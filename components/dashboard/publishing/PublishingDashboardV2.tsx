@@ -176,7 +176,7 @@ function InlineWheelPicker({
 
   return (
     <div className="min-w-0 select-none">
-      <div className="mb-2 text-center text-[11px] font-semibold text-[#64748B]">
+      <div className="mb-2 text-center text-[11px] font-semibold text-[var(--daira-text-secondary)]">
         {label}
       </div>
       <WheelPicker
@@ -192,9 +192,9 @@ function InlineWheelPicker({
         dragSensitivity={4}
         scrollSensitivity={6}
         classNames={{
-          optionItem: "!text-base !font-semibold !text-[#94A3B8]",
-          highlightWrapper: "!rounded-none !border-y !border-[#E2E8F0] !bg-white",
-          highlightItem: "!text-2xl !font-bold !text-[#18233C]",
+          optionItem: "!text-base !font-semibold !text-[var(--daira-text-disabled)]",
+          highlightWrapper: "!rounded-none !border-y !border-[var(--daira-border)] !bg-white",
+          highlightItem: "!text-2xl !font-bold !text-[var(--daira-heading)]",
         }}
       />
     </div>
@@ -231,7 +231,7 @@ function KeywordChipsInput({ value, onChange, placeholder }: { value: string; on
   const [draft, setDraft] = useState("");
   const sync = (next: string[]) => onChange(next.map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.indexOf(item) === index).join(","));
   const add = () => { const item = draft.trim(); if (!item) return; sync([...keywords, item]); setDraft(""); };
-  return <div className="flex min-h-[56px] flex-wrap items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 transition focus-within:border-[#7C3AED] focus-within:ring-2 focus-within:ring-[#7C3AED]/10">{keywords.map((item) => <span key={item} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground">{item}<Button type="button" onClick={() => sync(keywords.filter((keyword) => keyword !== item))} className="text-muted-foreground hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></Button></span>)}<Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (["Enter", ",", "،"].includes(event.key)) { event.preventDefault(); add(); } }} onBlur={add} placeholder={keywords.length ? "کلمه بعدی..." : placeholder} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm text-[#18233C] outline-none ring-0 placeholder:text-[#94A3B8]" /><Button type="button" onPointerDown={(event) => event.preventDefault()} onClick={add} className="shrink-0 rounded-lg border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#64748B] hover:bg-[#F8FAFC]">افزودن کلمه</Button></div>;
+  return <div className="flex min-h-[56px] flex-wrap items-center gap-2 rounded-xl border border-[var(--daira-border)] bg-white px-3 py-2.5 transition focus-within:border-[var(--daira-processing)] focus-within:ring-2 focus-within:ring-[var(--daira-processing)]/10">{keywords.map((item) => <span key={item} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground">{item}<Button type="button" onClick={() => sync(keywords.filter((keyword) => keyword !== item))} className="text-muted-foreground hover:text-foreground" aria-label={`حذف ${item}`}><X size={13} /></Button></span>)}<Input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (["Enter", ",", "،"].includes(event.key)) { event.preventDefault(); add(); } }} onBlur={add} placeholder={keywords.length ? "کلمه بعدی..." : placeholder} className="min-w-[140px] flex-1 border-0 bg-transparent px-1 py-1 text-sm text-[var(--daira-heading)] outline-none ring-0 placeholder:text-[var(--daira-text-disabled)]" /><Button type="button" onPointerDown={(event) => event.preventDefault()} onClick={add} className="shrink-0 rounded-lg border border-[var(--daira-border)] bg-white px-2.5 py-1.5 text-xs font-medium text-[var(--daira-text-secondary)] hover:bg-[var(--daira-surface-hover)]">افزودن کلمه</Button></div>;
 }
 
 function SectionHeader({ n, title, text }: { n: string; title: string; text: string }) {
@@ -248,11 +248,11 @@ function SectionHeader({ n, title, text }: { n: string; title: string; text: str
 }
 function ProgressBar({ progress }: { progress: number }) {
   return <div className="mt-4 w-full max-w-md">
-    <div className="mb-2 text-center text-[10px] font-semibold text-[#2F61FD]">
+    <div className="mb-2 text-center text-[10px] font-semibold text-[var(--daira-primary)]">
       {toPersianDigits(progress)}٪
     </div>
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E2E8F0]">
-      <div className="h-full rounded-full bg-[#2F61FD] transition-[width] duration-150 ease-out" style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--daira-border)]">
+      <div className="h-full rounded-full bg-[var(--daira-primary)] transition-[width] duration-150 ease-out" style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
     </div>
   </div>;
 }
@@ -277,11 +277,11 @@ function UploadSuccessMark() {
         }
       `}</style>
       <span
-        className="absolute left-[7px] top-[19px] block h-[3px] origin-left rounded-full bg-[#16A34A]"
+        className="absolute left-[7px] top-[19px] block h-[3px] origin-left rounded-full bg-[var(--daira-publishing-completed)]"
         style={{ transform: "rotate(45deg)", animation: "var(--check-draw)" }}
       />
       <span
-        className="absolute left-[12px] top-[25px] block h-[3px] origin-left rounded-full bg-[#16A34A]"
+        className="absolute left-[12px] top-[25px] block h-[3px] origin-left rounded-full bg-[var(--daira-publishing-completed)]"
         style={{ transform: "rotate(-45deg)", animation: "var(--check-draw-long)" }}
       />
     </span>
@@ -296,21 +296,21 @@ type UploadAreaProps = {
 function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging, title, onChange, onDrop }: UploadAreaProps) {
   return (
     <div className={"rounded-[20px] border p-4 transition-all sm:p-5 " +
-      (isDragging ? "border-[#2F61FD] bg-[#EDF3FF] ring-2 ring-[#BAD0FF]" : "border-[#DFE7F3] bg-[#F6F9FF] hover:border-[#BAD0FF]") +
+      (isDragging ? "border-[var(--daira-primary)] bg-[var(--daira-publishing-selected)] ring-2 ring-[#BAD0FF]" : "border-[var(--daira-publishing-border)] bg-[var(--daira-upload-bg)] hover:border-[#BAD0FF]") +
       (disabled ? " pointer-events-none opacity-60" : "")}
       onDragOver={event=>{event.preventDefault();if(!disabled)setIsDragging(true);}}
       onDragLeave={()=>setIsDragging(false)}
       onDrop={event=>{event.preventDefault();setIsDragging(false);if(!disabled)onDrop(event);}}>
       <Input id={id} type="file" accept={accept} multiple={multiple} onChange={onChange} disabled={disabled} className="sr-only"/>
       <label htmlFor={id} className="flex min-h-[130px] cursor-pointer flex-col items-center justify-between gap-4 text-center sm:min-h-[115px] sm:flex-row sm:text-right">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[17px] bg-white text-[#2F61FD] shadow-[0_3px_16px_rgba(47,97,253,.10)]" aria-hidden="true">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[17px] bg-white text-[var(--daira-primary)] shadow-[0_3px_16px_rgba(47,97,253,.10)]" aria-hidden="true">
           <ImagePlus size={25} strokeWidth={1.8}/>
         </span>
         <span className="min-w-0 flex-1">
-          <strong className="block text-sm text-[#18233C]">{title}</strong>
-          <span className="mt-1.5 block text-xs leading-6 text-[#5A6B87]">{multiple?"چند فایل را هم‌زمان انتخاب کن یا اینجا رها کن.":"یک فایل را انتخاب کن یا اینجا رها کن."}</span>
+          <strong className="block text-sm text-[var(--daira-heading)]">{title}</strong>
+          <span className="mt-1.5 block text-xs leading-6 text-[var(--daira-text-secondary)]">{multiple?"چند فایل را هم‌زمان انتخاب کن یا اینجا رها کن.":"یک فایل را انتخاب کن یا اینجا رها کن."}</span>
         </span>
-        <span className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#2F61FD] px-5 text-xs font-bold text-white shadow-sm sm:w-auto">
+        <span className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-5 text-xs font-bold text-white shadow-sm sm:w-auto">
           <ImagePlus size={17}/> انتخاب فایل
         </span>
       </label>
@@ -322,12 +322,12 @@ function MediaTile({ item, type, onRemove, ready = false, compact = false }: Med
   const image = item.type === "IMAGE";
   const src = ready && "publicUrl" in item ? item.publicUrl : "previewUrl" in item ? item.previewUrl : item.publicUrl;
   const aspect = type === "REEL" || type === "STORY" ? "aspect-[9/16]" : "aspect-[4/5]";
-  return <div className={"group relative overflow-hidden rounded-2xl border border-[#DFE7F3] bg-[#F6F9FF] shadow-[0_8px_24px_rgba(22,54,110,.06)] "+(!compact?"w-full":"")}>
+  return <div className={"group relative overflow-hidden rounded-2xl border border-[var(--daira-publishing-border)] bg-[var(--daira-upload-bg)] shadow-[0_8px_24px_rgba(22,54,110,.06)] "+(!compact?"w-full":"")}>
     {image ? <img src={src} alt={"file" in item ? item.file.name : item.fileName}
       className={"w-full object-cover "+aspect} /> :
       <video src={src} controls playsInline preload="metadata" className={"w-full object-cover "+aspect} />}
     {!compact && <button type="button" onClick={onRemove}
-      className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-full border border-[#FECACA] bg-white/95 text-[#B91C1C] shadow-sm"
+      className="absolute left-2 top-2 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--daira-error-border)] bg-white/95 text-[var(--daira-error-text)] shadow-sm"
       aria-label="حذف فایل"><Trash2 size={16}/></button>}
   </div>;
 }
@@ -487,14 +487,14 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       if (previousStatus === job.status) continue;
 
       if (job.status === "PUBLISHED") {
-        toast.success(`${typeLabels[job.type]} با موفقیت در اینستاگرام منتشر شد.`, { icon: <CheckCircle2 size={18} className="text-[#16A34A]" /> });
+        toast.success(`${typeLabels[job.type]} با موفقیت در اینستاگرام منتشر شد.`, { icon: <CheckCircle2 size={18} className="text-[var(--daira-publishing-completed)]" /> });
         if (activePublishJobIdRef.current === job.id) {
           setPublishResult("PUBLISHED");
           setPublishResultVisible(true);
         }
         knownJobIdsRef.current.delete(job.id);
       } else if (job.status === "FAILED") {
-        toast.error(job.errorMessage || `${typeLabels[job.type]} در اینستاگرام منتشر نشد.`, { icon: <CircleSlash2 size={18} className="text-[#DC2626]" /> });
+        toast.error(job.errorMessage || `${typeLabels[job.type]} در اینستاگرام منتشر نشد.`, { icon: <CircleSlash2 size={18} className="text-[var(--daira-error-text)]" /> });
         if (activePublishJobIdRef.current === job.id) {
           setPublishResult("FAILED");
           window.setTimeout(() => {
@@ -1216,7 +1216,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         const publishResult = await publishResponse.json();
         if (!publishResponse.ok) {
           setPublishResult("FAILED");
-          toast.error(publishResult.message || `${typeLabels[type]} در اینستاگرام منتشر نشد.`, { icon: <CircleSlash2 size={18} className="text-[#DC2626]" /> });
+          toast.error(publishResult.message || `${typeLabels[type]} در اینستاگرام منتشر نشد.`, { icon: <CircleSlash2 size={18} className="text-[var(--daira-error-text)]" /> });
           window.setTimeout(() => {
             setPublishResultVisible(false);
             setActivePublishJobId(null);
@@ -1228,7 +1228,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         knownJobIdsRef.current.add(job.id);
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
         setActiveTab("queue");
-        toast.success(`${typeLabels[type]} برای زمان ${formatScheduledLabel(scheduled!)} تنظیم شد.`, { icon: <Clock3 size={18} className="text-[#2F61FD]" /> });
+        toast.success(`${typeLabels[type]} برای زمان ${formatScheduledLabel(scheduled!)} تنظیم شد.`, { icon: <Clock3 size={18} className="text-[var(--daira-primary)]" /> });
         setCaption(""); setReelOptions({ ...DEFAULT_REEL_OPTIONS }); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(todayJalali); setHour(officialTehranClock.hour); setMinute(officialTehranClock.minute); setStage6Date(todayJalali); setStage6Hour(officialTehranClock.hour); setStage6Minute(officialTehranClock.minute);
         animateStepChange(() => {
           clearLocalMedia();
@@ -1279,13 +1279,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   return (
     <div dir="rtl" className="min-h-full bg-transparent px-1 py-2 pb-24 sm:px-2 sm:py-3 sm:pb-10">
       <div className="mx-auto w-full max-w-4xl">
-        <nav className="mb-5 grid grid-cols-2 gap-2 rounded-[20px] bg-[#EEF3FB] p-1.5" aria-label="بخش‌های انتشار">
+        <nav className="mb-5 grid grid-cols-2 gap-2 rounded-[20px] bg-[var(--daira-section-alt)] p-1.5" aria-label="بخش‌های انتشار">
           <button type="button" onClick={()=>setActiveTab("create")} aria-current={activeTab==="create"?"page":undefined}
-            className={"flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="create"?"bg-white text-[#2F61FD] shadow-sm":"text-[#5A6B87]")}>
+            className={"flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="create"?"bg-white text-[var(--daira-primary)] shadow-sm":"text-[var(--daira-text-secondary)]")}>
             <ImagePlus size={18}/> انتشار محتوا
           </button>
           <button type="button" onClick={()=>setActiveTab("queue")} aria-current={activeTab==="queue"?"page":undefined}
-            className={"flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="queue"?"bg-white text-[#2F61FD] shadow-sm":"text-[#5A6B87]")}>
+            className={"flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="queue"?"bg-white text-[var(--daira-primary)] shadow-sm":"text-[var(--daira-text-secondary)]")}>
             <CalendarClock size={18}/> صف انتشار
           </button>
         </nav>
@@ -1293,19 +1293,19 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           <PublishingQueue jobs={jobs} loading={loading} error={error} onRetry={retryJob} onCancel={cancelJob} onRefresh={loadJobs}/>
         ) : loading ? <PublishingPageSkeleton/> : (
           <div className="space-y-5 pb-7">
-            <section aria-label="نوع محتوا" className="rounded-[22px] border border-[#DFE7F3] bg-white p-4 shadow-sm sm:p-5">
+            <section aria-label="نوع محتوا" className="rounded-[22px] border border-[var(--daira-publishing-border)] bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-4">
-                <h1 className="text-base font-extrabold text-[#18233C]">انتشار محتوای جدید</h1>
-                <p className="mt-1 text-xs leading-6 text-[#5A6B87]">نوع محتوا را انتخاب کن؛ تمام تنظیمات مربوط به آن در همین صفحه است.</p>
+                <h1 className="text-base font-extrabold text-[var(--daira-heading)]">انتشار محتوای جدید</h1>
+                <p className="mt-1 text-xs leading-6 text-[var(--daira-text-secondary)]">نوع محتوا را انتخاب کن؛ تمام تنظیمات مربوط به آن در همین صفحه است.</p>
               </div>
               <div className="grid grid-cols-4 gap-2 sm:gap-3" role="group" aria-label="انتخاب نوع محتوا">
                 {([["POST","پست",ImagePlus],["REEL","ریلز",Clapperboard],["CAROUSEL","پست اسلایدی",Images],["STORY","استوری",Camera]] as const).map(([value,label,Icon])=>{
                   const selected=type===value;
                   return <button key={value} type="button" disabled={uploading||reelCoverUploading||publishing} aria-pressed={selected} onClick={()=>changeContentType(value)}
-                    className={"relative flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl border px-1.5 py-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD] disabled:opacity-50 "+(selected?"border-[#2F61FD] bg-[#EDF3FF] text-[#2F61FD]":"border-[#E2E8F0] bg-[#F8FAFC] text-[#5A6B87] hover:border-[#BAD0FF]")}>
+                    className={"relative flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl border px-1.5 py-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] disabled:opacity-50 "+(selected?"border-[var(--daira-primary)] bg-[var(--daira-publishing-selected)] text-[var(--daira-primary)]":"border-[var(--daira-border)] bg-[var(--daira-surface-hover)] text-[var(--daira-text-secondary)] hover:border-[#BAD0FF]")}>
                     <Icon size={22} strokeWidth={1.8}/>
                     <span className="text-[11px] font-bold sm:text-xs">{label}</span>
-                    {selected&&<CheckCircle2 size={14} className="absolute left-2 top-2 text-[#2F61FD]"/>}
+                    {selected&&<CheckCircle2 size={14} className="absolute left-2 top-2 text-[var(--daira-primary)]"/>}
                   </button>;
                 })}
               </div>
@@ -1315,17 +1315,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <PublishingSectionGuide number={1} title="افزودن رسانه">
                 {type==="POST"?"یک عکس برای پست انتخاب کن.":type==="REEL"?"ویدیوی ریلز را بارگذاری کن.":type==="CAROUSEL"?"بین ۲ تا ۱۰ تصویر یا ویدیو اضافه کن؛ ترتیب اسلایدها قابل جابه‌جایی است.":"یک عکس یا ویدیو برای استوری انتخاب کن."}
               </PublishingSectionGuide>
-              <div className="rounded-[22px] border border-[#DFE7F3] bg-white p-4 shadow-sm sm:p-5">
+              <div className="rounded-[22px] border border-[var(--daira-publishing-border)] bg-white p-4 shadow-sm sm:p-5">
                 {type!=="CAROUSEL" && uploadedMedia[0] ? (
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
                     <div className="mx-auto w-full max-w-[200px] shrink-0 sm:mx-0 sm:w-44">
                       <MediaTile item={uploadedMedia[0]} type={type} onRemove={()=>void removeUploaded(uploadedMedia[0])} ready/>
                     </div>
                     <div className="min-w-0 flex-1 space-y-3 text-center sm:text-right">
-                      <div className="flex items-center justify-center gap-2 text-[#15803D] sm:justify-start"><CheckCircle2 size={19}/><strong className="text-sm">رسانه آماده است</strong></div>
-                      <p dir="auto" className="truncate text-xs text-[#5A6B87]">{uploadedMedia[0].fileName}</p>
+                      <div className="flex items-center justify-center gap-2 text-[var(--daira-chart-increase)] sm:justify-start"><CheckCircle2 size={19}/><strong className="text-sm">رسانه آماده است</strong></div>
+                      <p dir="auto" className="truncate text-xs text-[var(--daira-text-secondary)]">{uploadedMedia[0].fileName}</p>
                       <button type="button" onClick={()=>void removeUploaded(uploadedMedia[0])}
-                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#DFE7F3] bg-[#F8FAFC] px-4 text-xs font-bold text-[#18233C]"><Trash2 size={15}/> جایگزینی فایل</button>
+                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[var(--daira-publishing-border)] bg-[var(--daira-surface-hover)] px-4 text-xs font-bold text-[var(--daira-heading)]"><Trash2 size={15}/> جایگزینی فایل</button>
                     </div>
                   </div>
                 ) : canUpload ? (
@@ -1333,17 +1333,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     disabled={publishing || !canUpload} isDragging={isDragging} setIsDragging={setIsDragging}
                     title={uploadTitle} onChange={handleFiles} onDrop={handleDrop}/>
                 ) : type!=="CAROUSEL" && uploading ? (
-                  <div role="status" className="rounded-xl bg-[#F6F9FF] p-5 text-center">
-                    <Loader2 className="mx-auto mb-2 animate-spin text-[#2F61FD]" size={22}/>
-                    <p className="text-xs text-[#5A6B87]">در حال بارگذاری رسانه…</p>
+                  <div role="status" className="rounded-xl bg-[var(--daira-upload-bg)] p-5 text-center">
+                    <Loader2 className="mx-auto mb-2 animate-spin text-[var(--daira-primary)]" size={22}/>
+                    <p className="text-xs text-[var(--daira-text-secondary)]">در حال بارگذاری رسانه…</p>
                   </div>
                 ) : null}
                 {uploading&&type!=="CAROUSEL"&&<ProgressBar progress={uploadProgress}/>}
                 {uploadRows.filter(row=>row.status==="failed").map(row=>
-                  <div key={row.id} className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3">
-                    <p className="min-w-0 flex-1 text-xs leading-6 text-[#B91C1C]">{row.fileName}: {row.error||"آپلود ناموفق بود."}</p>
-                    <button type="button" onClick={()=>retryLocalUpload(row.id)} className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#B91C1C]"><RotateCcw size={14}/>تلاش دوباره</button>
-                    <button type="button" onClick={()=>removeLocalById(row.id)} aria-label={"حذف فایل ناموفق "+row.fileName} className="rounded-lg border border-[#FECACA] bg-white p-2 text-[#B91C1C]"><Trash2 size={14}/></button>
+                  <div key={row.id} className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] p-3">
+                    <p className="min-w-0 flex-1 text-xs leading-6 text-[var(--daira-error-text)]">{row.fileName}: {row.error||"آپلود ناموفق بود."}</p>
+                    <button type="button" onClick={()=>retryLocalUpload(row.id)} className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-bold text-[var(--daira-error-text)]"><RotateCcw size={14}/>تلاش دوباره</button>
+                    <button type="button" onClick={()=>removeLocalById(row.id)} aria-label={"حذف فایل ناموفق "+row.fileName} className="rounded-lg border border-[var(--daira-error-border)] bg-white p-2 text-[var(--daira-error-text)]"><Trash2 size={14}/></button>
                   </div>
                 )}
                                       {type === "CAROUSEL" && uploadRows.length > 0 && (
@@ -1364,42 +1364,42 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             const isCarouselSlide = type === "CAROUSEL" && Boolean(slide);
                             return (
                               <div key={row.id} className="relative flex items-stretch gap-2">
-                                {type === "CAROUSEL" && <span className="flex w-12 shrink-0 items-center justify-center self-stretch whitespace-nowrap px-1 text-[11px] font-bold tabular-nums text-[#5A6B87]">{"اسلاید " + toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
+                                {type === "CAROUSEL" && <span className="flex w-12 shrink-0 items-center justify-center self-stretch whitespace-nowrap px-1 text-[11px] font-bold tabular-nums text-[var(--daira-text-secondary)]">{"اسلاید " + toPersianDigits(slideIndex >= 0 ? slideIndex + 1 : rowPosition + 1)}</span>}
                                 <SortableSlideShell
                                 id={row.storageKey ?? row.id}
                                 disabled={!isCarouselSlide || row.status !== "success" || Boolean(row.removing)}
                                 className="relative min-w-0 flex-1"
                               >
-                                <div className={["relative flex-1 overflow-hidden rounded-[17px] border px-3 py-3 shadow-[0_2px_10px_rgba(22,54,110,.025)] transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[#FECACA] bg-[#FEF2F2]" : row.status === "success" && slide ? "border-[#DFE7F3] bg-[#F6F9FF]" : row.status === "success" ? "border-[#BBF7D0] bg-[#F0FDF4]" : "border-[#E2E8F0] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing" : ""].join(" ")}
+                                <div className={["relative flex-1 overflow-hidden rounded-[17px] border px-3 py-3 shadow-[0_2px_10px_rgba(22,54,110,.025)] transition-[border-color,background-color,opacity] duration-150 ease-out", row.removing ? "max-h-0 -translate-y-1 !border-transparent !p-0 opacity-0" : "max-h-36 opacity-100", row.status === "failed" ? "border-[var(--daira-error-border)] bg-[var(--daira-error-background)]" : row.status === "success" && slide ? "border-[var(--daira-publishing-border)] bg-[var(--daira-upload-bg)]" : row.status === "success" ? "border-[#BBF7D0] bg-[var(--daira-success-bg)]" : "border-[var(--daira-border)] bg-white", isCarouselSlide ? "cursor-grab active:cursor-grabbing" : ""].join(" ")}
                                 >
                                 <div className="flex items-center gap-3">
                                   {slide ? (
-                                    <span className="flex h-[68px] w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#DFE7F3] bg-white">
+                                    <span className="flex h-[68px] w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--daira-publishing-border)] bg-white">
                                       {slide.type === "IMAGE" ? <img src={slide.publicUrl} alt={slide.fileName} className="h-full w-full object-cover" /> : <video src={slide.publicUrl} muted preload="metadata" className="h-full w-full object-cover" />}
                                     </span>
                                   ) : (
-                                    <span className="flex h-[68px] w-14 shrink-0 items-center justify-center rounded-xl border border-[#DFE7F3] bg-white text-[#64748B]">
-                                      {row.status === "failed" ? <CircleSlash2 size={17} className="text-[#DC2626]" /> : row.status === "uploading" ? <Loader2 size={17} className="animate-spin text-[#2F61FD]" /> : <Images size={17} />}
+                                    <span className="flex h-[68px] w-14 shrink-0 items-center justify-center rounded-xl border border-[var(--daira-publishing-border)] bg-white text-[var(--daira-text-secondary)]">
+                                      {row.status === "failed" ? <CircleSlash2 size={17} className="text-[var(--daira-error-text)]" /> : row.status === "uploading" ? <Loader2 size={17} className="animate-spin text-[var(--daira-primary)]" /> : <Images size={17} />}
                                     </span>
                                   )}
                                   <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <p className="max-w-full truncate text-xs font-semibold text-[#18233C]" dir="auto">{row.fileName}</p>
+                                      <p className="max-w-full truncate text-xs font-semibold text-[var(--daira-heading)]" dir="auto">{row.fileName}</p>
 
                                     </div>
-                                    <p className={["mt-1 text-[11px] font-medium", row.status === "failed" ? "text-[#B91C1C]" : row.status === "success" ? "text-[#15803D]" : "text-[#64748B]"].join(" ")}>
+                                    <p className={["mt-1 text-[11px] font-medium", row.status === "failed" ? "text-[var(--daira-error-text)]" : row.status === "success" ? "text-[var(--daira-chart-increase)]" : "text-[var(--daira-text-secondary)]"].join(" ")}>
                                       {row.status === "queued" ? "در صف آپلود" : row.status === "uploading" ? `در حال آپلود · ${toPersianDigits(row.progress)}٪` : row.status === "success" ? "آپلود با موفقیت انجام شد · برای جابه‌جایی نگه دار و بکش" : "آپلود ناموفق بود"}
                                     </p>
                                     {(row.status === "queued" || row.status === "uploading" || row.status === "failed") && (
-                                      <div className={["mt-2 h-1.5 overflow-hidden rounded-full", row.status === "failed" ? "bg-[#FEE2E2]" : "bg-[#E2E8F0]"].join(" ")}>
-                                        <div className={["h-full rounded-full transition-[width] duration-150", row.status === "failed" ? "bg-[#DC2626]" : "bg-[#2F61FD]"].join(" ")} style={{ width: `${Math.max(row.status === "failed" ? 3 : 0, Math.min(100, row.progress))}%` }} />
+                                      <div className={["mt-2 h-1.5 overflow-hidden rounded-full", row.status === "failed" ? "bg-[#FEE2E2]" : "bg-[var(--daira-border)]"].join(" ")}>
+                                        <div className={["h-full rounded-full transition-[width] duration-150", row.status === "failed" ? "bg-[var(--daira-error-text)]" : "bg-[var(--daira-primary)]"].join(" ")} style={{ width: `${Math.max(row.status === "failed" ? 3 : 0, Math.min(100, row.progress))}%` }} />
                                       </div>
                                     )}
-                                    {row.error && <p className="mt-2 text-[11px] leading-5 text-[#B91C1C]">{row.error}</p>}
+                                    {row.error && <p className="mt-2 text-[11px] leading-5 text-[var(--daira-error-text)]">{row.error}</p>}
                                   </div>
-                                  {row.status === "failed" && <button type="button" onClick={() => retryLocalUpload(row.id)} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg bg-[#DC2626] px-2.5 text-[11px] font-bold text-white"><RotateCcw size={13} />تلاش دوباره</button>}
-                                  {row.status === "success" && slide && <button type="button" onClick={() => void removeUploaded(slide)} aria-label="حذف اسلاید از پست اسلایدی" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#FECACA] bg-white text-[#B91C1C] hover:bg-[#FEF2F2]"><X size={16} /></button>}
-                                  {row.status !== "success" && <button type="button" onClick={() => removeLocalById(row.id)} aria-label="حذف فایل از صف آپلود" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#64748B] hover:bg-black/5 hover:text-[#DC2626]"><X size={16} /></button>}
+                                  {row.status === "failed" && <button type="button" onClick={() => retryLocalUpload(row.id)} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg bg-[var(--daira-error-text)] px-2.5 text-[11px] font-bold text-white"><RotateCcw size={13} />تلاش دوباره</button>}
+                                  {row.status === "success" && slide && <button type="button" onClick={() => void removeUploaded(slide)} aria-label="حذف اسلاید از پست اسلایدی" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--daira-error-border)] bg-white text-[var(--daira-error-text)] hover:bg-[var(--daira-error-background)]"><X size={16} /></button>}
+                                  {row.status !== "success" && <button type="button" onClick={() => removeLocalById(row.id)} aria-label="حذف فایل از صف آپلود" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--daira-text-secondary)] hover:bg-black/5 hover:text-[var(--daira-error-text)]"><X size={16} /></button>}
                                 </div>
                                 </div>
                               </SortableSlideShell>
@@ -1412,7 +1412,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       )}
 
 
-                {type==="CAROUSEL" && uploadedMedia.length>0 && <p className="mt-3 rounded-xl bg-[#F6F9FF] px-3 py-2.5 text-xs leading-6 text-[#5A6B87]">
+                {type==="CAROUSEL" && uploadedMedia.length>0 && <p className="mt-3 rounded-xl bg-[var(--daira-upload-bg)] px-3 py-2.5 text-xs leading-6 text-[var(--daira-text-secondary)]">
                   {toPersianDigits(uploadedMedia.length)} اسلاید از ۱۰ آماده است؛ برای تغییر ترتیب، اسلاید را بگیر و جابه‌جا کن.
                 </p>}
               </div>
@@ -1433,13 +1433,13 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   کپشن را بنویس؛ در صورت نیاز، تگ کاربران را برای هر رسانه اضافه کن.
                 </PublishingSectionGuide>
                 <div className="mx-auto w-full max-w-4xl space-y-4">
-                <section className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-                  <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[#DFE7F3] bg-[#F6F9FF] px-4 py-3.5">
+                <section className="w-full rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-sm sm:p-6">
+                  <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[var(--daira-publishing-border)] bg-[var(--daira-upload-bg)] px-4 py-3.5">
                     <div>
-                      <div className="flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EDF3FF] text-xs font-bold text-[#2F61FD]">۲</span><h2 className="text-sm font-bold text-[#18233C]">کپشن</h2></div>
-                      <p className="mt-1.5 text-xs leading-5 text-[#64748B]">{`کپشن ${typeLabels[type]} را بنویس.`}</p>
+                      <div className="flex items-center gap-2"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--daira-publishing-selected)] text-xs font-bold text-[var(--daira-primary)]">۲</span><h2 className="text-sm font-bold text-[var(--daira-heading)]">کپشن</h2></div>
+                      <p className="mt-1.5 text-xs leading-5 text-[var(--daira-text-secondary)]">{`کپشن ${typeLabels[type]} را بنویس.`}</p>
                     </div>
-                    <span className="text-[11px] text-[#64748B]">{toPersianDigits(caption.length)} / ۲۲۰۰</span>
+                    <span className="text-[11px] text-[var(--daira-text-secondary)]">{toPersianDigits(caption.length)} / ۲۲۰۰</span>
                   </div>
                   <textarea
                     value={caption}
@@ -1450,42 +1450,42 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                     autoCapitalize="sentences"
                     spellCheck
                     style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
-                    className="w-full resize-none rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10"
+                    className="w-full resize-none rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10"
                     placeholder={`کپشن ${typeLabels[type]} را بنویس...`}
                   />
                 </section>
                 <section className="w-full rounded-[22px] border border-[#E8EDF5] bg-white p-4 shadow-sm sm:p-6">
                   <button type="button" onClick={()=>setShowTags(value=>!value)} aria-expanded={showTags} aria-controls="publishing-tags-panel"
-                    className="mb-2 flex w-full items-center justify-between gap-3 rounded-xl p-1 text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F61FD]">
+                    className="mb-2 flex w-full items-center justify-between gap-3 rounded-xl p-1 text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]">
                     <span className="flex items-start gap-3">
 
-                      <span><span className="block text-sm font-bold text-[#18233C]">تگ کردن کاربران <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span>
-                        <span className="mt-1 block text-xs leading-6 text-[#5A6B87]">{Object.values(taggedUsersByMedia).reduce((sum,list)=>sum+list.length,0).toLocaleString("fa-IR")} تگ ثبت‌شده — برای ویرایش باز کنید</span></span>
+                      <span><span className="block text-sm font-bold text-[var(--daira-heading)]">تگ کردن کاربران <span className="font-medium text-[var(--daira-primary)]">(اختیاری)</span></span>
+                        <span className="mt-1 block text-xs leading-6 text-[var(--daira-text-secondary)]">{Object.values(taggedUsersByMedia).reduce((sum,list)=>sum+list.length,0).toLocaleString("fa-IR")} تگ ثبت‌شده — برای ویرایش باز کنید</span></span>
                     </span>
-                    <ChevronDown size={18} className={"shrink-0 text-[#5A6B87] transition-transform "+(showTags?"rotate-180":"")}/>
+                    <ChevronDown size={18} className={"shrink-0 text-[var(--daira-text-secondary)] transition-transform "+(showTags?"rotate-180":"")}/>
                   </button>
                   {showTags && <div id="publishing-tags-panel" className="mt-4 border-t border-[#E8EDF5] pt-4">
-                  {tagInputError && <p role="alert" className="mb-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs text-[#B91C1C]">{tagInputError}</p>}
+                  {tagInputError && <p role="alert" className="mb-3 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] p-3 text-xs text-[var(--daira-error-text)]">{tagInputError}</p>}
                   <div className="space-y-3">
                     {uploadedMedia.length === 0 && (
-                      <p className="text-xs leading-6 text-[#5A6B87]">برای فعال‌شدن دکمه افزودن تگ، ابتدا رسانه را آپلود کن.</p>
+                      <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">برای فعال‌شدن دکمه افزودن تگ، ابتدا رسانه را آپلود کن.</p>
                     )}
                     {(uploadedMedia.length ? uploadedMedia : [null]).map((item, index) => {
                       const mediaKey = item?.storageKey ?? "__pending__";
                       const tags = taggedUsersByMedia[mediaKey] ?? [];
                       const draft = tagDraftByMedia[mediaKey] ?? "";
                       return (
-                        <div key={mediaKey} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 sm:p-4">
+                        <div key={mediaKey} className="rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3.5 sm:p-4">
                           <div className="mb-2 flex items-center justify-between gap-2">
-                            <p className="text-xs font-bold text-[#18233C]">{!item ? "تگ‌های محتوا" : type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
-                            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-[#64748B] ring-1 ring-[#E2E8F0]">{toPersianDigits(tags.length)} تگ</span>
+                            <p className="text-xs font-bold text-[var(--daira-heading)]">{!item ? "تگ‌های محتوا" : type === "CAROUSEL" ? `اسلاید ${toPersianDigits(index + 1)}` : typeLabels[type]}</p>
+                            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-medium text-[var(--daira-text-secondary)] ring-1 ring-[var(--daira-border)]">{toPersianDigits(tags.length)} تگ</span>
                           </div>
                           {tags.length > 0 && (
                             <div className="mb-2.5 flex flex-wrap gap-1.5">
                               {tags.map((username) => (
-                                <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[#EFF6FF] px-2.5 py-1.5 text-[11px] font-semibold text-[#2F61FD] ring-1 ring-[#DBEAFE]">
+                                <span key={username} className="inline-flex items-center gap-1 rounded-full bg-[var(--daira-outline-hover-bg)] px-2.5 py-1.5 text-[11px] font-semibold text-[var(--daira-primary)] ring-1 ring-[var(--daira-outline-active-bg)]">
                                   <span dir="ltr">@{username}</span>
-                                  <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[#64748B] hover:bg-white hover:text-[#DC2626]" aria-label={`حذف تگ @${username}`}>
+                                  <button type="button" onClick={() => removeTagForMedia(mediaKey, username)} className="flex h-4 w-4 items-center justify-center rounded-full text-[var(--daira-text-secondary)] hover:bg-white hover:text-[var(--daira-error-text)]" aria-label={`حذف تگ @${username}`}>
                                     <X size={11} />
                                   </button>
                                 </span>
@@ -1494,12 +1494,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                           )}
                           <div className="flex items-center gap-2">
                             {type === "CAROUSEL" && item && (
-                              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
+                              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[var(--daira-border)] bg-white">
                                 <MediaTile item={item} type="CAROUSEL" onRemove={() => void removeUploaded(item)} ready compact />
                               </div>
                             )}
-                            <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2.5 !text-base leading-5 text-[#18233C] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2F61FD] focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                            <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!item || !draft.trim()} className="shrink-0 rounded-lg !bg-[#2F61FD] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[#1E4BD8] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8] disabled:opacity-100 disabled:hover:!bg-[#E2E8F0]">افزودن</Button>
+                            <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-2.5 !text-base leading-5 text-[var(--daira-heading)] outline-none placeholder:text-xs placeholder:text-[var(--daira-text-disabled)] focus:border-[var(--daira-primary)] focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                            <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!item || !draft.trim()} className="shrink-0 rounded-lg !bg-[var(--daira-primary)] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[var(--daira-primary-hover)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[var(--daira-border)] disabled:!text-[var(--daira-text-disabled)] disabled:opacity-100 disabled:hover:!bg-[var(--daira-border)]">افزودن</Button>
                           </div>
                         </div>
                       );
@@ -1516,27 +1516,27 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               <PublishingSectionGuide number={type==="STORY"?2:3} title="پاسخ خودکار (اختیاری)">
                 {type==="STORY"?"اگر می‌خواهی به ریپلای این استوری پاسخ داده شود، این بخش را فعال کن.":"اگر می‌خواهی به کامنت‌ها و دایرکت‌ها پاسخ داده شود، این بخش را فعال کن."}
               </PublishingSectionGuide>
-              <div className="rounded-[22px] border border-[#DFE7F3] bg-white p-4 shadow-sm sm:p-5">
+              <div className="rounded-[22px] border border-[var(--daira-publishing-border)] bg-white p-4 shadow-sm sm:p-5">
                 <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3">
-                  <span className="min-w-0"><strong className="block text-sm text-[#18233C]">فعال‌سازی پاسخ خودکار</strong>
-                    <span className="mt-1 block text-xs leading-6 text-[#5A6B87]">بدون فعال‌سازی، محتوا عادی منتشر می‌شود.</span></span>
+                  <span className="min-w-0"><strong className="block text-sm text-[var(--daira-heading)]">فعال‌سازی پاسخ خودکار</strong>
+                    <span className="mt-1 block text-xs leading-6 text-[var(--daira-text-secondary)]">بدون فعال‌سازی، محتوا عادی منتشر می‌شود.</span></span>
                   <input type="checkbox" role="switch" checked={automationEnabled} disabled={publishing} onChange={e=>handleAutomationChoice(e.target.checked)} className="daira-form-switch shrink-0 -scale-x-100"/>
                 </label>
               </div>
               {automationEnabled && (type==="STORY" ? <div className="mx-auto w-full max-w-2xl">
                 
 
-                <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+                <section className="space-y-5 rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-sm sm:p-6">
                   
 
                   <fieldset disabled={storyResponseSaved && !storyResponseEditing}>
                     <div>
-                      <label className="mb-2 block text-sm font-bold text-[#18233C]">کلمات کلیدی Reply استوری</label>
-                      <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود.</p>
+                      <label className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">کلمات کلیدی Reply استوری</label>
+                      <p className="mb-3 text-xs leading-5 text-[var(--daira-text-secondary)]">با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود.</p>
                       {keywords.trim() && (
                         <div className="mb-3 flex flex-wrap gap-2">
                           {keywords.split(",").map((keyword) => keyword.trim()).filter(Boolean).map((keyword) => (
-                            <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2F61FD]">
+                            <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
                               <span>{keyword}</span>
                               <button type="button" onClick={() => { setKeywords(keywords.split(",").map(item => item.trim()).filter(item => item && item !== keyword).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); }} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button>
                             </span>
@@ -1544,8 +1544,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        <input id="publishing-story-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#18233C] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2F61FD] focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                        <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || keywords.split(",").map(item => item.trim()).filter(Boolean).includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2F61FD] px-3.5 text-xs font-semibold text-white hover:!bg-[#1E4BD8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
+                        <input id="publishing-story-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-3 !text-base leading-5 text-[var(--daira-heading)] outline-none placeholder:text-xs placeholder:text-[var(--daira-text-disabled)] focus:border-[var(--daira-primary)] focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                        <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); const current = keywords.split(",").map(item => item.trim()).filter(Boolean); if (value && !current.includes(value)) setKeywords(current.concat(value).join(",")); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || keywords.split(",").map(item => item.trim()).filter(Boolean).includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[var(--daira-primary)] px-3.5 text-xs font-semibold text-white hover:!bg-[var(--daira-primary-hover)] disabled:!bg-[var(--daira-border)] disabled:!text-[var(--daira-text-disabled)]">افزودن</Button>
                       </div>
                     </div>
                   </fieldset>
@@ -1581,7 +1581,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <fieldset disabled={storyResponseSaved && !storyResponseEditing}>
                     <section className="space-y-3">
                       {messages[0]?.messageType === "FORM" && (
-                        <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                        <div className="rounded-xl border border-[var(--daira-border)] bg-white p-3.5">
                           <label className="flex cursor-pointer items-start gap-3">
                             <input
                               type="checkbox"
@@ -1600,18 +1600,18 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 }
                               }}
                               disabled={!messages[0]?.quickReplies?.some((reply) => reply.isExit) && (messages[0]?.quickReplies?.length ?? 0) >= 13}
-                              className="mt-0.5 h-4 w-4 accent-[#2F61FD]"
+                              className="mt-0.5 h-4 w-4 accent-[var(--daira-primary)]"
                             />
                             <span>
-                              <span className="block text-sm font-bold text-[#18233C]">خروج از فرم <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span>
-                              <span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال‌سازی، کاربر با این گزینه از شاخه فرم خارج می‌شود.</span>
+                              <span className="block text-sm font-bold text-[var(--daira-heading)]">خروج از فرم <span className="font-medium text-[var(--daira-primary)]">(اختیاری)</span></span>
+                              <span className="mt-1 block text-xs leading-5 text-[var(--daira-text-secondary)]">در صورت فعال‌سازی، کاربر با این گزینه از شاخه فرم خارج می‌شود.</span>
                             </span>
                           </label>
 
                           {messages[0]?.quickReplies?.find((reply) => reply.isExit) && (
                             <div className="mt-3 space-y-3">
                               <div>
-                                <label className="mb-2 block text-xs font-bold text-[#18233C]">متن دکمه خروج</label>
+                                <label className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">متن دکمه خروج</label>
                                 <input
                                   value={messages[0]?.quickReplies?.find((reply) => reply.isExit)?.title ?? ""}
                                   maxLength={20}
@@ -1620,12 +1620,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                     if (!exitId) return;
                                     updateMessage(0, { quickReplies: (messages[0]?.quickReplies ?? []).map((reply) => reply.id === exitId ? { ...reply, title: event.target.value } : reply) });
                                   }}
-                                  className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10"
+                                  className="w-full rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10"
                                   style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                                 />
                               </div>
                               <div>
-                                <label className="mb-2 block text-xs font-bold text-[#18233C]">متن خروج از فرم</label>
+                                <label className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">متن خروج از فرم</label>
                                 <textarea
                                   value={messages[0]?.quickReplies?.find((reply) => reply.isExit)?.destinationText ?? ""}
                                   rows={3}
@@ -1635,7 +1635,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                     if (!exitId) return;
                                     updateMessage(0, { quickReplies: (messages[0]?.quickReplies ?? []).map((reply) => reply.id === exitId ? { ...reply, destinationText: event.target.value } : reply) });
                                   }}
-                                  className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10"
+                                  className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10"
                                   style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
                                 />
                               </div>
@@ -1644,21 +1644,21 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                         </div>
                       )}
 
-                      <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                      <div className="rounded-xl border border-[var(--daira-border)] bg-white p-3.5">
                         <label className="flex cursor-pointer items-start gap-3">
-                          <input type="checkbox" checked={likeStoryReply} onChange={event => { setLikeStoryReply(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2F61FD]" />
-                          <span><span className="block text-sm font-bold text-[#18233C]">لایک ریپلای <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span></span>
+                          <input type="checkbox" checked={likeStoryReply} onChange={event => { setLikeStoryReply(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[var(--daira-primary)]" />
+                          <span><span className="block text-sm font-bold text-[var(--daira-heading)]">لایک ریپلای <span className="font-medium text-[var(--daira-primary)]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[var(--daira-text-secondary)]">در صورت فعال بودن، Reply استوری کاربر لایک می‌شود.</span></span>
                         </label>
                       </div>
 
-                      <div className="rounded-xl border border-[#E2E8F0] bg-white p-3.5">
+                      <div className="rounded-xl border border-[var(--daira-border)] bg-white p-3.5">
                         <label className="flex cursor-pointer items-start gap-3">
-                          <input type="checkbox" checked={requireFollow} onChange={event => { setRequireFollow(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[#2F61FD]" />
-                          <span><span className="block text-sm font-bold text-[#18233C]">اجبار به فالو <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
+                          <input type="checkbox" checked={requireFollow} onChange={event => { setRequireFollow(event.target.checked); if (storyResponseEditing) setStoryResponseDirty(true); }} className="mt-0.5 h-4 w-4 accent-[var(--daira-primary)]" />
+                          <span><span className="block text-sm font-bold text-[var(--daira-heading)]">اجبار به فالو <span className="font-medium text-[var(--daira-primary)]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[var(--daira-text-secondary)]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
                         </label>
                         {requireFollow && <div className="mt-2.5">
-                          <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#18233C]">متن درخواست فالو</label>
-                          <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => { setFollowGateText(event.target.value); if (storyResponseEditing) setStoryResponseDirty(true); }} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-xs focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                          <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">متن درخواست فالو</label>
+                          <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => { setFollowGateText(event.target.value); if (storyResponseEditing) setStoryResponseDirty(true); }} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-xs focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                         </div>}
                       </div>
                     </section>
@@ -1667,64 +1667,64 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
 
                   {(!storyResponseSaved || storyResponseEditing) && (
-                    <div className="border-t border-[#E2E8F0] pt-4">
-                      <Button type="button" onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }} disabled={!keywords.trim() || (messages[0]?.messageType === "TEXT" && !messages[0]?.text.trim()) || (storyResponseEditing && !storyResponseDirty)} className="w-full min-h-11 rounded-xl bg-[#2F61FD] px-4 text-sm font-bold text-white hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:opacity-40">
+                    <div className="border-t border-[var(--daira-border)] pt-4">
+                      <Button type="button" onClick={() => { void storyAutomationSetupRef.current?.saveAndContinue(); }} disabled={!keywords.trim() || (messages[0]?.messageType === "TEXT" && !messages[0]?.text.trim()) || (storyResponseEditing && !storyResponseDirty)} className="w-full min-h-11 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-bold text-white hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:opacity-40">
                         ذخیره {messages[0]?.messageType === "FORM" ? "فرم" : messages[0]?.messageType === "SHOWCASE" ? "ویترین" : messages[0]?.messageType === "TEXT" ? "متن" : messages[0]?.messageType === "IMAGE" ? "عکس" : messages[0]?.messageType === "VIDEO" ? "فیلم" : "وویس"} 
                       </Button>
                     </div>
                   )}
 
                   {storyResponseSaved && !storyResponseEditing && (
-                    <div className="flex items-center justify-center gap-2 border-t border-[#E2E8F0] pt-4">
-                      <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 text-sm font-bold text-[#2F61FD] hover:bg-[#DBEAFE]">
+                    <div className="flex items-center justify-center gap-2 border-t border-[var(--daira-border)] pt-4">
+                      <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[#BFDBFE] bg-[var(--daira-outline-hover-bg)] px-4 text-sm font-bold text-[var(--daira-primary)] hover:bg-[var(--daira-outline-active-bg)]">
                         <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Pencil size={15} /><span dir="rtl">ویرایش</span></span>
                       </Button>
-                      <Button type="button" variant="destructive" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 !rounded-xl !border !border-[#FECACA] !bg-[#FEF2F2] !px-4 !text-sm !font-bold !text-[#DC2626] hover:!bg-[#FEE2E2]">
+                      <Button type="button" variant="destructive" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 !rounded-xl !border !border-[var(--daira-error-border)] !bg-[var(--daira-error-background)] !px-4 !text-sm !font-bold !text-[var(--daira-error-text)] hover:!bg-[#FEE2E2]">
                         <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Trash2 size={15} /><span dir="rtl">حذف</span></span>
                       </Button>
                     </div>
                   )}
 
-                  {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
+                  {error && <div className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-5 text-[var(--daira-error-text)]" role="alert">{error}</div>}
                 </section>
               </div> : <div className="mx-auto w-full max-w-2xl">
                 
-                <section className="space-y-5 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+                <section className="space-y-5 rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-sm sm:p-6">
                   
 
                   <div>
-                    <label htmlFor="publishing-auto-keyword" className="mb-2 block text-sm font-bold text-[#18233C]">کلمات کلیدی</label>
-                    <p className="mb-3 text-xs leading-5 text-[#64748B]">با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود.</p>
-                    {automationKeywords.length > 0 && <div className="mb-3 flex flex-wrap gap-2">{automationKeywords.map((keyword) => <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2F61FD]"><span>{keyword}</span><button type="button" onClick={() => setAutomationKeywords(current => current.filter(item => item !== keyword))} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button></span>)}</div>}
+                    <label htmlFor="publishing-auto-keyword" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">کلمات کلیدی</label>
+                    <p className="mb-3 text-xs leading-5 text-[var(--daira-text-secondary)]">با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود.</p>
+                    {automationKeywords.length > 0 && <div className="mb-3 flex flex-wrap gap-2">{automationKeywords.map((keyword) => <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]"><span>{keyword}</span><button type="button" onClick={() => setAutomationKeywords(current => current.filter(item => item !== keyword))} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button></span>)}</div>}
                     <div className="flex items-center gap-2">
-                      <input id="publishing-auto-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#18233C] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2F61FD] focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                      <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || automationKeywords.includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[#2F61FD] px-3.5 text-xs font-semibold text-white hover:!bg-[#1E4BD8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</Button>
+                      <input id="publishing-auto-keyword" value={automationKeywordDraft} onChange={event => setAutomationKeywordDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-3 !text-base leading-5 text-[var(--daira-heading)] outline-none placeholder:text-xs placeholder:text-[var(--daira-text-disabled)] focus:border-[var(--daira-primary)] focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                      <Button type="button" onClick={() => { const value = automationKeywordDraft.trim(); if (value && !automationKeywords.includes(value)) setAutomationKeywords(current => [...current, value]); setAutomationKeywordDraft(""); }} disabled={!automationKeywordDraft.trim() || automationKeywords.includes(automationKeywordDraft.trim())} className="min-h-11 shrink-0 rounded-lg !bg-[var(--daira-primary)] px-3.5 text-xs font-semibold text-white hover:!bg-[var(--daira-primary-hover)] disabled:!bg-[var(--daira-border)] disabled:!text-[var(--daira-text-disabled)]">افزودن</Button>
                     </div>
                   </div>
 
-                  <div className="border-t border-[#E2E8F0] pt-5">
-                    <label htmlFor="publishing-comment-reply" className="mb-2 block text-sm font-bold text-[#18233C]">متن ارسالی در کامنت</label>
-                    <textarea id="publishing-comment-reply" value={publishingCommentReplyText} onChange={event => setPublishingCommentReplyText(event.target.value)} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-xs focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                  <div className="border-t border-[var(--daira-border)] pt-5">
+                    <label htmlFor="publishing-comment-reply" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">متن ارسالی در کامنت</label>
+                    <textarea id="publishing-comment-reply" value={publishingCommentReplyText} onChange={event => setPublishingCommentReplyText(event.target.value)} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-xs focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                   </div>
 
-                  <div className="border-t border-[#E2E8F0] pt-5">
-                    <label htmlFor="publishing-direct-message" className="mb-2 block text-sm font-bold text-[#18233C]">متن ارسالی در دایرکت <span className="font-medium text-[#2F61FD]">(اختیاری)</span></label>
-                    <textarea id="publishing-direct-message" value={directMessageText} onChange={event => setDirectMessageText(event.target.value)} rows={4} maxLength={2000} inputMode="text" placeholder="متن پیامی را که می‌خواهی در دایرکت ارسال شود بنویس..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-xs focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                  <div className="border-t border-[var(--daira-border)] pt-5">
+                    <label htmlFor="publishing-direct-message" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">متن ارسالی در دایرکت <span className="font-medium text-[var(--daira-primary)]">(اختیاری)</span></label>
+                    <textarea id="publishing-direct-message" value={directMessageText} onChange={event => setDirectMessageText(event.target.value)} rows={4} maxLength={2000} inputMode="text" placeholder="متن پیامی را که می‌خواهی در دایرکت ارسال شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-xs focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                   </div>
 
-                  <div className="border-t border-[#E2E8F0] pt-5">
-                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
-                      <input type="checkbox" checked={requireFollow} onChange={event => setRequireFollow(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#2F61FD]" />
-                      <span><span className="block text-sm font-bold text-[#18233C]">اجبار به فالو <span className="font-medium text-[#2F61FD]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[#64748B]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
+                  <div className="border-t border-[var(--daira-border)] pt-5">
+                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3.5">
+                      <input type="checkbox" checked={requireFollow} onChange={event => setRequireFollow(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--daira-primary)]" />
+                      <span><span className="block text-sm font-bold text-[var(--daira-heading)]">اجبار به فالو <span className="font-medium text-[var(--daira-primary)]">(اختیاری)</span></span><span className="mt-1 block text-xs leading-5 text-[var(--daira-text-secondary)]">در صورت فعال بودن، کاربر باید پیج را فالو کرده باشد تا پاسخ را دریافت کند.</span></span>
                     </label>
                     {requireFollow && <div className="mt-2.5">
-                      <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[#18233C]">متن درخواست فالو</label>
-                      <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#18233C] outline-none placeholder:text-xs focus:border-[#2F61FD] focus:bg-white focus:ring-2 focus:ring-[#2F61FD]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                      <label htmlFor="publishing-follow-gate-text" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">متن درخواست فالو</label>
+                      <textarea id="publishing-follow-gate-text" value={followGateText} onChange={event => setFollowGateText(event.target.value)} rows={2} maxLength={500} inputMode="text" placeholder="مثلاً برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-xs focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                     </div>}
                   </div>
                   
 
-                  {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
+                  {error && <div className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-5 text-[var(--daira-error-text)]" role="alert">{error}</div>}
                 </section>
               </div>)}
             </section>
@@ -1735,31 +1735,31 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </PublishingSectionGuide>
               <div className="mx-auto w-full max-w-2xl">
                 
-                <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+                <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-sm sm:p-6">
                   
 
                   <div className="space-y-3">
                     <fieldset className="space-y-2.5">
                       <legend className="sr-only">شیوه انتشار محتوا</legend>
-                      <label className={"flex min-h-[64px] cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition " + (publishNow?"border-[#2F61FD] bg-[#EFF6FF]":"border-[#E2E8F0] bg-white")}>
-                        <input type="radio" name="publishing-mode" checked={publishNow} onChange={()=>{setPublishNow(true);setError("");}} className="h-4 w-4 accent-[#2F61FD]" />
-                        <span className="flex-1"><span className="block text-sm font-bold text-[#18233C]">انتشار همین حالا</span>
-                          <span className="mt-1 block text-xs text-[#5A6B87]">پس از ثبت، وضعیت انتشار در صف قابل پیگیری است.</span></span>
-                        <Send size={18} className="text-[#2F61FD]"/>
+                      <label className={"flex min-h-[64px] cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition " + (publishNow?"border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]":"border-[var(--daira-border)] bg-white")}>
+                        <input type="radio" name="publishing-mode" checked={publishNow} onChange={()=>{setPublishNow(true);setError("");}} className="h-4 w-4 accent-[var(--daira-primary)]" />
+                        <span className="flex-1"><span className="block text-sm font-bold text-[var(--daira-heading)]">انتشار همین حالا</span>
+                          <span className="mt-1 block text-xs text-[var(--daira-text-secondary)]">پس از ثبت، وضعیت انتشار در صف قابل پیگیری است.</span></span>
+                        <Send size={18} className="text-[var(--daira-primary)]"/>
                       </label>
-                      <label className={"flex min-h-[64px] cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition " + (!publishNow?"border-[#2F61FD] bg-[#EFF6FF]":"border-[#E2E8F0] bg-white")}>
-                        <input type="radio" name="publishing-mode" checked={!publishNow} onChange={()=>{setPublishNow(false);setError("");}} className="h-4 w-4 accent-[#2F61FD]" />
-                        <span className="flex-1"><span className="block text-sm font-bold text-[#18233C]">زمان‌بندی انتشار</span>
-                          <span className="mt-1 block text-xs text-[#5A6B87]">انتخاب زمان تا ۴۸ ساعت آینده</span></span>
-                        <CalendarClock size={18} className="text-[#2F61FD]"/>
+                      <label className={"flex min-h-[64px] cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition " + (!publishNow?"border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]":"border-[var(--daira-border)] bg-white")}>
+                        <input type="radio" name="publishing-mode" checked={!publishNow} onChange={()=>{setPublishNow(false);setError("");}} className="h-4 w-4 accent-[var(--daira-primary)]" />
+                        <span className="flex-1"><span className="block text-sm font-bold text-[var(--daira-heading)]">زمان‌بندی انتشار</span>
+                          <span className="mt-1 block text-xs text-[var(--daira-text-secondary)]">انتخاب زمان تا ۴۸ ساعت آینده</span></span>
+                        <CalendarClock size={18} className="text-[var(--daira-primary)]"/>
                       </label>
                     </fieldset>
 
                     {!publishNow && (
-                      <div className="mt-3 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
+                      <div className="mt-3 rounded-xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                         <div className="mb-4">
-                          <p className="text-sm font-bold text-[#18233C]">انتخاب زمان دقیق</p>
-                          <p className="mt-1 text-[11px] leading-5 text-[#64748B]">تاریخ انتشار را انتخاب کن.</p>
+                          <p className="text-sm font-bold text-[var(--daira-heading)]">انتخاب زمان دقیق</p>
+                          <p className="mt-1 text-[11px] leading-5 text-[var(--daira-text-secondary)]">تاریخ انتشار را انتخاب کن.</p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -1781,21 +1781,21 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                   }
                                   setError("");
                                 }}
-                                className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[#2F61FD] bg-[#EFF6FF] shadow-sm ring-2 ring-[#2F61FD]/10" : "border-[#E2E8F0] bg-white hover:border-[#BFDBFE] hover:bg-[#F8FAFC]"].join(" ")}
+                                className={["relative min-h-24 overflow-hidden rounded-2xl border p-3.5 text-right transition-all", selected ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] shadow-sm ring-2 ring-[var(--daira-primary)]/10" : "border-[var(--daira-border)] bg-white hover:border-[#BFDBFE] hover:bg-[var(--daira-surface-hover)]"].join(" ")}
                               >
-                                <span className="absolute right-3.5 top-3.5 text-[11px] font-semibold text-[#64748B]">{getJalaliWeekday(date)}</span>
-                                <span className="absolute left-3.5 top-3.5 text-[10px] font-semibold text-[#2F61FD]">{label}</span>
-                                <div className="mt-5 text-center text-base font-bold text-[#18233C]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
-                                <div className="mt-2 text-center text-[10px] font-medium text-[#64748B]">{toPersianDigits(date.year)}</div>
-                                {selected && <span className="absolute bottom-2.5 left-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2F61FD] text-[10px] font-bold text-white">✓</span>}
+                                <span className="absolute right-3.5 top-3.5 text-[11px] font-semibold text-[var(--daira-text-secondary)]">{getJalaliWeekday(date)}</span>
+                                <span className="absolute left-3.5 top-3.5 text-[10px] font-semibold text-[var(--daira-primary)]">{label}</span>
+                                <div className="mt-5 text-center text-base font-bold text-[var(--daira-heading)]">{toPersianDigits(date.day)} {jalaliMonths[date.month - 1]}</div>
+                                <div className="mt-2 text-center text-[10px] font-medium text-[var(--daira-text-secondary)]">{toPersianDigits(date.year)}</div>
+                                {selected && <span className="absolute bottom-2.5 left-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--daira-primary)] text-[10px] font-bold text-white">✓</span>}
                               </button>
                             );
                           })}
                         </div>
 
-                        <div className="mt-6 border-t border-[#E2E8F0] pt-5">
+                        <div className="mt-6 border-t border-[var(--daira-border)] pt-5">
                           <div className="mb-3">
-                            <p className="text-sm font-bold text-[#18233C]">ساعت انتشار</p>
+                            <p className="text-sm font-bold text-[var(--daira-heading)]">ساعت انتشار</p>
                           </div>
 
                           <div dir="ltr" className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
@@ -1814,7 +1814,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                                 setError("");
                               }}
                             />
-                            <span className="mt-6 px-0.5 text-xl font-bold text-[#64748B]" aria-hidden="true">:</span>
+                            <span className="mt-6 px-0.5 text-xl font-bold text-[var(--daira-text-secondary)]" aria-hidden="true">:</span>
                             <InlineWheelPicker
                               value={stage6Minute}
                               min={
@@ -1839,7 +1839,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             />
                           </div>
 
-                          <p className="mt-4 text-center text-[11px] leading-5 text-[#64748B]">برای انتخاب به بالا یا پایین بکشید</p>
+                          <p className="mt-4 text-center text-[11px] leading-5 text-[var(--daira-text-secondary)]">برای انتخاب به بالا یا پایین بکشید</p>
                         </div>
 
                       </div>
@@ -1847,18 +1847,18 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                     <button type="button" disabled={!canPublish || (!publishNow && (!stage6Date || stage6Hour===null || stage6Minute===null))}
                       onClick={()=>void createJob(publishNow)}
-                      className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[#2F61FD] px-5 text-sm font-bold text-white transition hover:bg-[#1E4BD8] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8]">
+                      className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[var(--daira-primary)] px-5 text-sm font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:bg-[var(--daira-border)] disabled:text-[var(--daira-text-disabled)]">
                       {publishing?<Loader2 size={18} className="animate-spin"/>:publishNow?<Send size={18}/>:<CalendarClock size={18}/>}
                       {publishing?"در حال ثبت انتشار...":publishNow?"انتشار همین حالا":"ثبت زمان‌بندی انتشار"}
                     </button>
-                    {error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">{error}</div>}
+                    {error && <div className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-5 text-[var(--daira-error-text)]" role="alert">{error}</div>}
                   </div>
                 </section>
               </div>
-              {automationEnabled&&!canSubmitAutomation&&<p className="rounded-xl border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3 text-xs leading-6 text-[#92400E]">
+              {automationEnabled&&!canSubmitAutomation&&<p className="rounded-xl border border-[#FDE68A] bg-[var(--daira-warning-bg)] px-4 py-3 text-xs leading-6 text-[var(--daira-warning-text)]">
                 {type==="STORY"?"برای انتشار با پاسخ خودکار، ابتدا پاسخ استوری را ذخیره کن.":"برای فعال‌سازی پاسخ خودکار، حداقل یک کلمه کلیدی و متن پاسخ کامنت لازم است."}
               </p>}
-              {error&&<p role="alert" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-xs leading-6 text-[#B91C1C]">{error}</p>}
+              {error&&<p role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-4 py-3 text-xs leading-6 text-[var(--daira-error-text)]">{error}</p>}
             </section>
           </div>
         )}

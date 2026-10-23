@@ -197,27 +197,27 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: Props) {
   }
 
   return (
-    <div dir="rtl" className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4">
+    <div dir="rtl" className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4">
       {recording ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FEF3C7] text-[#D97706]">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--daira-warning-bg)] text-[var(--daira-warning)]">
                 <Mic size={19} />
               </span>
               <div>
-                <p className="text-xs font-bold text-[#0F172A]">{paused ? "ضبط متوقف است" : "در حال ضبط وویس"}</p>
-                <p className="mt-0.5 font-mono text-xs text-[#64748B]" dir="ltr">{formatDuration(duration)}</p>
+                <p className="text-xs font-bold text-[var(--daira-heading)]">{paused ? "ضبط متوقف است" : "در حال ضبط وویس"}</p>
+                <p className="mt-0.5 font-mono text-xs text-[var(--daira-text-secondary)]" dir="ltr">{formatDuration(duration)}</p>
               </div>
             </div>
-            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#DC2626]" />
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[var(--daira-error-text)]" />
           </div>
 
           <div className="flex gap-2">
             <button
               type="button"
               onClick={togglePause}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 text-xs font-bold text-[#334155]"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3 py-2.5 text-xs font-bold text-[var(--daira-input-label)]"
             >
               {paused ? <Play size={15} /> : <Pause size={15} />}
               {paused ? "ادامه ضبط" : "مکث"}
@@ -225,7 +225,7 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: Props) {
             <button
               type="button"
               onClick={stopRecording}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#DC2626] px-3 py-2.5 text-xs font-bold text-white"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--daira-error-text)] px-3 py-2.5 text-xs font-bold text-white"
             >
               <Square size={14} />
               پایان ضبط
@@ -240,7 +240,7 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: Props) {
               type="button"
               disabled={processing}
               onClick={resetRecording}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-xs font-bold text-[#64748B] disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--daira-border)] bg-white px-3 py-2.5 text-xs font-bold text-[var(--daira-text-secondary)] disabled:opacity-50"
             >
               <RotateCcw size={14} />
               ضبط دوباره
@@ -249,7 +249,7 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: Props) {
               type="button"
               disabled={processing}
               onClick={() => void uploadRecording()}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-3 py-2.5 text-xs font-bold text-white disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-3 py-2.5 text-xs font-bold text-white disabled:opacity-50"
             >
               <Upload size={14} />
               {processing ? "در حال آپلود..." : "آپلود وویس"}
@@ -261,7 +261,7 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: Props) {
           type="button"
           disabled={disabled}
           onClick={() => void startRecording()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-xs font-bold text-[#334155] transition hover:border-[#BFDBFE] hover:bg-[#EFF6FF] disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 py-3 text-xs font-bold text-[var(--daira-input-label)] transition hover:border-[#BFDBFE] hover:bg-[var(--daira-outline-hover-bg)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Mic size={16} />
           ضبط وویس با میکروفون
@@ -269,7 +269,7 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: Props) {
       )}
 
       {error && (
-        <div className="flex items-start justify-between gap-2 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3 py-2.5 text-[10px] leading-5 text-[#B91C1C]">
+        <div className="flex items-start justify-between gap-2 rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3 py-2.5 text-[10px] leading-5 text-[var(--daira-error-text)]">
           <span>{error}</span>
           <button type="button" onClick={() => setError("")} aria-label="بستن خطا">
             <X size={13} />

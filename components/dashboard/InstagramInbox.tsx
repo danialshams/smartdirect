@@ -1341,12 +1341,12 @@ export default function InstagramInbox({
       <div className="shrink-0 border-b border-[#E8EDF5] px-3 pb-2 pt-2 sm:px-4">
         <div className="mb-2 flex items-center justify-between gap-2">
           <div>
-            <h1 className="text-sm font-extrabold text-[#18233C]">صندوق دایرکت</h1>
-            <p className="text-[10px] text-[#64748B]">{conversations.length.toLocaleString("fa-IR")} گفتگو</p>
+            <h1 className="text-sm font-extrabold text-[var(--daira-heading)]">صندوق دایرکت</h1>
+            <p className="text-[10px] text-[var(--daira-text-secondary)]">{conversations.length.toLocaleString("fa-IR")} گفتگو</p>
           </div>
           <button type="button" onClick={() => void loadConversations()} aria-label="به‌روزرسانی گفتگوها" title="به‌روزرسانی" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#F1F5FC] text-[#526580] transition hover:bg-[#E7EEFC]"><RotateCcw size={17}/></button>
         </div>
-        <div className="flex min-w-0 flex-nowrap items-center gap-1 rounded-xl bg-[#EEF3FB] p-1" role="group" aria-label="فیلتر گفتگوها">
+        <div className="flex min-w-0 flex-nowrap items-center gap-1 rounded-xl bg-[var(--daira-section-alt)] p-1" role="group" aria-label="فیلتر گفتگوها">
           {(
             [
               ["ALL", "همه", conversations.length],
@@ -1381,7 +1381,7 @@ export default function InstagramInbox({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="جستجوی گفتگو..."
-            className="h-9 rounded-lg border-[#E5EAF3] bg-[#F8FAFD] pr-9 text-[13px] focus:border-[#2F61FD]"
+            className="h-9 rounded-lg border-[#E5EAF3] bg-[#F8FAFD] pr-9 text-[13px] focus:border-[var(--daira-primary)]"
           />
         </div>
       </div>
@@ -1416,7 +1416,7 @@ export default function InstagramInbox({
                       className="h-10 w-10 rounded-full object-cover ring-1 ring-[#E5EAF3]"
                     />
                   ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF3FB] text-[#64748B]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--daira-section-alt)] text-[var(--daira-text-secondary)]">
                       <UserRound size={18} />
                     </div>
                   )}
@@ -1451,7 +1451,7 @@ export default function InstagramInbox({
                       {preview(conversation.messages[conversation.messages.length - 1])}
                     </p>
                     {unread && (
-                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#2F61FD] px-1.5 text-[10px] font-bold text-white">
+                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[var(--daira-primary)] px-1.5 text-[10px] font-bold text-white">
                         {(conversation.unreadCount || 0).toLocaleString("fa-IR")}
                       </span>
                     )}
@@ -1461,7 +1461,7 @@ export default function InstagramInbox({
             );
           })}
           {hasMoreConversations && !search.trim() && (
-            <button type="button" disabled={loadingMoreConversations} onClick={() => void loadMoreConversations()} className="my-3 w-full rounded-xl border border-[#DBEAFE] bg-[#F8FAFF] px-3 py-3 text-xs font-bold text-[#2F61FD] disabled:opacity-50">
+            <button type="button" disabled={loadingMoreConversations} onClick={() => void loadMoreConversations()} className="my-3 w-full rounded-xl border border-[var(--daira-outline-active-bg)] bg-[#F8FAFF] px-3 py-3 text-xs font-bold text-[var(--daira-primary)] disabled:opacity-50">
               {loadingMoreConversations ? "در حال بارگذاری…" : "نمایش گفتگوهای بیشتر"}
             </button>
           )}
@@ -1492,17 +1492,17 @@ export default function InstagramInbox({
             {selectedConversation.participantProfilePicture ? (
               <img src={selectedConversation.participantProfilePicture} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-[#E5EAF3]"/>
             ) : (
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#EEF3FB] text-[#64748B]"><UserRound size={19}/></div>
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--daira-section-alt)] text-[var(--daira-text-secondary)]"><UserRound size={19}/></div>
             )}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-extrabold text-[#18233C]">{displayName(selectedConversation)}</p>
+              <p className="truncate text-sm font-extrabold text-[var(--daira-heading)]">{displayName(selectedConversation)}</p>
               <div className="mt-1 flex min-w-0 items-center gap-1.5">
                 <span className="truncate text-[11px] text-[#71809A]">{selectedConversation.participantName || "دایرکت اینستاگرام"}</span>
                 {selectedConversation.messagingWindow && (
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                     selectedConversation.messagingWindow.canSend
                       ? "bg-[#ECFDF3] text-[#16834C]"
-                      : "bg-[#FEF2F2] text-[#B91C1C]"
+                      : "bg-[var(--daira-error-background)] text-[var(--daira-error-text)]"
                   }`}>{selectedConversation.messagingWindow.canSend ? "پاسخ‌گویی فعال" : "مهلت پاسخ تمام شده"}</span>
                 )}
               </div>
@@ -1525,27 +1525,27 @@ export default function InstagramInbox({
                   onChange={(event) => setConversationSearchText(event.target.value)}
                   placeholder="جست‌وجو در پیام‌های این گفتگو..."
                   aria-label="جست‌وجو در پیام‌های گفتگو"
-                  className="h-11 min-w-0 w-full flex-1 touch-manipulation rounded-xl border border-[#DFE7F3] bg-[#F8FAFD] px-3 text-base leading-6 text-[#18233C] outline-none focus:border-[#2F61FD]"
+                  className="h-11 min-w-0 w-full flex-1 touch-manipulation rounded-xl border border-[var(--daira-publishing-border)] bg-[#F8FAFD] px-3 text-base leading-6 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]"
                   style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                 />
                 <button type="button" onClick={() => {
                   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
                   setConversationSearchOpen(false);
                   setConversationSearchText("");
-                }} className="grid h-11 w-11 shrink-0 touch-manipulation place-items-center rounded-xl text-[#64748B]" aria-label="بستن جست‌وجو"><X size={18}/></button>
+                }} className="grid h-11 w-11 shrink-0 touch-manipulation place-items-center rounded-xl text-[var(--daira-text-secondary)]" aria-label="بستن جست‌وجو"><X size={18}/></button>
               </div>
               {conversationSearchText.trim() && (
                 <div className="mt-2 max-h-[min(40dvh,300px)] min-w-0 space-y-1 overflow-y-auto overscroll-contain" aria-live="polite">
-                  {conversationSearching ? <p className="p-3 text-xs text-[#64748B]">در حال جست‌وجو…</p> :
+                  {conversationSearching ? <p className="p-3 text-xs text-[var(--daira-text-secondary)]">در حال جست‌وجو…</p> :
                   conversationMatches.length ? conversationMatches.map((result) => (
                     <button key={result.id} type="button" onClick={() => {
                       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
                       void focusSearchResult(result.id);
                     }} className="flex w-full touch-manipulation flex-col gap-1 rounded-xl px-3 py-2.5 text-right hover:bg-[#F1F5FC]">
-                      <span className="line-clamp-2 text-xs leading-5 text-[#18233C]">{result.text}</span>
-                      <span className="text-[10px] text-[#94A3B8]">{formatDate(result.createdAt)}</span>
+                      <span className="line-clamp-2 text-xs leading-5 text-[var(--daira-heading)]">{result.text}</span>
+                      <span className="text-[10px] text-[var(--daira-text-disabled)]">{formatDate(result.createdAt)}</span>
                     </button>
-                  )) : <p className="p-3 text-xs text-[#64748B]">پیامی پیدا نشد.</p>}
+                  )) : <p className="p-3 text-xs text-[var(--daira-text-secondary)]">پیامی پیدا نشد.</p>}
                 </div>
               )}
             </div>
@@ -1565,7 +1565,7 @@ export default function InstagramInbox({
           >
             {focusedMessageId && (
               <div className="mx-auto mb-4 flex max-w-2xl justify-center">
-                <button type="button" onClick={returnToLatest} className="inline-flex items-center gap-2 rounded-full border border-[#DBEAFE] bg-white px-4 py-2 text-xs font-bold text-[#2F61FD] shadow-sm">
+                <button type="button" onClick={returnToLatest} className="inline-flex items-center gap-2 rounded-full border border-[var(--daira-outline-active-bg)] bg-white px-4 py-2 text-xs font-bold text-[var(--daira-primary)] shadow-sm">
                   <ArrowDown size={15}/> بازگشت به آخرین پیام‌ها
                 </button>
               </div>
@@ -1578,7 +1578,7 @@ export default function InstagramInbox({
                   <button type="button" disabled={loadingOlderMessages} onClick={() => {
                     const first = messages.find((message) => !message.sendStatus);
                     if (first) void loadMessages({ before: first.id });
-                  }} className="mx-auto mb-4 rounded-full border border-[#E0E8F5] bg-white px-4 py-2 text-xs font-bold text-[#64748B] shadow-sm disabled:opacity-50">
+                  }} className="mx-auto mb-4 rounded-full border border-[#E0E8F5] bg-white px-4 py-2 text-xs font-bold text-[var(--daira-text-secondary)] shadow-sm disabled:opacity-50">
                     {loadingOlderMessages ? "در حال دریافت…" : "نمایش پیام‌های قدیمی‌تر"}
                   </button>
                 )}
@@ -1603,9 +1603,9 @@ export default function InstagramInbox({
                           <div className={`overflow-hidden shadow-[0_2px_8px_rgba(20,40,80,.04)] ${
                             message.messageType === "AUDIO" ? "rounded-[21px]" :
                               "rounded-[20px] " + (outbound
-                                ? "rounded-br-[20px] rounded-bl-md bg-[#2F61FD] text-white"
-                                : "rounded-br-md border border-[#E7EDF5] bg-white text-[#18233C]")
-                          } ${message.messageType === "AUDIO" ? (outbound ? "bg-[#2F61FD] text-white" : "border border-[#E7EDF5] bg-white text-[#18233C]") : ""}`}>
+                                ? "rounded-br-[20px] rounded-bl-md bg-[var(--daira-primary)] text-white"
+                                : "rounded-br-md border border-[#E7EDF5] bg-white text-[var(--daira-heading)]")
+                          } ${message.messageType === "AUDIO" ? (outbound ? "bg-[var(--daira-primary)] text-white" : "border border-[#E7EDF5] bg-white text-[var(--daira-heading)]") : ""}`}>
                             {hasMedia && <MediaBubble message={message} onMediaLoad={scrollToInitialBottom}/>}
                             {message.text && (
                               <div className="px-3.5 py-2.5">
@@ -1619,16 +1619,16 @@ export default function InstagramInbox({
                           <div className={`mt-1 flex items-center gap-1.5 px-1 text-[10px] text-[#8290A6] ${outbound ? "justify-start" : "justify-end"}`}>
                             <span>{formatTime(message.createdAt)}</span>
                             {outbound && message.sendStatus === "SENDING" ? (
-                              <span className="text-[#64748B]" role="status">در حال ارسال…</span>
+                              <span className="text-[var(--daira-text-secondary)]" role="status">در حال ارسال…</span>
                             ) : outbound && message.sendStatus === "FAILED" ? (
                               <button type="button" onClick={() => void retryFailedMessage(message.id)}
                                 disabled={sending || !selectedConversation.messagingWindow?.canSend}
-                                className="inline-flex items-center gap-1 rounded-lg px-1 text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-50"
+                                className="inline-flex items-center gap-1 rounded-lg px-1 text-[var(--daira-error-text)] hover:bg-[var(--daira-error-background)] disabled:opacity-50"
                                 title={message.failureReason || "ارسال ناموفق بود"} aria-label="تلاش دوباره برای ارسال پیام">
                                 <CircleHelp size={14}/><span>ناموفق · تلاش مجدد</span>
                               </button>
                             ) : outbound && (message.seenAt ? (
-                              <span className="inline-flex items-center gap-1 font-semibold text-[#2F61FD]"><CheckCheck size={14}/>seen</span>
+                              <span className="inline-flex items-center gap-1 font-semibold text-[var(--daira-primary)]"><CheckCheck size={14}/>seen</span>
                             ) : <span title="ارسال‌شده"><Check size={13}/></span>)}
                           </div>
                         </div>
@@ -1641,15 +1641,15 @@ export default function InstagramInbox({
             ) : (
               <div className="flex h-full items-center justify-center p-8 text-center">
                 <div>
-                  <div className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] bg-white text-[#94A3B8] shadow-sm"><MessageCircle size={27}/></div>
-                  <h3 className="mt-4 text-sm font-bold text-[#18233C]">هنوز پیامی وجود ندارد</h3>
-                  <p className="mt-2 max-w-xs text-xs leading-6 text-[#64748B]">اولین پیام را از همین‌جا ارسال کنید.</p>
+                  <div className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] bg-white text-[var(--daira-text-disabled)] shadow-sm"><MessageCircle size={27}/></div>
+                  <h3 className="mt-4 text-sm font-bold text-[var(--daira-heading)]">هنوز پیامی وجود ندارد</h3>
+                  <p className="mt-2 max-w-xs text-xs leading-6 text-[var(--daira-text-secondary)]">اولین پیام را از همین‌جا ارسال کنید.</p>
                 </div>
               </div>
             )}
             {showJumpToLatest && !focusedMessageId && (
               <div className="pointer-events-none sticky bottom-3 mt-3 flex justify-center">
-                <button type="button" onClick={forceScrollToBottom} className="pointer-events-auto inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-[#2F61FD] shadow-[0_4px_16px_rgba(24,35,60,.15)]" aria-label="رفتن به آخرین پیام">
+                <button type="button" onClick={forceScrollToBottom} className="pointer-events-auto inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-[var(--daira-primary)] shadow-[0_4px_16px_rgba(24,35,60,.15)]" aria-label="رفتن به آخرین پیام">
                   <ArrowDown size={16}/>
                   {newMessageCount ? `${newMessageCount.toLocaleString("fa-IR")} پیام جدید` : "آخرین پیام"}
                 </button>
@@ -1672,13 +1672,13 @@ export default function InstagramInbox({
               </div>
             )}
             {recordedVoice && recordedVoiceUrl && (
-              <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[#DBEAFE] bg-[#F4F8FF] p-3">
-                <Mic size={17} className="shrink-0 text-[#2F61FD]"/>
+              <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[var(--daira-outline-active-bg)] bg-[#F4F8FF] p-3">
+                <Mic size={17} className="shrink-0 text-[var(--daira-primary)]"/>
                 <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-xs font-bold text-[#18233C]">پیش‌نمایش پیام صوتی</p>
+                  <p className="mb-1 text-xs font-bold text-[var(--daira-heading)]">پیش‌نمایش پیام صوتی</p>
                   <audio src={recordedVoiceUrl} controls className="h-9 w-full" preload="metadata"/>
                 </div>
-                <button type="button" onClick={() => setRecordedVoice(null)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[#64748B] hover:bg-[#FEE2E2]" aria-label="حذف ویس ضبط‌شده"><X size={17}/></button>
+                <button type="button" onClick={() => setRecordedVoice(null)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[var(--daira-text-secondary)] hover:bg-[#FEE2E2]" aria-label="حذف ویس ضبط‌شده"><X size={17}/></button>
               </div>
             )}
             {selectedFile && (
@@ -1804,7 +1804,7 @@ export default function InstagramInbox({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     variant="icon"
-                    className="flex h-11 w-10 shrink-0 items-center justify-center rounded-xl p-0 text-[#64748B] hover:bg-[#F3F6FB] hover:text-[#2F61FD]"
+                    className="flex h-11 w-10 shrink-0 items-center justify-center rounded-xl p-0 text-[var(--daira-text-secondary)] hover:bg-[#F3F6FB] hover:text-[var(--daira-primary)]"
                     aria-label="ارسال عکس، ویدیو یا فایل صوتی"
                   >
                     <Paperclip size={18} />
@@ -1827,14 +1827,14 @@ export default function InstagramInbox({
                     rows={1}
                     maxLength={1000}
                     placeholder="پیام خود را بنویسید..."
-                    className="min-h-11 max-h-40 min-w-0 flex-1 resize-none appearance-none rounded-2xl border border-[#E3EAF5] bg-[#F7F9FD] px-4 py-2.5 text-base leading-6 text-[#18233C] outline-none focus:border-[#2F61FD] focus:bg-white"
+                    className="min-h-11 max-h-40 min-w-0 flex-1 resize-none appearance-none rounded-2xl border border-[#E3EAF5] bg-[#F7F9FD] px-4 py-2.5 text-base leading-6 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white"
                     style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                   />
 
                   {!text.trim() && !selectedFile && !recordedVoice && (
                     <Button type="button" onClick={() => void startRecording()}
                       disabled={sending || !selectedConversation.messagingWindow?.canSend} variant="icon"
-                      className="flex h-11 w-10 shrink-0 items-center justify-center rounded-xl p-0 text-[#64748B] hover:bg-[#F3F6FB] hover:text-[#2F61FD] disabled:text-slate-300"
+                      className="flex h-11 w-10 shrink-0 items-center justify-center rounded-xl p-0 text-[var(--daira-text-secondary)] hover:bg-[#F3F6FB] hover:text-[var(--daira-primary)] disabled:text-slate-300"
                       aria-label="ضبط ویس"><Mic size={20}/></Button>
                   )}
 
@@ -1846,7 +1846,7 @@ export default function InstagramInbox({
                     (!text.trim() && !selectedFile && !recordedVoice)
                   }
                     variant="icon"
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#2F61FD] p-0 text-white shadow-sm hover:bg-[#244ED2] disabled:bg-[#E7EDF6] disabled:text-[#94A3B8]"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--daira-primary)] p-0 text-white shadow-sm hover:bg-[#244ED2] disabled:bg-[#E7EDF6] disabled:text-[var(--daira-text-disabled)]"
                     aria-label="ارسال"
                   >
                     <Send size={17} />
@@ -1916,7 +1916,7 @@ export default function InstagramInbox({
         </div>
       )}
 
-      <div ref={inboxFrameRef} className="inbox-frame h-[calc(100dvh-196px)] min-h-0 overflow-hidden rounded-[22px] border border-[#DFE7F3] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.04)] lg:h-[calc(100dvh-235px)] lg:min-h-[420px]">
+      <div ref={inboxFrameRef} className="inbox-frame h-[calc(100dvh-196px)] min-h-0 overflow-hidden rounded-[22px] border border-[var(--daira-publishing-border)] bg-white shadow-[0_10px_35px_rgba(15,23,42,0.04)] lg:h-[calc(100dvh-235px)] lg:min-h-[420px]">
         <div className="flex h-full min-h-0 min-w-0 w-full">
           <div
             className={`flex min-h-0 min-w-0 w-full flex-1 flex-col lg:w-auto lg:flex-none ${
