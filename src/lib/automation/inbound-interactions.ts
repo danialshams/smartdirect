@@ -44,7 +44,8 @@ export function extractInboundInteraction(event: unknown): InboundInteraction | 
       return {kind:"STORY_MENTION",storyUrl:safeString(payload.url)};
     }
     if (type !== "ig_post" && type !== "ig_reel" && type !== "share" && type !== "media_share") continue;
-    const id = safeString(payload.media_id) ?? safeString(payload.mediaId)
+    const id = safeString(payload.ig_post_media_id) ?? safeString(payload.ig_reel_media_id)
+      ?? safeString(payload.media_id) ?? safeString(payload.mediaId)
       ?? safeString(payload.id) ?? safeString(attachment.id);
     const mediaId = id && /^\d{5,40}$/.test(id) ? id : null;
     const shortcode = shortcodeFromUrl(safeString(payload.permalink) ?? safeString(payload.url) ?? safeString(attachment.url));
