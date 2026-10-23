@@ -870,7 +870,7 @@ export default function InstagramContentAnalytics() {
 
             {!loadingAccounts &&
                 !accounts.length && (
-                    <div className="rounded-[26px] border border-dashed border-border bg-background px-6 py-14 text-center">
+                    <div className="daira-empty-state rounded-[26px] border border-dashed border-border bg-background px-6 py-14 text-center">
                         <BarChart3
                             size={28}
                             className="mx-auto text-muted-foreground"
@@ -957,7 +957,7 @@ export default function InstagramContentAnalytics() {
 
                         {filteredContent.length ===
                             0 ? (
-                            <div className="rounded-[26px] border border-dashed border-border bg-background px-6 py-16 text-center">
+                            <div className="daira-empty-state rounded-[26px] border border-dashed border-border bg-background px-6 py-16 text-center">
                                 <BarChart3
                                     size={28}
                                     className="mx-auto text-muted-foreground"

@@ -13,7 +13,7 @@ type Rule = { id: string; instagramAccountId: string; automationId: string; text
 type Draft = { automationId: string; delayMinutes: string; text: string };
 const INITIAL: Draft = { automationId: "", delayMinutes: "60", text: "" };
 function Guide({ number, title, hint }: { number: number; title: string; hint: string }) {
-  return <div className="mb-2 flex items-start gap-3 rounded-xl border px-3.5 py-3" style={{ background: dairaPalette.guide.background, borderColor: dairaPalette.guide.border, color: dairaPalette.guide.text }}>
+  return <div className="daira-guide-glass mb-2 flex items-start gap-3 rounded-xl border px-3.5 py-3" style={{ background: dairaPalette.guide.background, borderColor: dairaPalette.guide.border, color: dairaPalette.guide.text }}>
     <Lightbulb size={17} className="mt-1 shrink-0" style={{ color: dairaPalette.guide.icon }}/>
     <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: dairaPalette.guide.icon }}>{new Intl.NumberFormat("fa-IR").format(number)}</span><strong className="text-sm font-extrabold">{title}</strong></div><p className="mt-1 text-xs leading-6">{hint}</p></div>
   </div>;

@@ -326,7 +326,7 @@ export default function PersistentMenuManager({
       )}
 
       {(accountsLoading || loading) && !editor ? <MenuSkeleton /> : !account ? (
-        <section className="rounded-2xl border border-dashed border-[var(--daira-border)] bg-white px-5 py-14 text-center">
+        <section className="daira-empty-state rounded-2xl border border-dashed border-[var(--daira-border)] bg-white px-5 py-14 text-center">
           <Menu size={30} className="mx-auto text-[var(--daira-text)]" />
           <p className="mt-4 text-sm font-bold text-[var(--daira-heading)]">هیچ پیج اینستاگرامی متصل نیست</p>
           <p className="mt-2 text-xs leading-6 text-[var(--daira-text)]">برای ساخت منوی دایرکت ابتدا پیج را متصل کن.</p>
@@ -349,7 +349,7 @@ export default function PersistentMenuManager({
               </div>
 
               {!items.length ? (
-                <div className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 text-center">
+                <div className="daira-empty-state flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 text-center">
                   <MessageSquareText size={26} className="text-[var(--daira-text)]" />
                   <p className="mt-3 text-sm font-bold text-[var(--daira-heading)]">هنوز گزینه‌ای ساخته نشده</p>
                   <p className="mt-1.5 text-xs leading-6 text-[var(--daira-text)]">با «گزینه جدید» اولین گزینه را بساز.</p>
@@ -472,8 +472,7 @@ export default function PersistentMenuManager({
       {deleteTarget && (
         <div role="presentation" className="fixed inset-0 z-[2500] flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-[2px]"
           onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setDeleteTarget(null); }}>
-          <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="persistent-delete-title"
-            className="w-full max-w-sm rounded-2xl border border-[var(--daira-border)] bg-white p-5 shadow-2xl">
+          <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="persistent-delete-title" className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm rounded-2xl p-5">
             <h3 id="persistent-delete-title" className="text-base font-extrabold text-[var(--daira-heading)]">حذف گزینه منو</h3>
             <p className="mt-2 text-sm leading-7 text-[var(--daira-text)]">
               گزینه «{deleteTarget.label}» از منوی دایرکت حذف می‌شود. پاسخ‌های دیگر بدون تغییر باقی می‌مانند.

@@ -156,7 +156,7 @@ export default function ContentSelectionDialog({
               {Array.from({ length: 12 }, (_, i) => <div key={i} className="aspect-square animate-pulse rounded-2xl bg-[#E9EEF7]" />)}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 text-center text-xs leading-6 text-[var(--daira-text-secondary)]">
+            <div className="daira-empty-state flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 text-center text-xs leading-6 text-[var(--daira-text-secondary)]">
               {error || (items.length ? "محتوایی در این دسته وجود ندارد." : "هنوز محتوایی برای انتخاب دریافت نشده است.")}
             </div>
           ) : (

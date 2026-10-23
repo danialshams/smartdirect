@@ -67,7 +67,7 @@ export default function StoryAutomationCreate() {
   }
 
   if (!account) {
-    return <div dir="rtl" className="mx-auto max-w-xl rounded-2xl border border-dashed border-[var(--daira-outline)] bg-white px-6 py-14 text-center text-sm text-[var(--daira-text-secondary)]"><Camera size={26} className="mx-auto mb-3 text-[var(--daira-text-disabled)]" /><p className="font-semibold text-[var(--daira-heading)]">{error || "پیج اینستاگرام متصل نیست."}</p><p className="mt-2 text-xs leading-5">ابتدا یک پیج اینستاگرام متصل کنید و دوباره تلاش کنید.</p></div>;
+    return <div dir="rtl" className="daira-empty-state mx-auto max-w-xl rounded-2xl border border-dashed border-[var(--daira-outline)] bg-white px-6 py-14 text-center text-sm text-[var(--daira-text-secondary)]"><Camera size={26} className="mx-auto mb-3 text-[var(--daira-text-disabled)]" /><p className="font-semibold text-[var(--daira-heading)]">{error || "پیج اینستاگرام متصل نیست."}</p><p className="mt-2 text-xs leading-5">ابتدا یک پیج اینستاگرام متصل کنید و دوباره تلاش کنید.</p></div>;
   }
 
   return (
@@ -104,7 +104,7 @@ export default function StoryAutomationCreate() {
         </div>
 
         {stories.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-white px-6 py-16 text-center">
+          <div className="daira-empty-state mt-4 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-white px-6 py-16 text-center">
             <ImageIcon className="mx-auto text-muted-foreground" size={25} />
             <h2 className="mt-4 text-sm font-bold">استوری قابل انتخابی وجود ندارد</h2>
             <p className="mt-2 text-xs leading-6 text-muted-foreground">استوری‌هایی که قبلاً پاسخ خودکار دارند در این لیست نمایش داده نمی‌شوند.</p>
@@ -130,7 +130,7 @@ export default function StoryAutomationCreate() {
             })}
           </div>
         )}
-        {stories.length > 0 && visibleStories.length === 0 && <div className="mt-4 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-white px-5 py-10 text-center text-sm text-[var(--daira-text-secondary)]">استوری‌ای با این فیلتر پیدا نشد. جست‌وجو یا فیلتر نوع را تغییر دهید.</div>}
+        {stories.length > 0 && visibleStories.length === 0 && <div className="daira-empty-state mt-4 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-white px-5 py-10 text-center text-sm text-[var(--daira-text-secondary)]">استوری‌ای با این فیلتر پیدا نشد. جست‌وجو یا فیلتر نوع را تغییر دهید.</div>}
       </div>
     </div>
   );

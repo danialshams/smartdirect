@@ -637,7 +637,7 @@ function QuickReplySection({
       </div>
 
       {replies.length === 0 ? (
-        <div className="mt-4 rounded-xl border border-dashed bg-white px-4 py-7 text-center" style={{ borderColor: palette.border }}>
+        <div className="daira-empty-state mt-4 rounded-xl border border-dashed bg-white px-4 py-7 text-center" style={{ borderColor: palette.border }}>
           <p className="text-xs font-semibold" style={{ color: palette.text }}>هنوز گزینه‌ای وجود ندارد</p>
           <p className="mt-1 text-[10px]" style={{ color: palette.secondary }}>برای شروع یک گزینه پاسخ اضافه کن.</p>
         </div>

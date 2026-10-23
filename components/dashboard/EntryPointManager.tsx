@@ -569,14 +569,14 @@ export default function EntryPointManager({ accounts, kind }: Props) {
       </section>
 
       {!account ? (
-        <section className="rounded-3xl border border-dashed border-border bg-card px-6 py-16 text-center">
+        <section className="daira-empty-state rounded-3xl border border-dashed border-border bg-card px-6 py-16 text-center">
           <Bot className="mx-auto text-muted-foreground" size={24} />
           <h2 className="mt-4 text-base font-bold">ابتدا یک پیج اینستاگرام متصل کنید</h2>
         </section>
       ) : loading ? (
         <DashboardLoading label={kind === "ice-breaker" ? "در حال دریافت پیام‌های شروع گفتگو..." : "در حال دریافت منوی دایرکت..."} className="min-h-48" />
       ) : filteredItems.length === 0 ? (
-        <section className="rounded-3xl border border-dashed border-border bg-card px-6 py-20 text-center">
+        <section className="daira-empty-state rounded-3xl border border-dashed border-border bg-card px-6 py-20 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
             <Bot size={21} />
           </div>

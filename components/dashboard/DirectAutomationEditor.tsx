@@ -16,7 +16,7 @@ function wordsFrom(raw:string){
  return Array.from(new Set(raw.split(/[\n,،;؛]+/).map(x=>x.trim().toLocaleLowerCase("fa-IR")).filter(Boolean)));
 }
 function Guide({step,title,hint}:{step:number;title:string;hint:string}){
- return <div className="mb-3 flex items-start gap-3 rounded-xl border px-3.5 py-3"
+ return <div className="daira-guide-glass mb-3 flex items-start gap-3 rounded-xl border px-3.5 py-3"
    style={{background:dairaPalette.guide.background,borderColor:dairaPalette.guide.border,color:dairaPalette.guide.text}}>
    <Lightbulb size={17} className="mt-1 shrink-0" style={{color:dairaPalette.guide.icon}}/>
    <div className="min-w-0 flex-1"><div className="flex items-center gap-2">

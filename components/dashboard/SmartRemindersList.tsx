@@ -86,7 +86,7 @@ export default function SmartRemindersList() {
     <label className="relative block">
       <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--daira-text-disabled)]"/>
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="جستجو در یادآوری‌ها..." aria-label="جستجوی یادآوری‌ها"
-        className="min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[var(--daira-primary)]"/>
+        className="daira-search-input min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[var(--daira-primary)]"/>
     </label>
     {actionError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">{actionError}</p>}
     {filtered.length ? <div className="grid gap-3 sm:grid-cols-2">
@@ -107,13 +107,13 @@ export default function SmartRemindersList() {
           <button onClick={() => { setActionError(""); setDeleteTarget(rule); }} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--daira-error-border)] bg-white text-xs font-bold text-[var(--daira-error-text)]"><Trash2 size={15}/> حذف</button>
         </div>
       </article>)}
-    </div> : <div className="space-y-3 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] px-4 py-14 text-center">
+    </div> : <div className="daira-empty-state space-y-3 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] px-4 py-14 text-center">
       <MessageSquare size={30} className="mx-auto text-[var(--daira-text-disabled)]"/>
       <p className="text-sm font-semibold text-[var(--daira-text-secondary)]">{search ? "یادآوری‌ای با این عبارت پیدا نشد." : "هنوز یادآوری هوشمندی ساخته نشده است."}</p>
       {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[var(--daira-text-secondary)]">یک پاسخ خودکار را انتخاب کن، زمان انتظار و متن یادآوری را مشخص کن؛ اگر کاربر پاسخی ندهد و پنجره مجاز باشد، پیام ارسال می‌شود.</p>}
     </div>}
-    {deleteTarget && <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-[var(--daira-heading)]/40 p-4">
-      <div role="dialog" aria-modal="true" aria-label="حذف یادآوری" className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+    {deleteTarget && <div className="daira-glass-overlay fixed inset-0 z-[2500] flex items-center justify-center p-4">
+      <div role="dialog" aria-modal="true" aria-label="حذف یادآوری" className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm rounded-2xl p-5">
         <div className="flex items-center justify-between"><strong className="text-base text-[var(--daira-heading)]">حذف یادآوری</strong><button onClick={() => setDeleteTarget(null)} disabled={Boolean(busy)} aria-label="بستن"><X size={20}/></button></div>
         <p className="my-4 text-sm leading-7 text-[var(--daira-text-secondary)]">این یادآوری حذف می‌شود و یادآوری‌های زمان‌بندی‌شدهٔ آن دیگر ارسال نخواهند شد.</p>
         {actionError && <p role="alert" className="mb-3 text-xs text-red-600">{actionError}</p>}

@@ -103,7 +103,7 @@ export default function CommentAutomationCreate() {
   }
 
   if (!account) {
-    return <div dir="rtl" className="mx-auto max-w-xl rounded-[24px] border border-dashed border-[var(--daira-outline)] bg-white px-6 py-16 text-center text-sm text-[var(--daira-text-secondary)]">{error || "پیج اینستاگرام متصل نیست."}</div>;
+    return <div dir="rtl" className="daira-empty-state mx-auto max-w-xl rounded-[24px] border border-dashed border-[var(--daira-outline)] bg-white px-6 py-16 text-center text-sm text-[var(--daira-text-secondary)]">{error || "پیج اینستاگرام متصل نیست."}</div>;
   }
 
   return (
@@ -161,7 +161,7 @@ export default function CommentAutomationCreate() {
         {error && <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
         {visibleMedia.length === 0 ? (
-          <div className="mt-5 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] px-6 py-16 text-center">
+          <div className="daira-empty-state mt-5 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] px-6 py-16 text-center">
             <ImageIcon className="mx-auto text-muted-foreground" size={25} />
             <h2 className="mt-4 text-sm font-bold">محتوای قابل انتخابی وجود ندارد</h2>
             <p className="mt-2 text-xs leading-6 text-muted-foreground">محتواهایی که قبلاً پاسخ خودکار دارند در این لیست نمایش داده نمی‌شوند.</p>
