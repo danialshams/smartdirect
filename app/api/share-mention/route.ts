@@ -39,7 +39,7 @@ async function save(request:NextRequest,editing:boolean){
   const triggerType=clean(body.triggerType);
   if(triggerType!=="DM_MEDIA_SHARE"&&triggerType!=="STORY_MENTION")throw new RuleError("نوع تعامل معتبر نیست.");
   if(!instagramAccountId)throw new RuleError("پیج اینستاگرام را انتخاب کنید.");
-  const mediaIds=Array.isArray(body.mediaIds)?Array.from(new Set(body.mediaIds.filter((v:unknown):v is string=>typeof v==="string"&&/^\\d{5,40}$/.test(v.trim())).map((v:string)=>v.trim()))):[];
+  const mediaIds=Array.isArray(body.mediaIds)?Array.from(new Set(body.mediaIds.filter((v:unknown):v is string=>typeof v==="string"&&/^\d{5,40}$/.test(v.trim())).map((v:string)=>v.trim()))):[];
   if(triggerType==="DM_MEDIA_SHARE"&&(!mediaIds.length||mediaIds.length>50))throw new RuleError("بین ۱ تا ۵۰ پست یا ریلز انتخاب کنید.");
   if(triggerType==="STORY_MENTION"&&mediaIds.length)throw new RuleError("منشن استوری نیاز به انتخاب محتوا ندارد.");
   const raw=obj(body.message),messageType=clean(raw.messageType) as Type;
