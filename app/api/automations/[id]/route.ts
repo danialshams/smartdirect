@@ -15,7 +15,7 @@ function normalizeKeywords(value: unknown): string | null {
   return keywords.length ? keywords.join(",") : null;
 }
 function normalizeOptionalString(value: unknown): string | null { return typeof value === "string" && value.trim() ? value.trim() : null; }
-const validTriggerTypes = ["COMMENT_KEYWORD", "DM", "STORY_REPLY_KEYWORD"] as const;
+const validTriggerTypes = ["COMMENT_KEYWORD", "DM", "STORY_REPLY_KEYWORD", "DM_MEDIA_SHARE", "STORY_MENTION"] as const;
 type TriggerType = (typeof validTriggerTypes)[number];
 function isValidTriggerType(value: unknown): value is TriggerType { return typeof value === "string" && validTriggerTypes.includes(value as TriggerType); }
 
