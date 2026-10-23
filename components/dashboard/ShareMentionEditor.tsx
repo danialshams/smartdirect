@@ -6,7 +6,7 @@ import { Check, Lightbulb, RefreshCw, Share2, AtSign, Search, X, Image as ImageI
 import { dairaPalette } from "../../lib/design-system/palette";
 import PublishingStoryAutomationSetup, { type StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem, type InstagramMedia } from "./automation-form-utils";
-import DirectAutomationSkeleton from "./DirectAutomationSkeleton";
+import ShareMentionSkeleton from "./ShareMentionSkeleton";
 
 type Trigger = "DM_MEDIA_SHARE" | "STORY_MENTION";
 type Account = {id:string;igUsername:string;isConnected:boolean};
@@ -127,7 +127,7 @@ export default function ShareMentionEditor({id}:{id?:string}){
   finally{setSaving(false);}
  }
 
- if(loading)return <DirectAutomationSkeleton view="editor"/>;
+ if(loading)return <ShareMentionSkeleton/>;
  if(saved)return <div dir="rtl" className="mx-auto flex min-h-[45vh] max-w-lg flex-col items-center justify-center gap-4 px-4 text-center">
   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-600"><Check size={30}/></div>
   <h2 className="text-lg font-bold">پاسخ با موفقیت ذخیره شد</h2>
