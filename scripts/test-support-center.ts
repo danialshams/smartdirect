@@ -35,7 +35,9 @@ async function main() {
     const newForm = source("components/dashboard/SupportTicketNewClient.tsx");
     const styles = source("app/dashboard/tickets/support.css");
     assert(list.includes('className="daira-support__header-icon"') && newForm.includes('className="daira-support__header-icon"'), "Both support page titles need the matching section icon");
-    assert(styles.includes("background:#EDF3FC") && styles.includes("background:#DDEAFE"), "Support headers should match dashboard subtle heading surfaces");
+    const glass = source("app/daira-glass.css");
+    assert(glass.includes(".daira-support__header") && glass.includes("var(--daira-glass-raised)"), "Support titles must use the shared raised glass material");
+    assert(styles.includes("background:var(--daira-glass-raised)") && styles.includes("background:var(--daira-brand-200)"), "Support heading and icon must draw from canonical palette tokens");
     assert(styles.includes("flex-direction:row;direction:ltr"), "Plus icon should follow the create button label visually in RTL");
     const global = source("components/dashboard/SupportNotifications.tsx");
     assert(global.includes("SupportUnreadBadge") && global.includes("setTimeout") && global.includes("EventSource"), "Global notifications missing");

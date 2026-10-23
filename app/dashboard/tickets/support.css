@@ -1,7 +1,7 @@
 /* Daira support center: compact mobile-first conversation UI, scoped to support pages. */
 .daira-support{width:100%;max-width:900px;margin:0 auto;padding:10px 2px 38px;color:var(--daira-heading)}
 .daira-support--narrow{max-width:780px}
-.daira-support__header{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:66px;margin:5px 0 18px;padding:11px 14px;border-radius:16px;background:#EDF3FC}
+.daira-support__header{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:66px;margin:5px 0 18px;padding:11px 14px;border-radius:16px;background:var(--daira-glass-raised);border:1px solid var(--daira-glass-rim)}
 .daira-support__header-title{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
 .daira-support__header-icon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:12px;background:var(--daira-brand-200);color:var(--daira-primary)}
 .daira-support__header-copy{min-width:0}

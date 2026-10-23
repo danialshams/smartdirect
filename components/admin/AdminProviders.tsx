@@ -15,7 +15,7 @@ const theme = createTheme({
   direction: "rtl",
   palette: {
     mode: "light",
-    primary: { main:dairaPalette.primary.main,dark:dairaPalette.primary.hover,light:dairaTokens["--daira-brand-100"],contrastText:"#FFFFFF" },
+    primary: { main:dairaPalette.primary.main,dark:dairaPalette.primary.hover,light:dairaTokens["--daira-brand-100"],contrastText:dairaTokens["--daira-inverse-text"] },
     secondary: {main:dairaPalette.text.secondary},
     success: {main:dairaPalette.status.success},
     warning: {main:dairaPalette.status.warning},
@@ -50,7 +50,7 @@ const theme = createTheme({
     MuiSkeleton: {styleOverrides: {root: {backgroundColor:"var(--daira-skeleton-base)"}} },
     MuiTabs: {styleOverrides: {indicator: {backgroundColor:"var(--daira-primary)"}} },
     MuiPaper: { defaultProps: { elevation: 0 } },
-    MuiCard: { styleOverrides: { root: { border: "1px solid #E2E8F0" } } },
+    MuiCard: { styleOverrides: { root: { border: "1px solid var(--daira-border)" } } },
     MuiButton: { defaultProps: { disableElevation: true } },
     MuiTableCell: {
       styleOverrides: {
@@ -64,7 +64,7 @@ const theme = createTheme({
         },
         head: {
           fontWeight: 700,
-          backgroundColor: "#F8FAFC",
+          backgroundColor: "var(--daira-surface-hover)",
           "@media (max-width:600px)": {
             fontSize: "0.72rem",
           },
