@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { getDashboardBottomPageTitle } from "../components/dashboard/dashboard-bottom-nav-labels";
 
 const cases: Array<[string, string]> = [
@@ -35,7 +35,7 @@ for (const [route, expected] of cases) {
 const shell = readFileSync("components/dashboard/DahboardShell.tsx", "utf8");
 const styles = readFileSync("app/globals.css", "utf8");
 const shareManager = readFileSync("components/dashboard/ShareMentionManager.tsx", "utf8");
-assert(/href="\/dashboard\/share-mention\/new"[^>]*flex-row-reverse/.test(shareManager), "Share create button must match RTL icon ordering of other automation lists");
+assert(/href="\/dashboard\/share-mention\/new"[^>]*flex-row/.test(shareManager), "Share create button must place its icon first in RTL");
 const picker = readFileSync("components/dashboard/ContentSelectionDialog.tsx", "utf8");
 assert(picker.includes("h-[min(82dvh,720px)]") && picker.includes("daira-glass-dialog--content") && picker.includes("daira-glass-overlay"), "Content picker must float with safe mobile margins and a bounded glass height");
 assert(shell.includes('href="/dashboard" className="daira-bottom-nav__home-link"'), "Home link must remain navigable");
@@ -91,4 +91,32 @@ assert(styles.includes(".daira-bottom-nav--contextual .daira-bottom-nav__breadcr
 assert(styles.includes(".daira-bottom-nav__breadcrumb { direction:ltr;position:absolute;"), "Breadcrumb must not pop during navigation");
 assert(styles.includes("420ms cubic-bezier(.22,1,.36,1)"), "Breadcrumb transition must be smooth");
 assert(styles.includes(".daira-bottom-nav__center-home, .daira-bottom-nav__breadcrumb { transition:none; }"), "Reduced motion must disable both transitions");
-console.log("DAIRA_BOTTOM_NAV_BREADCRUMB_OK", cases.length);
+
+
+// Keep each home shortcut mapped to its own compact WebP artwork.
+const dashboardOverviewText = readFileSync("components/dashboard/DashboardOverview.tsx", "utf8");
+const imageMappings = {
+  "inbox": "inbox.webp",
+  "publishing": "publishing.webp",
+  "insights": "insights.webp",
+  "comment": "comment-reply.webp",
+  "story": "story-reply.webp",
+  "direct": "direct-automation.webp",
+  "share-mention": "share-mention.webp",
+  "live": "live-reply.webp",
+  "menu": "direct-menu.webp",
+  "icebreaker": "icebreakers.webp",
+  "reminders": "smart-reminders.webp"
+};
+const artLines = dashboardOverviewText.split(String.fromCharCode(10));
+for (const [key, filename] of Object.entries(imageMappings)) {
+  assert(artLines.some((line) => line.includes('{ key: "' + key + '"') && line.includes('image: "/dashboard-art/' + filename + '"')), "Incorrect home image for " + key);
+  const path = "public/dashboard-art/" + filename;
+  assert(existsSync(path), "Missing dashboard artwork: " + path);
+  const bytes = readFileSync(path);
+  assert(bytes.length < 50_000 && bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP", "Dashboard artwork must be lightweight WebP: " + path);
+}
+assert(new Set(Object.values(imageMappings)).size === 11, "Dashboard artwork cannot be reused between tools");
+assert(!dashboardOverviewText.includes('"/photos/'), "Remove old dashboard artwork references");
+
+console.log("DAIRA_BOTTOM_NAV_BREADCRUMB_OK", cases.length, "dashboard artwork: 11");

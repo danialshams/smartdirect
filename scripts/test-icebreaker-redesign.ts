@@ -7,10 +7,10 @@ const menu = load("components/dashboard/PersistentMenuManager.tsx");
 const response = load("components/dashboard/EntryPointFlowBuilder.tsx");
 const api = load("app/api/instagram/ice-breakers/route.ts");
 
-assert.ok(menu.includes('گزینه جدید <Plus size={17} aria-hidden="true" />'),
-  "Direct-menu add icon must follow the label in RTL flex order");
-assert.ok(ice.includes('پیام جدید <Plus size={17} aria-hidden="true" />'),
-  "Ice-breaker create icon must match the direct-menu action order");
+assert.ok(menu.includes('<Plus size={17} aria-hidden="true" className="shrink-0" /> گزینه جدید'),
+  "Direct-menu add icon must precede the label in RTL flex order");
+assert.ok(ice.includes('<Plus size={17} aria-hidden="true" className="shrink-0" /> پیام جدید'),
+  "Ice-breaker create icon must precede the label in RTL flex order");
 
 assert.ok(ice.includes('id="ice-breaker-heading"') &&
   ice.includes('aria-labelledby="ice-breaker-heading"') &&
