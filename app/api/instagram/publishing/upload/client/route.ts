@@ -88,14 +88,24 @@ async function finalizeVideoUpload(input: {
   if (!sourceBuffer.length || sourceBuffer.length > MAX_VIDEO_SIZE) throw new Error("حجم فایل ویدئو معتبر نیست.");
 
   const normalizedBuffer = await normalizeInstagramVideo(sourceBuffer, fileName, targetType);
+  checkMediaOutputSize(targetType === "MESSAGE" ? "AUTOMATION" : "PUBLISHING", "VIDEO", normalizedBuffer.length);
   const provider = getStorageProvider();
-  const uploaded = await provider.upload({ key: normalizedKey, body: normalizedBuffer, contentType: "video/mp4" });
+  await reserveUpload({ userId, storageKey: normalizedKey, bytes: normalizedBuffer.length, purpose: targetType === "MESSAGE" ? "AUTOMATION" : "PUBLISHING" });
+  let uploaded: Awaited<ReturnType<typeof provider.upload>>;
   try {
-    await prisma.instagramStorageObject.create({
-      data: { userId, storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, expiresAt: getUnlinkedUploadExpiry() },
+    uploaded = await provider.upload({ key: normalizedKey, body: normalizedBuffer, contentType: "video/mp4" });
+  } catch (error) {
+    await releaseUploadReservation(userId, normalizedKey);
+    throw error;
+  }
+  try {
+    await prisma.instagramStorageObject.update({
+      where: { storageKey: normalizedKey },
+      data: { storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, fileSize: BigInt(normalizedBuffer.length), expiresAt: getUnlinkedUploadExpiry() },
     });
   } catch (error) {
     await provider.delete(uploaded.storageKey).catch(() => undefined);
+    await releaseUploadReservation(userId, normalizedKey).catch(() => undefined);
     throw error;
   }
 
@@ -168,14 +178,24 @@ async function finalizeAudioUpload(input: {
   if (!sourceBuffer.length || sourceBuffer.length > MAX_AUDIO_SIZE) throw new Error("حجم فایل ویدئو معتبر نیست.");
 
   const normalizedBuffer = await normalizeInstagramAudio(sourceBuffer, fileName);
+  checkMediaOutputSize("AUTOMATION", "AUDIO", normalizedBuffer.length);
   const provider = getStorageProvider();
-  const uploaded = await provider.upload({ key: normalizedKey, body: normalizedBuffer, contentType: "audio/mp4" });
+  await reserveUpload({ userId, storageKey: normalizedKey, bytes: normalizedBuffer.length, purpose: "AUTOMATION" });
+  let uploaded: Awaited<ReturnType<typeof provider.upload>>;
   try {
-    await prisma.instagramStorageObject.create({
-      data: { userId, storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, expiresAt: getUnlinkedUploadExpiry() },
+    uploaded = await provider.upload({ key: normalizedKey, body: normalizedBuffer, contentType: "audio/mp4" });
+  } catch (error) {
+    await releaseUploadReservation(userId, normalizedKey);
+    throw error;
+  }
+  try {
+    await prisma.instagramStorageObject.update({
+      where: { storageKey: normalizedKey },
+      data: { storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, fileSize: BigInt(normalizedBuffer.length), expiresAt: getUnlinkedUploadExpiry() },
     });
   } catch (error) {
     await provider.delete(uploaded.storageKey).catch(() => undefined);
+    await releaseUploadReservation(userId, normalizedKey).catch(() => undefined);
     throw error;
   }
 
