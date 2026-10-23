@@ -51,6 +51,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
     <SupportNotifications>
       <div dir="rtl" className={`daira-app-shell${isAutomationCreateFlow ? " daira-app-shell--automation-flow" : ""}`}>
         <div className="daira-header-backdrop daira-header-backdrop--liquid" aria-hidden="true" />
+        <div className="daira-liquid-corner-guard daira-liquid-corner-guard--header" aria-hidden="true" />
         <DashboardHeader instagramAccounts={instagramAccounts} showBackButton={!isHome} />
         <main className={`daira-app-main${isHome ? " daira-app-main--home" : ""}${isAutomationCreateFlow ? " daira-app-main--flow-actions" : ""}`}>
           <div className="daira-app-content">
@@ -65,6 +66,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         {!isAutomationCreateFlow && (
           <>
         <div className="daira-bottom-nav-backdrop daira-bottom-nav-backdrop--liquid" aria-hidden="true" />
+        <div className="daira-liquid-corner-guard daira-liquid-corner-guard--nav" aria-hidden="true" />
         <nav className={`daira-bottom-nav daira-bottom-nav--liquid${isHome ? "" : " daira-bottom-nav--contextual"}`} aria-label="ناوبری اصلی">
           {bottomItems.map(({ title, href, icon: Icon }) => {
             if (href === "/dashboard") {

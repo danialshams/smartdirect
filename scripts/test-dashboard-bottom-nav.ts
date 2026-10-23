@@ -50,7 +50,13 @@ const dashboardHeader = readFileSync("components/dashboard/DashboardHeader.tsx",
 assert(dashboardHeader.includes("daira-home__header--liquid"), "Main header must share the glass treatment");
 assert(styles.includes(".daira-home__header--liquid") && styles.includes(".daira-home__header--liquid .daira-home__back"), "Header frame and controls need coherent glass styling");
 assert(styles.includes(".daira-home__header--liquid::after,") && styles.includes(".daira-bottom-nav--liquid::after"), "Under-glass content must disappear gradually inside both bars");
-assert(styles.includes("rgba(246,249,254,.62)") && styles.includes("rgba(246,249,254,0) 93%"), "End fade must happen within the glass, without any external page mask");
+assert(styles.includes("rgba(246,249,254,0) 0%") && styles.includes("rgba(246,249,254,.66) 100%"), "Under-glass content should gradually disappear at the LOWER internal edge");
+assert(styles.includes("rgba(255,255,255,.52)") && styles.includes("rgba(249,251,255,.24)"), "Glass overall surface should be slightly clearer");
+assert(shell.includes("daira-liquid-corner-guard--header") && shell.includes("daira-liquid-corner-guard--nav"), "Header and dock need matching exterior rounded-corner guards");
+assert(styles.includes(".daira-liquid-corner-guard::before") && styles.includes(".daira-liquid-corner-guard::after"), "Both lower corners need anti-bleed coverage");
+assert(styles.includes("circle var(--daira-glass-corner) at top right") && styles.includes("circle var(--daira-glass-corner) at top left"), "Guard masks must cover only outside of the rounded corners");
+assert(styles.includes("z-index:1590") && styles.includes("z-index:1495"), "Guards should sit below interactive glass bars and above scrolling content");
+assert(styles.includes(".daira-liquid-corner-guard--nav") && styles.includes("--daira-glass-corner:24px"), "Mobile nav corner guard must follow mobile radius");
 assert(styles.includes("height:max(8px,env(safe-area-inset-top,0px))") && styles.includes("height:calc(8px + env(safe-area-inset-bottom,0px))"), "Outside the glass, backdrops must only cover safe-area gaps");
 assert(!styles.includes("radial-gradient(ellipse at 12% -42%"), "Old colored internal glow must be removed");
 assert(styles.includes(".daira-bottom-nav--liquid .daira-bottom-nav__item.is-active"), "Active icon and text need a readable liquid-glass state");
