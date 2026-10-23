@@ -518,16 +518,16 @@ export default function EntryPointManager({ accounts, kind }: Props) {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <div className="relative min-w-0 flex-1">
+            <div className="daira-search-field relative min-w-0 flex-1">
               <Search
                 size={17}
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                className="shrink-0 text-[var(--daira-search-placeholder)]"
               />
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={c.searchPlaceholder}
-                className="h-11 rounded-xl pr-10"
+                className="daira-search-input min-w-0 flex-1 border-0 bg-transparent text-base"
               />
             </div>
             {selectedIds.length > 0 && (

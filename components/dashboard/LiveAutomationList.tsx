@@ -117,11 +117,11 @@ export default function LiveAutomationList() {
         style={{ background: dairaPalette.primary.main }}>
         <Plus size={20} /> ایجاد پاسخ جدید
       </button>
-      <label className="daira-search-field daira-search-field--floating relative block">
-        <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--daira-text-disabled)]" aria-hidden="true" />
+      <label className="daira-search-field relative flex">
+        <Search size={18} className="shrink-0 text-[var(--daira-search-placeholder)]" aria-hidden="true" />
         <input value={search} onChange={event => setSearch(event.target.value)}
           placeholder="جستجو در کلمات کلیدی یا پاسخ‌ها..." aria-label="جستجوی پاسخ‌های لایو"
-          className="daira-search-input min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[var(--daira-primary)]" />
+          className="daira-search-input min-w-0 flex-1 border-0 bg-transparent text-base outline-none" />
       </label>
       {filtered.length ? (
         <div className="grid gap-3 sm:grid-cols-2">

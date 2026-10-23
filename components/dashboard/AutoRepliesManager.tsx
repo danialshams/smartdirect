@@ -480,7 +480,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
           {!error && scopedItems.length > 0 ? (
             <div className="mb-4 px-1">
-              <label className="daira-search-field flex h-11 items-center gap-2.5 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 text-[var(--daira-text-secondary)] transition focus-within:border-[var(--daira-primary)] focus-within:ring-2 focus-within:ring-[var(--daira-primary)]/10">
+              <label className="daira-search-field flex h-11 items-center gap-2.5 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 text-[var(--daira-text-secondary)] transition ">
                 <Search size={17} className="shrink-0" aria-hidden="true" />
                 <input
                   type="search"

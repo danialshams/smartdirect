@@ -83,10 +83,10 @@ export default function SmartRemindersList() {
     <button type="button" onClick={() => router.push("/dashboard/reminders/new")}
       dir="rtl" className="flex min-h-[54px] w-full flex-row-reverse items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
       style={{ background: dairaPalette.primary.main }}><span>ایجاد یادآوری جدید</span><Plus size={20} aria-hidden="true"/></button>
-    <label className="daira-search-field daira-search-field--floating relative block">
-      <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--daira-text-disabled)]"/>
+    <label className="daira-search-field relative flex">
+      <Search size={18} className="shrink-0 text-[var(--daira-search-placeholder)]"/>
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="جستجو در یادآوری‌ها..." aria-label="جستجوی یادآوری‌ها"
-        className="daira-search-input min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[var(--daira-primary)]"/>
+        className="daira-search-input min-w-0 flex-1 border-0 bg-transparent text-base outline-none"/>
     </label>
     {actionError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">{actionError}</p>}
     {filtered.length ? <div className="grid gap-3 sm:grid-cols-2">
