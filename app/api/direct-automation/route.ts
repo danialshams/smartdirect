@@ -19,6 +19,7 @@ function parseReplies(raw:unknown,depth=0,seen=new Set<string>()):Reply[]{
   const o=obj(v),title=clean(o.title),payload=clean(o.payload),destinationType=clean(o.destinationType) as Type;
   const destinationText=clean(o.destinationText),destinationQuestion=clean(o.destinationQuestion);
   const destinationShowcaseId=clean(o.destinationShowcaseId),destinationMediaUrl=clean(o.destinationMediaUrl),destinationMediaId=clean(o.destinationMediaId);
+  if(destinationType==="VIDEO")throw new RuleError("آپلود ویدیو برای پاسخ خودکار فعلاً غیرفعال است.");
   if(!title||title.length>20||!payload||payload.length>1000||!types.includes(destinationType))throw new RuleError("عنوان یا مقصد یکی از گزینه‌های فرم نامعتبر است.");
   if(seen.has(payload))throw new RuleError("شناسه گزینه‌های فرم تکراری است.");seen.add(payload);
   if(destinationType==="TEXT"&&!destinationText)throw new RuleError("متن مقصد گزینه را وارد کنید.");
@@ -41,6 +42,7 @@ async function save(request:NextRequest,editing:boolean){
   if(!words.length||words.length>10||words.some(w=>w.length>100))throw new RuleError("بین ۱ تا ۱۰ کلمه کلیدی، هرکدام حداکثر ۱۰۰ کاراکتر، وارد کنید.");
   const raw=obj(body.message),messageType=clean(raw.messageType) as Type;
   if(!types.includes(messageType))throw new RuleError("نوع پاسخ معتبر نیست.");
+  if(messageType==="VIDEO")throw new RuleError("آپلود ویدیو برای پاسخ خودکار فعلاً غیرفعال است.");
   const text=clean(raw.text),mediaUrl=clean(raw.mediaUrl),mediaId=clean(raw.mediaId),showcaseId=clean(raw.showcaseId),formId=clean(raw.formId);
   if(["TEXT","FORM"].includes(messageType)&&(!text||text.length>2000))throw new RuleError("متن پیام یا سؤال فرم را کامل وارد کنید.");
   if(["IMAGE","VIDEO","AUDIO"].includes(messageType)&&!mediaUrl&&!mediaId)throw new RuleError("فایل پیام را انتخاب کنید.");
