@@ -44,7 +44,15 @@ assert(shell.includes('key={pathname}'), "Page transitions must restart the titl
 assert(styles.includes("text-overflow:ellipsis"), "Long current-page labels must truncate");
 // Glass must be a reversible visual-only experiment; don't change any navigation logic.
 assert(shell.includes("daira-bottom-nav--liquid") && shell.includes("daira-bottom-nav-backdrop--liquid"), "Glass dock must be enabled on shell and backdrop");
-assert(styles.includes(".daira-bottom-nav--liquid") && styles.includes("backdrop-filter:blur(20px) saturate(170%)"), "Glass dock needs real background refraction");
+assert(styles.includes(".daira-bottom-nav--liquid") && styles.includes("backdrop-filter:blur(14px) saturate(116%)"), "Glass surfaces need a lightly transparent backdrop");
+assert(shell.includes("daira-header-backdrop--liquid"), "Header backdrop must not occlude glass");
+const dashboardHeader = readFileSync("components/dashboard/DashboardHeader.tsx", "utf8");
+assert(dashboardHeader.includes("daira-home__header--liquid"), "Main header must share the glass treatment");
+assert(styles.includes(".daira-home__header--liquid") && styles.includes(".daira-home__header--liquid .daira-home__back"), "Header frame and controls need coherent glass styling");
+assert(styles.includes(".daira-home__header--liquid::after,") && styles.includes(".daira-bottom-nav--liquid::after"), "Under-glass content must disappear gradually inside both bars");
+assert(styles.includes("rgba(246,249,254,.62)") && styles.includes("rgba(246,249,254,0) 93%"), "End fade must happen within the glass, without any external page mask");
+assert(styles.includes("height:max(8px,env(safe-area-inset-top,0px))") && styles.includes("height:calc(8px + env(safe-area-inset-bottom,0px))"), "Outside the glass, backdrops must only cover safe-area gaps");
+assert(!styles.includes("radial-gradient(ellipse at 12% -42%"), "Old colored internal glow must be removed");
 assert(styles.includes(".daira-bottom-nav--liquid .daira-bottom-nav__item.is-active"), "Active icon and text need a readable liquid-glass state");
 assert(styles.includes(".daira-bottom-nav--liquid .daira-bottom-nav__breadcrumb"), "Inner-page breadcrumb must match liquid-glass dock");
 assert(styles.includes(".daira-bottom-nav--liquid .daira-support-nav-badge"), "Support unread badges must stay legible on glass");

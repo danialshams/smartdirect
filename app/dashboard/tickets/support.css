@@ -7,7 +7,7 @@
 .daira-support__header-copy{min-width:0}
 .daira-support__header h1{margin:0;color:#18233C;font-size:clamp(16px,1.45vw,18px);line-height:1.5;font-weight:850}
 .daira-support__header p{margin:3px 0 0;color:#63769D;font-size:11.5px;line-height:1.6}
-.daira-support__header .daira-support__primary{flex:0 0 auto;flex-direction:row-reverse;direction:ltr;min-height:44px}
+.daira-support__header .daira-support__primary{flex:0 0 auto;flex-direction:row;direction:ltr;min-height:44px}
 .daira-support__header .daira-support__primary svg{flex:0 0 auto}
 .daira-support__primary,.daira-support__secondary{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;padding:10px 21px;border:1px solid transparent;border-radius:15px;background:#2F61FD;color:#fff;font-size:13px;font-family:inherit;font-weight:800;text-decoration:none;cursor:pointer;transition:background .17s,transform .17s}
 .daira-support__primary:hover:not(:disabled){background:#2153E6}
