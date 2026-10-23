@@ -178,6 +178,9 @@ jobs:
       - name: Test advanced Instagram Reel publishing options
         run: npx tsx scripts/test-reel-settings.ts
 
+      - name: Test shared dashboard upload pipeline and audio conversion
+        run: npx tsx scripts/test-dashboard-upload-pipeline.ts
+
       - name: Test Daira publishing UX and data integrity
         run: npx tsx scripts/test-publishing-daira.ts
 
