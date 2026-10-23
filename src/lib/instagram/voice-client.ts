@@ -1,6 +1,6 @@
 /** Browser-side preflight only. The FFmpeg server check is authoritative. */
-export const VOICE_MAX_SECONDS = 60;
-export const VOICE_MAX_BYTES = 25_000_000 - 1;
+import { VOICE_MAX_SECONDS, VOICE_MAX_BYTES } from "./voice-limits";
+export { VOICE_MAX_SECONDS, VOICE_MAX_BYTES } from "./voice-limits";
 
 export async function validateVoiceFileForUpload(file: File): Promise<void> {
   if (!file.type.startsWith("audio/") && !/\.(m4a|mp3|ogg|aac|wav|webm|opus)$/i.test(file.name)) return;
@@ -27,7 +27,7 @@ export async function validateVoiceFileForUpload(file: File): Promise<void> {
       audio.load();
     });
     if (duration !== null && duration > VOICE_MAX_SECONDS + 0.05)
-      throw new Error("مدت وویس نباید بیشتر از ۶۰ ثانیه باشد.");
+      throw new Error("مدت وویس نباید بیشتر از ۵ دقیقه باشد.");
     // If the browser cannot read the duration, the server rejects invalid files.
   } finally {
     audio.removeAttribute("src");
