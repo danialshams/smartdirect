@@ -760,7 +760,7 @@ async function loadStagedInboxMedia(userId: string, storageKey: string) {
   const url = new URL(item.publicUrl);
   const allowed = [process.env.S3_PUBLIC_BASE_URL, process.env.LOCAL_STORAGE_PUBLIC_URL]
     .filter((value): value is string => Boolean(value))
-    .some((value) => { try { const base = new URL(value); return base.origin === url.origin && url.pathname.startsWith(base.pathname.replace(/\\/$/, "") + "/"); } catch { return false; } });
+    .some((value) => { try { const base = new URL(value); return base.origin === url.origin && url.pathname.startsWith(base.pathname.replace(/\/$/, "") + "/"); } catch { return false; } });
   const vercelHost = url.hostname.endsWith(".public.blob.vercel-storage.com");
   const localDevelopment = process.env.NODE_ENV !== "production" && url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
   if ((!localDevelopment && url.protocol !== "https:") || url.username || url.password || (!vercelHost && !allowed)) {
@@ -778,7 +778,7 @@ async function loadStagedInboxMedia(userId: string, storageKey: string) {
   const fallbackType = normalizedAudio ? "audio/mp4" : normalizedVideo ? "video/mp4" : "";
   const receivedType = response.headers.get("content-type")?.split(";")[0] || "";
   const type = fallbackType || receivedType;
-  if (!/^(image\\/(jpeg|png)|video\\/(mp4|quicktime)|audio\\/(mp4|mpeg|webm|ogg|wav|x-wav|aac))$/.test(type)) {
+  if (!/^(image\/(jpeg|png)|video\/(mp4|quicktime)|audio\/(mp4|mpeg|webm|ogg|wav|x-wav|aac))$/.test(type)) {
     throw new Error("فرمت فایل آپلودشده برای دایرکت مجاز نیست.");
   }
   return { file: new File([data], name, { type }), alreadyNormalized: normalizedAudio || normalizedVideo };
