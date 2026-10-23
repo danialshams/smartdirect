@@ -239,7 +239,8 @@ export async function POST(request: NextRequest) {
       });
       if (!ownedCover) return NextResponse.json({ success: false, message: "کاور معتبر نیست یا منقضی شده؛ دوباره آپلود کن." }, { status: 400 });
     }
-    if (uploadedStorageKeys.some((key) => key.startsWith("pending/"))) {
+    // S3 stores prefixed keys; all publishing files must be owned, tracked and alive.
+    if (uploadedStorageKeys.length) {
       const tracked = await prisma.instagramStorageObject.findMany({
         where: {
           userId: session.user.id,
@@ -250,7 +251,7 @@ export async function POST(request: NextRequest) {
         select: { storageKey: true },
       });
       const trackedKeys = new Set(tracked.map((item) => item.storageKey));
-      if (trackedKeys.size !== uploadedStorageKeys.filter((key) => key.startsWith("pending/")).length) {
+      if (trackedKeys.size !== new Set(uploadedStorageKeys).size) {
         return NextResponse.json({ success: false, message: "یک یا چند فایل آپلودشده معتبر نیست یا منقضی شده است. دوباره آپلود کنید." }, { status: 400 });
       }
     }
