@@ -2,17 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, Lightbulb, RefreshCw, Share2, AtSign, Search, X, Image as ImageIcon } from "lucide-react";
+import { Check, Lightbulb, Share2, AtSign, X, Image as ImageIcon } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
 import PublishingStoryAutomationSetup, { type StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem, type InstagramMedia } from "./automation-form-utils";
 import ShareMentionSkeleton from "./ShareMentionSkeleton";
+import ContentSelectionDialog, { contentLabel, sortContentNewestFirst } from "./ContentSelectionDialog";
 
 type Trigger = "DM_MEDIA_SHARE" | "STORY_MENTION";
 type Account = {id:string;igUsername:string;isConnected:boolean};
 type Existing = {id:string;triggerType:Trigger;instagramAccountId:string;updatedAt:string;isActive:boolean;mediaId:string|null;mediaIds:string|null;messages:unknown};
 const DESCRIPTION = "وقتی کسی پست یا ریلزت را به دایرکت بفرستد یا تو را در استوری منشن کند، پاسخ دلخواهت به‌صورت خودکار اجرا می‌شود.";
-const mediaLabel=(item:InstagramMedia)=>item.media_product_type==="REELS"?"ریلز":item.media_type==="CAROUSEL_ALBUM"?"آلبوم":"پست";
 
 function Guide({step,title,hint}:{step:number;title:string;hint:string}){
  return <div className="mb-3 flex items-start gap-3 rounded-xl border px-3.5 py-3" style={{background:dairaPalette.guide.background,borderColor:dairaPalette.guide.border,color:dairaPalette.guide.text}}>
@@ -35,7 +35,7 @@ export default function ShareMentionEditor({id}:{id?:string}){
  const [formTemplates,setFormTemplates]=useState<StoryFormTemplate[]>([]);
  const [pickerOpen,setPickerOpen]=useState(false);
  const [draftSelected,setDraftSelected]=useState<string[]>([]);
- const [mediaSearch,setMediaSearch]=useState("");
+ const [refreshingMedia,setRefreshingMedia]=useState(false);
  const [loading,setLoading]=useState(true);
  const [saving,setSaving]=useState(false);
  const [saved,setSaved]=useState(false);
@@ -92,7 +92,7 @@ export default function ShareMentionEditor({id}:{id?:string}){
     setShowcases(Array.isArray(sh?.data)?sh.data:Array.isArray(sh)?sh:[]);
     setForms(Array.isArray(fo?.data)?fo.data:Array.isArray(fo)?fo:[]);
     setFormTemplates(templates);
-    if(m?.success)setMedia((Array.isArray(m.data)?m.data:[]).filter((x:InstagramMedia)=>x.media_product_type!=="STORY"));
+    if(m?.success)setMedia(sortContentNewestFirst((Array.isArray(m.data)?m.data:[]).filter((x:InstagramMedia)=>x.media_product_type!=="STORY")));
     else setMediaError(m?.message||"دریافت پست‌ها و ریلزها ناموفق بود.");
    }catch(e){if(!controller.signal.aborted)setError(e instanceof Error?e.message:"بارگذاری ناموفق بود.");}
    finally{if(!controller.signal.aborted)setLoading(false);}
@@ -102,13 +102,15 @@ export default function ShareMentionEditor({id}:{id?:string}){
 
  async function refreshMedia(){
   if(!account)return;
+  setRefreshingMedia(true);
   try{
    setMediaError("");
    const response=await fetch("/api/instagram/media?instagramAccountId="+encodeURIComponent(account.id),{cache:"no-store",credentials:"include"});
    const payload=await response.json();
    if(!response.ok||!payload.success)throw new Error(payload.message||"بارگذاری محتوا ناموفق بود.");
-   setMedia((Array.isArray(payload.data)?payload.data:[]).filter((x:InstagramMedia)=>x.media_product_type!=="STORY"));
+   setMedia(sortContentNewestFirst((Array.isArray(payload.data)?payload.data:[]).filter((x:InstagramMedia)=>x.media_product_type!=="STORY")));
   }catch(e){setMediaError(e instanceof Error?e.message:"بارگذاری محتوا ناموفق بود.");}
+  finally{setRefreshingMedia(false);}
  }
  async function save(prepared?:MessageDraft){
   if(saving||!account||!responseValid)return;
@@ -154,14 +156,26 @@ export default function ShareMentionEditor({id}:{id?:string}){
   {trigger==="DM_MEDIA_SHARE"&&<section>
    <Guide step={2} title="انتخاب پست‌ها و ریلزها" hint="یک یا چند پست یا ریلز از پیج خودت انتخاب کن. پاسخ فقط وقتی اجرا می‌شود که مخاطب یکی از همین محتواها را به دایرکت پیج بفرستد."/>
    <div className="rounded-2xl border bg-white p-4 sm:p-5" style={{borderColor:dairaPalette.border}}>
-    <button type="button" onClick={()=>{setDraftSelected(selected);setMediaSearch("");setPickerOpen(true);}}
-     className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#DCE6FF] bg-[#F1F6FF] px-4 text-sm font-bold text-[#2563EB]">
+    <button type="button" onClick={()=>{setDraftSelected(selected);setPickerOpen(true);}}
+     className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400" style={{background:dairaPalette.primary.main}}>
      <ImageIcon size={19}/> انتخاب محتوا
     </button>
     <p className="mt-3 text-xs text-slate-500">{selected.length? `${selected.length.toLocaleString("fa-IR")} پست یا ریلز انتخاب شده است.`:"هنوز محتوایی انتخاب نشده است."}</p>
-    {selected.length>0&&<div className="mt-3 flex flex-wrap gap-2">
-      {selected.map(mid=>{const item=media.find(x=>x.id===mid);return <span key={mid} className="rounded-lg border bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600">{item?mediaLabel(item):"محتوای انتخاب‌شده"} <button type="button" onClick={()=>setSelected(list=>list.filter(x=>x!==mid))} className="mr-2 text-red-500" aria-label="حذف محتوا"><X size={13}/></button></span>})}
+    {selected.length>0&&<div aria-label="محتواهای انتخاب‌شده" className="mt-3 grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-5">
+      {selected.map(mid=>{
+       const item=media.find(x=>x.id===mid);
+       const isVideo=item?.media_product_type==="REELS"||item?.media_type==="VIDEO";
+       const preview=item?.thumbnail_url||(!isVideo?item?.media_url:null);
+       return <div key={mid} className="relative min-w-0 overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F8FAFC]">
+        <div className="flex aspect-square items-center justify-center overflow-hidden bg-[#EFF3FA]">
+         {preview?<img src={preview} alt={item?.caption||"محتوای انتخاب‌شده"} loading="lazy" className="h-full w-full object-cover"/>:<ImageIcon size={22} className="text-slate-400"/>}
+        </div>
+        <button type="button" onClick={()=>setSelected(list=>list.filter(x=>x!==mid))} className="absolute left-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-[#E2E8F0] bg-white/95 text-red-600 shadow-sm transition hover:bg-red-50" aria-label={"حذف "+(item?contentLabel(item):"محتوا")}><X size={16}/></button>
+        <p className="truncate px-2 py-2 text-center text-[11px] font-semibold text-[#475569]">{item?contentLabel(item):"محتوای قبلی"}</p>
+       </div>;
+      })}
      </div>}
+    {selected.some(mid=>!media.some(item=>item.id===mid))&&<p className="mt-2 text-xs leading-6 text-slate-500">پیش‌نمایش برخی محتواهای قبلی در دسترس نیست، اما انتخاب آن‌ها حفظ شده است.</p>}
     {mediaError&&<p role="alert" className="mt-2 text-xs text-red-600">{mediaError}</p>}
    </div>
   </section>}
@@ -181,31 +195,13 @@ export default function ShareMentionEditor({id}:{id?:string}){
      textPlaceholder="متن پاسخی که برای مخاطب ارسال می‌شود..."/>
    </div>
   </section>
-  {pickerOpen&&<div className="fixed inset-0 z-[2500] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-4" onMouseDown={e=>{if(e.target===e.currentTarget)setPickerOpen(false);}}>
-   <div role="dialog" aria-modal="true" aria-label="انتخاب پست و ریلز" dir="rtl" className="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[24px] bg-white shadow-2xl sm:max-h-[85dvh] sm:rounded-[24px]">
-    <div className="flex shrink-0 items-center justify-between border-b border-[#E2E8F0] px-4 py-4 sm:px-5"><strong className="text-sm font-extrabold text-[#18233C]">انتخاب محتوا</strong><button type="button" onClick={()=>setPickerOpen(false)} aria-label="بستن" className="rounded-lg p-2 text-slate-500"><X size={20}/></button></div>
-    <div className="shrink-0 space-y-2 border-b border-[#E2E8F0] p-4">
-      <div className="relative"><Search size={17} className="absolute right-3 top-3.5 text-slate-400"/><input value={mediaSearch} onChange={e=>setMediaSearch(e.target.value)} placeholder="جستجو در توضیحات محتوا" aria-label="جستجوی محتوا" className="min-h-11 w-full rounded-xl border border-[#E2E8F0] bg-white pr-10 pl-3 !text-base outline-none focus:border-[#2563EB]" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}}/></div>
-      <div className="flex items-center justify-between"><span className="text-xs text-slate-500">{draftSelected.length.toLocaleString("fa-IR")} از ۵۰ انتخاب شده</span><button type="button" onClick={()=>void refreshMedia()} className="flex items-center gap-1 text-xs text-blue-600"><RefreshCw size={14}/>به‌روزرسانی</button></div>
-    </div>
-    <div className="min-h-0 flex-1 overflow-y-auto p-4">
-     {media.filter(x=>!mediaSearch.trim()||(x.caption||"").includes(mediaSearch.trim())).length===0&&<p className="py-9 text-center text-sm text-slate-500">{mediaError||"محتوایی پیدا نشد."}</p>}
-     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-      {media.filter(x=>!mediaSearch.trim()||(x.caption||"").includes(mediaSearch.trim())).map(item=>{const checked=draftSelected.includes(item.id),locked=occupied.has(item.id);return <button key={item.id} type="button" disabled={locked||(!checked&&draftSelected.length>=50)}
-       onClick={()=>setDraftSelected(v=>checked?v.filter(x=>x!==item.id):[...v,item.id])} aria-pressed={checked}
-       aria-label={mediaLabel(item)+(checked?"، انتخاب‌شده":"")} className="relative aspect-square overflow-hidden rounded-xl border-2 bg-slate-100 disabled:opacity-50" style={{borderColor:checked?"#2563EB":"transparent"}}>
-       {item.thumbnail_url||item.media_url?<img src={item.thumbnail_url||item.media_url||""} alt="" className="h-full w-full object-cover"/>:<ImageIcon size={22} className="m-auto text-slate-400"/>}
-       <span className="absolute bottom-0 right-0 rounded-tl-lg bg-black/65 px-2 py-1 text-[10px] text-white">{locked?"قبلاً انتخاب شده":mediaLabel(item)}</span>
-       {checked&&<span className="absolute left-1 top-1 rounded-full bg-[#2563EB] p-1 text-white"><Check size={15}/></span>}
-      </button>})}
-     </div>
-    </div>
-    <div className="flex shrink-0 gap-2 border-t border-[#E2E8F0] bg-white p-4">
-     <button type="button" onClick={()=>{setSelected(draftSelected);setPickerOpen(false);}} className="min-h-12 flex-1 rounded-xl bg-[#2563EB] text-sm font-bold text-white">تأیید انتخاب</button>
-     <button type="button" onClick={()=>setPickerOpen(false)} className="min-h-12 rounded-xl border border-[#E2E8F0] px-5 text-sm">انصراف</button>
-    </div>
-   </div>
-  </div>}
+  {pickerOpen&&<ContentSelectionDialog
+   items={media} selectedIds={draftSelected} maxSelected={50} occupiedIds={occupied} error={mediaError}
+   onRefresh={()=>void refreshMedia()} refreshing={refreshingMedia}
+   onToggle={mid=>setDraftSelected(list=>list.includes(mid)?list.filter(x=>x!==mid):list.length>=50?list:[...list,mid])}
+   onClose={()=>setPickerOpen(false)}
+   onConfirm={()=>{setSelected(draftSelected);setPickerOpen(false);}}
+  />}
   {error&&<p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700">{error}</p>}
  </div>;
 }
