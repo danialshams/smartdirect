@@ -1,5 +1,6 @@
 "use client";
 
+import GlassModalPresence from "./GlassModalPresence";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check, CircleCheck, ExternalLink, Lightbulb, Link2,
@@ -469,6 +470,7 @@ export default function PersistentMenuManager({
         </>
       )}
 
+      <GlassModalPresence open={Boolean(deleteTarget)} onEscape={() => { if (!saving) setDeleteTarget(null); }}>
       {deleteTarget && (
         <div role="presentation" className="daira-glass-overlay fixed inset-0 z-[2500] flex items-center justify-center px-4"
           onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setDeleteTarget(null); }}>
@@ -488,6 +490,7 @@ export default function PersistentMenuManager({
           </div>
         </div>
       )}
+      </GlassModalPresence>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import GlassModalPresence from "./GlassModalPresence";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -230,6 +231,7 @@ const optionalSettings = (
 
 
         </section>
+      <GlassModalPresence open={showDeleteConfirm} onEscape={() => { if (!deleting) setShowDeleteConfirm(false); }}>
         {showDeleteConfirm && (
           <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center px-4" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target && !deleting) setShowDeleteConfirm(false); }}>
             <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="delete-media-automation-title" className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm rounded-2xl p-5">
@@ -242,6 +244,7 @@ const optionalSettings = (
             </div>
           </div>
         )}
+        </GlassModalPresence>
       </div>
     </div>
   );

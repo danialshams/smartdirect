@@ -171,7 +171,9 @@ export const dairaTokens = {
   "--daira-guide-glass-rim": "rgba(255,255,255,0.94)",
   "--daira-flow-card-glass": "rgba(255,255,255,0.58)",
   "--daira-flow-selection": "#E9F0FF",
-  "--daira-skeleton-surface": "rgba(255,255,255,0.42)"
+  "--daira-skeleton-surface": "rgba(255,255,255,0.42)",
+  "--daira-modal-motion-duration": "220ms",
+  "--daira-modal-motion-ease": "cubic-bezier(.22,1,.36,1)"
 } as const;
 
 export const dairaPalette = {

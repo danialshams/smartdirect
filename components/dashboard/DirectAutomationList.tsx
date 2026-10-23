@@ -1,5 +1,6 @@
 "use client";
 
+import GlassModalPresence from "./GlassModalPresence";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -89,7 +90,7 @@ export default function DirectAutomationList() {
           <section className="rounded-[28px] bg-transparent">
             {!error && rules.length > 0 ? (
               <div className="mb-4 px-1">
-                <label className="daira-search-field flex h-11 items-center gap-2.5 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 text-[var(--daira-text-secondary)] transition focus-within:border-[var(--daira-primary)] focus-within:ring-2 focus-within:ring-[var(--daira-primary)]/10">
+                <label className="daira-search-field flex h-11 items-center gap-2.5 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 text-[var(--daira-text-secondary)] transition ">
                   <Search size={17} className="shrink-0" aria-hidden="true" />
                   <input type="search" value={search} onChange={event => setSearch(event.target.value)}
                     placeholder="جستجو براساس کلمه کلیدی..." aria-label="جستجو براساس کلمه کلیدی"
@@ -143,6 +144,7 @@ export default function DirectAutomationList() {
           </section>
         </div>
       </div>
+      <GlassModalPresence open={Boolean(target)} onEscape={() => { if (!deleting) setTarget(null); }}>
       {target && (
         <div className="daira-glass-overlay fixed inset-0 z-[9998] flex items-center justify-center bg-[rgba(24,35,60,.36)] px-4 py-6 backdrop-blur-md"
           onMouseDown={event => { if (event.target === event.currentTarget && !deleting) setTarget(null); }}>
@@ -164,6 +166,7 @@ export default function DirectAutomationList() {
           </section>
         </div>
       )}
+      </GlassModalPresence>
     </div>
   );
 }

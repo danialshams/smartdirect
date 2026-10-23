@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronRight, X } from "lucide-react";
+import GlassModalPresence from "./GlassModalPresence";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 import { useDashboardAccountSelection } from "./DashboardAccountContext";
 
@@ -118,6 +119,7 @@ export default function DashboardHeader({
       </header>
       </div>
 
+      <GlassModalPresence open={accountModalOpen}>
       {accountModalOpen ? (
         <div className="daira-modal-backdrop daira-glass-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccountModalOpen(false); }}>
           <section ref={accountDialogRef} className="daira-account-modal daira-glass-dialog" role="dialog" aria-modal="true" aria-labelledby="daira-account-title">
@@ -149,8 +151,8 @@ export default function DashboardHeader({
           </section>
         </div>
       ) : null}
+      </GlassModalPresence>
 
-      
     </>
   );
 }

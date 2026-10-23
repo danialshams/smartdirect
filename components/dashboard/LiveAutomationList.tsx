@@ -1,5 +1,6 @@
 "use client";
 
+import GlassModalPresence from "./GlassModalPresence";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, RadioTower, Search, Pencil, Trash2, Loader2, RefreshCw, X } from "lucide-react";
@@ -117,11 +118,11 @@ export default function LiveAutomationList() {
         style={{ background: dairaPalette.primary.main }}>
         <Plus size={20} /> ایجاد پاسخ جدید
       </button>
-      <label className="daira-search-field daira-search-field--floating relative block">
-        <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--daira-text-disabled)]" aria-hidden="true" />
+      <label className="daira-search-field relative flex">
+        <Search size={18} className="shrink-0 text-[var(--daira-search-placeholder)]" aria-hidden="true" />
         <input value={search} onChange={event => setSearch(event.target.value)}
           placeholder="جستجو در کلمات کلیدی یا پاسخ‌ها..." aria-label="جستجوی پاسخ‌های لایو"
-          className="daira-search-input min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[var(--daira-primary)]" />
+          className="daira-search-input min-w-0 flex-1 border-0 bg-transparent text-base outline-none" />
       </label>
       {filtered.length ? (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -159,6 +160,7 @@ export default function LiveAutomationList() {
           {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[var(--daira-text-secondary)]">می‌توانی پاسخ را قبل از شروع لایو بسازی. هنگام لایو، کامنت‌های دارای کلمهٔ کلیدی به‌صورت خودکار بررسی می‌شوند.</p>}
         </div>
       )}
+      <GlassModalPresence open={Boolean(deleteTarget)} onEscape={() => { if (!deleting) setDeleteTarget(null); }}>
       {deleteTarget && (
         <div className="daira-glass-overlay fixed inset-0 z-[2500] flex items-center justify-center p-4" role="presentation"
           onMouseDown={event => { if (event.currentTarget === event.target && !deleting) setDeleteTarget(null); }}>
@@ -178,6 +180,7 @@ export default function LiveAutomationList() {
           </section>
         </div>
       )}
+      </GlassModalPresence>
     </div>
   );
 }

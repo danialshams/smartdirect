@@ -1794,8 +1794,8 @@ export default function AutomationForm({
     /* ---------------------------------------------------------------------- */
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 sm:p-4">
-            <div className="flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden bg-background shadow-2xl sm:h-auto sm:max-h-[92vh] sm:max-w-4xl sm:rounded-2xl">
+        <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <div className="daira-glass-dialog flex h-[min(82dvh,720px)] w-full max-w-4xl flex-col overflow-hidden rounded-[26px]">
                 {/* Header */}
 
                 <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4 sm:px-6 sm:py-5">

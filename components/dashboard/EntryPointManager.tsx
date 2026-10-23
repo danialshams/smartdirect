@@ -1,5 +1,6 @@
 "use client";
 
+import GlassModalPresence from "./GlassModalPresence";
 import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 import { Input } from "@/components/dashboard/DashboardUI";
 import {
@@ -518,16 +519,16 @@ export default function EntryPointManager({ accounts, kind }: Props) {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <div className="relative min-w-0 flex-1">
+            <div className="daira-search-field relative min-w-0 flex-1">
               <Search
                 size={17}
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                className="shrink-0 text-[var(--daira-search-placeholder)]"
               />
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={c.searchPlaceholder}
-                className="h-11 rounded-xl pr-10"
+                className="daira-search-input min-w-0 flex-1 border-0 bg-transparent text-base"
               />
             </div>
             {selectedIds.length > 0 && (
@@ -808,9 +809,10 @@ export default function EntryPointManager({ accounts, kind }: Props) {
         </div>
       )}
 
+      <GlassModalPresence open={Boolean(deleteTarget || bulkDeleteOpen)} onEscape={() => { if (!saving) {setDeleteTarget(null);setBulkDeleteOpen(false);} }}>
       {(deleteTarget || bulkDeleteOpen) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
-          <div className="w-full max-w-sm rounded-3xl border border-border bg-background p-6 shadow-2xl">
+        <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm rounded-3xl p-6">
             <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-red-600">
               <Trash2 size={20} />
             </div>
@@ -845,6 +847,7 @@ export default function EntryPointManager({ accounts, kind }: Props) {
           </div>
         </div>
       )}
+      </GlassModalPresence>
     </div>
   );
 }

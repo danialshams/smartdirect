@@ -1372,16 +1372,16 @@ export default function InstagramInbox({
           ))}
         </div>
 
-        <div className="relative mt-2">
+        <div className="daira-search-field relative mt-2">
           <Search
             size={15}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8290A6]"
+            className="shrink-0 text-[var(--daira-search-placeholder)]"
           />
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="جستجوی گفتگو..."
-            className="h-9 rounded-lg border-[#E5EAF3] bg-[#F8FAFD] pr-9 text-[13px] focus:border-[var(--daira-primary)]"
+            className="daira-search-input min-w-0 flex-1 border-0 bg-transparent text-base outline-none"
           />
         </div>
       </div>
@@ -1525,7 +1525,7 @@ export default function InstagramInbox({
                   onChange={(event) => setConversationSearchText(event.target.value)}
                   placeholder="جست‌وجو در پیام‌های این گفتگو..."
                   aria-label="جست‌وجو در پیام‌های گفتگو"
-                  className="h-11 min-w-0 w-full flex-1 touch-manipulation rounded-xl border border-[var(--daira-publishing-border)] bg-[#F8FAFD] px-3 text-base leading-6 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]"
+                  className="daira-search-standalone h-11 min-w-0 w-full flex-1 touch-manipulation rounded-xl border border-[var(--daira-search-border)] bg-[var(--daira-search-surface)] px-3 text-base leading-6 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-search-focus)]"
                   style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                 />
                 <button type="button" onClick={() => {

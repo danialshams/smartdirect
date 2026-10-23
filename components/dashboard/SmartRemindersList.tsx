@@ -1,5 +1,6 @@
 "use client";
 
+import GlassModalPresence from "./GlassModalPresence";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Pencil, Trash2, Clock3, RefreshCw, X, MessageSquare } from "lucide-react";
@@ -83,10 +84,10 @@ export default function SmartRemindersList() {
     <button type="button" onClick={() => router.push("/dashboard/reminders/new")}
       dir="rtl" className="flex min-h-[54px] w-full flex-row-reverse items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
       style={{ background: dairaPalette.primary.main }}><span>ایجاد یادآوری جدید</span><Plus size={20} aria-hidden="true"/></button>
-    <label className="daira-search-field daira-search-field--floating relative block">
-      <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--daira-text-disabled)]"/>
+    <label className="daira-search-field relative flex">
+      <Search size={18} className="shrink-0 text-[var(--daira-search-placeholder)]"/>
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="جستجو در یادآوری‌ها..." aria-label="جستجوی یادآوری‌ها"
-        className="daira-search-input min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[var(--daira-primary)]"/>
+        className="daira-search-input min-w-0 flex-1 border-0 bg-transparent text-base outline-none"/>
     </label>
     {actionError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">{actionError}</p>}
     {filtered.length ? <div className="grid gap-3 sm:grid-cols-2">
@@ -112,6 +113,7 @@ export default function SmartRemindersList() {
       <p className="text-sm font-semibold text-[var(--daira-text-secondary)]">{search ? "یادآوری‌ای با این عبارت پیدا نشد." : "هنوز یادآوری هوشمندی ساخته نشده است."}</p>
       {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[var(--daira-text-secondary)]">یک پاسخ خودکار را انتخاب کن، زمان انتظار و متن یادآوری را مشخص کن؛ اگر کاربر پاسخی ندهد و پنجره مجاز باشد، پیام ارسال می‌شود.</p>}
     </div>}
+      <GlassModalPresence open={Boolean(deleteTarget)} onEscape={() => { if (!busy) setDeleteTarget(null); }}>
     {deleteTarget && <div className="daira-glass-overlay fixed inset-0 z-[2500] flex items-center justify-center p-4">
       <div role="dialog" aria-modal="true" aria-label="حذف یادآوری" className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm rounded-2xl p-5">
         <div className="flex items-center justify-between"><strong className="text-base text-[var(--daira-heading)]">حذف یادآوری</strong><button onClick={() => setDeleteTarget(null)} disabled={Boolean(busy)} aria-label="بستن"><X size={20}/></button></div>
@@ -121,5 +123,6 @@ export default function SmartRemindersList() {
           <button onClick={() => void remove()} disabled={Boolean(busy)} className="min-h-11 flex-1 rounded-xl bg-[var(--daira-error-text)] text-sm font-bold text-white">{busy ? "در حال حذف..." : "حذف"}</button></div>
       </div>
     </div>}
+    </GlassModalPresence>
   </div>;
 }

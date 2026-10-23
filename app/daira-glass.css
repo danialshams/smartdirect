@@ -242,35 +242,78 @@
  }
 }
 
-/* Shared input search pattern. Near-opaque white is intentional: a translucent
-   search field on a glass card lowers contrast and causes iOS text zoom. */
-.daira-search-field {
-  background:var(--daira-search-surface)!important;
+/* One search control, one focus ring.
+   The previous "floating" variant styled BOTH the label and its input,
+   while the catch-all focus selector added a second blue inner outline.
+   All search inputs now share a single parent surface and an unbordered input. */
+.daira-app-shell .daira-search-field,
+.daira-app-shell .daira-search-field--floating {
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  min-height:48px;
   border:1px solid var(--daira-search-border)!important;
-  color:var(--daira-text-secondary);
   border-radius:14px!important;
-  box-shadow:inset 0 1px 0 var(--daira-glass-inner-rim),0 2px 8px rgba(24,35,60,.025);
-  min-height:46px;
+  padding:0 13px;
+  background:var(--daira-search-surface)!important;
+  box-shadow:inset 0 1px 0 var(--daira-glass-inner-rim),0 2px 8px rgba(24,35,60,.025)!important;
+  color:var(--daira-search-placeholder);
+  transition:border-color .18s ease,box-shadow .18s ease;
 }
-.daira-search-field:focus-within {
+.daira-app-shell .daira-search-field:focus-within {
   border-color:var(--daira-search-focus)!important;
-  box-shadow:var(--daira-input-focus-ring),inset 0 1px 0 var(--daira-glass-rim);
+  box-shadow:var(--daira-input-focus-ring),inset 0 1px 0 var(--daira-glass-rim)!important;
 }
-.daira-search-field .daira-search-input,
-.daira-search-field input {
+.daira-app-shell .daira-search-field > svg {
+  flex-shrink:0;
+  position:static!important;
+  transform:none!important;
+  color:var(--daira-search-placeholder);
+}
+.daira-app-shell .daira-search-field input,
+.daira-app-shell .daira-search-field .daira-search-input,
+.daira-app-shell .daira-search-field input:focus,
+.daira-app-shell .daira-search-field input:focus-visible {
+  flex:1;
+  display:block;
+  width:100%;
+  min-width:0;
+  height:46px;
+  min-height:0;
+  padding:0!important;
+  margin:0;
+  border:0!important;
+  border-radius:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  color:var(--daira-heading)!important;
   font-size:16px!important;
   -webkit-text-size-adjust:100%;
+}
+.daira-app-shell .daira-search-field input::placeholder {
+  color:var(--daira-search-placeholder)!important;
+  opacity:1;
+}
+/* Standalone searches, including inbox overlay, use the same outer outline.
+   Exclude wrapped inputs so no inner focus border is ever drawn. */
+.daira-app-shell input:is([type="search"],[aria-label*="جستجو"],[placeholder*="جستجو"],[placeholder*="جست‌"]):not(.daira-search-field input) {
+  height:48px;
+  min-height:48px;
+  border:1px solid var(--daira-search-border);
+  border-radius:14px;
+  background:var(--daira-search-surface);
   color:var(--daira-heading);
-  background:transparent!important;
+  font-size:16px!important;
+  -webkit-text-size-adjust:100%;
 }
-.daira-search-field input::placeholder {color:var(--daira-search-placeholder)}
-.daira-search-field--floating {background:transparent!important;border:0!important;box-shadow:none}
-.daira-search-field--floating input {
-  background:var(--daira-search-surface)!important;
-  border:1px solid var(--daira-search-border)!important;
-  border-radius:14px!important;
+.daira-app-shell input:is([type="search"],[aria-label*="جستجو"],[placeholder*="جستجو"],[placeholder*="جست‌"]):not(.daira-search-field input):focus-visible {
+  border-color:var(--daira-search-focus);
+  outline:0!important;
+  box-shadow:var(--daira-input-focus-ring);
 }
-.daira-search-field--floating input:focus-visible {border-color:var(--daira-search-focus)!important;box-shadow:var(--daira-input-focus-ring)}
 /* Same empty-state for automation lists, inbox empty views and pickers. */
 .daira-empty-state {
   border:1px dashed var(--daira-empty-border)!important;
@@ -328,20 +371,6 @@
   border:1px solid var(--daira-glass-rim);
   border-radius:20px;
 }
-/* Cross-module inputs by intention: search field may be wrapped by MUI or
-   written directly as a native input, including pages outside the shell. */
-.daira-app-shell input:is([type="search"],[aria-label*="جستجو"],[placeholder*="جستجو"],[placeholder*="جست‌"]) {
-  background:var(--daira-search-surface);
-  border-color:var(--daira-search-border);
-  border-radius:14px;
-  color:var(--daira-heading);
-  font-size:16px!important;
-  -webkit-text-size-adjust:100%;
-}
-.daira-app-shell input:is([type="search"],[aria-label*="جستجو"],[placeholder*="جستجو"],[placeholder*="جست‌"]):focus-visible {
-  border-color:var(--daira-search-focus);
-  box-shadow:var(--daira-input-focus-ring);
-}
 @media(prefers-reduced-transparency:reduce) {
  .daira-empty-state,.daira-flow-glass,.daira-guide-glass,.daira-glass-dialog--danger {
    background:var(--daira-surface)!important;backdrop-filter:none!important
@@ -394,4 +423,65 @@
   font-size:16px!important;
   -webkit-text-size-adjust:100%;
   color:var(--daira-heading);
+}
+
+/* One canonical, opt-in modal motion for account/content and custom dialogs.
+   Presence keeps the outgoing element mounted for the exit phase. */
+@keyframes daira-glass-overlay-appear {
+  from {opacity:0}
+  to {opacity:1}
+}
+@keyframes daira-glass-dialog-appear {
+  from {opacity:0;transform:translateY(12px) scale(.975)}
+  to {opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes daira-glass-overlay-leave {
+  from {opacity:1}
+  to {opacity:0}
+}
+@keyframes daira-glass-dialog-leave {
+  from {opacity:1;transform:translateY(0) scale(1)}
+  to {opacity:0;transform:translateY(9px) scale(.98)}
+}
+.daira-modal-presence {display:contents}
+.daira-glass-overlay,
+.daira-modal-backdrop {
+  animation:daira-glass-overlay-appear var(--daira-modal-motion-duration) ease-out both;
+}
+.daira-glass-overlay .daira-glass-dialog,
+.daira-modal-backdrop .daira-account-modal {
+  animation:daira-glass-dialog-appear var(--daira-modal-motion-duration) var(--daira-modal-motion-ease) both;
+  transform-origin:center center;
+}
+.daira-modal-presence[data-phase="closing"] .daira-glass-overlay,
+.daira-modal-presence[data-phase="closing"] .daira-modal-backdrop,
+.daira-glass-overlay[data-phase="closing"] {
+  animation:daira-glass-overlay-leave var(--daira-modal-motion-duration) ease-in both;
+  pointer-events:none!important;
+}
+.daira-modal-presence[data-phase="closing"] .daira-glass-dialog,
+.daira-modal-presence[data-phase="closing"] .daira-account-modal,
+.daira-glass-overlay[data-phase="closing"] .daira-glass-dialog {
+  animation:daira-glass-dialog-leave var(--daira-modal-motion-duration) ease-in both;
+}
+/* Existing comment automation has its own managed 280 ms exit; don't
+   apply a second conflicting keyframe to its animated root and dialog. */
+.daira-glass-overlay[class*="transition-[opacity"] {
+  animation:none;
+}
+.daira-glass-overlay[class*="transition-[opacity"] > .daira-glass-dialog {
+  animation:none;
+}
+.daira-account-modal__add {flex-direction:row-reverse}
+.daira-account-modal__add svg {flex-shrink:0}
+@media(prefers-reduced-motion:reduce) {
+  .daira-glass-overlay,.daira-modal-backdrop,
+  .daira-glass-overlay .daira-glass-dialog,
+  .daira-modal-backdrop .daira-account-modal,
+  .daira-modal-presence[data-phase="closing"] .daira-glass-overlay,
+  .daira-modal-presence[data-phase="closing"] .daira-glass-dialog,
+  .daira-modal-presence[data-phase="closing"] .daira-account-modal {
+    animation:none!important;
+    transition:none!important;
+  }
 }

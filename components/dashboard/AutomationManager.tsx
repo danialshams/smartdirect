@@ -1,5 +1,6 @@
 "use client";
 
+import GlassModalPresence from "./GlassModalPresence";
 import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 import {
   Bot,
@@ -392,16 +393,16 @@ export default function AutomationManager({
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <div className="relative min-w-0 flex-1">
+              <div className="daira-search-field relative min-w-0 flex-1">
                 <Search
                   size={17}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  className="shrink-0 text-[var(--daira-search-placeholder)]"
                 />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="جستجو بر اساس کلمه کلیدی..."
-                  className="h-11 w-full rounded-xl border border-border bg-background pr-10 pl-4 text-sm outline-none transition focus:border-primary"
+                  className="daira-search-input min-w-0 flex-1 border-0 bg-transparent text-base outline-none"
                 />
               </div>
 
@@ -601,6 +602,7 @@ export default function AutomationManager({
         )}
       </div>
 
+      <GlassModalPresence open={Boolean(formOpen && selectedAccount && editingAutomation)}>
       {formOpen && selectedAccount && editingAutomation && (
         <AutomationForm
           key={editingAutomation.id || `new-${editingAutomation.triggerType}`}
@@ -612,9 +614,11 @@ export default function AutomationManager({
         />
       )}
 
+      </GlassModalPresence>
+      <GlassModalPresence open={Boolean(deleteTarget || bulkDeleteOpen)} onEscape={() => { if (!deleting) { setDeleteTarget(null); setBulkDeleteOpen(false); } }}>
       {(deleteTarget || bulkDeleteOpen) && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
+          className="daira-glass-overlay fixed inset-0 z-[60] flex items-center justify-center p-4"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !deleting) {
               setDeleteTarget(null);
@@ -622,7 +626,7 @@ export default function AutomationManager({
             }
           }}
         >
-          <div className="w-full max-w-[380px] overflow-hidden rounded-[28px] border border-border/80 bg-background shadow-2xl">
+          <div className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-[380px] overflow-hidden rounded-[28px]">
             <div className="px-6 pb-1 pt-6">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-red-600">
                 <span className="text-lg font-bold">!</span>
@@ -672,6 +676,7 @@ export default function AutomationManager({
           </div>
         </div>
       )}
+      </GlassModalPresence>
     </div>
   );
 }

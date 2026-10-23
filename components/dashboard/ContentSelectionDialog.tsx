@@ -64,7 +64,27 @@ export default function ContentSelectionDialog({
   const [filter, setFilter] = useState<ContentFilter>("ALL");
   const closeRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
-  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+  const onConfirmRef = useRef(onConfirm);
+  const [closing,setClosing] = useState(false);
+  const closingRef = useRef(false);
+  const closeTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    onConfirmRef.current = onConfirm;
+  }, [onClose,onConfirm]);
+  // Keep the mounted media picker visible for the exit animation.
+  const animateExit = (action: () => void) => {
+    if (closingRef.current) return;
+    closingRef.current=true;
+    setClosing(true);
+    closeTimerRef.current=window.setTimeout(action,220);
+  };
+  const requestClose = () => animateExit(() => onCloseRef.current());
+  const requestConfirm = () => animateExit(() => onConfirmRef.current());
+  const requestCloseRef=useRef(requestClose);
+  requestCloseRef.current=requestClose;
+  useEffect(() => () => { if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current); }, []);
+
   const dialogRef = useRef<HTMLElement>(null);
   const sorted = useMemo(() => sortContentNewestFirst(items), [items]);
   const filters: Array<{ value: ContentFilter; label: string }> = mode === "story"
@@ -85,7 +105,7 @@ export default function ContentSelectionDialog({
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { event.preventDefault(); onCloseRef.current(); }
+      if (event.key === "Escape") { event.preventDefault(); requestCloseRef.current(); }
       if (event.key !== "Tab" || !dialogRef.current) return;
       const controls = Array.from(dialogRef.current.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));
       if (!controls.length) return;
@@ -104,7 +124,8 @@ export default function ContentSelectionDialog({
 
   return (
     <div className="daira-glass-overlay fixed inset-0 z-[2500] flex items-center justify-center p-4 sm:p-6"
-      onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      data-phase={closing ? "closing" : "open"}
+      onMouseDown={(event) => { if (event.target === event.currentTarget) requestClose(); }}>
       <section ref={dialogRef} dir="rtl" role="dialog" aria-modal="true" aria-labelledby="content-dialog-title" aria-describedby="content-dialog-hint"
         className="daira-glass-dialog daira-glass-dialog--content flex h-[min(82dvh,720px)] w-full max-w-[760px] flex-col overflow-hidden rounded-[26px] sm:h-[min(82dvh,720px)]">
         <header className="daira-glass-dialog__header flex shrink-0 items-start justify-between gap-3 border-b px-4 pb-4 pt-5 sm:px-6">
@@ -112,7 +133,7 @@ export default function ContentSelectionDialog({
             <h2 id="content-dialog-title" className="text-base font-extrabold text-[var(--daira-heading)]">انتخاب محتوا</h2>
             <p id="content-dialog-hint" className="mt-1 text-xs leading-5 text-[var(--daira-text-secondary)]">{mode === "story" ? "استوری موردنظر را انتخاب کنید." : "از جدیدترین محتواهای منتشرشده انتخاب کنید."}</p>
           </div>
-          <button ref={closeRef} type="button" onClick={onClose} aria-label="بستن انتخاب محتوا"
+          <button ref={closeRef} type="button" onClick={requestClose} aria-label="بستن انتخاب محتوا"
             className="daira-glass-dialog__close sd-neutral-button flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E6ECF5] bg-[#F8FAFD] text-[var(--daira-text-secondary)] transition hover:bg-[#EDF3FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
             <X size={19} />
           </button>
@@ -190,9 +211,9 @@ export default function ContentSelectionDialog({
           {error && filtered.length > 0 && <p role="alert" className="mt-3 text-xs text-red-600">{error}</p>}
         </div>
         <footer className="daira-glass-dialog__footer flex shrink-0 items-center gap-2 border-t px-4 py-3.5 sm:px-6">
-          <button type="button" onClick={onConfirm} disabled={loading}
+          <button type="button" onClick={requestConfirm} disabled={loading}
             className="daira-glass-dialog__primary min-h-12 flex-1 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-extrabold text-white transition hover:bg-[#2154E9] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
-          <button type="button" onClick={onClose} className="daira-glass-dialog__secondary sd-neutral-button min-h-12 rounded-xl border border-[#E0E7F2] bg-white px-5 text-sm font-bold text-[var(--daira-text-secondary)] transition hover:bg-[#F7F9FC]">انصراف</button>
+          <button type="button" onClick={requestClose} className="daira-glass-dialog__secondary sd-neutral-button min-h-12 rounded-xl border border-[#E0E7F2] bg-white px-5 text-sm font-bold text-[var(--daira-text-secondary)] transition hover:bg-[#F7F9FC]">انصراف</button>
         </footer>
       </section>
     </div>

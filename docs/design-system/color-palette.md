@@ -225,3 +225,14 @@
 - **Keyword Editor:** فیلد 16px، چیپ‌های ثابت، کلید Enter و دکمه افزودن دارای همان ساختار `.daira-keyword-field` و `.daira-keyword-chip`.
 - **Guide:** `.daira-guide-glass` با رنگ هشدار زرد کم‌رنگ و لبه سفید؛ عنوان و توضیحات با توکن‌های معنایی راهنما.
 - **Flow & Loading:** سطوح و انتخاب‌های فلو با `.daira-flow-glass` و Skeleton با `.daira-skeleton-glass`؛ تصویر/ویدیو و ورودی متن با وضوح کامل باقی می‌مانند.
+
+## جستجو و انیمیشن مدال‌ها — استاندارد واحد
+
+- **جستجو:** فقط یک کادر و یک Focus Ring؛ کلاس `daira-search-field` روی والد و `daira-search-input` روی Input بدون بوردر داخلی. ارتفاع ۴۸px، فونت ۱۶px حتی روی iOS و زمینه سفید صدفی از `--daira-search-surface`. نسخه قدیمی `daira-search-field--floating` به همین مدل یکپارچه تغییر کرده و دیگر بوردر مضاعف ایجاد نمی‌کند.
+- **مدال:** ورود با fade و حرکت نرم؛ خروج با fade و حرکت معکوس. مدال‌های شرطی از `GlassModalPresence` و زمان خروج استفاده کنند؛ صرفاً CSS بدون حفظ حضور DOM، خروج را اجرا نمی‌کند. Modals مبتنی بر MUI از گذار پیش‌فرض MUI استفاده می‌کنند.
+- **دسترسی:** `prefers-reduced-motion` همه حرکت‌ها را غیرفعال می‌کند، فوکوس و Escape حفظ می‌شوند.
+
+| توکن | مقدار | کاربرد |
+|---|---|---|
+| `--daira-modal-motion-duration` | `220ms` | حرکت مدال |
+| `--daira-modal-motion-ease` | `cubic-bezier(.22,1,.36,1)` | حرکت مدال |
