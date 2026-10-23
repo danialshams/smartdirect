@@ -9,6 +9,7 @@ import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./useSt
 import { createEmptyQuickReply } from "../automation-form-utils";
 import StoryReplyFormEditor from "./StoryReplyFormEditor";
 import StoryShowcaseSlidesEditor from "./StoryShowcaseSlidesEditor";
+import { uploadFileWithProgress } from "./shared-upload";
 
 export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean>; prepareExternalSave: () => Promise<MessageDraft | null> };
 
@@ -160,44 +161,19 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
   async function uploadMedia(file?: File): Promise<boolean> {
     if (!file) return false;
-    setError("");
-    setUploading(true);
-    setProgress(0);
-    setRetryFile(file);
-
-    const uploadSucceeded = await new Promise<boolean>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      const formData = new FormData();
-      formData.append("file", file);
-      xhr.open("POST", "/api/instagram/publishing/upload");
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) setProgress(Math.round((event.loaded / event.total) * 100));
-      };
-      xhr.onerror = () => reject(new Error("آپلود فایل ناموفق بود."));
-      xhr.onload = () => {
-        try {
-          const result = JSON.parse(xhr.responseText);
-          if (xhr.status < 200 || xhr.status >= 300 || !result?.success || typeof result?.data?.publicUrl !== "string") {
-            reject(new Error(result?.message || "آپلود فایل ناموفق بود."));
-            return;
-          }
-          setProgress(100);
-          if (!storyEditMode && message.mediaUrl && message.mediaUrl !== result.data.publicUrl) {
-            void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined);
-          }
-          onUpdate({ mediaUrl: result.data.publicUrl, mediaId: "" });
-          setRetryFile(null);
-          resolve(true);
-        } catch {
-          reject(new Error("پاسخ نامعتبر از سرور دریافت شد."));
-        }
-      };
-      xhr.send(formData);
-    }).catch((uploadError) => {
-      setError(uploadError instanceof Error ? uploadError.message : "آپلود فایل ناموفق بود.");
+    setError(""); setUploading(true); setProgress(0); setRetryFile(file);
+    try {
+      const uploaded = await uploadFileWithProgress(file, "MESSAGE", setProgress, { purpose: "AUTOMATION" });
+      if (!storyEditMode && message.mediaUrl && message.mediaUrl !== uploaded.publicUrl) {
+        void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined);
+      }
+      onUpdate({ mediaUrl: uploaded.publicUrl, mediaId: "" });
+      setRetryFile(null);
+      return true;
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "آپلود فایل ناموفق بود.");
       return false;
-    }).finally(() => setUploading(false));
-    return uploadSucceeded;
+    } finally { setUploading(false); }
   }
 
   useEffect(() => {
@@ -222,40 +198,16 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     setSlideUploading((current) => ({ ...current, [id]: true }));
     // Keep the previous image usable if replacement upload fails.
     const previousImageUrl = slides.find((slide) => slide.id === id)?.imageUrl;
-    await new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      const data = new FormData();
-      data.append("file", file);
-      xhr.open("POST", "/api/instagram/publishing/upload");
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          setSlideUploadProgress((current) => ({ ...current, [id]: Math.round((event.loaded / event.total) * 100) }));
-        }
-      };
-      xhr.onerror = () => reject(new Error("آپلود تصویر ناموفق بود."));
-      xhr.onload = () => {
-        try {
-          const result = JSON.parse(xhr.responseText);
-          if (xhr.status < 200 || xhr.status >= 300 || !result?.success || typeof result?.data?.publicUrl !== "string") {
-            reject(new Error(result?.message || "آپلود تصویر ناموفق بود."));
-            return;
-          }
-          setSlideUploadProgress((current) => ({ ...current, [id]: 100 }));
-          patchSlide(id, { imageUrl: result.data.publicUrl, previewUrl: result.data.publicUrl });
-          if (previousImageUrl && previousImageUrl !== result.data.publicUrl)
-            releaseDraftImage(previousImageUrl);
-          setSlideRetryFiles((current) => ({ ...current, [id]: null }));
-          resolve();
-        } catch {
-          reject(new Error("پاسخ نامعتبر از سرور دریافت شد."));
-        }
-      };
-      xhr.send(data);
-    }).catch((uploadError) => {
-      setError(uploadError instanceof Error ? uploadError.message : "آپلود تصویر ناموفق بود.");
-    }).finally(() => {
-      setSlideUploading((current) => ({ ...current, [id]: false }));
-    });
+    try {
+      const result = await uploadFileWithProgress(file, "MESSAGE", (progress) => {
+        setSlideUploadProgress((current) => ({ ...current, [id]: progress }));
+      }, { purpose: "AUTOMATION" });
+      patchSlide(id, { imageUrl: result.publicUrl, previewUrl: result.publicUrl });
+      if (previousImageUrl && previousImageUrl !== result.publicUrl) releaseDraftImage(previousImageUrl);
+      setSlideRetryFiles((current) => ({ ...current, [id]: null }));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "آپلود تصویر ناموفق بود.");
+    } finally { setSlideUploading((current) => ({ ...current, [id]: false })); }
   }
 
   const MAX_SHOWCASE_ITEMS = 10;
@@ -450,20 +402,13 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     },
   }), [keywordValid, uploading, slideUploadInProgress, formUploadsInFlight, savingShowcase, formSaving, responseType, message, showcaseSaved, onUpdate, onContinue, onSavedChange, existingShowcaseEdited, showcaseSource, storyCreateMode, storyEditMode, slides, hasValidSlide, selectedShowcase]);
 
-  async function uploadFormMedia(file?: File): Promise<string> {
+  async function uploadFormMedia(file?: File, onProgress: (progress: number) => void = () => undefined): Promise<string> {
     if (!file) return "";
     setFormUploadsInFlight((value) => value + 1);
     try {
-      const data = new FormData();
-      data.append("file", file);
-      const response = await fetch("/api/instagram/publishing/upload", { method: "POST", body: data });
-      const result = await response.json().catch(() => null);
-      if (!response.ok || !result?.success || typeof result?.data?.publicUrl !== "string")
-        throw new Error(result?.message || "آپلود فایل ناموفق بود.");
-      return result.data.publicUrl as string;
-    } finally {
-      setFormUploadsInFlight((value) => Math.max(0, value - 1));
-    }
+      const result = await uploadFileWithProgress(file, "MESSAGE", onProgress, { purpose: "AUTOMATION" });
+      return result.publicUrl;
+    } finally { setFormUploadsInFlight((value) => Math.max(0, value - 1)); }
   }
 
   const mediaAccept =

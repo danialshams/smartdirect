@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import VoiceRecorder from "./VoiceRecorder";
+import { uploadFileWithProgress } from "./publishing/shared-upload";
 import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./publishing/useStorageUploadLease";
 import type { AutomationTriggerType } from "./AutomationManager";
 import type {
@@ -96,30 +97,13 @@ async function readJsonResponse(response: Response, fallback: string) {
   }
 }
 
-async function uploadFile(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("purpose", "AUTOMATION");
-  const response = await fetch("/api/instagram/publishing/upload", {
-    method: "POST",
-    body: formData,
-  });
-  const result = await readJsonResponse(response, "آپلود فایل ناموفق بود.");
-  const uploadData = result?.data && typeof result.data === "object" ? result.data as Record<string, unknown> : {};
-  if (!response.ok || !result?.success || typeof uploadData.publicUrl !== "string") {
-    throw new Error(result?.message || "آپلود فایل ناموفق بود.");
-  }
-  return uploadData.publicUrl;
+async function uploadFile(file: File, onProgress: (progress: number) => void = () => undefined): Promise<string> {
+  const result = await uploadFileWithProgress(file, "MESSAGE", onProgress, { purpose: "AUTOMATION" });
+  return result.publicUrl;
 }
 
-async function uploadBranchMedia(
-  file: File,
-  onProgress: (progress: number) => void,
-): Promise<string> {
-  onProgress(20);
-  const url = await uploadFile(file);
-  onProgress(100);
-  return url;
+async function uploadBranchMedia(file: File, onProgress: (progress: number) => void): Promise<string> {
+  return uploadFile(file, onProgress);
 }
 
 const typeOptions: Array<{
@@ -280,7 +264,7 @@ export default function AutomationFlowMessage({
     setMediaRetryFile(file);
     setMediaProgress(15);
     try {
-      const url = await uploadFile(file);
+      const url = await uploadFile(file, setMediaProgress);
       setMediaProgress(100);
       if (message.mediaUrl && message.mediaUrl !== url) {
         void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined);
@@ -1145,7 +1129,7 @@ function ShowcaseComposer({
       const previewUrl = URL.createObjectURL(file);
       patchItem(id, { previewUrl });
       const previousUrl = items.find((item) => item.id === id)?.imageUrl;
-      const publicUrl = await uploadFile(file);
+      const publicUrl = await uploadFile(file, (progress) => setUploadProgressItems((current) => ({ ...current, [id]: progress })));
       if (previousUrl && previousUrl !== publicUrl) void requestStorageCleanupByPublicUrl(previousUrl).catch(() => undefined);
       setUploadProgressItems((current) => ({ ...current, [id]: 100 }));
       patchItem(id, { imageUrl: publicUrl, previewUrl: publicUrl });

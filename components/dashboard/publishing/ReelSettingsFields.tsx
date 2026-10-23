@@ -1,6 +1,6 @@
 "use client";
 
-import { upload as uploadToBlob } from "@vercel/blob/client";
+import { uploadFileWithProgress } from "./shared-upload";
 import { useRef, useState } from "react";
 import { CheckCircle2, ImagePlus, Loader2 } from "lucide-react";
 import type { ReelOptions } from "@/lib/instagram/reel-settings";
@@ -42,40 +42,8 @@ async function prepareCover(file: File): Promise<File> {
 }
 
 async function uploadCover(file: File, onProgress: (percent: number) => void): Promise<{ storageKey: string; publicUrl: string }> {
-  const response = await fetch("/api/instagram/publishing/upload/client", {
-    method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
-    body: JSON.stringify({ fileName: file.name, contentType: file.type, fileSize: file.size }),
-  });
-  const prepared = await response.json().catch(() => null);
-  if (!response.ok || !prepared?.success) throw new Error(prepared?.message || "آماده‌سازی کاور ناموفق بود.");
-  let result: unknown;
-  if (prepared.mode === "server-upload") {
-    const body = new FormData();
-    body.append("file", file);
-    body.append("targetType", "REEL");
-    const uploaded = await fetch("/api/instagram/publishing/upload", { method: "POST", credentials: "include", body });
-    result = await uploaded.json().catch(() => null);
-    if (!uploaded.ok) throw new Error((result as {message?: string} | null)?.message || "آپلود کاور ناموفق بود.");
-  } else if (prepared.mode === "vercel-blob" && typeof prepared.pathname === "string") {
-    const blob = await uploadToBlob(prepared.pathname, file, {
-      access: "public", contentType: "image/jpeg",
-      handleUploadUrl: "/api/instagram/publishing/upload/client",
-      onUploadProgress: (event) => onProgress(Math.min(95, Math.round(event.percentage))),
-      clientPayload: JSON.stringify({ pathname: prepared.pathname, fileName: file.name, contentType: file.type, fileSize: file.size }),
-    });
-    const finalized = await fetch("/api/instagram/publishing/upload/client", {
-      method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
-      body: JSON.stringify({ action: "finalize", pathname: blob.pathname, url: blob.url, fileName: file.name, contentType: file.type, fileSize: file.size, targetType: "REEL" }),
-    });
-    result = await finalized.json().catch(() => null);
-    if (!finalized.ok) throw new Error((result as {message?: string} | null)?.message || "ثبت کاور ناموفق بود.");
-  } else {
-    throw new Error("روش آپلود پشتیبانی نمی‌شود.");
-  }
-  const typed = result as { success?: boolean; message?: string; data?: { storageKey?: string; publicUrl?: string } } | null;
-  if (!typed?.success || !typed.data?.storageKey || !typed.data?.publicUrl) throw new Error(typed?.message || "آدرس کاور دریافت نشد.");
-  onProgress(100);
-  return { storageKey: typed.data.storageKey, publicUrl: typed.data.publicUrl };
+  const result = await uploadFileWithProgress(file, "REEL", onProgress);
+  return { storageKey: result.storageKey, publicUrl: result.publicUrl };
 }
 
 type Props = {

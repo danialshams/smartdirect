@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import path from "node:path";
-import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
-import { promisify } from "node:util";
-import ffmpegPath from "ffmpeg-static";
 
 import { authOptions } from "@/lib/auth";
 import { Prisma } from "@/generated/prisma/client";
@@ -20,12 +15,14 @@ import {
   proxyInstagramParticipantProfileUrl,
 } from "@/lib/instagram/media-proxy";
 import { getInstagramMessagingWindow } from "@/lib/instagram/messaging-window";
+import { normalizeInstagramAudio } from "@/lib/instagram/audio-normalizer";
+import { normalizeInstagramVideo } from "@/lib/instagram/video-normalizer";
+import { getStorageProvider } from "@/lib/storage/provider";
 
 export const dynamic = "force-dynamic";
 
-const MAX_MESSAGE_MEDIA_SIZE = 25 * 1024 * 1024;
-const SAFE_AUDIO_SIZE = 24 * 1024 * 1024;
-const execFileAsync = promisify(execFile);
+const MAX_MESSAGE_IMAGE_SIZE = 8_000_000 - 1;
+const MAX_MESSAGE_MEDIA_SIZE = 25_000_000 - 1;
 
 
 type HandoffState = {
@@ -207,12 +204,14 @@ async function uploadInstagramAttachment({
   igUserId,
   accessToken,
   file,
+  alreadyNormalized = false,
 }: {
   instagramAccountId: string;
   tenantId: string;
   igUserId: string;
   accessToken: string;
   file: File;
+  alreadyNormalized?: boolean;
 }) {
   const mimeType = file.type.toLowerCase();
 
@@ -228,68 +227,26 @@ async function uploadInstagramAttachment({
     throw new Error("فقط فایل‌های عکس، ویدیو و صوت قابل ارسال هستند.");
   }
 
-  if (file.size > MAX_MESSAGE_MEDIA_SIZE) {
-    throw new Error("حجم فایل نمی‌تواند بیشتر از ۲۵ مگابایت باشد.");
+  if (file.size <= 0) throw new Error("فایل خالی است.");
+  const maxSize = attachmentType === "image" ? MAX_MESSAGE_IMAGE_SIZE : MAX_MESSAGE_MEDIA_SIZE;
+  if (file.size > maxSize) {
+    throw new Error(attachmentType === "image" ? "حجم تصویر برای دایرکت باید کمتر از ۸ مگابایت باشد." : "حجم ویدیو یا صدا برای دایرکت باید کمتر از ۲۵ مگابایت باشد.");
   }
-
+  if (attachmentType === "image" && !["image/jpeg", "image/png"].includes(mimeType)) {
+    throw new Error("برای تصویر دایرکت از JPG یا PNG استفاده کن.");
+  }
   let uploadBuffer: Uint8Array<ArrayBufferLike> = new Uint8Array(await file.arrayBuffer());
   let uploadFileName = file.name || "smartdirect-media";
   let uploadContentType = mimeType;
-
-  if (attachmentType === "audio") {
-    if (!ffmpegPath) {
-      throw new Error("FFmpeg در سرور برای آماده‌سازی Voice در دسترس نیست.");
-    }
-
-    const tempDir = await mkdtemp(path.join(os.tmpdir(), "smartdirect-inbox-audio-"));
-    const inputPath = path.join(tempDir, "input" + (path.extname(uploadFileName) || ".audio"));
-    const outputPath = path.join(tempDir, "output.m4a");
-
-    try {
-      await writeFile(inputPath, uploadBuffer);
-      let normalized: Uint8Array<ArrayBufferLike> | null = null;
-
-      for (const bitrate of ["96k", "64k", "48k"]) {
-        await rm(outputPath, { force: true });
-        await execFileAsync(
-          ffmpegPath,
-          [
-            "-hide_banner",
-            "-loglevel",
-            "error",
-            "-y",
-            "-i",
-            inputPath,
-            "-vn",
-            "-c:a",
-            "aac",
-            "-b:a",
-            bitrate,
-            "-ar",
-            "44100",
-            "-ac",
-            "2",
-            "-movflags",
-            "+faststart",
-            outputPath,
-          ],
-          { timeout: 120000, maxBuffer: 4 * 1024 * 1024 },
-        );
-
-        normalized = new Uint8Array(await readFile(outputPath));
-        if (normalized.length <= SAFE_AUDIO_SIZE) break;
-      }
-
-      if (!normalized || normalized.length > SAFE_AUDIO_SIZE) {
-        throw new Error("حجم فایل صوتی پس از تبدیل باید حداکثر ۲۴ مگابایت باشد.");
-      }
-
-      uploadBuffer = normalized;
-      uploadFileName = path.basename(uploadFileName, path.extname(uploadFileName)) + ".m4a";
-      uploadContentType = "audio/mp4";
-    } finally {
-      await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
-    }
+  if (attachmentType === "audio" && !alreadyNormalized) {
+    uploadBuffer = await normalizeInstagramAudio(Buffer.from(uploadBuffer), uploadFileName);
+    uploadFileName = path.basename(uploadFileName, path.extname(uploadFileName)) + ".m4a";
+    uploadContentType = "audio/mp4";
+  }
+  if (attachmentType === "video" && !alreadyNormalized) {
+    uploadBuffer = await normalizeInstagramVideo(Buffer.from(uploadBuffer), uploadFileName, "MESSAGE");
+    uploadFileName = path.basename(uploadFileName, path.extname(uploadFileName)) + ".mp4";
+    uploadContentType = "video/mp4";
   }
 
   const uploadBody = new FormData();
@@ -323,7 +280,7 @@ async function uploadInstagramAttachment({
     method: "POST",
     accessToken,
     body: uploadBody,
-    timeoutMs: 30_000,
+    timeoutMs: 90_000,
     rateLimit: {
       instagramAccountId,
       tenantId,
@@ -792,6 +749,41 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/** Fetch only a pending upload owned by the authenticated dashboard user. */
+async function loadStagedInboxMedia(userId: string, storageKey: string) {
+  if (!storageKey.startsWith("pending/" + userId + "/")) throw new Error("فایل متعلق به این کاربر نیست.");
+  const item = await prisma.instagramStorageObject.findFirst({
+    where: { userId, storageKey, deletedAt: null },
+    select: { publicUrl: true },
+  });
+  if (!item?.publicUrl) throw new Error("فایل موقت برای ارسال پیدا نشد.");
+  const url = new URL(item.publicUrl);
+  const allowed = [process.env.S3_PUBLIC_BASE_URL, process.env.LOCAL_STORAGE_PUBLIC_URL]
+    .filter((value): value is string => Boolean(value))
+    .some((value) => { try { const base = new URL(value); return base.origin === url.origin && url.pathname.startsWith(base.pathname.replace(/\/$/, "") + "/"); } catch { return false; } });
+  const vercelHost = url.hostname.endsWith(".public.blob.vercel-storage.com");
+  const localDevelopment = process.env.NODE_ENV !== "production" && url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
+  if ((!localDevelopment && url.protocol !== "https:") || url.username || url.password || (!vercelHost && !allowed)) {
+    throw new Error("آدرس فایل برای ارسال معتبر نیست.");
+  }
+  const response = await fetch(url, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(90_000) });
+  if (!response.ok) throw new Error("دریافت فایل آپلودشده ناموفق بود.");
+  const declared = Number(response.headers.get("content-length") || 0);
+  if (declared > MAX_MESSAGE_MEDIA_SIZE) throw new Error("حجم فایل بیش از حد مجاز است.");
+  const data = await response.arrayBuffer();
+  if (!data.byteLength || data.byteLength > MAX_MESSAGE_MEDIA_SIZE) throw new Error("حجم فایل معتبر نیست.");
+  const name = storageKey.split("/").at(-1) || "inbox-media";
+  const normalizedAudio = name.endsWith(".normalized.m4a");
+  const normalizedVideo = name.endsWith(".normalized.mp4");
+  const fallbackType = normalizedAudio ? "audio/mp4" : normalizedVideo ? "video/mp4" : "";
+  const receivedType = response.headers.get("content-type")?.split(";")[0] || "";
+  const type = fallbackType || receivedType;
+  if (!/^(image\/(jpeg|png)|video\/(mp4|quicktime)|audio\/(mp4|mpeg|webm|ogg|wav|x-wav|aac))$/.test(type)) {
+    throw new Error("فرمت فایل آپلودشده برای دایرکت مجاز نیست.");
+  }
+  return { file: new File([data], name, { type }), alreadyNormalized: normalizedAudio || normalizedVideo };
+}
+
 export async function POST(request: NextRequest) {
   const debugId = `inbox-send-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -834,6 +826,7 @@ export async function POST(request: NextRequest) {
     const conversationId =
       typeof body.conversationId === "string" ? body.conversationId : "";
 
+    const stagedStorageKey = typeof body.stagedStorageKey === "string" ? body.stagedStorageKey : "";
     const text = typeof body.text === "string" ? body.text.trim() : "";
     const action = typeof body.action === "string" ? body.action : "";
 
@@ -862,7 +855,7 @@ export async function POST(request: NextRequest) {
       return jsonError("accountId و conversationId الزامی هستند.");
     }
 
-    if (action !== "mark_seen" && !text && !file) {
+    if (action !== "mark_seen" && !text && !file && !stagedStorageKey) {
       return jsonError("متن یا فایل پیام الزامی است.");
     }
 
@@ -1012,12 +1005,19 @@ export async function POST(request: NextRequest) {
           }),
     };
 
-    if (file) {
+    let attachmentFile = file;
+    let alreadyNormalized = false;
+    if (!attachmentFile && stagedStorageKey) {
+      const staged = await loadStagedInboxMedia(session.user.id, stagedStorageKey);
+      attachmentFile = staged.file;
+      alreadyNormalized = staged.alreadyNormalized;
+    }
+    if (attachmentFile) {
       console.info("[INBOX_SEND_DEBUG] attachment-upload-start", {
         debugId,
-        attachmentType: file.type,
-        fileName: file.name,
-        fileSize: file.size,
+        attachmentType: attachmentFile.type,
+        fileName: attachmentFile.name,
+        fileSize: attachmentFile.size,
       });
 
       const uploaded = await uploadInstagramAttachment({
@@ -1025,7 +1025,8 @@ export async function POST(request: NextRequest) {
         tenantId: session.user.id,
         igUserId: account.igUserId,
         accessToken,
-        file,
+        file: attachmentFile,
+        alreadyNormalized,
       });
 
       console.info("[INBOX_SEND_DEBUG] attachment-upload-success", {
@@ -1080,7 +1081,7 @@ export async function POST(request: NextRequest) {
           rateLimit: {
             instagramAccountId: account.id,
             tenantId: session.user.id,
-            operation: file ? "MESSAGE_MEDIA" : "MESSAGE_TEXT",
+            operation: attachmentFile ? "MESSAGE_MEDIA" : "MESSAGE_TEXT",
           },
         },
       );
