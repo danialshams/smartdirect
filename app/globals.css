@@ -761,7 +761,7 @@ body {
   overflow:hidden;
   border:1px solid rgba(255,255,255,.84);
   border-bottom-color:rgba(177,190,212,.46);
-  background:linear-gradient(125deg,rgba(255,255,255,.61),rgba(249,251,255,.34) 56%,rgba(255,255,255,.56));
+  background:linear-gradient(125deg,rgba(255,255,255,.52),rgba(249,251,255,.24) 56%,rgba(255,255,255,.46));
   -webkit-backdrop-filter:blur(14px) saturate(116%);
   backdrop-filter:blur(14px) saturate(116%);
   box-shadow:0 12px 30px rgba(31,49,80,.12),0 3px 8px rgba(31,49,80,.035),inset 0 1px 1px rgba(255,255,255,.96),inset 0 -1px 3px rgba(56,83,125,.09);
@@ -793,12 +793,12 @@ body {
 .daira-bottom-nav--liquid::before {
   background:linear-gradient(175deg,rgba(255,255,255,.55),rgba(255,255,255,0) 34%,rgba(255,255,255,.10) 100%);
 }
-/* Scrolling content remains sharp until it enters each glass surface.
-   Only INSIDE the glass, at its exit edge, a neutral veil progressively
-   obscures the underlying content. This is not a page-wide fade or mask. */
+/* Neutral fade INSIDE each rounded glass panel. In the previous version this
+   veil became transparent at the bottom edge, exposing scrolling card details.
+   It now progressively conceals them exactly as they exit that edge. */
 .daira-home__header--liquid::after,
 .daira-bottom-nav--liquid::after {
-  background:linear-gradient(to bottom,rgba(246,249,254,.62) 0%,rgba(246,249,254,.36) 28%,rgba(246,249,254,.12) 60%,rgba(246,249,254,0) 93%);
+  background:linear-gradient(to bottom,rgba(246,249,254,0) 0%,rgba(246,249,254,.06) 48%,rgba(246,249,254,.31) 79%,rgba(246,249,254,.66) 100%);
 }
 .daira-home__header--liquid > *,
 .daira-bottom-nav--liquid > .daira-bottom-nav__item,
@@ -898,4 +898,68 @@ body {
 @media(prefers-reduced-motion:reduce) {
   .daira-bottom-nav--liquid .daira-bottom-nav__item,
   .daira-home__header--liquid { transition:none; }
+}
+
+
+/* Anti-bleed quarter-circle guards: rounded glass clips its OWN contents, but
+   cannot clip underlying scrolling page elements OUTSIDE its bottom corners.
+   Paint only those two small exterior corner cutouts with the page color.
+   The rest of the glass stays transparent and responds to content underneath. */
+.daira-liquid-corner-guard {
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  pointer-events:none;
+  --daira-glass-corner:23px;
+}
+.daira-liquid-corner-guard::before,
+.daira-liquid-corner-guard::after {
+  content:"";
+  position:absolute;
+  bottom:0;
+  width:var(--daira-glass-corner);
+  height:var(--daira-glass-corner);
+  background:var(--daira-page-bg);
+  pointer-events:none;
+}
+.daira-liquid-corner-guard::before {
+  left:0;
+  -webkit-mask-image:radial-gradient(circle var(--daira-glass-corner) at top right,transparent calc(var(--daira-glass-corner) - 1px),#000 var(--daira-glass-corner));
+  mask-image:radial-gradient(circle var(--daira-glass-corner) at top right,transparent calc(var(--daira-glass-corner) - 1px),#000 var(--daira-glass-corner));
+}
+.daira-liquid-corner-guard::after {
+  right:0;
+  -webkit-mask-image:radial-gradient(circle var(--daira-glass-corner) at top left,transparent calc(var(--daira-glass-corner) - 1px),#000 var(--daira-glass-corner));
+  mask-image:radial-gradient(circle var(--daira-glass-corner) at top left,transparent calc(var(--daira-glass-corner) - 1px),#000 var(--daira-glass-corner));
+}
+.daira-liquid-corner-guard--header {
+  top:max(8px,env(safe-area-inset-top,0px));
+  width:calc(100% - clamp(14px,4vw,48px));
+  max-width:1240px;
+  height:82px;
+  z-index:1590;
+}
+.daira-liquid-corner-guard--nav {
+  bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  width:min(calc(100% - 24px),520px);
+  height:76px;
+  z-index:1495;
+  --daira-glass-corner:27px;
+}
+@media(max-width:900px) {
+  .daira-liquid-corner-guard--header { height:66px;--daira-glass-corner:21px; }
+}
+@media(max-width:520px) {
+  .daira-liquid-corner-guard--header { height:62px;--daira-glass-corner:19px; }
+}
+@media(max-width:480px) {
+  .daira-liquid-corner-guard--nav {
+    bottom:calc(8px + env(safe-area-inset-bottom,0px));
+    width:calc(100% - 16px);
+    height:74px;
+    --daira-glass-corner:24px;
+  }
+}
+@supports not ((mask-image:radial-gradient(circle,#000,transparent)) or (-webkit-mask-image:radial-gradient(circle,#000,transparent))) {
+  .daira-liquid-corner-guard { display:none; }
 }
