@@ -3,7 +3,6 @@
 import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
 import { uploadFileWithProgress, prepareAutomationFile } from "./publishing/shared-upload";
 import { validateVoiceFileForUpload, VOICE_MAX_SECONDS } from "@/lib/instagram/voice-client";
-import { Input } from "@/components/dashboard/DashboardUI";
 import {
   ArrowRight,
   Check,
@@ -1337,7 +1336,7 @@ export default function InstagramInbox({
   }, [mobileChatOpen]);
 
   const listPanel = (
-    <aside className="flex min-h-0 min-w-0 flex-1 flex-col bg-white lg:w-[315px] lg:flex-none lg:border-l lg:border-[#E8EDF5]">
+    <aside className="inbox-thread-list flex min-h-0 min-w-0 flex-1 flex-col bg-white lg:w-[315px] lg:flex-none lg:border-l lg:border-[#E8EDF5]">
       <div className="shrink-0 border-b border-[#E8EDF5] px-3 pb-2 pt-2 sm:px-4">
         <div className="mb-2 flex items-center justify-between gap-2">
           <div>
@@ -1377,7 +1376,8 @@ export default function InstagramInbox({
             size={15}
             className="shrink-0 text-[var(--daira-search-placeholder)]"
           />
-          <Input
+          <input
+            type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="جستجوی گفتگو..."
@@ -1484,7 +1484,7 @@ export default function InstagramInbox({
   );
 
   const chatPanel = (
-    <div className="relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-background">
+    <div className="inbox-chat-pane relative isolate flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-background">
       {selectedConversation ? (
         <>
           <header className="inbox-chat-header relative z-30 flex min-w-0 shrink-0 items-center gap-2 border-b border-[#E8EDF5] bg-white px-3 py-3 sm:px-5">
@@ -1515,8 +1515,10 @@ export default function InstagramInbox({
               setConversationSearchOpen((value) => !value);
             }} className="grid h-11 w-11 shrink-0 touch-manipulation place-items-center rounded-xl text-[#526580] hover:bg-[#F1F5FC]" aria-label="جست‌وجو در پیام‌ها" aria-expanded={conversationSearchOpen} aria-controls="inbox-conversation-search"><Search size={19}/></button>
             {conversationSearchOpen && (
-              <div id="inbox-conversation-search" role="search" className="absolute top-full right-0 left-0 z-40 min-w-0 border-b border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_12px_24px_rgba(24,35,60,0.12)] sm:px-5">
+              <div id="inbox-conversation-search" role="search" className="inbox-chat-search-panel absolute top-full right-0 left-0 z-40 min-w-0 border-b border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_12px_24px_rgba(24,35,60,0.12)] sm:px-5">
               <div className="flex items-center gap-2">
+                <label className="daira-search-field min-w-0 flex-1">
+                  <Search size={16} aria-hidden="true" />
                 <input
                   type="search"
                   inputMode="search"
@@ -1525,9 +1527,10 @@ export default function InstagramInbox({
                   onChange={(event) => setConversationSearchText(event.target.value)}
                   placeholder="جست‌وجو در پیام‌های این گفتگو..."
                   aria-label="جست‌وجو در پیام‌های گفتگو"
-                  className="daira-search-standalone h-11 min-w-0 w-full flex-1 touch-manipulation rounded-xl border border-[var(--daira-search-border)] bg-[var(--daira-search-surface)] px-3 text-base leading-6 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-search-focus)]"
+                  className="daira-search-input min-w-0 flex-1 touch-manipulation bg-transparent text-base leading-6 outline-none"
                   style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }}
                 />
+                </label>
                 <button type="button" onClick={() => {
                   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
                   setConversationSearchOpen(false);
@@ -1561,7 +1564,7 @@ export default function InstagramInbox({
               setShowJumpToLatest(distance > 180);
               if (distance < 100) setNewMessageCount(0);
             }}
-            className="relative min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-[#F7F9FD] px-3 py-4 sm:px-6 sm:py-5"
+            className="inbox-chat-scroll relative min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-[#F7F9FD] px-3 py-4 sm:px-6 sm:py-5"
           >
             {focusedMessageId && (
               <div className="mx-auto mb-4 flex max-w-2xl justify-center">
@@ -1659,7 +1662,7 @@ export default function InstagramInbox({
 
           <form
             onSubmit={sendMessage}
-            className="shrink-0 border-t border-[#E8EDF5] bg-white px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:py-3"
+            className="inbox-composer shrink-0 border-t border-[#E8EDF5] bg-white px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:py-3"
           >
             {selectedConversation.messagingWindow && !selectedConversation.messagingWindow.canSend && (
               <div className="mb-2 rounded-lg bg-muted/60 px-3 py-2 text-[10px] leading-5 text-muted-foreground">
@@ -1879,7 +1882,7 @@ export default function InstagramInbox({
   );
 
   return (
-    <section id="messages" dir="rtl" data-mobile-chat-open={mobileChatOpen ? "true" : "false"} className="scroll-mt-24 overflow-x-hidden">
+    <section id="messages" dir="rtl" data-mobile-chat-open={mobileChatOpen ? "true" : "false"} className="daira-inbox-glass scroll-mt-24 overflow-x-hidden">
       <style>{`
         @media (max-width: 1023px) {
           #messages[data-mobile-chat-open="true"] .inbox-frame {

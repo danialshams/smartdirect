@@ -485,3 +485,171 @@
     transition:none!important;
   }
 }
+
+
+/* Scoped Liquid Glass applications — text inputs and actual media stay opaque. */
+.daira-app-shell .daira-inbox-glass .inbox-frame {
+  border-color:var(--daira-glass-rim);
+  background:var(--daira-inbox-frame-glass);
+  box-shadow:var(--daira-shadow-floating),inset 0 1px 0 var(--daira-glass-rim);
+  -webkit-backdrop-filter:blur(14px) saturate(112%);
+  backdrop-filter:blur(14px) saturate(112%);
+}
+.daira-app-shell .daira-inbox-glass .inbox-thread-list {
+  background:var(--daira-inbox-sidebar-glass);
+  border-color:var(--daira-glass-inner-rim);
+}
+.daira-app-shell .daira-inbox-glass .inbox-thread-list > div:first-child {
+  border-color:var(--daira-glass-inner-rim);
+  background:var(--daira-glass-raised);
+}
+.daira-app-shell .daira-inbox-glass .inbox-chat-pane {background:var(--daira-inbox-chat-canvas)}
+.daira-app-shell .daira-inbox-glass .inbox-chat-header {
+  border-color:var(--daira-glass-inner-rim);
+  background:var(--daira-glass-raised);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+}
+.daira-app-shell .daira-inbox-glass .inbox-chat-scroll {
+  background:var(--daira-inbox-chat-canvas);
+}
+.daira-app-shell .daira-inbox-glass .inbox-composer {
+  border-color:var(--daira-glass-inner-rim);
+  background:var(--daira-inbox-composer-glass);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+}
+.daira-app-shell .daira-inbox-glass .inbox-chat-search-panel {
+  background:var(--daira-glass-popover);
+  border-color:var(--daira-glass-rim);
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+  box-shadow:var(--daira-shadow-floating);
+}
+.daira-app-shell .daira-inbox-glass .inbox-thread-list button.group:hover,
+.daira-app-shell .daira-inbox-glass .inbox-chat-search-panel button:hover {
+  background:var(--daira-inbox-thread-hover);
+}
+.daira-app-shell .daira-inbox-glass .inbox-chat-scroll [data-message-id] div[class*="rounded-br-md"][class*="bg-white"],
+.daira-app-shell .daira-inbox-glass .inbox-chat-scroll [data-message-id] div[class*="rounded-[21px]"][class*="bg-white"] {
+  background:var(--daira-inbox-received-bubble);
+  border-color:var(--daira-glass-rim);
+}
+.daira-app-shell .daira-inbox-glass .inbox-composer textarea {
+  border-color:var(--daira-input-border);
+  background:var(--daira-publishing-control-glass);
+}
+.daira-app-shell .daira-insights-glass > section[class*="bg-white"],
+.daira-app-shell .daira-insights-glass section[class*="rounded-2xl"][class*="border"] {
+  background:var(--daira-glass-card);
+  border-color:var(--daira-glass-rim);
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
+}
+.daira-app-shell .daira-insights-glass .daira-insights-date-field {
+  background:var(--daira-calendar-field-glass);
+  border-color:var(--daira-glass-rim);
+  box-shadow:inset 0 1px 0 var(--daira-glass-rim);
+}
+.daira-app-shell .daira-insights-glass .daira-insights-date-field:hover,
+.daira-app-shell .daira-insights-glass .daira-insights-date-field:focus-visible {
+  border-color:var(--daira-primary);
+}
+.daira-insights-calendar-dialog {
+  border-color:var(--daira-glass-border-strong);
+  background:var(--daira-calendar-glass);
+  color:var(--daira-heading);
+}
+.daira-insights-calendar-dialog > div:first-child {
+  border-color:var(--daira-glass-inner-rim);
+  background:var(--daira-glass-modal-header);
+}
+.daira-insights-calendar-body {background:var(--daira-calendar-glass)}
+.daira-insights-calendar-body .daira-insights-calendar-grid {
+  background:transparent;
+}
+.daira-insights-calendar-body .rdp-day_button:hover {
+  background:var(--daira-calendar-cell-hover);
+}
+.daira-insights-calendar-body .rdp-dropdown_root {
+  border-color:var(--daira-search-border);
+  background:var(--daira-glass-popover);
+}
+.daira-app-shell .daira-publishing-glass .daira-publishing-tabs {
+  border:1px solid var(--daira-glass-rim);
+  background:var(--daira-glass-raised);
+  box-shadow:inset 0 1px 0 var(--daira-glass-inner-rim);
+}
+.daira-app-shell .daira-publishing-glass .daira-publishing-tabs button[aria-current="page"] {
+  background:var(--daira-glass-popover);
+  color:var(--daira-primary);
+}
+.daira-app-shell .daira-publishing-glass section[class*="bg-white"][class*="border"],
+.daira-app-shell .daira-publishing-glass div[class*="rounded-[22px]"][class*="bg-white"][class*="border"],
+.daira-app-shell .daira-publishing-glass div[class*="rounded-2xl"][class*="bg-white"][class*="border"] {
+  background:var(--daira-publishing-glass);
+  border-color:var(--daira-glass-rim);
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
+}
+.daira-app-shell .daira-publishing-glass :is(input:not([type=checkbox]):not([type=radio]),textarea,select) {
+  background:var(--daira-publishing-control-glass);
+}
+.daira-app-shell .automation-create-flow .daira-content-select-panel {
+  border-color:var(--daira-glass-rim);
+  background:var(--daira-content-select-panel);
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
+}
+.daira-app-shell .automation-create-flow section[class*="bg-white"][class*="border"] {
+  background:var(--daira-flow-card-glass);
+  border-color:var(--daira-glass-rim);
+}
+.daira-content-select-button {
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:44px;border:1px solid var(--daira-content-select-button);
+  border-radius:12px;background:var(--daira-content-select-button);
+  color:var(--daira-inverse-text);font-weight:800;
+  transition:background-color .18s,border-color .18s,box-shadow .18s;
+}
+.daira-content-select-button:hover:not(:disabled) {
+  background:var(--daira-content-select-button-hover);
+  border-color:var(--daira-content-select-button-hover);
+}
+.daira-content-select-button:focus-visible,
+.daira-create-action:focus-visible {
+  outline:2px solid var(--daira-primary);
+  outline-offset:3px;
+}
+.daira-create-action svg,.daira-content-select-button svg {flex-shrink:0}
+.daira-app-shell .daira-search-field .MuiInputBase-root,
+.daira-app-shell .daira-search-field .MuiOutlinedInput-root {
+  min-width:0;flex:1;height:46px;padding:0!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+}
+.daira-app-shell .daira-search-field .MuiOutlinedInput-notchedOutline {
+  border:0!important;
+}
+.daira-app-shell .daira-search-field .MuiOutlinedInput-input {
+  height:46px!important;padding:0!important;
+  box-shadow:none!important;outline:0!important;
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .daira-app-shell .daira-inbox-glass :is(.inbox-frame,.inbox-thread-list,.inbox-chat-header,.inbox-composer,.inbox-chat-search-panel),
+  .daira-insights-calendar-dialog,
+  .daira-app-shell .daira-publishing-glass section[class*="bg-white"][class*="border"],
+  .daira-app-shell .automation-create-flow .daira-content-select-panel {
+    background:var(--daira-surface);
+  }
+}
+@media(prefers-reduced-transparency:reduce) {
+  .daira-app-shell .daira-inbox-glass :is(.inbox-frame,.inbox-thread-list,.inbox-chat-header,.inbox-composer,.inbox-chat-search-panel),
+  .daira-insights-calendar-dialog,.daira-insights-calendar-body,
+  .daira-app-shell .daira-publishing-glass section[class*="bg-white"][class*="border"],
+  .daira-app-shell .automation-create-flow .daira-content-select-panel {
+    background:var(--daira-surface)!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .daira-content-select-button {transition:none}
+}

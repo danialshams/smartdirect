@@ -1277,9 +1277,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const accept = type === "REEL" ? acceptedVideos : type === "STORY" || type === "CAROUSEL" ? "image/jpeg,image/png,image/webp," + acceptedVideos : "image/jpeg,image/png,image/webp";
 
   return (
-    <div dir="rtl" className="min-h-full bg-transparent px-1 py-2 pb-24 sm:px-2 sm:py-3 sm:pb-10">
+    <div dir="rtl" className="daira-publishing-glass min-h-full bg-transparent px-1 py-2 pb-24 sm:px-2 sm:py-3 sm:pb-10">
       <div className="mx-auto w-full max-w-4xl">
-        <nav className="mb-5 grid grid-cols-2 gap-2 rounded-[20px] bg-[var(--daira-section-alt)] p-1.5" aria-label="بخش‌های انتشار">
+        <nav className="daira-publishing-tabs mb-5 grid grid-cols-2 gap-2 rounded-[20px] bg-[var(--daira-section-alt)] p-1.5" aria-label="بخش‌های انتشار">
           <button type="button" onClick={()=>setActiveTab("create")} aria-current={activeTab==="create"?"page":undefined}
             className={"flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="create"?"bg-white text-[var(--daira-primary)] shadow-sm":"text-[var(--daira-text-secondary)]")}>
             <ImagePlus size={18}/> انتشار محتوا

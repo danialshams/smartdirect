@@ -82,8 +82,8 @@ export default function SmartRemindersList() {
 
   return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-4 py-3">
     <button type="button" onClick={() => router.push("/dashboard/reminders/new")}
-      dir="rtl" className="flex min-h-[54px] w-full flex-row-reverse items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
-      style={{ background: dairaPalette.primary.main }}><span>ایجاد یادآوری جدید</span><Plus size={20} aria-hidden="true"/></button>
+      dir="rtl" className="daira-create-action flex min-h-[54px] w-full flex-row items-center justify-center gap-2 rounded-full text-base font-bold text-white shadow-sm transition hover:brightness-95"
+      style={{ background: dairaPalette.primary.main }}><Plus size={20} aria-hidden="true" className="shrink-0"/><span>ایجاد یادآوری جدید</span></button>
     <label className="daira-search-field relative flex">
       <Search size={18} className="shrink-0 text-[var(--daira-search-placeholder)]"/>
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="جستجو در یادآوری‌ها..." aria-label="جستجوی یادآوری‌ها"

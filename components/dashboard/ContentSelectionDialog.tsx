@@ -134,7 +134,7 @@ export default function ContentSelectionDialog({
             <p id="content-dialog-hint" className="mt-1 text-xs leading-5 text-[var(--daira-text-secondary)]">{mode === "story" ? "استوری موردنظر را انتخاب کنید." : "از جدیدترین محتواهای منتشرشده انتخاب کنید."}</p>
           </div>
           <button ref={closeRef} type="button" onClick={requestClose} aria-label="بستن انتخاب محتوا"
-            className="daira-glass-dialog__close sd-neutral-button flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E6ECF5] bg-[#F8FAFD] text-[var(--daira-text-secondary)] transition hover:bg-[#EDF3FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
+            className="daira-glass-dialog__close sd-neutral-button flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--daira-search-border)] bg-[var(--daira-glass-raised)] text-[var(--daira-text-secondary)] transition hover:bg-[var(--daira-outline-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
             <X size={19} />
           </button>
         </header>
@@ -142,18 +142,18 @@ export default function ContentSelectionDialog({
           <div role="group" aria-label="فیلتر محتوا" className="daira-glass-tabs flex min-w-0 gap-1.5 rounded-2xl p-1">
             {filters.map((option) => (
               <button key={option.value} type="button" aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
-                className={"sd-neutral-button min-h-9 rounded-xl px-3.5 text-xs font-bold transition sm:px-5 " + (filter === option.value ? "bg-white text-[#2158DE] shadow-[0_2px_9px_rgba(30,65,120,.10)]" : "text-[var(--daira-text-secondary)] hover:text-[#1E293B]")}>
+                className={"sd-neutral-button min-h-9 rounded-xl px-3.5 text-xs font-bold transition sm:px-5 " + (filter === option.value ? "bg-[var(--daira-glass-popover)] text-[var(--daira-primary)] shadow-[0_2px_9px_rgba(30,65,120,.10)]" : "text-[var(--daira-text-secondary)] hover:text-[var(--daira-heading)]")}>
                 {option.label}
               </button>
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <span aria-live="polite" className="rounded-full bg-[#EEF4FF] px-3 py-1.5 text-xs font-bold text-[var(--daira-primary)]">
+            <span aria-live="polite" className="rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-bold text-[var(--daira-primary)]">
               {number(selectedIds.length)} {maxSelected ? "از " + number(maxSelected) : ""} انتخاب‌شده
             </span>
             {onRefresh && (
               <button type="button" onClick={onRefresh} disabled={refreshing} aria-label="به‌روزرسانی محتوا" title="به‌روزرسانی محتوا"
-                className="sd-neutral-button flex h-9 w-9 items-center justify-center rounded-xl text-[var(--daira-text-secondary)] transition hover:bg-[#F1F5FB] disabled:opacity-50">
+                className="sd-neutral-button flex h-9 w-9 items-center justify-center rounded-xl text-[var(--daira-text-secondary)] transition hover:bg-[var(--daira-outline-hover-bg)] disabled:opacity-50">
                 <RefreshCw size={17} className={refreshing ? "animate-spin" : ""} />
               </button>
             )}
@@ -165,7 +165,7 @@ export default function ContentSelectionDialog({
               پیش‌نمایش {number(missingIds.length)} محتوای قبلی در دسترس نیست، اما انتخاب آن حفظ شده است.
               <div className="mt-2 flex flex-wrap gap-2">
                 {missingIds.map((id) => (
-                  <button key={id} type="button" onClick={() => onToggle(id)} className="sd-neutral-button inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#DDE6F3] bg-white px-3 text-xs text-[var(--daira-text-secondary)]">
+                  <button key={id} type="button" onClick={() => onToggle(id)} className="sd-neutral-button inline-flex min-h-9 items-center gap-2 rounded-lg border border-[var(--daira-search-border)] bg-[var(--daira-glass-popover)] px-3 text-xs text-[var(--daira-text-secondary)]">
                     <span dir="ltr">…{id.slice(-8)}</span><X size={13} />
                   </button>
                 ))}
@@ -174,7 +174,7 @@ export default function ContentSelectionDialog({
           )}
           {loading ? (
             <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 sm:gap-3" aria-label="در حال دریافت محتوا" role="status">
-              {Array.from({ length: 12 }, (_, i) => <div key={i} className="aspect-square animate-pulse rounded-2xl bg-[#E9EEF7]" />)}
+              {Array.from({ length: 12 }, (_, i) => <div key={i} className="aspect-square animate-pulse rounded-2xl bg-[var(--daira-skeleton-base)]" />)}
             </div>
           ) : filtered.length === 0 ? (
             <div className="daira-empty-state flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 text-center text-xs leading-6 text-[var(--daira-text-secondary)]">
@@ -191,8 +191,8 @@ export default function ContentSelectionDialog({
                 return (
                   <button key={item.id} type="button" disabled={locked || full} onClick={() => onToggle(item.id)} aria-pressed={selected}
                     aria-label={contentLabel(item) + (locked ? "، قبلاً انتخاب شده" : selected ? "، انتخاب‌شده" : "")}
-                    className={"sd-content-card group relative block aspect-square min-w-0 overflow-hidden rounded-2xl border-2 bg-[#F0F3F9] text-right transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] focus-visible:ring-offset-2 " + (locked ? "cursor-not-allowed opacity-60" : "hover:shadow-md")}
-                    style={{ borderColor: selected ? dairaPalette.primary.main : "#E7ECF5" }}>
+                    className={"sd-content-card group relative block aspect-square min-w-0 overflow-hidden rounded-2xl border-2 bg-[var(--daira-surface-active)] text-right transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)] focus-visible:ring-offset-2 " + (locked ? "cursor-not-allowed opacity-60" : "hover:shadow-md")}
+                    style={{ borderColor: selected ? dairaPalette.primary.main : "var(--daira-search-border)" }}>
                     {preview ? <img src={preview} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.035]" /> :
                       <span className="flex h-full w-full items-center justify-center text-[var(--daira-text-disabled)]">{isVideo ? <Video size={25} /> : <ImageIcon size={25} />}</span>}
                     <span className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/70 to-transparent" aria-hidden="true" />
@@ -212,8 +212,8 @@ export default function ContentSelectionDialog({
         </div>
         <footer className="daira-glass-dialog__footer flex shrink-0 items-center gap-2 border-t px-4 py-3.5 sm:px-6">
           <button type="button" onClick={requestConfirm} disabled={loading}
-            className="daira-glass-dialog__primary min-h-12 flex-1 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-extrabold text-white transition hover:bg-[#2154E9] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
-          <button type="button" onClick={requestClose} className="daira-glass-dialog__secondary sd-neutral-button min-h-12 rounded-xl border border-[#E0E7F2] bg-white px-5 text-sm font-bold text-[var(--daira-text-secondary)] transition hover:bg-[#F7F9FC]">انصراف</button>
+            className="daira-glass-dialog__primary min-h-12 flex-1 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-extrabold text-white transition hover:bg-[var(--daira-content-select-button-hover)] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
+          <button type="button" onClick={requestClose} className="daira-glass-dialog__secondary sd-neutral-button min-h-12 rounded-xl border border-[var(--daira-search-border)] bg-[var(--daira-glass-popover)] px-5 text-sm font-bold text-[var(--daira-text-secondary)] transition hover:bg-[var(--daira-surface-hover)]">انصراف</button>
         </footer>
       </section>
     </div>

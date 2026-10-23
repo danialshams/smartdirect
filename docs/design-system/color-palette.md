@@ -236,3 +236,31 @@
 |---|---|---|
 | `--daira-modal-motion-duration` | `220ms` | حرکت مدال |
 | `--daira-modal-motion-ease` | `cubic-bezier(.22,1,.36,1)` | حرکت مدال |
+
+## یکپارچگی دایرکت، تقویم، انتشار و انتخاب محتوا
+
+تمامی مقادیر پایین در `lib/design-system/palette.ts` نگهداری می‌شوند و در CSS تولیدشده مصرف می‌شوند. رنگ مستقل در کامپوننت تعریف نشود.
+
+| توکن | مقدار | کاربرد |
+| --- | --- | --- |
+| `--daira-inbox-frame-glass` | `rgba(255,255,255,0.52)` | پنل و پیام دایرکت |
+| `--daira-inbox-sidebar-glass` | `rgba(255,255,255,0.76)` | پنل و پیام دایرکت |
+| `--daira-inbox-chat-canvas` | `#F2F6FD` | پنل و پیام دایرکت |
+| `--daira-inbox-composer-glass` | `rgba(255,255,255,0.91)` | پنل و پیام دایرکت |
+| `--daira-inbox-received-bubble` | `rgba(255,255,255,0.96)` | پنل و پیام دایرکت |
+| `--daira-inbox-thread-hover` | `rgba(233,240,255,0.66)` | پنل و پیام دایرکت |
+| `--daira-calendar-glass` | `rgba(255,255,255,0.86)` | تقویم و تاریخ |
+| `--daira-calendar-cell-hover` | `#E9F0FF` | تقویم و تاریخ |
+| `--daira-calendar-field-glass` | `rgba(255,255,255,0.78)` | تقویم و تاریخ |
+| `--daira-publishing-glass` | `rgba(255,255,255,0.60)` | انتشار محتوا |
+| `--daira-publishing-control-glass` | `rgba(255,255,255,0.90)` | انتشار محتوا |
+| `--daira-content-select-panel` | `rgba(255,255,255,0.56)` | انتخاب محتوای مشترک |
+| `--daira-content-select-button` | `#2F61FD` | انتخاب محتوای مشترک |
+| `--daira-content-select-button-hover` | `#1E4BD8` | انتخاب محتوای مشترک |
+
+- **دایرکت:** `.daira-inbox-glass` دور فریم، `.inbox-thread-list` برای لیست، `.inbox-chat-scroll` برای پس‌زمینه پیام، `.inbox-composer` برای بخش ارسال. حباب پیام دریافتی مات می‌ماند.
+- **جستجو:** کادر بیرونی `.daira-search-field` و ورودی `.daira-search-input`؛ حتی در ورودی MUI نباید `.MuiOutlinedInput-notchedOutline` بوردر دوم بسازد. اندازه ورودی در iOS حداقل ۱۶px است.
+- **تقویم آنالیز:** مدال Portal با `.daira-insights-calendar-dialog` و بدنه تقویم با `.daira-insights-calendar-body`؛ پنل خوانا با شیشه تقریباً مات و انتخاب/امروز در آبی برند.
+- **انتشار:** `.daira-publishing-glass` و پنل‌های دارای حاشیه با شیشه؛ فرم، متن، پیش‌نمایش عکس/ویدیو و آپلود با زمینه خوانا باقی می‌مانند.
+- **انتخاب محتوا:** `.daira-content-select-panel` و `.daira-content-select-button` در حالت ایجاد و ویرایش فلو؛ مدال واحد `ContentSelectionDialog`؛ ترتیب دکمه در RTL آیکن سپس متن است.
+- **دسترسی‌پذیری:** کم‌کردن شفافیت سیستم یا نبود پشتیبانی backdrop-filter باید به سطح مات برگردد؛ Focus Ring واحد حفظ می‌شود.

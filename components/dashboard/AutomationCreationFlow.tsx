@@ -851,13 +851,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       <div className="space-y-0">
         <div className="mb-2"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? "۱. انتخاب محتوا — پست یا ریلز موردنظرت را انتخاب کن." : (isEditing ? "۱. استوری — استوری متصل را ببین یا تغییر بده." : "۱. انتخاب محتوا — استوری موردنظرت را انتخاب کن.")}</AutomationSectionGuide></div>
         {isEditing ? (
-          <section aria-label="محتواهای انتخاب‌شده" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+          <section aria-label="محتواهای انتخاب‌شده" className="daira-content-select-panel rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="daira-keyword-field flex items-center gap-2">
                 <strong className="text-sm font-bold text-[var(--daira-heading)]">{triggerType === "STORY_REPLY_KEYWORD" ? "استوری انتخاب‌شده" : "محتواهای انتخاب‌شده"}</strong>
                 <span className="rounded-full bg-[var(--daira-surface-hover)] px-2.5 py-1 text-xs font-bold text-[var(--daira-text)]" aria-live="polite">{new Intl.NumberFormat("fa-IR").format(selectedMediaCount)} {triggerType === "STORY_REPLY_KEYWORD" ? "استوری" : "محتوا"}</span>
               </div>
-              <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white">
+              <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="daira-content-select-button inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-white">
                 <ImageIcon size={16} aria-hidden="true" /> افزودن یا تغییر محتوا
               </button>
             </div>
@@ -892,7 +892,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             )}
           </section>
         ) : (
-          <section aria-labelledby="automation-content-title" className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+          <section aria-labelledby="automation-content-title" className="daira-content-select-panel rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex shrink-0 items-center gap-1">
@@ -921,7 +921,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   </p>
                 </div>
               </div>
-              <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-white transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25" style={{ background: dairaPalette.primary.main }}>
+              <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="daira-content-select-button inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-white">
                 <ImageIcon size={16} aria-hidden="true" />
                 {selectedMediaCount > 0 ? "تغییر انتخاب" : "انتخاب محتوا"}
               </button>

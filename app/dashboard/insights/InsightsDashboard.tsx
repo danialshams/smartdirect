@@ -442,7 +442,7 @@ export default function InsightsDashboard() {
   }
 
   return (
-    <main dir="rtl" className="mx-auto w-full max-w-5xl space-y-4 overflow-x-clip px-1 pb-12 pt-2 sm:px-2 sm:py-4">
+    <main dir="rtl" className="daira-insights-glass mx-auto w-full max-w-5xl space-y-4 overflow-x-clip px-1 pb-12 pt-2 sm:px-2 sm:py-4">
       <section aria-labelledby="insights-heading" className="flex items-start gap-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--daira-surface-hover)] text-[var(--daira-primary)]">
           <BarChart3 size={23} aria-hidden="true" />
@@ -477,7 +477,7 @@ export default function InsightsDashboard() {
           {(["from", "to"] as const).map((field) => (
             <button type="button" key={field} onClick={() => openCalendar(field)}
               aria-haspopup="dialog" aria-label={field === "from" ? "انتخاب تاریخ شروع" : "انتخاب تاریخ پایان"}
-              className={"flex min-h-[77px] min-w-0 flex-col gap-2 rounded-xl border p-3 text-right transition hover:border-blue-300 " +
+              className={"daira-insights-date-field flex min-h-[77px] min-w-0 flex-col gap-2 rounded-xl border p-3 text-right transition " +
                 (appliedRange ? "border-blue-300 bg-blue-50" : "border-[var(--daira-border)] bg-[var(--daira-surface-hover)]")}>
               <span className="text-[11px] text-[var(--daira-text)]">{field === "from" ? "از تاریخ" : "تا تاریخ"}</span>
               <span className="flex w-full min-w-0 items-center gap-1.5 text-xs font-bold text-[var(--daira-heading)]">
@@ -590,11 +590,11 @@ export default function InsightsDashboard() {
       ) : null}
 
       {calendarOpen && typeof document !== "undefined" && createPortal(
-        <div data-insights-calendar-popup className="fixed inset-0 z-[3000] flex items-center justify-center bg-slate-950/40 px-3 py-4"
+        <div data-insights-calendar-popup className="daira-glass-overlay daira-insights-calendar-overlay fixed inset-0 z-[3000] flex items-center justify-center px-3 py-4"
           onMouseDown={(event) => { if (event.target === event.currentTarget) setCalendarOpen(null); }}>
           <section dir="rtl" role="dialog" aria-modal="true"
             aria-label={calendarOpen === "from" ? "انتخاب تاریخ شروع" : "انتخاب تاریخ پایان"}
-            className="flex max-h-[min(90dvh,670px)] w-fit max-w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            className="daira-glass-dialog daira-insights-calendar-dialog flex max-h-[min(90dvh,670px)] w-fit max-w-full flex-col overflow-hidden rounded-[24px]">
             <div className="flex items-center justify-between gap-2 border-b border-[var(--daira-border)] px-4 py-3">
               <div className="text-sm font-extrabold text-[var(--daira-heading)]">
                 {calendarOpen === "from" ? "انتخاب تاریخ شروع" : "انتخاب تاریخ پایان"}
@@ -604,8 +604,8 @@ export default function InsightsDashboard() {
                 <X size={19} />
               </button>
             </div>
-            <div className="min-h-0 overflow-y-auto overscroll-contain">
-              <Calendar key={calendarOpen} mode="single" numberOfMonths={1}
+            <div className="daira-insights-calendar-body min-h-0 overflow-y-auto overscroll-contain">
+              <Calendar className="daira-insights-calendar-grid" key={calendarOpen} mode="single" numberOfMonths={1}
                 selected={calendarOpen === "from" ? draftFrom : draftTo}
                 onSelect={pickDate}
                 defaultMonth={(calendarOpen === "from" ? draftFrom : draftTo) ?? today}
