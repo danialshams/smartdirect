@@ -8,6 +8,31 @@ type UploadedMedia = UploadMediaResult;
 type UploadApiResult = { success?: boolean; message?: string; data?: unknown };
 type UploadOptions = { purpose?: "PUBLISHING" | "AUTOMATION"; onController?: (controller: AbortController | null) => void };
 
+export type PublishingUploadResult = Omit<UploadMediaResult, "type"> & { type: "IMAGE" | "VIDEO" };
+
+async function normalizeAutomationImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || ["image/jpeg", "image/png"].includes(file.type)) return file;
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = objectUrl;
+    await image.decode();
+    const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("امکان تبدیل تصویر وجود ندارد.");
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(
+      (value) => value ? resolve(value) : reject(new Error("تبدیل تصویر انجام نشد.")), "image/jpeg", 0.85));
+    return new File([blob], file.name.replace(/\\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    throw new Error("این فرمت تصویر در مرورگر قابل تبدیل نیست. لطفاً JPG یا PNG انتخاب کن.");
+  } finally { URL.revokeObjectURL(objectUrl); }
+}
+
+
 function uploadFormDataWithProgress(url: string, formData: FormData, signal: AbortSignal, onProgress: UploadProgressCallback, timeoutMs: number): Promise<{ ok: boolean; result: UploadApiResult | null }> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -19,7 +44,7 @@ function uploadFormDataWithProgress(url: string, formData: FormData, signal: Abo
     signal.addEventListener("abort", abort, { once: true });
     xhr.upload.onprogress = (event) => {
       if (!event.lengthComputable || event.total <= 0) return;
-      onProgress(Math.max(1, Math.min(99, Math.round((event.loaded / event.total) * 100))));
+      onProgress(Math.max(1, Math.min(85, Math.round((event.loaded / event.total) * 85))));
     };
     xhr.onload = () => {
       cleanup();
@@ -34,11 +59,11 @@ function uploadFormDataWithProgress(url: string, formData: FormData, signal: Abo
   });
 }
 
-export async function uploadFileWithProgress(file: File, type: string, onProgress: UploadProgressCallback, options: UploadOptions = {}): Promise<UploadMediaResult> {
+async function uploadOnce(file: File, type: string, onProgress: UploadProgressCallback, options: UploadOptions = {}): Promise<UploadMediaResult> {
   const purpose = options.purpose ?? "PUBLISHING";
   if (file.size === 0) throw new Error("فایل خالی است.");
   if (purpose === "AUTOMATION") {
-    if (file.type === "image/webp") throw new Error("برای پاسخ خودکار از JPG یا PNG استفاده کن.");
+    file = await normalizeAutomationImage(file);
     const limit = file.type.startsWith("image/") ? 8_000_000 - 1 : 25_000_000 - 1;
     if (file.size > limit) throw new Error("حجم فایل پاسخ خودکار بیش از حد مجاز Meta است.");
   }
@@ -223,4 +248,20 @@ export async function uploadFileWithProgress(file: File, type: string, onProgres
     }
     options.onController?.(null);
   }
+}
+
+export function uploadFileWithProgress(file: File, type: string, onProgress: UploadProgressCallback, options?: Omit<UploadOptions, "purpose"> & { purpose?: "PUBLISHING" }): Promise<PublishingUploadResult>;
+export function uploadFileWithProgress(file: File, type: string, onProgress: UploadProgressCallback, options: UploadOptions & { purpose: "AUTOMATION" }): Promise<UploadMediaResult>;
+export async function uploadFileWithProgress(file: File, type: string, onProgress: UploadProgressCallback, options: UploadOptions = {}): Promise<UploadMediaResult> {
+  // Retry a dropped connection once. Do not retry cancellations or validation/Meta errors.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try { return await uploadOnce(file, type, onProgress, options); }
+    catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (attempt > 0 || !/ارتباط|network|fetch failed|timeout|زمان مجاز/i.test(message) || /لغو شد/.test(message)) throw error;
+      onProgress(0);
+      await new Promise((resolve) => setTimeout(resolve, 450 + Math.random() * 300));
+    }
+  }
+  throw new Error("آپلود ناموفق بود.");
 }
