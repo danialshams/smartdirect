@@ -36,4 +36,19 @@ assert(shell.includes('key={pathname}'), "Page transitions must restart the titl
 assert(styles.includes("text-overflow:ellipsis"), "Long current-page labels must truncate");
 assert(styles.includes("@media(prefers-reduced-motion:reduce)"), "Reduced-motion support missing");
 assert(shell.includes("!isAutomationCreateFlow"), "Existing automation action dock must remain unobstructed");
+const overview = readFileSync("components/dashboard/DashboardOverview.tsx", "utf8");
+assert(shell.includes('icon: Headset'), "Support tab must use the headset icon");
+assert(shell.includes('dir="ltr" className="daira-bottom-nav__breadcrumb"'), "Breadcrumb must be left-to-right");
+assert(shell.includes("<ChevronRight"), "Separator must point in the left-to-right direction");
+assert(styles.includes(".daira-bottom-nav__breadcrumb { direction:ltr;"), "Breadcrumb CSS must be left-to-right");
+assert.equal((overview.match(/<section className="daira-home__section"/g) || []).length, 2, "Dashboard must have exactly two tool sections");
+assert(overview.includes(">پاسخ‌های هوشمند</h2>"), "Smart responses section must be present");
+assert(overview.includes(">مدیریت پیج</h2>"), "Page management section must be present");
+assert(!overview.includes("دسترسی سریع</h2>") && !overview.includes(">ابزارهای تکمیلی</h2>"), "Old homepage headings must be removed");
+const toolKeys = ["comment", "story", "direct", "live", "menu", "icebreaker", "reminders"];
+for (const key of toolKeys) {
+  assert(overview.includes(`{ key: "${key}"`), `Missing smart response tool: ${key}`);
+}
+assert(!overview.includes("extraTools.map"), "Supplementary tools must appear within smart responses");
+assert(styles.includes(".daira-home__tool-grid--automation .daira-home__tool-card:last-child:nth-child(odd)"), "Odd mobile row should span both columns");
 console.log("DAIRA_BOTTOM_NAV_BREADCRUMB_OK", cases.length);
