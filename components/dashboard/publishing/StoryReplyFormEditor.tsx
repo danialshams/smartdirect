@@ -14,7 +14,7 @@ type FormProps = {
   loadingResources: boolean;
   preserveSavedMedia?: boolean;
   onUpdate: (patch: Partial<MessageDraft>) => void;
-  onUploadMedia: (file?: File) => Promise<string>;
+  onUploadMedia: (file?: File, onProgress?: (progress: number) => void) => Promise<string>;
 };
 
 type BranchProps = {
@@ -25,7 +25,7 @@ type BranchProps = {
   loadingResources: boolean;
   preserveSavedMedia?: boolean;
   onChange: (patch: { question?: string; replies?: QuickReplyDraft[] }) => void;
-  onUploadMedia: (file?: File) => Promise<string>;
+  onUploadMedia: (file?: File, onProgress?: (progress: number) => void) => Promise<string>;
   level: number;
 };
 
@@ -98,7 +98,7 @@ type AnswerProps = {
   preserveSavedMedia?: boolean;
   onChange: (patch: Partial<QuickReplyDraft>) => void;
   onRemove: () => void;
-  onUploadMedia: (file?: File) => Promise<string>;
+  onUploadMedia: (file?: File, onProgress?: (progress: number) => void) => Promise<string>;
 };
 
 function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadingResources, preserveSavedMedia = false, onChange, onRemove, onUploadMedia }: AnswerProps) {
@@ -107,6 +107,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
   const [createdShowcaseId, setCreatedShowcaseId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
   useStorageUploadLease([reply.destinationMediaUrl]);
 
   function changeDestination(value: QuickReplyDraft["destinationType"]) {
@@ -133,8 +134,9 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
     if (!file || uploading) return;
     setUploading(true);
     setUploadError("");
+    setUploadProgress(0);
     try {
-      const url = await onUploadMedia(file);
+      const url = await onUploadMedia(file, setUploadProgress);
       if (!url) throw new Error("آپلود فایل ناموفق بود.");
       if (reply.destinationMediaUrl && reply.destinationMediaUrl !== url && !preserveSavedMedia)
         void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined);
@@ -258,7 +260,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
             <div className="space-y-2">
               <label className={["flex min-h-20 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-3 text-xs font-bold text-[#2563EB]", uploading ? "opacity-55" : "hover:border-[#2563EB]"].join(" ")}>
                 <ImagePlus size={17} aria-hidden="true" />
-                {uploading ? "در حال آپلود..." : reply.destinationMediaUrl ? "جایگزینی فایل" : "انتخاب فایل از دستگاه"}
+                {uploading ? `در حال آپلود... ${new Intl.NumberFormat("fa-IR").format(uploadProgress)}٪` : reply.destinationMediaUrl ? "جایگزینی فایل" : "انتخاب فایل از دستگاه"}
                 <input className="hidden" type="file" disabled={uploading}
                   accept={reply.destinationType === "IMAGE" ? "image/*" : reply.destinationType === "VIDEO" ? "video/*" : "audio/*"}
                   onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; void upload(file); }} />
