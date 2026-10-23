@@ -21,11 +21,11 @@ assert.ok(ui.includes('(["from", "to"] as const).map((field)') &&
   ui.includes('openCalendar(field)'),
   "Date range uses two clear, independently accessible start/end fields");
 assert.ok(ui.includes('mode="single" numberOfMonths={1}') &&
-  ui.includes('selected={calendarOpen === "from" ? draftFrom : draftTo}') &&
+  ui.includes('selected={visibleCalendarField === "from" ? draftFrom : draftTo}') &&
   ui.includes('onSelect={pickDate}') &&
   ui.includes('aria-modal="true"') &&
-  ui.includes('before: calendarOpen === "to" ? (draftFrom ?? minDate) : minDate'),
-  "Each Persian date picker must use one month and respect selectable boundaries");
+  ui.includes('before: visibleCalendarField === "to" ? (draftFrom ?? minDate) : minDate'),
+  "Animated Persian date picker must keep one month and respect selectable boundaries");
 assert.ok(ui.includes('draftFrom <= draftTo') &&
   ui.includes("daysBetween(draftFrom, draftTo) <= 730") &&
   ui.includes('if (draftTo && draftTo < chosen) setDraftTo(undefined);'),
