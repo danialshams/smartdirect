@@ -16,8 +16,8 @@ function assert(condition: unknown, message: string) {
 async function main() {
   // 95 — Architecture / trigger model
   assert(
-    AUTOMATION_TRIGGER_TYPES.length === 3,
-    "Expected exactly 3 supported automation trigger types.",
+    AUTOMATION_TRIGGER_TYPES.length === 5,
+    "Expected exactly 5 supported automation trigger types.",
   );
   assert(
     AUTOMATION_TRIGGER_TYPES.includes("COMMENT_KEYWORD"),
@@ -31,6 +31,9 @@ async function main() {
     AUTOMATION_TRIGGER_TYPES.includes("STORY_REPLY_KEYWORD"),
     "STORY_REPLY_KEYWORD trigger is missing.",
   );
+
+  assert(AUTOMATION_TRIGGER_TYPES.includes("DM_MEDIA_SHARE"), "DM_MEDIA_SHARE trigger is missing.");
+  assert(AUTOMATION_TRIGGER_TYPES.includes("STORY_MENTION"), "STORY_MENTION trigger is missing.");
 
   // 96 — Trigger resolution primitives
   assert(

@@ -1,0 +1,184 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Check, Lightbulb, RefreshCw, Share2, AtSign } from "lucide-react";
+import { dairaPalette } from "../../lib/design-system/palette";
+import PublishingStoryAutomationSetup, { type StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
+import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem, type InstagramMedia } from "./automation-form-utils";
+import DirectAutomationSkeleton from "./DirectAutomationSkeleton";
+
+type Trigger = "DM_MEDIA_SHARE" | "STORY_MENTION";
+type Account = {id:string;igUsername:string;isConnected:boolean};
+type Existing = {id:string;triggerType:Trigger;instagramAccountId:string;updatedAt:string;isActive:boolean;mediaId:string|null;mediaIds:string|null;messages:unknown};
+const DESCRIPTION = "وقتی کسی پست یا ریلزت را به دایرکت بفرستد یا تو را در استوری منشن کند، پاسخ دلخواهت به‌صورت خودکار اجرا می‌شود.";
+const mediaLabel=(item:InstagramMedia)=>item.media_product_type==="REELS"?"ریلز":item.media_type==="CAROUSEL_ALBUM"?"آلبوم":"پست";
+
+function Guide({step,title,hint}:{step:number;title:string;hint:string}){
+ return <div className="mb-3 flex items-start gap-3 rounded-xl border px-3.5 py-3" style={{background:dairaPalette.guide.background,borderColor:dairaPalette.guide.border,color:dairaPalette.guide.text}}>
+  <Lightbulb size={17} className="mt-1 shrink-0" style={{color:dairaPalette.guide.icon}}/>
+  <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{background:dairaPalette.guide.icon}}>{new Intl.NumberFormat("fa-IR").format(step)}</span><strong className="text-sm font-extrabold">{title}</strong></div>
+   <p className="mt-1 text-xs leading-6">{hint}</p></div>
+ </div>;
+}
+
+export default function ShareMentionEditor({id}:{id?:string}){
+ const [account,setAccount]=useState<Account|null>(null);
+ const [trigger,setTrigger]=useState<Trigger>("DM_MEDIA_SHARE");
+ const [original,setOriginal]=useState<Existing|null>(null);
+ const [selected,setSelected]=useState<string[]>([]);
+ const [media,setMedia]=useState<InstagramMedia[]>([]);
+ const [mediaError,setMediaError]=useState("");
+ const [message,setMessage]=useState<MessageDraft>(()=>createEmptyMessage());
+ const [showcases,setShowcases]=useState<Showcase[]>([]);
+ const [forms,setForms]=useState<FormItem[]>([]);
+ const [formTemplates,setFormTemplates]=useState<StoryFormTemplate[]>([]);
+ const [isActive,setActive]=useState(true);
+ const [loading,setLoading]=useState(true);
+ const [saving,setSaving]=useState(false);
+ const [saved,setSaved]=useState(false);
+ const [error,setError]=useState("");
+ const [reload,setReload]=useState(0);
+ const [showcaseDraftChanged,setShowcaseDraftChanged]=useState(false);
+ const [occupied,setOccupied]=useState<Set<string>>(new Set());
+ const responseValid=trigger==="STORY_MENTION"||selected.length>0;
+ const selectedSet=useMemo(()=>new Set(selected),[selected]);
+ useEffect(()=>{
+  const controller=new AbortController();
+  setLoading(true);setError("");
+  (async()=>{
+   try{
+    const accounts=await fetch("/api/instagram/accounts",{cache:"no-store",credentials:"include",signal:controller.signal}).then(r=>r.json());
+    const active=(Array.isArray(accounts.accounts)?accounts.accounts:[]).find((x:Account)=>x.isConnected) as Account|undefined;
+    if(!active)throw new Error("ابتدا پیج اینستاگرام را متصل کنید.");
+    const q="?instagramAccountId="+encodeURIComponent(active.id);
+    const [a,m,sh,fo,sa,automations]=await Promise.all([
+      id?fetch("/api/automations/"+encodeURIComponent(id),{cache:"no-store",credentials:"include",signal:controller.signal}).then(r=>r.json()):Promise.resolve(null),
+      fetch("/api/instagram/media"+q,{cache:"no-store",credentials:"include",signal:controller.signal}).then(async r=>r.ok?r.json():{success:false,message:"بارگذاری محتوا ناموفق بود."}),
+      fetch("/api/showcases"+q,{cache:"no-store",credentials:"include",signal:controller.signal}).then(r=>r.json()),
+      fetch("/api/forms"+q,{cache:"no-store",credentials:"include",signal:controller.signal}).then(r=>r.json()),
+      fetch("/api/saved-responses"+q,{cache:"no-store",credentials:"include",signal:controller.signal}).then(r=>r.json()),
+      fetch("/api/automations"+q,{cache:"no-store",credentials:"include",signal:controller.signal}).then(r=>r.json()),
+    ]);
+    if(id&&(!a?.success||!a?.data))throw new Error(a?.error||"پاسخ موردنظر پیدا نشد.");
+    const existing=id?a.data as Existing:null;
+    if(existing&&(!["DM_MEDIA_SHARE","STORY_MENTION"].includes(existing.triggerType)||existing.instagramAccountId!==active.id))throw new Error("پاسخ انتخاب‌شده متعلق به این بخش نیست.");
+    const all=Array.isArray(automations?.data)?automations.data:[];
+    const busy=new Set<string>();
+    for(const item of all){
+     if(item.triggerType!=="DM_MEDIA_SHARE"||item.id===existing?.id)continue;
+     for(const mid of (item.mediaIds||item.mediaId||"").split(","))if(mid)busy.add(mid);
+    }
+    const templates:StoryFormTemplate[]=[];
+    for(const item of all){
+     for(const msg of normalizeMessages(item.messages)){
+      if(msg.messageType==="FORM"&&msg.text.trim()&&msg.quickReplies.length>=2)
+       templates.push({id:"automation:"+item.id+":"+msg.id,title:"فرم — "+msg.text.slice(0,45),text:msg.text,quickReplies:msg.quickReplies});
+     }
+    }
+    for(const item of Array.isArray(sa?.data)?sa.data:[]){
+     if(item.messageType!=="FORM")continue;
+     const msg=normalizeMessages([item])[0];
+     if(msg&&msg.quickReplies.length>=2)templates.push({id:"saved:"+item.id,title:item.title||"فرم ذخیره‌شده",text:msg.text,quickReplies:msg.quickReplies});
+    }
+    if(controller.signal.aborted)return;
+    setAccount(active);
+    setOriginal(existing);
+    setTrigger(existing?.triggerType||"DM_MEDIA_SHARE");
+    setSelected((existing?.mediaIds||existing?.mediaId||"").split(",").filter(Boolean));
+    setMessage(existing?normalizeMessages(existing.messages)[0]||createEmptyMessage():createEmptyMessage());
+    setActive(existing?.isActive!==false);
+    setOccupied(busy);
+    setShowcases(Array.isArray(sh?.data)?sh.data:Array.isArray(sh)?sh:[]);
+    setForms(Array.isArray(fo?.data)?fo.data:Array.isArray(fo)?fo:[]);
+    setFormTemplates(templates);
+    if(m?.success)setMedia((Array.isArray(m.data)?m.data:[]).filter((x:InstagramMedia)=>x.media_product_type!=="STORY"));
+    else setMediaError(m?.message||"دریافت پست‌ها و ریلزها ناموفق بود.");
+   }catch(e){if(!controller.signal.aborted)setError(e instanceof Error?e.message:"بارگذاری ناموفق بود.");}
+   finally{if(!controller.signal.aborted)setLoading(false);}
+  })();
+  return ()=>controller.abort();
+ },[id,reload]);
+
+ async function save(prepared?:MessageDraft){
+  if(saving||!account||!responseValid)return;
+  setSaving(true);setError("");
+  try{
+   const response=await fetch("/api/share-mention",{method:original?"PUT":"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+    id:original?.id,expectedUpdatedAt:original?.updatedAt,
+    instagramAccountId:account.id,triggerType:trigger,
+    mediaIds:trigger==="DM_MEDIA_SHARE"?selected:[],isActive,
+    message:prepared||message,
+   })});
+   const data=await response.json();
+   if(!response.ok||!data?.success)throw new Error(data?.error||"ذخیره پاسخ ناموفق بود.");
+   setSaved(true);window.scrollTo({top:0,behavior:"smooth"});
+  }catch(e){setError(e instanceof Error?e.message:"ذخیره پاسخ ناموفق بود.");}
+  finally{setSaving(false);}
+ }
+
+ if(loading)return <DirectAutomationSkeleton view="editor"/>;
+ if(saved)return <div dir="rtl" className="mx-auto flex min-h-[45vh] max-w-lg flex-col items-center justify-center gap-4 px-4 text-center">
+  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-600"><Check size={30}/></div>
+  <h2 className="text-lg font-bold">پاسخ با موفقیت ذخیره شد</h2>
+  <p className="text-sm leading-7 text-slate-500">تنظیمات پاسخ به اشتراک‌گذاری و منشن ثبت شد.</p>
+  <Link href="/dashboard/share-mention" className="rounded-full px-6 py-3 text-sm font-bold text-white" style={{background:dairaPalette.primary.main}}>مدیریت پاسخ‌ها</Link>
+ </div>;
+ if(!account)return <div dir="rtl" className="mx-auto max-w-xl space-y-4 rounded-2xl border p-5 text-center"><p role="alert">{error||"پیج متصل نیست."}</p><button onClick={()=>setReload(x=>x+1)} className="rounded-xl bg-blue-600 px-5 py-3 text-white">تلاش دوباره</button></div>;
+
+ return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-3 sm:py-4">
+  <div className="px-1"><h1 className="text-lg font-bold text-slate-900">{original?"ویرایش پاسخ به اشتراک‌گذاری و منشن":"ایجاد پاسخ به اشتراک‌گذاری و منشن"}</h1><p className="mt-2 text-xs leading-7 text-slate-500">{DESCRIPTION}</p></div>
+  <section>
+   <Guide step={1} title="انتخاب نوع تعامل" hint="اشتراک‌گذاری یعنی فرستادن پست یا ریلز به دایرکت پیج؛ منشن یعنی کسی پیجت را در استوری خودش تگ کند. این‌ها با ریپلای استوری و کلمه کلیدی دایرکت تفاوت دارند."/>
+   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    {([{key:"DM_MEDIA_SHARE",title:"اشتراک‌گذاری پست و ریلز",hint:"وقتی مخاطب محتوای انتخابی را در دایرکت برایت بفرستد.",Icon:Share2},{key:"STORY_MENTION",title:"منشن در استوری",hint:"وقتی مخاطب پیجت را در استوری خودش منشن کند.",Icon:AtSign}] as const).map(item=>
+     <button type="button" key={item.key} disabled={Boolean(original)} aria-pressed={trigger===item.key}
+      onClick={()=>setTrigger(item.key)} className="flex min-h-28 items-start gap-3 rounded-2xl border bg-white p-4 text-right transition disabled:cursor-not-allowed"
+      style={{borderColor:trigger===item.key?dairaPalette.primary.main:dairaPalette.border,background:trigger===item.key?"#F1F6FF":"white"}}>
+      <item.Icon size={24} className="mt-1 shrink-0 text-blue-600"/>
+      <span><strong className="block text-sm">{item.title}</strong><span className="mt-2 block text-xs leading-6 text-slate-500">{item.hint}</span></span>
+      {trigger===item.key&&<Check size={17} className="mr-auto shrink-0 text-blue-600"/>}
+     </button>)}
+   </div>
+  </section>
+  {trigger==="DM_MEDIA_SHARE"&&<section>
+   <Guide step={2} title="انتخاب پست‌ها و ریلزها" hint="یک یا چند پست یا ریلز از پیج خودت انتخاب کن. پاسخ فقط وقتی اجرا می‌شود که مخاطب یکی از همین محتواها را به دایرکت پیج بفرستد."/>
+   <div className="space-y-3 rounded-2xl border bg-white p-4" style={{borderColor:dairaPalette.border}}>
+    <div className="flex items-center justify-between gap-2"><span className="text-xs font-bold">انتخاب‌شده: {selected.length.toLocaleString("fa-IR")} از ۵۰</span><button type="button" onClick={()=>setReload(x=>x+1)} className="flex items-center gap-1 text-xs text-blue-600"><RefreshCw size={14}/>به‌روزرسانی</button></div>
+    {mediaError&&<p role="alert" className="text-xs text-red-600">{mediaError}</p>}
+    {media.length===0&&!mediaError&&<p className="text-xs leading-7 text-slate-500">پستی برای انتخاب پیدا نشد.</p>}
+    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+     {media.map(item=>{const checked=selectedSet.has(item.id),locked=occupied.has(item.id);return <button type="button" key={item.id} disabled={locked||(!checked&&selected.length>=50)}
+      onClick={()=>setSelected(v=>checked?v.filter(x=>x!==item.id):[...v,item.id])} aria-pressed={checked} aria-label={mediaLabel(item)+(checked?" انتخاب شده":"")}
+      className="relative aspect-square overflow-hidden rounded-xl border-2 bg-slate-100 disabled:opacity-50"
+      style={{borderColor:checked?dairaPalette.primary.main:"transparent"}}>
+      {item.thumbnail_url||item.media_url?<img src={item.thumbnail_url||item.media_url||""} alt="" className="h-full w-full object-cover"/>:<span className="text-xs">بدون پیش‌نمایش</span>}
+      <span className="absolute bottom-0 right-0 rounded-tl-lg bg-black/65 px-2 py-1 text-[10px] text-white">{locked?"قبلاً انتخاب‌شده":mediaLabel(item)}</span>
+      {checked&&<span className="absolute left-1 top-1 rounded-full bg-blue-600 p-1 text-white"><Check size={14}/></span>}
+     </button>})}
+    </div>
+   </div>
+  </section>}
+  {trigger==="STORY_MENTION"&&<section>
+   <Guide step={2} title="منشن در استوری دیگران" hint="نیازی به انتخاب استوری نیست. این پاسخ برای منشن جدید پیجت در استوری مخاطبان ارسال می‌شود؛ ریپلای به استوری خودت همچنان در بخش پاسخ به استوری مدیریت می‌شود."/>
+   <div className="rounded-2xl border bg-white p-4 text-xs leading-7 text-slate-600" style={{borderColor:dairaPalette.border}}>برای این پیج فقط یک پاسخ به منشن استوری می‌توانی تعریف کنی. ارسال پیام به دریافت رویداد مجاز از Meta وابسته است.</div>
+  </section>}
+  <section>
+   <Guide step={3} title="نوع پاسخ" hint="از همان پاسخ‌های فعلی دایرا استفاده کن: متن، عکس، ویدیو، وویس، ویترین یا فرم چندمرحله‌ای. فایل‌ها فقط وقتی ذخیره شوند که پاسخ ثبت شده باشد باقی می‌مانند."/>
+   <div className="rounded-2xl border bg-white p-4 sm:p-5" style={{borderColor:dairaPalette.border}}>
+    <PublishingStoryAutomationSetup key={original?.id||account.id} message={message} showcases={showcases} forms={forms} formTemplates={formTemplates}
+     loadingResources={false} instagramAccountId={account.id} onUpdate={patch=>setMessage(m=>({...m,...patch}))}
+     keywordValid={responseValid} storyCreateMode storyEditMode={Boolean(original)} onDraftChange={setShowcaseDraftChanged}
+     disabled={saving} showFinalSave finalSaveDisabled={saving||!responseValid} onContinue={save}
+     finalSaveLabel={original?"ذخیره تغییرات":"ساخت پاسخ خودکار"} finalSaveLoadingLabel="در حال ذخیره..."
+     responseTypeTitle="انتخاب نوع پاسخ" responseTypeDescription="پاسخی را انتخاب کن که پس از این تعامل برای مخاطب ارسال شود."
+     textPlaceholder="متن پاسخی که برای مخاطب ارسال می‌شود..."/>
+   </div>
+  </section>
+  <label className="flex items-center gap-3 rounded-xl border bg-white px-4 py-3 text-sm" style={{borderColor:dairaPalette.border}}>
+   <input type="checkbox" checked={isActive} onChange={e=>setActive(e.target.checked)} className="h-4 w-4 accent-blue-600"/> پاسخ پس از ذخیره فعال باشد
+  </label>
+  {error&&<p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-6 text-red-700">{error}</p>}
+  <Link href="/dashboard/share-mention" className="inline-flex px-2 py-3 text-xs text-slate-500">بازگشت به فهرست پاسخ‌ها</Link>
+ </div>;
+}

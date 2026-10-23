@@ -769,6 +769,8 @@ enum AutomationTriggerType {
   COMMENT_KEYWORD
   DM
   STORY_REPLY_KEYWORD
+  DM_MEDIA_SHARE
+  STORY_MENTION
 }
 
 enum AutomationMessageType {

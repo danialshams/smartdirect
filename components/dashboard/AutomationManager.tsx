@@ -27,7 +27,9 @@ type InstagramAccount = {
 export type AutomationTriggerType =
   | "COMMENT_KEYWORD"
   | "DM"
-  | "STORY_REPLY_KEYWORD";
+  | "STORY_REPLY_KEYWORD"
+  | "DM_MEDIA_SHARE"
+  | "STORY_MENTION";
 
 export type Automation = {
   id: string;

@@ -300,7 +300,7 @@ function validateQuickReplyTree(replies: QuickReplyDraft[], messageNumber: numbe
     }
 }
 
-export function validateMessages(messages: MessageDraft[], triggerType?: "COMMENT_KEYWORD" | "DM" | "STORY_REPLY_KEYWORD") {
+export function validateMessages(messages: MessageDraft[], triggerType?: "COMMENT_KEYWORD" | "DM" | "STORY_REPLY_KEYWORD" | "DM_MEDIA_SHARE" | "STORY_MENTION") {
     if (messages.length === 0) throw new Error("حداقل یک پیام اضافه کنید.");
     if (triggerType === "COMMENT_KEYWORD" && messages.some((message) => message.messageType !== "TEXT")) {
         throw new Error("در Automation کامنت فقط پیام متنی به‌عنوان Private Reply قابل استفاده است.");

@@ -16,6 +16,8 @@ import { processInstagramWebhookQueueJob } from "@/lib/webhook/workflow";
 import { executeAutomation } from "@/lib/automation/execute-automation";
 import { processLiveComment, processLiveReplyContinuation } from "@/lib/automation/live-replies";
 import { findAutomationByQuickReplyPayload, findMatchingAutomation } from "@/lib/automation/find-matching-automation";
+import { extractInboundInteraction } from "@/lib/automation/inbound-interactions";
+import { findMatchingInteractionAutomation } from "@/lib/automation/find-interaction-automation";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { reactToInstagramMessage } from "@/lib/instagram/react-to-message";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
@@ -1061,7 +1063,8 @@ async function processMessagingEventLocked(
 
     const recipientId = messagingEvent?.recipient?.id;
 
-    const message = messagingEvent?.message;
+    // Story mentions can open a messaging thread through referral without a normal text message.
+    const message = messagingEvent?.message || (messagingEvent?.referral?.source === "STORY_MENTION" ? { attachments: [{ type: "story_mention", payload: messagingEvent?.referral?.story || {} }] } : null);
 
     // =======================================================
     // POSTBACK
@@ -1167,6 +1170,7 @@ async function processMessagingEventLocked(
     // =======================================================
 
     const storyReply = extractStoryReplyData(message);
+    const interaction = extractInboundInteraction({ ...messagingEvent, message });
 
     console.log("Instagram account:", instagramAccount.igUsername);
 
@@ -1376,7 +1380,7 @@ async function processMessagingEventLocked(
     // This MUST happen before normal DM automation.
     // =======================================================
 
-    if (storyReply.isStoryReply) {
+    if (storyReply.isStoryReply && interaction?.kind !== "STORY_MENTION") {
       console.log("========================================");
       console.log("STORY REPLY DETECTED - BYPASSING NORMAL DM");
       console.log("========================================");
@@ -1490,8 +1494,12 @@ async function processMessagingEventLocked(
     // =======================================================
 
     let automation = null;
+    let interactionAutomation: Awaited<ReturnType<typeof findMatchingInteractionAutomation>> = null;
 
-    if (quickReplyPayload) {
+    if (interaction) {
+      interactionAutomation = await findMatchingInteractionAutomation(instagramAccount.id, interaction);
+      console.info("[INSTAGRAM_INTERACTION]", { kind: interaction.kind, matched: Boolean(interactionAutomation), hasMediaId: interaction.kind === "DM_MEDIA_SHARE" && Boolean(interaction.mediaId) });
+    } else if (quickReplyPayload) {
       console.log("Resolving Quick Reply payload across active automations:", quickReplyPayload);
 
       automation = await findAutomationByQuickReplyPayload({
@@ -1685,6 +1693,20 @@ async function processMessagingEventLocked(
     );
 
     console.log("Incoming message type:", incomingMessageType);
+
+    // Interactions never fall through to keyword automations: one inbound event, one response.
+    if (interaction) {
+      if (interactionAutomation) {
+        await executeAutomation({
+          automationId: interactionAutomation.id,
+          instagramAccountId: instagramAccount.id,
+          participantId,
+          igUserId: participantId,
+          executionId,
+        });
+      }
+      return;
+    }
 
     // Live comment Private Replies are one-time; any further rich response
     // waits for the viewer to explicitly write the configured DM keyword.

@@ -1,0 +1,32 @@
+import assert from "node:assert/strict";
+import { extractInboundInteraction, matchesSharedMedia } from "../src/lib/automation/inbound-interactions";
+
+const mediaId="17912345678901234";
+const postUrl="https://www.instagram.com/p/AB_cd-12/";
+const reelUrl="https://www.instagram.com/reel/XY123Ab/";
+const event=(attachment:unknown)=>({sender:{id:"123"},recipient:{id:"456"},message:{mid:"m-123",attachments:[attachment]}});
+const metaDocumented=extractInboundInteraction(event({type:"ig_post",payload:{ig_post_media_id:mediaId,title:"Example caption",url:"https://lookaside.fbsbx.com/ig_messaging_cdn/?asset_id="+mediaId}}));
+assert.deepEqual(metaDocumented,{kind:"DM_MEDIA_SHARE",mediaId,shortcode:null});
+const transition=extractInboundInteraction({message:{mid:"m",attachments:[{type:"share",payload:{ig_post_media_id:mediaId,url:"https://lookaside.fbsbx.com/ig_messaging_cdn/"}},{type:"ig_post",payload:{ig_post_media_id:mediaId}}]}});
+assert.equal(transition?.kind,"DM_MEDIA_SHARE");
+const post=extractInboundInteraction(event({type:"ig_post",payload:{id:mediaId,url:postUrl}}));
+assert.deepEqual(post,{kind:"DM_MEDIA_SHARE",mediaId,shortcode:"AB_cd-12"});
+const reel=extractInboundInteraction(event({type:"ig_reel",payload:{url:reelUrl}}));
+assert.deepEqual(reel,{kind:"DM_MEDIA_SHARE",mediaId:null,shortcode:"XY123Ab"});
+assert.equal(matchesSharedMedia({mediaId,shortcode:null},[mediaId],[]),true);
+assert.equal(matchesSharedMedia({mediaId:"999999999999",shortcode:null},[mediaId],[]),false);
+assert.equal(matchesSharedMedia({mediaId:null,shortcode:"XY123Ab"},[mediaId],[{id:mediaId,permalink:reelUrl}]),true);
+assert.equal(matchesSharedMedia({mediaId:null,shortcode:"XY123Ab"},["999999"],[{id:mediaId,permalink:reelUrl}]),false);
+// Legacy share payloads contain only a lookaside CDN URL: never match a random post.
+const legacy=extractInboundInteraction(event({type:"share",payload:{url:"https://lookaside.fbsbx.com/ig_messaging_cdn/?asset=123"}}));
+assert.deepEqual(legacy,{kind:"DM_MEDIA_SHARE",mediaId:null,shortcode:null});
+assert.equal(matchesSharedMedia({mediaId:null,shortcode:null},[mediaId],[{id:mediaId,permalink:postUrl}]),false);
+assert.deepEqual(extractInboundInteraction(event({type:"story_mention",payload:{url:"https://lookaside.fbsbx.com/story"}})),{kind:"STORY_MENTION",storyUrl:"https://lookaside.fbsbx.com/story"});
+assert.deepEqual(extractInboundInteraction({sender:{id:"123"},referral:{source:"STORY_MENTION",story:{url:"https://fbcdn.net/s"}}}),{kind:"STORY_MENTION",storyUrl:"https://fbcdn.net/s"});
+assert.equal(extractInboundInteraction({...event({type:"story_mention",payload:{url:postUrl}}),message:{is_echo:true,attachments:[{type:"story_mention",payload:{url:postUrl}}]}}),null);
+assert.equal(extractInboundInteraction({message:{reply_to:{story:{id:"123"}},attachments:[{type:"story_mention",payload:{url:postUrl}}]}}),null);
+assert.equal(extractInboundInteraction(event({type:"image",payload:{url:postUrl}})),null);
+assert.equal(extractInboundInteraction(event({type:"share",payload:{url:"https://phishing.invalid/p/Abcd/"}}))?.kind,"DM_MEDIA_SHARE");
+const malicious=extractInboundInteraction(event({type:"share",payload:{url:"https://phishing.invalid/p/Abcd/"}}));
+assert.equal(malicious?.kind==="DM_MEDIA_SHARE"?malicious.shortcode:null,null);
+console.log("SHARE_MENTION_WEBHOOK_TEST_OK");
