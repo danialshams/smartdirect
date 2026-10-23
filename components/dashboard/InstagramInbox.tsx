@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, DashboardLoading } from "@/components/dashboard/DashboardUI";
+import { uploadFileWithProgress } from "./publishing/shared-upload";
 import { Input } from "@/components/dashboard/DashboardUI";
 import {
   ArrowRight,
@@ -394,6 +395,7 @@ export default function InstagramInbox({
   const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [mediaUploadProgress, setMediaUploadProgress] = useState<number | null>(null);
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Conversation[]>([]);
@@ -858,15 +860,26 @@ export default function InstagramInbox({
     const optimisticId = addOptimisticMessage({ kind: "FILE", file });
     setSending(true);
     try {
-      const form = new FormData();
-      form.append("accountId", accountId);
-      form.append("conversationId", selectedId);
-      form.append("file", file);
-      const response = await fetch("/api/instagram/inbox", {
-        method: "POST",
-        body: form,
-        headers: { Accept: "application/json" },
-      });
+      let response: Response;
+      if (file.size > 3 * 1024 * 1024) {
+        // Large browser bodies exceed the serverless request limit on Vercel.
+        // Stage directly to object storage, then pass only the authenticated key.
+        setMediaUploadProgress(0);
+        const staged = await uploadFileWithProgress(file, "MESSAGE", setMediaUploadProgress, { purpose: "AUTOMATION" });
+        response = await fetch("/api/instagram/inbox", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ accountId, conversationId: selectedId, stagedStorageKey: staged.storageKey }),
+        });
+      } else {
+        const form = new FormData();
+        form.append("accountId", accountId);
+        form.append("conversationId", selectedId);
+        form.append("file", file);
+        response = await fetch("/api/instagram/inbox", {
+          method: "POST", body: form, headers: { Accept: "application/json" },
+        });
+      }
       const result = await readApiResult(response);
       if (!response.ok || !result.success || !result.message) {
         throw new Error(result.error || "ارسال رسانه ناموفق بود.");
@@ -901,6 +914,7 @@ export default function InstagramInbox({
       }
       return false;
     } finally {
+      setMediaUploadProgress(null);
       setSending(false);
     }
   }
@@ -1641,6 +1655,11 @@ export default function InstagramInbox({
             {selectedConversation.messagingWindow && !selectedConversation.messagingWindow.canSend && (
               <div className="mb-2 rounded-lg bg-muted/60 px-3 py-2 text-[10px] leading-5 text-muted-foreground">
                 زمان مجاز پاسخ‌گویی به این گفتگو تمام شده است. با پیام جدید کاربر، امکان پاسخ دوباره فعال می‌شود.
+              </div>
+            )}
+            {mediaUploadProgress !== null && (
+              <div role="status" className="mb-2 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">
+                در حال آپلود رسانه: {new Intl.NumberFormat("fa-IR").format(mediaUploadProgress)}٪
               </div>
             )}
             {recordedVoice && recordedVoiceUrl && (
