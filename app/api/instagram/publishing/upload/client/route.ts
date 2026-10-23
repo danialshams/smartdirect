@@ -439,6 +439,7 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      await reserveUpload({ userId: session.user.id, storageKey: pathname, bytes: payload.fileSize, purpose: automation ? "AUTOMATION" : "PUBLISHING" });
       return NextResponse.json({
         success: true,
         mode: "vercel-blob",
