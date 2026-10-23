@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import path from "node:path";
+import { createHash } from "node:crypto";
 
 import { authOptions } from "@/lib/auth";
-import { getStorageProvider } from "@/lib/storage/provider";
+import { getStorageProvider, getStorageProviderForObject } from "@/lib/storage/provider";
+import { reserveUpload, releaseUploadReservation } from "@/lib/storage/upload-accounting";
+import { maximumUploadBytes, checkMediaOutputSize } from "@/lib/instagram/media-limits";
+import { normalizeInstagramPublishImage } from "@/lib/instagram/image-normalizer";
 import { prisma } from "@/lib/prisma";
 import { getUnlinkedUploadExpiry } from "@/lib/instagram/publishing-media-cleanup";
 import { isStorageObjectReferenced } from "@/lib/instagram/storage-references";
@@ -65,17 +69,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "فرمت فایل پشتیبانی نمی‌شود." }, { status: 400 });
     }
 
-    const maxSize = purpose === "AUTOMATION"
-      ? isImage
-        ? META_DM_IMAGE_MAX_SIZE
-        : isVideo
-          ? META_DM_VIDEO_MAX_SIZE
-          : META_DM_AUDIO_MAX_SIZE
-      : isVideo
-        ? MAX_VIDEO_SIZE
-        : isAudio
-          ? MAX_AUDIO_SIZE
-          : MAX_IMAGE_SIZE;
+    const mediaType = isImage ? "IMAGE" : isVideo ? "VIDEO" : "AUDIO";
+    const maxSize = maximumUploadBytes(purpose, mediaType, targetType);
 
     if (file.size > maxSize) {
       if (purpose === "AUTOMATION") {
@@ -103,37 +98,63 @@ export async function POST(request: NextRequest) {
         throw error;
       }
     }
+    if (isImage && purpose === "PUBLISHING") {
+      uploadBuffer = await normalizeInstagramPublishImage(uploadBuffer, file.name, targetType);
+      uploadFileName = path.basename(file.name, path.extname(file.name)) + ".jpg";
+      uploadContentType = "image/jpeg";
+    }
     if (isAudio) {
       uploadBuffer = await normalizeInstagramAudio(uploadBuffer, file.name);
       uploadFileName = path.basename(file.name, path.extname(file.name)) + ".m4a";
       uploadContentType = "audio/mp4";
     }
 
+    checkMediaOutputSize(purpose, mediaType, uploadBuffer.length);
     const extension = path.extname(uploadFileName) || (isImage ? ".jpg" : isVideo ? ".mp4" : ".m4a");
     const safeName = sanitizeFileName(path.basename(uploadFileName, extension));
     const key = ["pending", session.user.id, `${crypto.randomUUID()}-${safeName}${extension}`].join("/");
 
+    const checksum = createHash("sha256").update(uploadBuffer).digest("hex");
+    if (purpose === "AUTOMATION") {
+      const duplicate = await prisma.instagramStorageObject.findFirst({
+        where: { userId: session.user.id, purpose: "AUTOMATION", checksum, deletedAt: null, publicUrl: { not: null } },
+        select: { storageKey: true, publicUrl: true },
+      });
+      if (duplicate?.publicUrl && await isStorageObjectReferenced({
+        storageKey: duplicate.storageKey, publicUrl: duplicate.publicUrl,
+      })) {
+        const oldProvider = getStorageProviderForObject(duplicate.storageKey, duplicate.publicUrl);
+        if (await oldProvider.exists(duplicate.storageKey).catch(() => false)) {
+          return NextResponse.json({ success: true, reused: true, data: {
+            storageKey: duplicate.storageKey, publicUrl: duplicate.publicUrl,
+            type: mediaType, fileName: uploadFileName,
+            mimeType: uploadContentType, fileSize: uploadBuffer.length,
+          } });
+        }
+      }
+    }
     const provider = getStorageProvider();
-    const result = await provider.upload({
-      key,
-      body: uploadBuffer,
-      contentType: uploadContentType,
-    });
-
+    await reserveUpload({ userId: session.user.id, storageKey: key, bytes: uploadBuffer.length, purpose });
+    let result: Awaited<ReturnType<typeof provider.upload>> | null = null;
     try {
-      await prisma.instagramStorageObject.create({
+      result = await provider.upload({ key, body: uploadBuffer, contentType: uploadContentType });
+      await prisma.instagramStorageObject.update({
+        where: { storageKey: key },
         data: {
-          userId: session.user.id,
           storageKey: result.storageKey,
           publicUrl: result.publicUrl,
+          fileSize: BigInt(uploadBuffer.length),
+          checksum,
           expiresAt: getUnlinkedUploadExpiry(),
         },
       });
     } catch (error) {
-      await provider.delete(result.storageKey).catch(() => undefined);
+      if (result) await provider.delete(result.storageKey).catch(() => undefined);
+      await releaseUploadReservation(session.user.id, key).catch(() => undefined);
       throw error;
     }
 
+    if (!result) throw new Error("آپلود فایل تکمیل نشد.");
     return NextResponse.json({
       success: true,
       data: {
@@ -225,7 +246,7 @@ export async function DELETE(request: NextRequest) {
       });
     }
 
-    const provider = getStorageProvider();
+    const provider = getStorageProviderForObject(storageKey, publicUrl);
     await provider.delete(storageKey);
 
     await prisma.instagramStorageObject.updateMany({

@@ -6,7 +6,8 @@ import { promisify } from "node:util";
 import ffmpegPath from "ffmpeg-static";
 
 const execFileAsync = promisify(execFile);
-const SAFE_VIDEO_SIZE = 100 * 1024 * 1024;
+// Keep a safety margin below Meta's 100 MB (decimal) story/carousel boundary.
+const SAFE_VIDEO_SIZE = 99_000_000;
 const SAFE_MESSAGE_VIDEO_SIZE = 24_000_000;
 
 export type InstagramVideoTarget = "CAROUSEL" | "REEL" | "STORY" | "MESSAGE";

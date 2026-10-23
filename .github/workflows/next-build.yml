@@ -178,6 +178,19 @@ jobs:
       - name: Test advanced Instagram Reel publishing options
         run: npx tsx scripts/test-reel-settings.ts
 
+      - name: Test storage quota, JPEG normalization and Meta media limits
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+        run: npx tsx scripts/test-storage-accounting.ts
+
+      - name: Test publishing and automation storage lifecycle
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          STORAGE_PROVIDER: test
+        run: npx tsx scripts/test-instagram-storage-lifecycle.ts
+
       - name: Test shared dashboard upload pipeline and audio conversion
         run: npx tsx scripts/test-dashboard-upload-pipeline.ts
 

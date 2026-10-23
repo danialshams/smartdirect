@@ -28,3 +28,14 @@ export function getStorageProvider() {
       throw new Error(`Storage provider "${provider}" پشتیبانی نمی‌شود.`);
   }
 }
+
+/** A stored file keeps its provider when the default backend changes. */
+export function getStorageProviderForObject(storageKey: string, publicUrl?: string | null) {
+  if (storageKey.startsWith("s3:")) return s3CompatibleStorageProvider;
+  if (publicUrl) {
+    try {
+      if (new URL(publicUrl).hostname.endsWith(".public.blob.vercel-storage.com")) return vercelBlobStorageProvider;
+    } catch { /* old records may have malformed URLs */ }
+  }
+  return getStorageProvider();
+}

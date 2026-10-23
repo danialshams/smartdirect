@@ -751,9 +751,9 @@ export async function GET(request: NextRequest) {
 
 /** Fetch only a pending upload owned by the authenticated dashboard user. */
 async function loadStagedInboxMedia(userId: string, storageKey: string) {
-  if (!storageKey.startsWith("pending/" + userId + "/")) throw new Error("فایل متعلق به این کاربر نیست.");
+  if (!storageKey.startsWith("pending/" + userId + "/") && !storageKey.startsWith("s3:pending/" + userId + "/")) throw new Error("فایل متعلق به این کاربر نیست.");
   const item = await prisma.instagramStorageObject.findFirst({
-    where: { userId, storageKey, deletedAt: null },
+    where: { userId, storageKey, deletedAt: null, expiresAt: { gt: new Date() } },
     select: { publicUrl: true },
   });
   if (!item?.publicUrl) throw new Error("فایل موقت برای ارسال پیدا نشد.");

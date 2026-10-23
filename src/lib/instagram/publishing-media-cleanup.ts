@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { getStorageProvider } from "@/lib/storage/provider";
+import { getStorageProviderForObject } from "@/lib/storage/provider";
 import { isStorageObjectReferenced } from "@/lib/instagram/storage-references";
 
 const DEFAULT_UPLOAD_TTL_MS = 60 * 60 * 1000;
 const CLEANUP_BATCH_SIZE = 200;
+const MAX_CLEANUP_BATCHES = 12;
+const FAILED_MEDIA_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const PUBLISH_MEDIA_MAX_RETRIES = 4;
 
@@ -20,7 +22,6 @@ export function getUnlinkedUploadExpiry(now = Date.now()) {
 export async function deletePublishMediaStorage(
   items: Array<{ id: string; storageKey: string; publicUrl: string | null; deletedAt: Date | null }>,
 ) {
-  const storage = getStorageProvider();
   let deleted = 0;
   let failed = 0;
   let skippedReferenced = 0;
@@ -29,13 +30,13 @@ export async function deletePublishMediaStorage(
   for (const item of items) {
     if (item.deletedAt) continue;
 
-    const storageObject = item.publicUrl
-      ? null
-      : await prisma.instagramStorageObject.findUnique({
-          where: { storageKey: item.storageKey },
-          select: { publicUrl: true },
-        });
-    const publicUrl = item.publicUrl || storageObject?.publicUrl || null;
+    const storageObject = await prisma.instagramStorageObject.findUnique({
+      where: { storageKey: item.storageKey },
+      select: { publicUrl: true },
+    });
+    // Published media's publicUrl may have been rewritten to Instagram's URL.
+    // The storage object's original URL is authoritative for shared references.
+    const publicUrl = storageObject?.publicUrl || item.publicUrl || null;
 
     // Without a URL we cannot prove that this object is not also used by an
     // automation/showcase. Keep it rather than risk breaking saved content.
@@ -56,7 +57,7 @@ export async function deletePublishMediaStorage(
 
     try {
       if (!item.storageKey.startsWith("test:")) {
-        await storage.delete(item.storageKey);
+        await getStorageProviderForObject(item.storageKey, publicUrl).delete(item.storageKey);
       }
 
       await prisma.$transaction([
@@ -84,85 +85,97 @@ export async function deletePublishMediaStorage(
 }
 
 export async function cleanupInstagramPublishStorage(now = new Date(), userId?: string) {
-  const media = await prisma.instagramPublishMedia.findMany({
-    where: {
-      deletedAt: null,
-      ...(userId ? { publishJob: { userId } } : {}),
-      OR: [
-        { expiresAt: { lte: now } },
-        { publishJob: { status: "CANCELLED" } },
-        { publishJob: { status: "PUBLISHED" } },
-        {
-          publishJob: {
-            status: "FAILED",
-            retryCount: { gte: PUBLISH_MEDIA_MAX_RETRIES },
-          },
-        },
-      ],
-    },
-    select: { id: true, storageKey: true, publicUrl: true, deletedAt: true },
-    orderBy: { expiresAt: "asc" },
-    take: CLEANUP_BATCH_SIZE,
-  });
-
-  const mediaResult = await deletePublishMediaStorage(media);
-
-  const orphaned = await prisma.instagramStorageObject.findMany({
-    where: {
-      deletedAt: null,
-      ...(userId ? { userId } : {}),
-      expiresAt: { lte: now },
-    },
-    select: { id: true, storageKey: true, publicUrl: true },
-    orderBy: { expiresAt: "asc" },
-    take: CLEANUP_BATCH_SIZE,
-  });
-
-  const storage = getStorageProvider();
-  let orphanDeleted = 0;
-  let orphanFailed = 0;
-  let legacySkipped = 0;
-
-  for (const item of orphaned) {
-    // Older rows predate publicUrl tracking. Their URL references cannot be
-    // verified safely, so leave them intact rather than risk deleting live media.
-    if (!item.publicUrl) {
-      legacySkipped++;
-      continue;
-    }
-
-    const isReferenced = await isStorageObjectReferenced({
-      storageKey: item.storageKey,
-      publicUrl: item.publicUrl,
+  const oldFailed = new Date(now.getTime() - FAILED_MEDIA_GRACE_MS);
+  const processedMediaIds: string[] = [];
+  let mediaDeleted = 0, mediaFailed = 0, mediaSkippedReferenced = 0, mediaLegacySkipped = 0;
+  for (let batch = 0; batch < MAX_CLEANUP_BATCHES; batch++) {
+    const media = await prisma.instagramPublishMedia.findMany({
+      where: {
+        deletedAt: null,
+        ...(userId ? { publishJob: { userId } } : {}),
+        ...(processedMediaIds.length ? { id: { notIn: processedMediaIds } } : {}),
+        OR: [
+          { publishJob: { status: "CANCELLED" } },
+          { publishJob: { status: "PUBLISHED" } },
+          // Do not expire files while SCHEDULED, PROCESSING or PUBLISHING:
+          // a delayed Instagram attempt still needs the original public URL.
+          { publishJob: { status: "FAILED", retryCount: { gte: PUBLISH_MEDIA_MAX_RETRIES }, updatedAt: { lte: oldFailed } } },
+          { publishJob: { status: "DRAFT", updatedAt: { lte: oldFailed } } },
+        ],
+      },
+      select: { id: true, storageKey: true, publicUrl: true, deletedAt: true },
+      orderBy: { expiresAt: "asc" },
+      take: CLEANUP_BATCH_SIZE,
     });
-    if (isReferenced) continue;
-
-    try {
-      if (!item.storageKey.startsWith("test:")) {
-        await storage.delete(item.storageKey);
-      }
-      await prisma.instagramStorageObject.update({
-        where: { id: item.id },
-        data: { deletedAt: new Date() },
-      });
-      orphanDeleted++;
-    } catch (error) {
-      orphanFailed++;
-      console.error("Orphaned Instagram storage cleanup failed:", {
-        storageObjectId: item.id,
-        storageKey: item.storageKey,
-        error,
-      });
-    }
+    if (!media.length) break;
+    processedMediaIds.push(...media.map((item) => item.id));
+    const result = await deletePublishMediaStorage(media);
+    mediaDeleted += result.deleted;
+    mediaFailed += result.failed;
+    mediaSkippedReferenced += result.skippedReferenced;
+    mediaLegacySkipped += result.legacySkipped;
+    if (media.length < CLEANUP_BATCH_SIZE) break;
   }
 
+  const processedObjectIds: string[] = [];
+  let orphanDeleted = 0, orphanFailed = 0, legacySkipped = 0;
+  for (let batch = 0; batch < MAX_CLEANUP_BATCHES; batch++) {
+    const orphaned = await prisma.instagramStorageObject.findMany({
+      where: {
+        deletedAt: null,
+        ...(userId ? { userId } : {}),
+        expiresAt: { lte: now },
+        ...(processedObjectIds.length ? { id: { notIn: processedObjectIds } } : {}),
+      },
+      select: { id: true, userId: true, purpose: true, createdAt: true, storageKey: true, publicUrl: true },
+      orderBy: { expiresAt: "asc" },
+      take: CLEANUP_BATCH_SIZE,
+    });
+    if (!orphaned.length) break;
+    processedObjectIds.push(...orphaned.map((item) => item.id));
+    for (const item of orphaned) {
+      const isUnfinalizedUpload = !item.publicUrl
+        && item.storageKey.startsWith(`pending/${item.userId}/`)
+        && item.purpose !== "UNKNOWN";
+      if (!item.publicUrl && !isUnfinalizedUpload) {
+        legacySkipped++;
+        continue;
+      }
+
+      const isReferenced = await isStorageObjectReferenced({
+        storageKey: item.storageKey,
+        publicUrl: item.publicUrl,
+      });
+      if (isReferenced) {
+        // This file is still owned by a saved response, showcase or in-flight job.
+        // Avoid rescanning this active file in every daily cleanup batch.
+        await prisma.instagramStorageObject.updateMany({
+          where: { id: item.id, deletedAt: null },
+          data: { expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000) },
+        });
+        continue;
+      }
+
+      try {
+        if (!item.storageKey.startsWith("test:")) {
+          await getStorageProviderForObject(item.storageKey, item.publicUrl).delete(item.storageKey);
+        }
+        await prisma.instagramStorageObject.update({
+          where: { id: item.id },
+          data: { deletedAt: new Date() },
+        });
+        orphanDeleted++;
+      } catch (error) {
+        orphanFailed++;
+        console.error("Orphaned Instagram storage cleanup failed:", {
+          storageObjectId: item.id, storageKey: item.storageKey, error,
+        });
+      }
+    }
+    if (orphaned.length < CLEANUP_BATCH_SIZE) break;
+  }
   return {
-    mediaDeleted: mediaResult.deleted,
-    mediaFailed: mediaResult.failed,
-    mediaSkippedReferenced: mediaResult.skippedReferenced,
-    mediaLegacySkipped: mediaResult.legacySkipped,
-    orphanedDeleted: orphanDeleted,
-    orphanedFailed: orphanFailed,
-    legacySkipped,
+    mediaDeleted, mediaFailed, mediaSkippedReferenced, mediaLegacySkipped,
+    orphanedDeleted: orphanDeleted, orphanedFailed: orphanFailed, legacySkipped,
   };
 }

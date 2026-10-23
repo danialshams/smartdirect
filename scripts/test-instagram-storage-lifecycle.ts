@@ -49,7 +49,7 @@ async function main() {
 
   const createCase = async (
     name: string,
-    status: "CANCELLED" | "PUBLISHED" | "FAILED" | "DRAFT",
+    status: "CANCELLED" | "PUBLISHED" | "FAILED" | "DRAFT" | "SCHEDULED",
     retryCount: number,
     expiresAt: Date,
   ) => {
@@ -95,6 +95,12 @@ async function main() {
   const finalFailed = await createCase("final-failed", "FAILED", PUBLISH_MEDIA_MAX_RETRIES, future);
   const retrying = await createCase("retrying", "FAILED", PUBLISH_MEDIA_MAX_RETRIES - 1, future);
   const expired = await createCase("expired", "DRAFT", 0, past);
+  const scheduled = await createCase("protected-scheduled", "SCHEDULED", 0, past);
+  const oldDate = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
+  await prisma.instagramPublishJob.updateMany({
+    where: { id: { in: [finalFailed.job.id, expired.job.id] } },
+    data: { updatedAt: oldDate },
+  });
 
   const orphanKey = "test:" + suffix + "/orphan";
   const orphanUrl = "https://storage.test/" + suffix + "/orphan";
@@ -160,6 +166,8 @@ async function main() {
     select: { deletedAt: true },
   });
   assert(retainedMedia?.deletedAt === null, "Retryable failed media was deleted too early");
+  const protectedScheduled = await prisma.instagramPublishMedia.findUnique({ where: { id: scheduled.media.id } });
+  assert(protectedScheduled?.deletedAt === null, "Scheduled media must survive expired TTL until publication succeeds");
 
   const deletedObjects = await prisma.instagramStorageObject.findMany({
     where: { storageKey: { in: [cancelled.storageKey, published.storageKey, finalFailed.storageKey, expired.storageKey, orphanKey] } },
@@ -172,6 +180,8 @@ async function main() {
     select: { deletedAt: true },
   });
   assert(retainedObject?.deletedAt === null, "Retryable failed storage object was deleted too early");
+  const scheduledObject = await prisma.instagramStorageObject.findUnique({ where: { storageKey: scheduled.storageKey } });
+  assert(scheduledObject?.deletedAt === null, "Active scheduled source must be retained");
 
   const legacyObject = await prisma.instagramStorageObject.findUnique({
     where: { storageKey: legacyStorageKey },
@@ -193,6 +203,7 @@ async function main() {
     tests: {
       ttlRules: true,
       activeAutomationMediaRetention: true,
+      scheduledMediaSurvivesExpiry: true,
       legacyObjectSafety: true,
       cancelledImmediateCleanup: true,
       publishedImmediateCleanup: true,

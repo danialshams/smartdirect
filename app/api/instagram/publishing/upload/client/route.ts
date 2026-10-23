@@ -7,7 +7,10 @@ import path from "node:path";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getUnlinkedUploadExpiry } from "@/lib/instagram/publishing-media-cleanup";
-import { getStorageProvider } from "@/lib/storage/provider";
+import { getStorageProvider, getStorageProviderForObject } from "@/lib/storage/provider";
+import { reserveUpload, releaseUploadReservation } from "@/lib/storage/upload-accounting";
+import { maximumUploadBytes, checkMediaOutputSize } from "@/lib/instagram/media-limits";
+import { normalizeInstagramPublishImage } from "@/lib/instagram/image-normalizer";
 import { normalizeInstagramVideo, type InstagramVideoTarget } from "@/lib/instagram/video-normalizer";
 import { normalizeInstagramAudio } from "@/lib/instagram/audio-normalizer";
 
@@ -68,8 +71,12 @@ async function finalizeVideoUpload(input: {
     throw new Error("آدرس فایل آپلودشده با فایل ثبت‌شده مطابقت ندارد.");
   }
   if (!sourceObject) {
-    await prisma.instagramStorageObject.create({
-      data: { userId, storageKey: pathname, publicUrl: url, expiresAt: getUnlinkedUploadExpiry() },
+    throw new Error("آپلود مستقیم در سهمیه کاربر ثبت نشده است.");
+  }
+  if (!sourceObject.publicUrl) {
+    await prisma.instagramStorageObject.update({
+      where: { storageKey: pathname },
+      data: { publicUrl: url, fileSize: BigInt(fileSize) },
     });
   }
 
@@ -85,19 +92,29 @@ async function finalizeVideoUpload(input: {
   if (!sourceBuffer.length || sourceBuffer.length > MAX_VIDEO_SIZE) throw new Error("حجم فایل ویدئو معتبر نیست.");
 
   const normalizedBuffer = await normalizeInstagramVideo(sourceBuffer, fileName, targetType);
+  checkMediaOutputSize(targetType === "MESSAGE" ? "AUTOMATION" : "PUBLISHING", "VIDEO", normalizedBuffer.length);
   const provider = getStorageProvider();
-  const uploaded = await provider.upload({ key: normalizedKey, body: normalizedBuffer, contentType: "video/mp4" });
+  await reserveUpload({ userId, storageKey: normalizedKey, bytes: normalizedBuffer.length, purpose: targetType === "MESSAGE" ? "AUTOMATION" : "PUBLISHING" });
+  let uploaded: Awaited<ReturnType<typeof provider.upload>>;
   try {
-    await prisma.instagramStorageObject.create({
-      data: { userId, storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, expiresAt: getUnlinkedUploadExpiry() },
+    uploaded = await provider.upload({ key: normalizedKey, body: normalizedBuffer, contentType: "video/mp4" });
+  } catch (error) {
+    await releaseUploadReservation(userId, normalizedKey);
+    throw error;
+  }
+  try {
+    await prisma.instagramStorageObject.update({
+      where: { storageKey: normalizedKey },
+      data: { storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, fileSize: BigInt(normalizedBuffer.length), expiresAt: getUnlinkedUploadExpiry() },
     });
   } catch (error) {
     await provider.delete(uploaded.storageKey).catch(() => undefined);
+    await releaseUploadReservation(userId, normalizedKey).catch(() => undefined);
     throw error;
   }
 
   try {
-    await provider.delete(pathname);
+    await getStorageProviderForObject(pathname, url).delete(pathname);
     await prisma.instagramStorageObject.updateMany({
       where: { userId, storageKey: pathname, deletedAt: null },
       data: { deletedAt: new Date(), expiresAt: new Date() },
@@ -148,8 +165,12 @@ async function finalizeAudioUpload(input: {
     throw new Error("آدرس فایل آپلودشده با فایل ثبت‌شده مطابقت ندارد.");
   }
   if (!sourceObject) {
-    await prisma.instagramStorageObject.create({
-      data: { userId, storageKey: pathname, publicUrl: url, expiresAt: getUnlinkedUploadExpiry() },
+    throw new Error("آپلود مستقیم در سهمیه کاربر ثبت نشده است.");
+  }
+  if (!sourceObject.publicUrl) {
+    await prisma.instagramStorageObject.update({
+      where: { storageKey: pathname },
+      data: { publicUrl: url, fileSize: BigInt(fileSize) },
     });
   }
 
@@ -165,19 +186,29 @@ async function finalizeAudioUpload(input: {
   if (!sourceBuffer.length || sourceBuffer.length > MAX_AUDIO_SIZE) throw new Error("حجم فایل ویدئو معتبر نیست.");
 
   const normalizedBuffer = await normalizeInstagramAudio(sourceBuffer, fileName);
+  checkMediaOutputSize("AUTOMATION", "AUDIO", normalizedBuffer.length);
   const provider = getStorageProvider();
-  const uploaded = await provider.upload({ key: normalizedKey, body: normalizedBuffer, contentType: "audio/mp4" });
+  await reserveUpload({ userId, storageKey: normalizedKey, bytes: normalizedBuffer.length, purpose: "AUTOMATION" });
+  let uploaded: Awaited<ReturnType<typeof provider.upload>>;
   try {
-    await prisma.instagramStorageObject.create({
-      data: { userId, storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, expiresAt: getUnlinkedUploadExpiry() },
+    uploaded = await provider.upload({ key: normalizedKey, body: normalizedBuffer, contentType: "audio/mp4" });
+  } catch (error) {
+    await releaseUploadReservation(userId, normalizedKey);
+    throw error;
+  }
+  try {
+    await prisma.instagramStorageObject.update({
+      where: { storageKey: normalizedKey },
+      data: { storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, fileSize: BigInt(normalizedBuffer.length), expiresAt: getUnlinkedUploadExpiry() },
     });
   } catch (error) {
     await provider.delete(uploaded.storageKey).catch(() => undefined);
+    await releaseUploadReservation(userId, normalizedKey).catch(() => undefined);
     throw error;
   }
 
   try {
-    await provider.delete(pathname);
+    await getStorageProviderForObject(pathname, url).delete(pathname);
     await prisma.instagramStorageObject.updateMany({
       where: { userId, storageKey: pathname, deletedAt: null },
       data: { deletedAt: new Date(), expiresAt: new Date() },
@@ -260,6 +291,7 @@ export async function POST(request: NextRequest) {
               fileName?: string;
               contentType?: string;
               fileSize?: number;
+              targetType?: string;
             } = {};
 
             if (clientPayload) {
@@ -270,6 +302,10 @@ export async function POST(request: NextRequest) {
               }
             }
 
+            const reserved = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
+            if (!reserved || reserved.userId !== session.user.id || reserved.deletedAt || reserved.expiresAt <= new Date() || reserved.fileSize !== BigInt(payload.fileSize ?? 0)) {
+              throw new Error("مجوز آپلود منقضی شده یا متعلق به کاربر نیست.");
+            }
             if (
               payload.pathname !== pathname ||
               !payload.contentType ||
@@ -281,9 +317,9 @@ export async function POST(request: NextRequest) {
             const automation = payload.purpose === "AUTOMATION";
             if (automation && payload.contentType === "image/webp") throw new Error("برای پاسخ خودکار فقط JPG یا PNG مجاز است.");
             if (!automation && payload.contentType.startsWith("audio/")) throw new Error("صوت فقط برای پاسخ خودکار مجاز است.");
-            const maxSize = automation
-              ? payload.contentType.startsWith("image/") ? 8_000_000 - 1 : 25_000_000 - 1
-              : payload.contentType.startsWith("video/") ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+            const kind = payload.contentType.startsWith("image/") ? "IMAGE" : payload.contentType.startsWith("audio/") ? "AUDIO" : "VIDEO";
+            const incomingTarget = payload.targetType === "STORY" || payload.targetType === "CAROUSEL" ? payload.targetType : "REEL";
+            const maxSize = maximumUploadBytes(automation ? "AUTOMATION" : "PUBLISHING", kind, incomingTarget);
 
             return {
               pathname,
@@ -318,9 +354,8 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const maxSize = purpose === "AUTOMATION"
-          ? contentType.startsWith("image/") ? 8_000_000 - 1 : 25_000_000 - 1
-          : contentType.startsWith("video/") ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+        const kind = contentType.startsWith("image/") ? "IMAGE" : contentType.startsWith("audio/") ? "AUDIO" : "VIDEO";
+        const maxSize = maximumUploadBytes(purpose, kind, targetType === "MESSAGE" ? "REEL" : targetType);
         if ((purpose === "AUTOMATION" && contentType === "image/webp") || (purpose !== "AUTOMATION" && contentType.startsWith("audio/"))) {
           return NextResponse.json({ success: false, message: "فرمت فایل برای این بخش مجاز نیست." }, { status: 400 });
         }
@@ -348,6 +383,64 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ success: true, data });
         }
 
+        if (contentType === "image/jpeg" && purpose === "PUBLISHING" && fileSize < 8_000_000) {
+          const existing = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
+          if (!existing || existing.userId !== session.user.id || existing.deletedAt || existing.expiresAt <= new Date()) {
+            return NextResponse.json({ success: false, message: "فایل تصویر رزرو نشده یا منقضی شده است." }, { status: 409 });
+          }
+          await prisma.instagramStorageObject.update({
+            where: { storageKey: pathname },
+            data: { publicUrl: url, fileSize: BigInt(fileSize), expiresAt: getUnlinkedUploadExpiry() },
+          });
+          return NextResponse.json({ success: true, data: { storageKey: pathname, publicUrl: url, type: "IMAGE", fileName, mimeType: contentType, fileSize } });
+        }
+        if (contentType.startsWith("image/") && purpose === "PUBLISHING") {
+          const source = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
+          if (!source || source.userId !== session.user.id || source.deletedAt) {
+            return NextResponse.json({ success: false, message: "فایل اولیه در سهمیه کاربر ثبت نشده است." }, { status: 400 });
+          }
+          await prisma.instagramStorageObject.update({ where: { storageKey: pathname }, data: { publicUrl: url, fileSize: BigInt(fileSize) } });
+          const sourceResponse = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(120_000) });
+          if (!sourceResponse.ok) throw new Error("دانلود تصویر برای تبدیل ناموفق بود.");
+          const raw = Buffer.from(await sourceResponse.arrayBuffer());
+          if (!raw.length || raw.length > MAX_IMAGE_SIZE) throw new Error("حجم تصویر ورودی بیشتر از حد مجاز است.");
+          const normalized = await normalizeInstagramPublishImage(raw, fileName, targetType === "STORY" ? "STORY" : "POST");
+          checkMediaOutputSize("PUBLISHING", "IMAGE", normalized.length);
+          const normalizedKey = pathname + ".normalized.jpg";
+          const already = await prisma.instagramStorageObject.findUnique({ where: { storageKey: normalizedKey } });
+          if (already?.publicUrl && !already.deletedAt && already.userId === session.user.id) {
+            return NextResponse.json({ success: true, data: {
+              storageKey: already.storageKey, publicUrl: already.publicUrl, type: "IMAGE",
+              fileName: fileName.replace(/\.[^/.]+$/, "") + ".jpg", mimeType: "image/jpeg", fileSize: normalized.length,
+            } });
+          }
+          await reserveUpload({ userId: session.user.id, storageKey: normalizedKey, bytes: normalized.length, purpose: "PUBLISHING" });
+          const provider = getStorageProvider();
+          let uploaded: Awaited<ReturnType<typeof provider.upload>>;
+          try {
+            uploaded = await provider.upload({ key: normalizedKey, body: normalized, contentType: "image/jpeg" });
+            await prisma.instagramStorageObject.update({
+              where: { storageKey: normalizedKey },
+              data: { storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, fileSize: BigInt(normalized.length), expiresAt: getUnlinkedUploadExpiry() },
+            });
+          } catch (error) {
+            await releaseUploadReservation(session.user.id, normalizedKey).catch(() => undefined);
+            throw error;
+          }
+          try {
+            await getStorageProviderForObject(pathname, url).delete(pathname);
+            await prisma.instagramStorageObject.updateMany({
+              where: { storageKey: pathname, userId: session.user.id, deletedAt: null },
+              data: { deletedAt: new Date() },
+            });
+          } catch (error) {
+            console.warn("Original image cleanup deferred:", error);
+          }
+          return NextResponse.json({ success: true, data: {
+            storageKey: uploaded.storageKey, publicUrl: uploaded.publicUrl, type: "IMAGE",
+            fileName: fileName.replace(/\.[^/.]+$/, "") + ".jpg", mimeType: "image/jpeg", fileSize: normalized.length,
+          } });
+        }
         const existing = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
         if (existing) {
           if (existing.userId !== session.user.id || existing.deletedAt) {
@@ -358,7 +451,7 @@ export async function POST(request: NextRequest) {
           }
           await prisma.instagramStorageObject.update({
             where: { id: existing.id },
-            data: { publicUrl: existing.publicUrl || url, expiresAt: getUnlinkedUploadExpiry() },
+            data: { publicUrl: existing.publicUrl || url, fileSize: BigInt(fileSize), expiresAt: getUnlinkedUploadExpiry() },
           });
           return NextResponse.json({
             success: true,
@@ -366,9 +459,7 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        await prisma.instagramStorageObject.create({
-          data: { userId: session.user.id, storageKey: pathname, publicUrl: url, expiresAt: getUnlinkedUploadExpiry() },
-        });
+        return NextResponse.json({ success: false, message: "فایل آپلودشده در سهمیه کاربر رزرو نشده است." }, { status: 409 });
         return NextResponse.json({
           success: true,
           data: { storageKey: pathname, publicUrl: url, type: "IMAGE", fileName, mimeType: contentType, fileSize },
@@ -379,6 +470,7 @@ export async function POST(request: NextRequest) {
         contentType?: string;
         fileSize?: number;
         purpose?: "AUTOMATION" | "PUBLISHING";
+        targetType?: string;
       };
 
       if (
@@ -400,9 +492,9 @@ export async function POST(request: NextRequest) {
           (!automation && isAudio)) {
         return NextResponse.json({ success: false, message: "فرمت فایل برای این بخش مجاز نیست." }, { status: 400 });
       }
-      const maxSize = automation
-        ? isImage ? 8_000_000 - 1 : 25_000_000 - 1
-        : isVideo ? MAX_VIDEO_SIZE : isAudio ? MAX_AUDIO_SIZE : MAX_IMAGE_SIZE;
+      const kind = isImage ? "IMAGE" : isVideo ? "VIDEO" : "AUDIO";
+      const targetForLimits = payload.targetType === "STORY" || payload.targetType === "CAROUSEL" ? payload.targetType : "REEL";
+      const maxSize = maximumUploadBytes(automation ? "AUTOMATION" : "PUBLISHING", kind, targetForLimits);
 
       if (payload.fileSize <= 0 || payload.fileSize > maxSize) {
         return NextResponse.json(
@@ -436,6 +528,7 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      await reserveUpload({ userId: session.user.id, storageKey: pathname, bytes: payload.fileSize, purpose: automation ? "AUTOMATION" : "PUBLISHING" });
       return NextResponse.json({
         success: true,
         mode: "vercel-blob",

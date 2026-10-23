@@ -90,6 +90,7 @@ async function uploadOnce(file: File, type: string, onProgress: UploadProgressCa
       contentType: file.type,
       fileSize: file.size,
       purpose,
+      targetType: type,
     }),
   });
 
@@ -212,6 +213,7 @@ async function uploadOnce(file: File, type: string, onProgress: UploadProgressCa
         contentType: file.type,
         fileSize: file.size,
         purpose,
+        targetType: type,
       }),
     });
 
