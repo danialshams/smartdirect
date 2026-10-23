@@ -94,7 +94,7 @@ assert(styles.includes(".daira-bottom-nav__center-home, .daira-bottom-nav__bread
 
 
 // Keep each home shortcut mapped to its own compact WebP artwork.
-const overview = readFileSync("components/dashboard/DashboardOverview.tsx", "utf8");
+const dashboardOverviewText = readFileSync("components/dashboard/DashboardOverview.tsx", "utf8");
 const imageMappings = {
   "inbox": "inbox.webp",
   "publishing": "publishing.webp",
@@ -108,15 +108,15 @@ const imageMappings = {
   "icebreaker": "icebreakers.webp",
   "reminders": "smart-reminders.webp"
 };
-const lines = overview.split(String.fromCharCode(10));
+const artLines = dashboardOverviewText.split(String.fromCharCode(10));
 for (const [key, filename] of Object.entries(imageMappings)) {
-  assert(lines.some((line) => line.includes('{ key: "' + key + '"') && line.includes('image: "/dashboard-art/' + filename + '"')), "Incorrect home image for " + key);
+  assert(artLines.some((line) => line.includes('{ key: "' + key + '"') && line.includes('image: "/dashboard-art/' + filename + '"')), "Incorrect home image for " + key);
   const path = "public/dashboard-art/" + filename;
   assert(existsSync(path), "Missing dashboard artwork: " + path);
   const bytes = readFileSync(path);
   assert(bytes.length < 50_000 && bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP", "Dashboard artwork must be lightweight WebP: " + path);
 }
 assert(new Set(Object.values(imageMappings)).size === 11, "Dashboard artwork cannot be reused between tools");
-assert(!overview.includes('"/photos/'), "Remove old dashboard artwork references");
+assert(!dashboardOverviewText.includes('"/photos/'), "Remove old dashboard artwork references");
 
 console.log("DAIRA_BOTTOM_NAV_BREADCRUMB_OK", cases.length, "dashboard artwork: 11");
