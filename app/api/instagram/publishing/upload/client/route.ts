@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
               throw new Error("مسیر آپلود معتبر نیست.");
             }
             const reserved = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
-            if (!reserved || reserved.userId !== session.user.id || reserved.deletedAt || reserved.expiresAt <= new Date()) {
+            if (!reserved || reserved.userId !== session.user.id || reserved.deletedAt || reserved.expiresAt <= new Date() || reserved.fileSize !== BigInt(payload.fileSize ?? 0)) {
               throw new Error("مجوز آپلود منقضی شده یا متعلق به کاربر نیست.");
             }
 
@@ -287,6 +287,7 @@ export async function POST(request: NextRequest) {
               fileName?: string;
               contentType?: string;
               fileSize?: number;
+              targetType?: string;
             } = {};
 
             if (clientPayload) {
@@ -309,7 +310,8 @@ export async function POST(request: NextRequest) {
             if (automation && payload.contentType === "image/webp") throw new Error("برای پاسخ خودکار فقط JPG یا PNG مجاز است.");
             if (!automation && payload.contentType.startsWith("audio/")) throw new Error("صوت فقط برای پاسخ خودکار مجاز است.");
             const kind = payload.contentType.startsWith("image/") ? "IMAGE" : payload.contentType.startsWith("audio/") ? "AUDIO" : "VIDEO";
-            const maxSize = maximumUploadBytes(automation ? "AUTOMATION" : "PUBLISHING", kind);
+            const incomingTarget = payload.targetType === "STORY" || payload.targetType === "CAROUSEL" ? payload.targetType : "REEL";
+            const maxSize = maximumUploadBytes(automation ? "AUTOMATION" : "PUBLISHING", kind, incomingTarget);
 
             return {
               pathname,
@@ -448,6 +450,7 @@ export async function POST(request: NextRequest) {
         contentType?: string;
         fileSize?: number;
         purpose?: "AUTOMATION" | "PUBLISHING";
+        targetType?: string;
       };
 
       if (
@@ -470,7 +473,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, message: "فرمت فایل برای این بخش مجاز نیست." }, { status: 400 });
       }
       const kind = isImage ? "IMAGE" : isVideo ? "VIDEO" : "AUDIO";
-      const maxSize = maximumUploadBytes(automation ? "AUTOMATION" : "PUBLISHING", kind);
+      const targetForLimits = payload.targetType === "STORY" || payload.targetType === "CAROUSEL" ? payload.targetType : "REEL";
+      const maxSize = maximumUploadBytes(automation ? "AUTOMATION" : "PUBLISHING", kind, targetForLimits);
 
       if (payload.fileSize <= 0 || payload.fileSize > maxSize) {
         return NextResponse.json(
