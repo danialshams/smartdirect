@@ -375,6 +375,17 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ success: true, data });
         }
 
+        if (contentType === "image/jpeg" && purpose === "PUBLISHING" && fileSize < 8_000_000) {
+          const existing = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
+          if (!existing || existing.userId !== session.user.id || existing.deletedAt || existing.expiresAt <= new Date()) {
+            return NextResponse.json({ success: false, message: "فایل تصویر رزرو نشده یا منقضی شده است." }, { status: 409 });
+          }
+          await prisma.instagramStorageObject.update({
+            where: { storageKey: pathname },
+            data: { publicUrl: url, fileSize: BigInt(fileSize), expiresAt: getUnlinkedUploadExpiry() },
+          });
+          return NextResponse.json({ success: true, data: { storageKey: pathname, publicUrl: url, type: "IMAGE", fileName, mimeType: contentType, fileSize } });
+        }
         if (contentType.startsWith("image/") && purpose === "PUBLISHING") {
           const source = await prisma.instagramStorageObject.findUnique({ where: { storageKey: pathname } });
           if (!source || source.userId !== session.user.id || source.deletedAt) {
