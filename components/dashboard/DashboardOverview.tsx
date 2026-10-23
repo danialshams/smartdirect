@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Bot, Camera, CheckCircle2, Clock3, LayoutGrid, MessageCircle, Zap } from "lucide-react";
+import { ArrowLeft, Bot, Camera, CheckCircle2, Clock3, LayoutGrid, MessageCircle } from "lucide-react";
 import { useDashboardAccountSelection } from "./DashboardAccountContext";
 import DashboardHomeSkeleton from "./DashboardHomeSkeleton";
 
@@ -45,9 +45,6 @@ const automationTools: Tool[] = [
   { key: "story", title: "پاسخ به استوری", description: "پاسخ خودکار به ریپلای استوری", image: "/photos/02-story.webp", href: "/dashboard/story-automation" },
   { key: "direct", title: "پاسخ خودکار دایرکت", description: "واکنش به کلمات کلیدی دایرکت", image: "/photos/08-direct-auto.webp", href: "/dashboard/direct-automation" },
   { key: "live", title: "پاسخ به لایو", description: "ارسال پاسخ هنگام لایو", image: "/photos/03-live.webp", href: "/dashboard/live-automation" },
-];
-
-const extraTools: Tool[] = [
   { key: "menu", title: "منوی دایرکت", description: "دسترسی سریع مخاطبان به گزینه‌ها", image: "/photos/07-direct-menu.webp", href: "/dashboard/persistent-menu" },
   { key: "icebreaker", title: "پیام شروع گفتگو", description: "خوش‌آمدگویی و شروع گفتگو", image: "/photos/09-icebreaker.webp", href: "/dashboard/ice-breaker" },
   { key: "reminders", title: "یادآوری هوشمند", description: "پیگیری هوشمند گفتگوها", image: "/photos/04-reminder.webp", href: "/dashboard/reminders" },
@@ -193,9 +190,9 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
 
       <section className="daira-home__section" aria-labelledby="daira-quick-title">
         <div className="daira-home__section-heading">
-          <span className="daira-home__section-icon" aria-hidden="true"><Zap size={20} strokeWidth={2} /></span>
+          <span className="daira-home__section-icon" aria-hidden="true"><LayoutGrid size={20} strokeWidth={2} /></span>
           <span className="daira-home__section-title">
-            <h2 id="daira-quick-title">دسترسی سریع</h2>
+            <h2 id="daira-quick-title">مدیریت پیج</h2>
           </span>
         </div>
         <div className="daira-home__quick-grid">
@@ -224,27 +221,7 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
         </div>
       </section>
 
-      <section className="daira-home__section" aria-labelledby="daira-extra-title">
-        <div className="daira-home__section-heading">
-          <span className="daira-home__section-icon" aria-hidden="true"><LayoutGrid size={20} strokeWidth={2} /></span>
-          <span className="daira-home__section-title">
-            <h2 id="daira-extra-title">ابزارهای تکمیلی</h2>
-          </span>
-        </div>
-        <div className="daira-home__tool-grid daira-home__tool-grid--extra">
-          {extraTools.map((tool) => (
-            <Link className="daira-home__tool-card" href={tool.href} key={tool.key}>
-              <span className="daira-home__tool-art">
-                <Image src={tool.image} alt="" width={120} height={120} sizes="(max-width: 680px) 60px, 72px" />
-              </span>
-              <span className="daira-home__tool-copy">
-                <strong>{tool.title}</strong>
-                <span>{tool.description}</span>
-              </span>
-            </Link>
-          ))}
-        </div>
-      </section>
+
 
     </div>
   );
