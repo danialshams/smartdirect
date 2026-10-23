@@ -14,7 +14,7 @@ export default function AutoRepliesSkeleton({ includeCreateButton = false }: Aut
       <div className="mx-auto w-full max-w-4xl">
         {includeCreateButton ? (
           <section className="mb-4 px-0 pt-1" aria-hidden="true">
-            <div className="flex min-h-[54px] w-full animate-pulse flex-row-reverse items-center justify-center gap-2 rounded-full bg-[#2F61FD]/70 px-5 shadow-sm">
+            <div className="flex min-h-[54px] w-full animate-pulse flex-row items-center justify-center gap-2 rounded-full bg-[#2F61FD]/70 px-5 shadow-sm">
               <span className="h-5 w-5 rounded-full bg-white/35" />
               <span className="h-4 w-28 rounded-md bg-white/45" />
             </div>

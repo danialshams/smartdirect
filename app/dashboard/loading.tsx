@@ -1,6 +1,14 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import AutoRepliesSkeleton from "@/components/dashboard/AutoRepliesSkeleton";
+import ShareMentionSkeleton from "@/components/dashboard/ShareMentionSkeleton";
 import DashboardHomeSkeleton from "@/components/dashboard/DashboardHomeSkeleton";
 
 export default function DashboardLoading() {
+  const pathname = usePathname() || "";
+  if (pathname.startsWith("/dashboard/share-mention/")) return <ShareMentionSkeleton />;
+  if (pathname === "/dashboard/share-mention") return <AutoRepliesSkeleton includeCreateButton />;
   return (
     <div className="daira-app-shell" dir="rtl" role="status" aria-busy="true" aria-label="در حال بارگذاری داشبورد">
       <div className="daira-header-backdrop" aria-hidden="true" />

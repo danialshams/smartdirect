@@ -8,7 +8,7 @@ const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/Publis
 import type { StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, normalizeMessages, validateMessages, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
-import AutomationPicker from "./AutomationPicker";
+import ContentSelectionDialog from "./ContentSelectionDialog";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
@@ -216,20 +216,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     registerBackHandler(handleBack);
     return () => registerBackHandler(null);
   }, [mediaDialogOpen, registerBackHandler, router]);
-
-  useEffect(() => {
-    if (!mediaDialogOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMediaDialogOpen(false);
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [mediaDialogOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -892,7 +878,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         <X size={16} strokeWidth={2.5} aria-hidden="true" />
                       </button>
                       <p className="truncate px-2 py-2 text-center text-[11px] font-semibold text-[var(--daira-text)]">
-                        {triggerType === "STORY_REPLY_KEYWORD" ? "استوری" : item?.media_product_type === "REELS" ? "ریلز" : item ? "پست" : "محتوای قبلی"}
+                        {triggerType === "STORY_REPLY_KEYWORD" ? "استوری" : item?.media_product_type === "REELS" ? "ریلز" : item?.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : item ? "پست" : "محتوای قبلی"}
                       </p>
                     </div>
                   );
@@ -1340,35 +1326,19 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
 
         {mediaDialogOpen && (
-          <div className="fixed inset-0 z-[2200] flex items-end justify-center bg-black/45 p-5 backdrop-blur-[2px] sm:items-center sm:p-6 md:p-8" onMouseDown={(event) => { if (event.target === event.currentTarget) setMediaDialogOpen(false); }}>
-            <section role="dialog" aria-modal="true" aria-labelledby="media-dialog-title" className="flex max-h-[82dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-              <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--daira-border)] px-3 py-2.5 sm:px-4">
-                <span className="shrink-0 rounded-lg bg-[var(--daira-surface-hover)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--daira-text)]">{new Intl.NumberFormat("fa-IR").format(draftSelectedMediaIds.length)} انتخاب‌شده</span>
-                <button type="button" onClick={() => setMediaDialogOpen(false)} aria-label="بستن پنجره انتخاب محتوا" className="sd-neutral-button flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)] hover:text-[var(--daira-heading)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/25"><X size={17} /></button>
-              </header>
-              <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2 sm:px-4">
-                {isEditing && !mediaLoading && draftSelectedMediaIds.some((id) => !availableMediaIdSet.has(id)) && (
-                  <div className="mb-3 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3">
-                    <p className="mb-2 text-xs font-bold text-[var(--daira-text)]">محتواهای متصل که اکنون در فهرست اینستاگرام نمایش داده نمی‌شوند:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {draftSelectedMediaIds.filter((id) => !availableMediaIdSet.has(id)).map((id) => (
-                        <button key={id} type="button" onClick={() => setDraftSelectedMediaIds((current) => current.filter((value) => value !== id))} className="sd-neutral-button inline-flex min-h-9 items-center gap-2 rounded-xl border border-[var(--daira-border)] bg-white px-3 text-xs text-[var(--daira-text)]">
-                          <span dir="ltr">…{id.slice(-8)}</span><X size={14} aria-label="حذف این اتصال" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <AutomationPicker items={mediaItems} selectedIds={draftSelectedMediaIds} loading={mediaLoading} showContentFilters={triggerType === "COMMENT_KEYWORD"} onToggle={(id) => setDraftSelectedMediaIds((current) => triggerType === "COMMENT_KEYWORD" ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]) : [id])} />
-              </div>
-              <footer className="flex shrink-0 items-center justify-center gap-2 border-t border-[var(--daira-border)] bg-white px-3 py-3 sm:px-4">
-                <div className="flex items-center justify-center gap-2">
-                  <button type="button" onClick={() => setMediaDialogOpen(false)} className="sd-neutral-button min-h-9 rounded-xl border border-[var(--daira-border)] px-4 text-xs font-bold text-[var(--daira-text)] transition hover:bg-[var(--daira-surface-hover)]">انصراف</button>
-                  <button type="button" onClick={confirmMediaSelection} disabled={mediaLoading} className="min-h-9 rounded-xl bg-[var(--daira-primary)] px-4 text-xs font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50">تأیید انتخاب</button>
-                </div>
-              </footer>
-            </section>
-          </div>
+          <ContentSelectionDialog
+            items={mediaItems}
+            selectedIds={draftSelectedMediaIds}
+            loading={mediaLoading}
+            mode={triggerType === "STORY_REPLY_KEYWORD" ? "story" : "feed"}
+            onToggle={(id) => setDraftSelectedMediaIds((current) =>
+              triggerType === "COMMENT_KEYWORD"
+                ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id])
+                : (current.includes(id) ? [] : [id])
+            )}
+            onClose={() => setMediaDialogOpen(false)}
+            onConfirm={confirmMediaSelection}
+          />
         )}
 
     </div>
