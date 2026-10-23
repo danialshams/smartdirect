@@ -574,6 +574,8 @@ model InstagramStorageObject {
   userId       String
   storageKey   String   @unique
   publicUrl    String?
+  fileSize     BigInt   @default(0)
+  purpose      String   @default("UNKNOWN")
   expiresAt    DateTime
   deletedAt    DateTime?
   createdAt    DateTime @default(now())
@@ -582,6 +584,7 @@ model InstagramStorageObject {
 
   @@index([userId, expiresAt])
   @@index([userId, publicUrl])
+  @@index([userId, deletedAt])
   @@index([expiresAt, deletedAt])
 }
 
