@@ -1,5 +1,6 @@
 "use client";
 
+import GlassModalPresence from "./GlassModalPresence";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -143,6 +144,7 @@ export default function DirectAutomationList() {
           </section>
         </div>
       </div>
+      <GlassModalPresence open={Boolean(target)} onEscape={() => { if (!deleting) setTarget(null); }}>
       {target && (
         <div className="daira-glass-overlay fixed inset-0 z-[9998] flex items-center justify-center bg-[rgba(24,35,60,.36)] px-4 py-6 backdrop-blur-md"
           onMouseDown={event => { if (event.target === event.currentTarget && !deleting) setTarget(null); }}>
@@ -164,6 +166,7 @@ export default function DirectAutomationList() {
           </section>
         </div>
       )}
+      </GlassModalPresence>
     </div>
   );
 }

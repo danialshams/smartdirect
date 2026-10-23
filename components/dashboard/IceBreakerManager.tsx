@@ -1,5 +1,6 @@
 "use client";
 
+import GlassModalPresence from "./GlassModalPresence";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, CircleCheck, Lightbulb, MessageCircleQuestion, MessageSquareText, Pencil, Plus, Trash2, X } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
@@ -394,6 +395,7 @@ export default function IceBreakerManager({
         </>
       )}
 
+      <GlassModalPresence open={Boolean(deleteTarget)} onEscape={() => { if (!saving) setDeleteTarget(null); }}>
       {deleteTarget && (
         <div role="presentation" className="daira-glass-overlay fixed inset-0 z-[2500] flex items-center justify-center px-4"
           onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setDeleteTarget(null); }}>
@@ -413,6 +415,7 @@ export default function IceBreakerManager({
           </div>
         </div>
       )}
+      </GlassModalPresence>
     </div>
   );
 }

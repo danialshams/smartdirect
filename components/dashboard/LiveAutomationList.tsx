@@ -1,5 +1,6 @@
 "use client";
 
+import GlassModalPresence from "./GlassModalPresence";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, RadioTower, Search, Pencil, Trash2, Loader2, RefreshCw, X } from "lucide-react";
@@ -159,6 +160,7 @@ export default function LiveAutomationList() {
           {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[var(--daira-text-secondary)]">می‌توانی پاسخ را قبل از شروع لایو بسازی. هنگام لایو، کامنت‌های دارای کلمهٔ کلیدی به‌صورت خودکار بررسی می‌شوند.</p>}
         </div>
       )}
+      <GlassModalPresence open={Boolean(deleteTarget)} onEscape={() => { if (!deleting) setDeleteTarget(null); }}>
       {deleteTarget && (
         <div className="daira-glass-overlay fixed inset-0 z-[2500] flex items-center justify-center p-4" role="presentation"
           onMouseDown={event => { if (event.currentTarget === event.target && !deleting) setDeleteTarget(null); }}>
@@ -178,6 +180,7 @@ export default function LiveAutomationList() {
           </section>
         </div>
       )}
+      </GlassModalPresence>
     </div>
   );
 }
