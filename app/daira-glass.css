@@ -176,3 +176,68 @@
   .daira-app-shell :is(.daira-home__account-panel,.daira-home__tool-card,
     .daira-home__quick-card,.daira-support__ticket) { transition:none; }
 }
+
+/* Daira shared modal / picker base; use with any dashboard portal. */
+.daira-glass-overlay {
+  background:var(--daira-glass-modal-dim);
+  -webkit-backdrop-filter:blur(3px);
+  backdrop-filter:blur(3px);
+  padding-top:max(16px,env(safe-area-inset-top,0px));
+  padding-bottom:max(16px,env(safe-area-inset-bottom,0px));
+}
+.daira-glass-dialog {
+  border:1.5px solid var(--daira-glass-border-strong);
+  border-radius:26px;
+  background:var(--daira-glass-modal-balanced);
+  -webkit-backdrop-filter:blur(18px) saturate(116%);
+  backdrop-filter:blur(18px) saturate(116%);
+  box-shadow:0 25px 65px rgba(22,44,86,.23),inset 0 1px 0 var(--daira-glass-rim),
+    inset 0 -1px 0 var(--daira-glass-border-strong);
+  color:var(--daira-heading);
+}
+.daira-glass-dialog__header,
+.daira-glass-dialog__filters {
+  border-color:var(--daira-glass-inner-rim);
+  background:var(--daira-glass-modal-header);
+}
+.daira-glass-dialog__footer {
+  border-color:var(--daira-glass-inner-rim);
+  background:var(--daira-glass-modal-footer);
+}
+.daira-glass-dialog__close,
+.daira-glass-dialog__secondary {
+  border-color:var(--daira-glass-rim);
+  background:var(--daira-glass-raised);
+  color:var(--daira-text-secondary);
+}
+.daira-glass-dialog__primary { background:var(--daira-primary);color:var(--daira-inverse-text); }
+.daira-glass-dialog--danger { max-width:410px; }
+.daira-glass-dialog--content { max-height:min(82dvh,720px); }
+.daira-glass-tabs { background:var(--daira-queue-bg);border:1px solid var(--daira-glass-inner-rim); }
+.daira-glass-dialog .sd-content-card,
+.daira-glass-dialog .daira-content-thumbnail {
+  border-color:var(--daira-glass-rim);
+  background:var(--daira-surface-hover);
+}
+.daira-glass-dialog .daira-content-thumbnail[aria-pressed="true"] {
+  border-color:var(--daira-primary)!important;
+  box-shadow:0 0 0 1px var(--daira-glass-rim),0 3px 12px rgba(47,97,253,.20);
+}
+.daira-app-shell .daira-account-modal {
+  background:var(--daira-glass-modal-balanced);
+  border-color:var(--daira-glass-border-strong);
+  box-shadow:0 25px 65px rgba(22,44,86,.23),inset 0 1px 0 var(--daira-glass-rim),
+    inset 0 -1px 0 var(--daira-glass-border-strong);
+}
+@media(max-width:600px) {
+ .daira-glass-dialog--content { width:calc(100vw - 32px);max-height:82dvh; }
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .daira-glass-dialog,.daira-app-shell .daira-account-modal { background:var(--daira-surface); }
+}
+@media(prefers-reduced-transparency:reduce) {
+ .daira-glass-dialog,.daira-app-shell .daira-account-modal {
+    background:var(--daira-surface)!important;backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+ }
+}

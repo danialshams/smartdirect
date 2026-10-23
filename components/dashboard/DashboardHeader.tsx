@@ -89,6 +89,7 @@ export default function DashboardHeader({
     <>
       <div className="daira-home__header-wrap">
         <div className="daira-liquid-corner-guard daira-liquid-corner-guard--header" aria-hidden="true" />
+        <div className="daira-liquid-corner-guard daira-liquid-corner-guard--header daira-liquid-corner-guard--header-top" aria-hidden="true" />
       <header className={`daira-home__header daira-home__header--liquid${isScrolled ? " is-scrolled" : ""}`}>
         <button className="daira-home__instagram" type="button" aria-label={connected.length ? "مدیریت اکانت‌های متصل اینستاگرام" : "افزودن اکانت اینستاگرام"} onClick={() => setAccountModalOpen(true)}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="instagramGradient" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse"><stop stopColor="#FEDA75"/><stop offset=".35" stopColor="#FA7E1E"/><stop offset=".65" stopColor="#D62976"/><stop offset="1" stopColor="#4F5BD5"/></linearGradient></defs><rect x="3" y="3" width="18" height="18" rx="5" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="url(#instagramGradient)" strokeWidth="2"/><circle cx="17.5" cy="6.8" r="1.2" fill="#D62976"/></svg>
