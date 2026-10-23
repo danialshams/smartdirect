@@ -152,11 +152,11 @@ jobs:
           REDIS_URL: redis://127.0.0.1:6379
           NODE_ENV: test
         run: |
-          npm run rate-limit:test
-          npm run instagram:retry:test
-          npm run instagram:container-status:rate-limit:test
-          npm run instagram:publish:container:pressure:test
-          npm run publishing:queue:test
+          npx tsx scripts/test-rate-limit.ts
+          npx tsx scripts/test-instagram-retry.ts
+          npx tsx scripts/test-instagram-container-status-rate-limit.ts
+          npx tsx scripts/test-instagram-publish-container-pressure.ts
+          npx tsx scripts/test-publishing-queue.ts
 
       - name: Test independent Worker processes under account and conversation contention
         env:
