@@ -65,16 +65,16 @@ type ShowcaseItemDraft = {
 };
 
 const palette = {
-  primary: "#2563EB",
-  automation: "#7C3AED",
-  success: "#16A34A",
-  warning: "#D97706",
-  error: "#DC2626",
-  text: "#0F172A",
-  secondary: "#64748B",
-  border: "#E2E8F0",
-  surface: "#FFFFFF",
-  muted: "#F8FAFC",
+  primary: "var(--daira-primary)",
+  automation: "var(--daira-processing)",
+  success: "var(--daira-publishing-completed)",
+  warning: "var(--daira-warning)",
+  error: "var(--daira-error-text)",
+  text: "var(--daira-heading)",
+  secondary: "var(--daira-text-secondary)",
+  border: "var(--daira-border)",
+  surface: "var(--daira-surface)",
+  muted: "var(--daira-surface-hover)",
 };
 
 const newShowcaseItem = (): ShowcaseItemDraft => ({
@@ -113,9 +113,9 @@ const typeOptions: Array<{
   color: string;
   softColor: string;
 }> = [
-  { value: "TEXT", label: "متن", Icon: MessageSquareText, color: palette.primary, softColor: "#EFF6FF" },
+  { value: "TEXT", label: "متن", Icon: MessageSquareText, color: palette.primary, softColor: "var(--daira-outline-hover-bg)" },
   { value: "IMAGE", label: "تصویر", Icon: ImagePlus, color: palette.automation, softColor: "#F5F3FF" },
-  { value: "AUDIO", label: "وویس", Icon: Mic, color: palette.warning, softColor: "#FFF7ED" },
+  { value: "AUDIO", label: "وویس", Icon: Mic, color: palette.warning, softColor: "var(--daira-warning-bg)" },
 ];
 
 export default function AutomationFlowMessage({
@@ -291,7 +291,7 @@ export default function AutomationFlowMessage({
   return (
     <article dir="rtl" className="relative overflow-hidden rounded-[28px] border bg-white" style={{ borderColor: palette.border }}>
       {instagramAccountId && (
-        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center" style={{ borderColor: palette.border, background: "#F8FAFC" }}>
+        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center" style={{ borderColor: palette.border, background: "var(--daira-surface-hover)" }}>
           <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
             <input
               value={savedResponseTitle}
@@ -365,7 +365,7 @@ export default function AutomationFlowMessage({
                   .finally(() => setSavedResponseDeleting(false));
               }}
               className="rounded-xl border bg-white px-3 py-2.5 text-xs font-bold disabled:opacity-40"
-              style={{ borderColor: "#FECACA", color: palette.error }}
+              style={{ borderColor: "var(--daira-error-border)", color: palette.error }}
             >
               {savedResponseDeleting ? "..." : "حذف"}
             </button>
@@ -477,7 +477,7 @@ export default function AutomationFlowMessage({
           )}
 
           {error && (
-            <p className="mt-4 rounded-xl border px-3 py-2.5 text-xs" style={{ borderColor: "#FECACA", background: "#FEF2F2", color: palette.error }}>
+            <p className="mt-4 rounded-xl border px-3 py-2.5 text-xs" style={{ borderColor: "var(--daira-error-border)", background: "var(--daira-error-background)", color: palette.error }}>
               {error}
             </p>
           )}
@@ -871,7 +871,7 @@ function MediaComposer({
       <ComposerTitle title={labels[kind]} description={kind === "AUDIO" ? "وویس را از دستگاه انتخاب کن یا با میکروفون همین‌جا ضبط و آپلود کن." : `فایل ${labels[kind]} را انتخاب کن تا در این مرحله برای کاربر ارسال شود.`} />
 
       {url ? (
-        <div className="rounded-2xl border p-4" style={{ borderColor: "#BBF7D0", background: "#F0FDF4" }}>
+        <div className="rounded-2xl border p-4" style={{ borderColor: "#BBF7D0", background: "var(--daira-success-bg)" }}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#DCFCE7", color: palette.success }}>
@@ -895,18 +895,18 @@ function MediaComposer({
       ) : (
         <div className="space-y-3">
           {uploading || retryFile ? (
-            <div className={["rounded-2xl border p-4", error && retryFile && !uploading ? "border-[#FECACA] bg-[#FEF2F2]" : "border-[#BFDBFE] bg-[#EFF6FF]"].join(" ")}>
+            <div className={["rounded-2xl border p-4", error && retryFile && !uploading ? "border-[var(--daira-error-border)] bg-[var(--daira-error-background)]" : "border-[#BFDBFE] bg-[var(--daira-outline-hover-bg)]"].join(" ")}>
               <div className="mb-2 flex items-center justify-between gap-2 text-xs font-bold">
-                <span className={error && retryFile && !uploading ? "text-[#B91C1C]" : "text-[#2563EB]"}>
+                <span className={error && retryFile && !uploading ? "text-[var(--daira-error-text)]" : "text-[var(--daira-primary)]"}>
                   {error && retryFile && !uploading ? "آپلود ناموفق بود" : "در حال آپلود..."}
                 </span>
-                <span className={error && retryFile && !uploading ? "text-[#B91C1C]" : "text-[#2563EB]"}>{progress}٪</span>
+                <span className={error && retryFile && !uploading ? "text-[var(--daira-error-text)]" : "text-[var(--daira-primary)]"}>{progress}٪</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-[#E2E8F0]">
-                <div className={["h-full rounded-full transition-[width] duration-300", error && retryFile && !uploading ? "bg-[#DC2626]" : "bg-[#2563EB]"].join(" ")} style={{ width: `${Math.max(3, Math.min(100, progress))}%` }} />
+              <div className="h-2 overflow-hidden rounded-full bg-[var(--daira-border)]">
+                <div className={["h-full rounded-full transition-[width] duration-300", error && retryFile && !uploading ? "bg-[var(--daira-error-text)]" : "bg-[var(--daira-primary)]"].join(" ")} style={{ width: `${Math.max(3, Math.min(100, progress))}%` }} />
               </div>
               {error && retryFile && !uploading && (
-                <button type="button" onClick={() => void onUpload(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white">
+                <button type="button" onClick={() => void onUpload(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[var(--daira-error-text)] px-3 py-2 text-[11px] font-bold text-white">
                   <RotateCcw size={14} />
                   تلاش دوباره
                 </button>
@@ -924,7 +924,7 @@ function MediaComposer({
           )}
           {kind === "AUDIO" && (
             <>
-              <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
+              <div className="text-center text-[10px] font-semibold text-[var(--daira-text-disabled)]">یا</div>
               <VoiceRecorder disabled={uploading} onRecorded={onUpload} />
             </>
           )}
@@ -955,7 +955,7 @@ function FilePicker({
   return (
     <label
       className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 text-center transition hover:bg-[#F5F3FF] ${large ? "min-h-[230px]" : "min-h-11"} ${disabled ? "pointer-events-none opacity-60" : ""}`}
-      style={{ borderColor: "#CBD5E1", background: large ? palette.muted : palette.surface }}
+      style={{ borderColor: "var(--daira-outline)", background: large ? palette.muted : palette.surface }}
     >
       <span className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "#F5F3FF", color: palette.automation }}>
         <Icon size={22} />
@@ -1042,7 +1042,7 @@ function BranchMediaDestination({
   return (
     <div className="space-y-3">
       {url ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3" style={{ borderColor: "#BBF7D0", background: "#F0FDF4" }}>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3" style={{ borderColor: "#BBF7D0", background: "var(--daira-success-bg)" }}>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold" style={{ color: "#166534" }}>فایل مقصد آماده است</p>
             {kind === "AUDIO" ? <audio src={url} controls className="mt-2 w-full max-w-md" /> : <p className="mt-1 max-w-[420px] truncate text-[10px]" dir="ltr" style={{ color: palette.secondary }}>{url}</p>}
@@ -1053,18 +1053,18 @@ function BranchMediaDestination({
           </div>
         </div>
       ) : uploading || retryFile ? (
-        <div className={["rounded-xl border p-3", error && retryFile && !uploading ? "border-[#FECACA] bg-[#FEF2F2]" : "border-[#BFDBFE] bg-[#EFF6FF]"].join(" ")}>
+        <div className={["rounded-xl border p-3", error && retryFile && !uploading ? "border-[var(--daira-error-border)] bg-[var(--daira-error-background)]" : "border-[#BFDBFE] bg-[var(--daira-outline-hover-bg)]"].join(" ")}>
           <div className="flex items-center justify-between text-[11px] font-bold">
-            <span className={error && retryFile && !uploading ? "text-[#B91C1C]" : "text-[#2563EB]"}>{error && retryFile && !uploading ? "آپلود ناموفق بود" : "در حال آپلود..."}</span>
-            <span className={error && retryFile && !uploading ? "text-[#B91C1C]" : "text-[#2563EB]"}>{progress}٪</span>
+            <span className={error && retryFile && !uploading ? "text-[var(--daira-error-text)]" : "text-[var(--daira-primary)]"}>{error && retryFile && !uploading ? "آپلود ناموفق بود" : "در حال آپلود..."}</span>
+            <span className={error && retryFile && !uploading ? "text-[var(--daira-error-text)]" : "text-[var(--daira-primary)]"}>{progress}٪</span>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#E2E8F0]"><div className={["h-full rounded-full transition-[width] duration-300", error && retryFile && !uploading ? "bg-[#DC2626]" : "bg-[#2563EB]"].join(" ")} style={{ width: `${Math.max(3, Math.min(100, progress))}%` }} /></div>
-          {error && retryFile && !uploading && <button type="button" onClick={() => void choose(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14} /> تلاش دوباره</button>}
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--daira-border)]"><div className={["h-full rounded-full transition-[width] duration-300", error && retryFile && !uploading ? "bg-[var(--daira-error-text)]" : "bg-[var(--daira-primary)]"].join(" ")} style={{ width: `${Math.max(3, Math.min(100, progress))}%` }} /></div>
+          {error && retryFile && !uploading && <button type="button" onClick={() => void choose(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[var(--daira-error-text)] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14} /> تلاش دوباره</button>}
         </div>
       ) : (
         <div className="space-y-3">
           <FilePicker accept={accept} disabled={uploading} onChange={choose} label="انتخاب فایل مقصد" />
-          {kind === "AUDIO" && <><div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div><VoiceRecorder disabled={uploading} onRecorded={choose} /></>}
+          {kind === "AUDIO" && <><div className="text-center text-[10px] font-semibold text-[var(--daira-text-disabled)]">یا</div><VoiceRecorder disabled={uploading} onRecorded={choose} /></>}
         </div>
       )}
       {error && <p className="text-[10px]" style={{ color: palette.error }}>{error}</p>}
@@ -1206,10 +1206,10 @@ function ShowcaseComposer({
       </div>
 
       {showcaseId && existing ? (
-        <div className="rounded-2xl border p-4" style={{ borderColor: "#BBF7D0", background: "#F0FDF4" }}>
+        <div className="rounded-2xl border p-4" style={{ borderColor: "#BBF7D0", background: "var(--daira-success-bg)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "#DCFCE7", color: palette.success }}><Check size={16} /></div>
-            <div><p className="text-xs font-bold" style={{ color: "#166534" }}>«{existing.title}» به این مرحله متصل است.</p><p className="mt-1 text-[10px]" style={{ color: "#15803D" }}>برای مدیریت محتوای ویترین از بخش ویترین‌ها استفاده کن.</p></div>
+            <div><p className="text-xs font-bold" style={{ color: "#166534" }}>«{existing.title}» به این مرحله متصل است.</p><p className="mt-1 text-[10px]" style={{ color: "var(--daira-chart-increase)" }}>برای مدیریت محتوای ویترین از بخش ویترین‌ها استفاده کن.</p></div>
           </div>
         </div>
       ) : (
@@ -1217,11 +1217,11 @@ function ShowcaseComposer({
           <div className="space-y-3">
             {items.map((item, itemIndex) => (
               <div key={item.id} className="grid gap-4 rounded-2xl border bg-white p-4 sm:grid-cols-[132px_minmax(0,1fr)_32px]" style={{ borderColor: palette.border }}>
-                <label className="flex min-h-[132px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed" style={{ borderColor: "#CBD5E1", background: palette.muted }}>
+                <label className="flex min-h-[132px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed" style={{ borderColor: "var(--daira-outline)", background: palette.muted }}>
                   {uploadingItems[item.id] ? (
   <div className="flex w-full flex-col items-center justify-center px-4">
-    <span className="mb-2 text-[10px] font-bold text-[#2563EB]">{uploadProgressItems[item.id] ?? 0}٪</span>
-    <div className="h-1.5 w-full max-w-[180px] overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-150" style={{ width: `${uploadProgressItems[item.id] ?? 0}%` }} /></div>
+    <span className="mb-2 text-[10px] font-bold text-[var(--daira-primary)]">{uploadProgressItems[item.id] ?? 0}٪</span>
+    <div className="h-1.5 w-full max-w-[180px] overflow-hidden rounded-full bg-[var(--daira-border)]"><div className="h-full rounded-full bg-[var(--daira-primary)] transition-[width] duration-150" style={{ width: `${uploadProgressItems[item.id] ?? 0}%` }} /></div>
   </div>
 ) : item.previewUrl ? <img src={item.previewUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-2 text-[10px]" style={{ color: palette.secondary }}><ImagePlus size={22} />تصویر کارت {itemIndex + 1}</span>}
                   <Input type="file" accept="image/*" disabled={uploadingItems[item.id]} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void chooseImage(item.id, file); }} />

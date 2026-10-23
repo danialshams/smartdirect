@@ -848,12 +848,12 @@ export default function EntryPointFlowBuilder({
                 modernResponseFlow ? (
                     <ModernResponseSkeleton />
                 ) : fullPageLoading ? (
-                    <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[#F8FAFC] px-4 text-center">
-                        <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
-                        <p className="text-sm leading-6 text-[#64748B]">در حال دریافت تنظیمات پاسخ خودکار...</p>
+                    <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--daira-surface-hover)] px-4 text-center">
+                        <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[var(--daira-primary)]" />
+                        <p className="text-sm leading-6 text-[var(--daira-text-secondary)]">در حال دریافت تنظیمات پاسخ خودکار...</p>
                     </div>
                 ) : hideLoadingSpinner ? (
-                    <div role="status" aria-live="polite" className="py-8 text-center text-sm leading-6 text-[#64748B]">در حال دریافت تنظیمات پاسخ خودکار...</div>
+                    <div role="status" aria-live="polite" className="py-8 text-center text-sm leading-6 text-[var(--daira-text-secondary)]">در حال دریافت تنظیمات پاسخ خودکار...</div>
                 ) : (
                     <DashboardLoading label="در حال دریافت تنظیمات پاسخ خودکار..." className="min-h-32" />
                 )
@@ -862,14 +862,14 @@ export default function EntryPointFlowBuilder({
                     {triggerType !== "DM" && (
                         <div className="space-y-3">
                             <div>
-                                <label className="mb-2 block text-sm font-bold text-[#0F172A]">{keywordLabel || "کلمات کلیدی"}</label>
-                                <p className="mb-3 text-xs leading-5 text-[#64748B]">
+                                <label className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">{keywordLabel || "کلمات کلیدی"}</label>
+                                <p className="mb-3 text-xs leading-5 text-[var(--daira-text-secondary)]">
                                     {keywordDescription || (triggerType === "COMMENT_KEYWORD" ? "با وارد شدن این کلمات در کامنت، پاسخ خودکار فعال می‌شود." : "با وارد شدن این کلمات در Reply استوری، پاسخ خودکار فعال می‌شود.")}
                                 </p>
                                 {keywordItems.length > 0 && (
                                     <div className="mb-3 flex flex-wrap gap-2">
                                         {keywordItems.map((item) => (
-                                            <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#2563EB]">
+                                            <span key={item} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
                                                 <span>{item}</span>
                                                 <button type="button" onClick={() => { onKeywordChange?.(keywordItems.filter((value) => value !== item).join(",")); onDirtyChange?.(true); }} aria-label={"حذف " + item} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button>
                                             </span>
@@ -877,8 +877,8 @@ export default function EntryPointFlowBuilder({
                                     </div>
                                 )}
                                 <div className="flex items-center gap-2">
-                                    <input id="edit-publishing-keyword" value={keywordDraft} onChange={(event) => setKeywordDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addKeyword(); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-3 !text-base leading-5 text-[#0F172A] outline-none placeholder:text-xs placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
-                                    <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim() || keywordItems.some((item) => item.toLocaleLowerCase() === keywordDraft.trim().toLocaleLowerCase())} className="min-h-11 shrink-0 rounded-lg !bg-[#2563EB] px-3.5 text-xs font-semibold text-white hover:!bg-[#1D4ED8] disabled:!bg-[#E2E8F0] disabled:!text-[#94A3B8]">افزودن</button>
+                                    <input id="edit-publishing-keyword" value={keywordDraft} onChange={(event) => setKeywordDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addKeyword(); } }} placeholder="مثلاً قیمت، اطلاعات" inputMode="text" className="min-w-0 flex-1 rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-3 !text-base leading-5 text-[var(--daira-heading)] outline-none placeholder:text-xs placeholder:text-[var(--daira-text-disabled)] focus:border-[var(--daira-primary)] focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                                    <button type="button" onClick={addKeyword} disabled={!keywordDraft.trim() || keywordItems.some((item) => item.toLocaleLowerCase() === keywordDraft.trim().toLocaleLowerCase())} className="min-h-11 shrink-0 rounded-lg !bg-[var(--daira-primary)] px-3.5 text-xs font-semibold text-white hover:!bg-[var(--daira-primary-hover)] disabled:!bg-[var(--daira-border)] disabled:!text-[var(--daira-text-disabled)]">افزودن</button>
                                 </div>
                             </div>
                         </div>
@@ -888,12 +888,12 @@ export default function EntryPointFlowBuilder({
                         modernResponseFlow ? (
                             <ModernResponseSkeleton />
                         ) : fullPageLoading ? (
-                            <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[#F8FAFC] px-4 text-center">
-                                <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[#2563EB]" />
-                                <p className="text-sm leading-6 text-[#64748B]">در حال دریافت اطلاعات فرم‌ها و ویترین‌ها...</p>
+                            <div dir="rtl" role="status" aria-live="polite" className="fixed inset-0 z-40 flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--daira-surface-hover)] px-4 text-center">
+                                <Loader2 size={30} strokeWidth={1.8} className="animate-spin text-[var(--daira-primary)]" />
+                                <p className="text-sm leading-6 text-[var(--daira-text-secondary)]">در حال دریافت اطلاعات فرم‌ها و ویترین‌ها...</p>
                             </div>
                         ) : hideLoadingSpinner ? (
-                            <div role="status" aria-live="polite" className="py-8 text-center text-sm leading-6 text-[#64748B]">در حال دریافت اطلاعات فرم‌ها و ویترین‌ها...</div>
+                            <div role="status" aria-live="polite" className="py-8 text-center text-sm leading-6 text-[var(--daira-text-secondary)]">در حال دریافت اطلاعات فرم‌ها و ویترین‌ها...</div>
                         ) : (
                             <DashboardLoading label="در حال دریافت پاسخ..." className="min-h-32" />
                         )
@@ -930,7 +930,7 @@ export default function EntryPointFlowBuilder({
                     )}
 
                     {error && (
-                        <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-3 text-xs font-medium leading-5 text-[#B91C1C]" role="alert">
+                        <div className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-5 text-[var(--daira-error-text)]" role="alert">
                             {error}
                         </div>
                     )}

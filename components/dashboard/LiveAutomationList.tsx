@@ -106,7 +106,7 @@ export default function LiveAutomationList() {
   if (error) return (
     <div dir="rtl" className="mx-auto flex min-h-[45vh] max-w-4xl flex-col items-center justify-center gap-4 px-4">
       <p role="alert" className="w-full rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">{error}</p>
-      <button type="button" onClick={() => setRefresh(value => value + 1)} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#2563EB] px-5 text-sm font-bold text-white"><RefreshCw size={16} /> تلاش دوباره</button>
+      <button type="button" onClick={() => setRefresh(value => value + 1)} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[var(--daira-primary)] px-5 text-sm font-bold text-white"><RefreshCw size={16} /> تلاش دوباره</button>
     </div>
   );
 
@@ -118,34 +118,34 @@ export default function LiveAutomationList() {
         <Plus size={20} /> ایجاد پاسخ جدید
       </button>
       <label className="relative block">
-        <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" aria-hidden="true" />
+        <Search size={18} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--daira-text-disabled)]" aria-hidden="true" />
         <input value={search} onChange={event => setSearch(event.target.value)}
           placeholder="جستجو در کلمات کلیدی یا پاسخ‌ها..." aria-label="جستجوی پاسخ‌های لایو"
-          className="min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[#2563EB]" />
+          className="min-h-12 w-full rounded-xl border border-[#DBE2ED] bg-white py-3 pl-4 pr-10 text-base outline-none focus:border-[var(--daira-primary)]" />
       </label>
       {filtered.length ? (
         <div className="grid gap-3 sm:grid-cols-2">
           {filtered.map(rule => (
-            <article key={rule.id} className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-[0_3px_12px_rgba(24,35,60,0.025)]">
+            <article key={rule.id} className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-[0_3px_12px_rgba(24,35,60,0.025)]">
               <div className="flex items-center gap-2">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><RadioTower size={18}/></span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><RadioTower size={18}/></span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-bold text-[#0F172A]">{rule.matchMode === "CONTAINS_ANY" && !rule.keyword?.trim() ? "هر کامنتی" : rule.keyword.replace(/,/g, "، ")}</h3>
-                  <p className="mt-0.5 text-[11px] text-[#64748B]">{rule.matchMode === "CONTAINS_ANY" && !rule.keyword?.trim() ? "پاسخ به همه کامنت‌های لایو" : "کلمه کلیدی لایو"}</p>
+                  <h3 className="truncate text-sm font-bold text-[var(--daira-heading)]">{rule.matchMode === "CONTAINS_ANY" && !rule.keyword?.trim() ? "هر کامنتی" : rule.keyword.replace(/,/g, "، ")}</h3>
+                  <p className="mt-0.5 text-[11px] text-[var(--daira-text-secondary)]">{rule.matchMode === "CONTAINS_ANY" && !rule.keyword?.trim() ? "پاسخ به همه کامنت‌های لایو" : "کلمه کلیدی لایو"}</p>
                 </div>
               </div>
-              <p className="line-clamp-3 min-h-12 text-xs leading-6 text-[#475569]">{rule.initialText}</p>
-              <div className="flex flex-wrap gap-2 text-[11px] text-[#64748B]">
-                {rule.followupEnabled && <span className="rounded-lg bg-[#F1F5F9] px-2.5 py-1">پاسخ چندمرحله‌ای</span>}
-                {rule.requireFollow && <span className="rounded-lg bg-[#F1F5F9] px-2.5 py-1">اجبار به فالو</span>}
+              <p className="line-clamp-3 min-h-12 text-xs leading-6 text-[var(--daira-text-secondary)]">{rule.initialText}</p>
+              <div className="flex flex-wrap gap-2 text-[11px] text-[var(--daira-text-secondary)]">
+                {rule.followupEnabled && <span className="rounded-lg bg-[var(--daira-neutral-bg)] px-2.5 py-1">پاسخ چندمرحله‌ای</span>}
+                {rule.requireFollow && <span className="rounded-lg bg-[var(--daira-neutral-bg)] px-2.5 py-1">اجبار به فالو</span>}
               </div>
-              <div className="flex gap-2 border-t border-[#F1F5F9] pt-3">
+              <div className="flex gap-2 border-t border-[var(--daira-neutral-bg)] pt-3">
                 <button type="button" onClick={() => router.push("/dashboard/live-automation/" + rule.id)}
-                  className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#EFF6FF] text-xs font-bold text-[#1D4ED8] transition hover:bg-[#DBEAFE]">
+                  className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--daira-outline-hover-bg)] text-xs font-bold text-[var(--daira-primary-hover)] transition hover:bg-[var(--daira-outline-active-bg)]">
                   <Pencil size={15} /> ویرایش
                 </button>
                 <button type="button" onClick={() => { setDeleteError(""); setDeleteTarget(rule); }}
-                  className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-[#FECACA] bg-white text-xs font-bold text-[#DC2626] hover:bg-[#FEF2F2]">
+                  className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--daira-error-border)] bg-white text-xs font-bold text-[var(--daira-error-text)] hover:bg-[var(--daira-error-background)]">
                   <Trash2 size={15} /> حذف
                 </button>
               </div>
@@ -153,25 +153,25 @@ export default function LiveAutomationList() {
           ))}
         </div>
       ) : (
-        <div className="space-y-3 rounded-2xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-14 text-center">
-          <RadioTower size={30} className="mx-auto text-[#94A3B8]" />
-          <p className="text-sm font-semibold text-[#475569]">{search ? "پاسخی با این عبارت پیدا نشد." : "هنوز پاسخ خودکار لایو ساخته نشده است."}</p>
-          {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[#64748B]">می‌توانی پاسخ را قبل از شروع لایو بسازی. هنگام لایو، کامنت‌های دارای کلمهٔ کلیدی به‌صورت خودکار بررسی می‌شوند.</p>}
+        <div className="space-y-3 rounded-2xl border border-dashed border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] px-4 py-14 text-center">
+          <RadioTower size={30} className="mx-auto text-[var(--daira-text-disabled)]" />
+          <p className="text-sm font-semibold text-[var(--daira-text-secondary)]">{search ? "پاسخی با این عبارت پیدا نشد." : "هنوز پاسخ خودکار لایو ساخته نشده است."}</p>
+          {!search && <p className="mx-auto max-w-md text-xs leading-6 text-[var(--daira-text-secondary)]">می‌توانی پاسخ را قبل از شروع لایو بسازی. هنگام لایو، کامنت‌های دارای کلمهٔ کلیدی به‌صورت خودکار بررسی می‌شوند.</p>}
         </div>
       )}
       {deleteTarget && (
-        <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-[#18233C]/40 p-4" role="presentation"
+        <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-[var(--daira-heading)]/40 p-4" role="presentation"
           onMouseDown={event => { if (event.currentTarget === event.target && !deleting) setDeleteTarget(null); }}>
           <section role="dialog" aria-modal="true" aria-labelledby="delete-live-title" className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-5 shadow-xl">
             <div className="flex items-center justify-between">
-              <h2 id="delete-live-title" className="text-base font-bold text-[#0F172A]">حذف پاسخ خودکار لایو؟</h2>
-              <button type="button" aria-label="بستن" onClick={() => setDeleteTarget(null)} disabled={deleting} className="rounded-lg p-2 text-[#64748B]"><X size={17}/></button>
+              <h2 id="delete-live-title" className="text-base font-bold text-[var(--daira-heading)]">حذف پاسخ خودکار لایو؟</h2>
+              <button type="button" aria-label="بستن" onClick={() => setDeleteTarget(null)} disabled={deleting} className="rounded-lg p-2 text-[var(--daira-text-secondary)]"><X size={17}/></button>
             </div>
-            <p className="text-sm leading-6 text-[#475569]">پاسخ مربوط به «{deleteTarget.matchMode === "CONTAINS_ANY" && !deleteTarget.keyword?.trim() ? "هر کامنتی" : deleteTarget.keyword.replace(/,/g, "، ")}» دیگر اجرا نمی‌شود.</p>
-            {deleteError && <p role="alert" className="text-xs text-[#B91C1C]">{deleteError}</p>}
+            <p className="text-sm leading-6 text-[var(--daira-text-secondary)]">پاسخ مربوط به «{deleteTarget.matchMode === "CONTAINS_ANY" && !deleteTarget.keyword?.trim() ? "هر کامنتی" : deleteTarget.keyword.replace(/,/g, "، ")}» دیگر اجرا نمی‌شود.</p>
+            {deleteError && <p role="alert" className="text-xs text-[var(--daira-error-text)]">{deleteError}</p>}
             <div className="grid grid-cols-2 gap-2">
-              <button type="button" disabled={deleting} onClick={() => setDeleteTarget(null)} className="min-h-11 rounded-xl border border-[#E2E8F0] font-semibold text-[#475569]">انصراف</button>
-              <button type="button" disabled={deleting} onClick={() => void deleteRule()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#DC2626] text-sm font-bold text-white disabled:opacity-50">
+              <button type="button" disabled={deleting} onClick={() => setDeleteTarget(null)} className="min-h-11 rounded-xl border border-[var(--daira-border)] font-semibold text-[var(--daira-text-secondary)]">انصراف</button>
+              <button type="button" disabled={deleting} onClick={() => void deleteRule()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--daira-error-text)] text-sm font-bold text-white disabled:opacity-50">
                 {deleting && <Loader2 size={15} className="animate-spin"/>} حذف
               </button>
             </div>

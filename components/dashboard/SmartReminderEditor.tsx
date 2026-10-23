@@ -90,54 +90,54 @@ export default function SmartReminderEditor({ id }: { id?: string }) {
   if (loading) return <SmartReminderSkeleton view="editor"/>;
   if (error && !account) return <div dir="rtl" className="mx-auto flex min-h-[45vh] max-w-4xl flex-col items-center justify-center gap-4 px-4">
     <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
-    <button onClick={() => setRetry(n => n + 1)} className="min-h-11 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white">تلاش دوباره</button>
+    <button onClick={() => setRetry(n => n + 1)} className="min-h-11 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-bold text-white">تلاش دوباره</button>
   </div>;
 
   return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-3 sm:py-4">
     <section>
       <Guide number={1} title="انتخاب پاسخ خودکار" hint="پس از ارسال پاسخ خودکار انتخاب‌شده، اگر کاربر پاسخی ندهد یادآوری زمان‌بندی می‌شود."/>
-      <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
-        <label htmlFor="reminder-automation" className="block text-xs font-semibold text-[#334155]">انتخاب پاسخ خودکار</label>
+      <div className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+        <label htmlFor="reminder-automation" className="block text-xs font-semibold text-[var(--daira-input-label)]">انتخاب پاسخ خودکار</label>
         <select id="reminder-automation" value={draft.automationId} onChange={e => patch({ automationId: e.target.value })}
-          className="min-h-12 w-full rounded-xl border border-[#D8E0EC] bg-white px-3.5 text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB]">
+          className="min-h-12 w-full rounded-xl border border-[#D8E0EC] bg-white px-3.5 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
           <option value="">یک پاسخ خودکار انتخاب کن</option>
           {automations.map(item => <option key={item.id} value={item.id}>{smartReminderOptionName(item)}</option>)}
         </select>
-        {!automations.length && <p className="text-xs leading-6 text-[#64748B]">پاسخ خودکار قابل انتخابی وجود ندارد. ابتدا یک پاسخ خودکار کامنت، استوری یا دایرکت با کلمهٔ کلیدی بساز.</p>}
-        <p className="text-xs leading-6 text-[#64748B]">برای پاسخ‌های کامنت، یادآوری فقط وقتی ارسال می‌شود که مشتری از قبل پنجرهٔ مجاز دایرکت را با پیام خود باز کرده باشد. کامنت به‌تنهایی مجوز ارسال پیام دوم نیست.</p>
+        {!automations.length && <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">پاسخ خودکار قابل انتخابی وجود ندارد. ابتدا یک پاسخ خودکار کامنت، استوری یا دایرکت با کلمهٔ کلیدی بساز.</p>}
+        <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">برای پاسخ‌های کامنت، یادآوری فقط وقتی ارسال می‌شود که مشتری از قبل پنجرهٔ مجاز دایرکت را با پیام خود باز کرده باشد. کامنت به‌تنهایی مجوز ارسال پیام دوم نیست.</p>
       </div>
     </section>
     <section>
       <Guide number={2} title="زمان انتظار" hint="از لحظهٔ ارسال پاسخ خودکار محاسبه می‌شود. اگر کاربر در این فاصله پیام بفرستد، یادآوری لغو می‌شود."/>
-      <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
+      <div className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
         <div className="grid grid-cols-3 gap-2">
           {presets.map(minutes => <button type="button" key={minutes} onClick={() => patch({ delayMinutes: String(minutes) })}
             aria-pressed={draft.delayMinutes === String(minutes)}
             className={"min-h-11 rounded-xl border px-2 text-xs font-bold transition " + (draft.delayMinutes === String(minutes)
-              ? "border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]" : "border-[#D8E0EC] bg-white text-[#475569]")}>
+              ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[#D8E0EC] bg-white text-[var(--daira-text-secondary)]")}>
             {minutes < 60 ? new Intl.NumberFormat("fa-IR").format(minutes) + " دقیقه" :
               new Intl.NumberFormat("fa-IR").format(minutes / 60) + " ساعت"}
           </button>)}
         </div>
-        <label htmlFor="reminder-delay" className="block text-xs font-semibold text-[#334155]">زمان دلخواه (دقیقه)</label>
+        <label htmlFor="reminder-delay" className="block text-xs font-semibold text-[var(--daira-input-label)]">زمان دلخواه (دقیقه)</label>
         <input id="reminder-delay" type="number" min={5} max={1380} step={1} dir="ltr" value={draft.delayMinutes}
           onChange={e => patch({ delayMinutes: e.target.value })}
-          className="min-h-12 w-full rounded-xl border border-[#D8E0EC] px-3.5 text-center text-base outline-none focus:border-[#2563EB]"/>
-        <p className="text-xs leading-6 text-[#64748B]">بین ۵ دقیقه تا ۲۳ ساعت. اگر پنجرهٔ مجاز ۲۴ساعتهٔ Meta بسته شده باشد، پیام ارسال نمی‌شود.</p>
+          className="min-h-12 w-full rounded-xl border border-[#D8E0EC] px-3.5 text-center text-base outline-none focus:border-[var(--daira-primary)]"/>
+        <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">بین ۵ دقیقه تا ۲۳ ساعت. اگر پنجرهٔ مجاز ۲۴ساعتهٔ Meta بسته شده باشد، پیام ارسال نمی‌شود.</p>
       </div>
     </section>
     <section>
       <Guide number={3} title="متن پیام یادآوری" hint="این متن فقط در صورت پاسخ‌ندادن کاربر و باز بودن پنجرهٔ مجاز در دایرکت ارسال می‌شود."/>
-      <div className="space-y-2 rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5">
-        <label htmlFor="reminder-text" className="block text-xs font-semibold text-[#334155]">متن یادآوری در دایرکت کاربر</label>
+      <div className="space-y-2 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+        <label htmlFor="reminder-text" className="block text-xs font-semibold text-[var(--daira-input-label)]">متن یادآوری در دایرکت کاربر</label>
         <textarea id="reminder-text" rows={4} maxLength={1000} value={draft.text} onChange={e => patch({ text: e.target.value })}
-          className="w-full resize-y rounded-xl border border-[#D8E0EC] px-3.5 py-3 text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB]"/>
-        <p className="text-left text-[11px] text-[#94A3B8]">{new Intl.NumberFormat("fa-IR").format(draft.text.length)} / ۱۰۰۰</p>
+          className="w-full resize-y rounded-xl border border-[#D8E0EC] px-3.5 py-3 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]"/>
+        <p className="text-left text-[11px] text-[var(--daira-text-disabled)]">{new Intl.NumberFormat("fa-IR").format(draft.text.length)} / ۱۰۰۰</p>
       </div>
     </section>
-    {error && <p role="alert" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs leading-6 text-[#B91C1C]">{error}</p>}
+    {error && <p role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] p-3 text-xs leading-6 text-[var(--daira-error-text)]">{error}</p>}
     <button type="button" disabled={!eligible} onClick={() => void save()}
-      className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white transition hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40">
+      className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:opacity-40">
       {saving && <Loader2 size={17} className="animate-spin"/>}
       {!saving && <CheckCircle2 size={17}/>}
       {saving ? "در حال ذخیره..." : id ? "ذخیره تغییرات" : "ساخت یادآوری هوشمند"}
