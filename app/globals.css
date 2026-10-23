@@ -775,6 +775,15 @@ body {
 }
 .daira-bottom-nav--liquid {
   border-radius:27px;
+  /* A continuous white perimeter, including the entire lower horizontal
+     edge and curved bottom corners. The previous shared rule tinted only
+     the bottom border gray, which made the white rim disappear there. */
+  border-color:rgba(255,255,255,.88);
+  border-bottom-color:rgba(255,255,255,.97);
+  box-shadow:0 12px 30px rgba(31,49,80,.12),0 3px 8px rgba(31,49,80,.035),
+    inset 0 0 0 1px rgba(255,255,255,.52),
+    inset 0 -1px 0 rgba(255,255,255,.91),
+    inset 0 1px 1px rgba(255,255,255,.96);
   transition:grid-template-columns 420ms cubic-bezier(.22,1,.36,1);
 }
 /* Two neutral optical layers, without the previous blue/purple internal glow. */
@@ -932,12 +941,46 @@ body {
   -webkit-mask-image:radial-gradient(circle var(--daira-glass-corner) at top left,transparent calc(var(--daira-glass-corner) - 1px),#000 var(--daira-glass-corner));
   mask-image:radial-gradient(circle var(--daira-glass-corner) at top left,transparent calc(var(--daira-glass-corner) - 1px),#000 var(--daira-glass-corner));
 }
-.daira-liquid-corner-guard--header {
+/* Anchor the guard to the ACTUAL rendered header box instead of guessing
+   82/66/62px heights. This also handles font scaling and browser rounding. */
+.daira-home__header-wrap {
+  position:fixed;
   top:max(8px,env(safe-area-inset-top,0px));
+  left:50%;
+  transform:translateX(-50%);
   width:calc(100% - clamp(14px,4vw,48px));
   max-width:1240px;
-  height:82px;
-  z-index:1590;
+  z-index:1600;
+}
+.daira-home__header-wrap .daira-home__header {
+  position:relative;
+  inset:auto;
+  left:auto;
+  right:auto;
+  top:auto;
+  transform:none;
+  width:100%;
+  max-width:none;
+  z-index:1;
+}
+.daira-home__header-wrap .daira-liquid-corner-guard--header {
+  position:absolute;
+  inset:0;
+  left:0;
+  top:0;
+  width:100%;
+  max-width:none;
+  height:100%;
+  transform:none;
+  z-index:0;
+  --daira-glass-corner:23px;
+}
+/* The header's lower lip is slightly stronger than the center, but never
+   masks content outside the glass or darkens the header controls. */
+.daira-home__header--liquid::after {
+  background:linear-gradient(to bottom,rgba(246,249,254,0) 0%,
+    rgba(246,249,254,.08) 43%,rgba(246,249,254,.38) 77%,
+    rgba(246,249,254,.82) 100%);
 }
 .daira-liquid-corner-guard--nav {
   bottom:calc(12px + env(safe-area-inset-bottom,0px));
@@ -947,10 +990,10 @@ body {
   --daira-glass-corner:27px;
 }
 @media(max-width:900px) {
-  .daira-liquid-corner-guard--header { height:66px;--daira-glass-corner:21px; }
+  .daira-home__header-wrap .daira-liquid-corner-guard--header { --daira-glass-corner:21px; }
 }
 @media(max-width:520px) {
-  .daira-liquid-corner-guard--header { height:62px;--daira-glass-corner:19px; }
+  .daira-home__header-wrap .daira-liquid-corner-guard--header { --daira-glass-corner:19px; }
 }
 @media(max-width:480px) {
   .daira-liquid-corner-guard--nav {
