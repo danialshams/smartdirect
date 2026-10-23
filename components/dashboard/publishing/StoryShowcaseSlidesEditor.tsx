@@ -62,7 +62,7 @@ export default function StoryShowcaseSlidesEditor({
       {slides.length < maxSlides && (
         <button type="button" disabled={disabled || Object.values(uploading).some(Boolean)}
           onClick={onAdd}
-          className="sd-neutral-button flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#B9C8DA] bg-white px-3 text-sm font-bold text-[var(--daira-primary)] transition hover:bg-[var(--daira-surface-hover)] disabled:cursor-not-allowed disabled:opacity-45">
+          className="sd-neutral-button flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--daira-border-hover)] bg-white px-3 text-sm font-bold text-[var(--daira-primary)] transition hover:bg-[var(--daira-surface-hover)] disabled:cursor-not-allowed disabled:opacity-45">
           <Plus size={17} aria-hidden="true" /> افزودن اسلاید
           <span className="text-[11px] font-normal text-[var(--daira-text-secondary)]">حداکثر {new Intl.NumberFormat("fa-IR").format(maxSlides)} اسلاید</span>
         </button>

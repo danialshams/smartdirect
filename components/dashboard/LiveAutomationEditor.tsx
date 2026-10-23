@@ -201,16 +201,16 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
           <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label="روش فعال شدن پاسخ لایو">
             <button type="button" aria-pressed={draft.matchMode === "EXACT"}
               onClick={() => { patch({ matchMode: "EXACT" }); setKeywordDraft(""); }}
-              className={"min-h-11 rounded-xl border px-3 text-xs font-bold transition " + (draft.matchMode === "EXACT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[#D8E0EC] bg-white text-[var(--daira-text-secondary)]")}>
+              className={"min-h-11 rounded-xl border px-3 text-xs font-bold transition " + (draft.matchMode === "EXACT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-input-border)] bg-white text-[var(--daira-text-secondary)]")}>
               کلمات کلیدی مشخص
             </button>
             <button type="button" aria-pressed={anyComment}
               onClick={() => { patch({ matchMode: "CONTAINS_ANY", keyword: "" }); setKeywordDraft(""); }}
-              className={"min-h-11 rounded-xl border px-3 text-xs font-bold transition " + (anyComment ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[#D8E0EC] bg-white text-[var(--daira-text-secondary)]")}>
+              className={"min-h-11 rounded-xl border px-3 text-xs font-bold transition " + (anyComment ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-input-border)] bg-white text-[var(--daira-text-secondary)]")}>
               هر کامنتی
             </button>
             {legacySubstring && (
-              <div className="sm:col-span-2 rounded-xl border border-[#D8E0EC] bg-[var(--daira-surface-hover)] p-3 text-xs leading-6 text-[var(--daira-text-secondary)]">
+              <div className="sm:col-span-2 rounded-xl border border-[var(--daira-input-border)] bg-[var(--daira-surface-hover)] p-3 text-xs leading-6 text-[var(--daira-text-secondary)]">
                 تنظیم قدیمی «شامل یکی از عبارت‌ها» فعال است. برای حفظ آن، عبارت‌های زیر قابل ویرایش‌اند؛ یا می‌توانی «هر کامنتی» را انتخاب کنی.
               </div>
             )}
@@ -249,7 +249,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
           <label htmlFor="live-intro" className="block text-xs font-semibold text-[var(--daira-input-label)]">متن پاسخ در دایرکت کاربر</label>
           <textarea id="live-intro" rows={4} maxLength={1000} value={draft.initialText} onChange={e => patch({ initialText: e.target.value })}
             placeholder=""
-            className="w-full resize-y rounded-xl border border-[#D8E0EC] px-3.5 py-3 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]" />
+            className="w-full resize-y rounded-xl border border-[var(--daira-input-border)] px-3.5 py-3 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]" />
           <p className="text-left text-[11px] text-[var(--daira-text-disabled)]">{new Intl.NumberFormat("fa-IR").format(draft.initialText.length)} / ۱۰۰۰</p>
         </div>
       </section>
@@ -267,7 +267,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
               <div className="space-y-2">
                 <label htmlFor="live-followup-keyword" className="block text-xs font-semibold text-[var(--daira-input-label)]">کلمهٔ ادامهٔ گفتگو</label>
                 <input id="live-followup-keyword" maxLength={60} value={draft.followupKeyword} onChange={e => patch({ followupKeyword: e.target.value })}
-                  placeholder="مثلاً ارسال کن" className="min-h-12 w-full rounded-xl border border-[#D8E0EC] px-3.5 text-base outline-none focus:border-[var(--daira-primary)]" />
+                  placeholder="مثلاً ارسال کن" className="min-h-12 w-full rounded-xl border border-[var(--daira-input-border)] px-3.5 text-base outline-none focus:border-[var(--daira-primary)]" />
               </div>
               <div className="border-t border-[var(--daira-neutral-bg)] pt-4">
                 <PublishingStoryAutomationSetup
@@ -307,18 +307,18 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
               <textarea id="live-follow-gate" rows={3} maxLength={640}
                 value={draft.followGateText} onChange={e => patch({ followGateText: e.target.value })}
                 placeholder="برای دریافت اطلاعات، ابتدا پیج را فالو کن."
-                className="w-full resize-y rounded-xl border border-[#D8E0EC] px-3.5 py-3 text-base leading-7 outline-none focus:border-[var(--daira-primary)]" />
+                className="w-full resize-y rounded-xl border border-[var(--daira-input-border)] px-3.5 py-3 text-base leading-7 outline-none focus:border-[var(--daira-primary)]" />
               <label htmlFor="live-follow-button" className="block text-xs font-semibold text-[var(--daira-input-label)]">متن دکمه بررسی فالو</label>
               <input id="live-follow-button" value={draft.followGateButtonText} maxLength={20}
                 onChange={e => patch({ followGateButtonText: e.target.value })}
-                placeholder="بررسی فالو" className="min-h-12 w-full rounded-xl border border-[#D8E0EC] px-3.5 text-base outline-none focus:border-[var(--daira-primary)]" />
+                placeholder="بررسی فالو" className="min-h-12 w-full rounded-xl border border-[var(--daira-input-border)] px-3.5 text-base outline-none focus:border-[var(--daira-primary)]" />
             </div>
           )}
         </div>
       </section>
 
       {error && <p role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] p-3 text-xs leading-6 text-[var(--daira-error-text)]">{error}</p>}
-      {saved && <p role="status" className="flex items-center gap-2 text-sm text-[#166534]"><CheckCircle2 size={16}/> تغییرات ذخیره شد.</p>}
+      {saved && <p role="status" className="flex items-center gap-2 text-sm text-[var(--daira-success-text)]"><CheckCircle2 size={16}/> تغییرات ذخیره شد.</p>}
       <button type="button" disabled={!canSave} onClick={() => void save()}
         className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:opacity-40">
         {saving && <Loader2 size={17} className="animate-spin"/>}

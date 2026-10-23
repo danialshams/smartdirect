@@ -439,7 +439,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   className={[
                     "sd-neutral-button group flex items-center gap-2.5 rounded-xl border px-3 text-right transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/30",
                     storyCreateMode ? "min-h-[64px] py-2.5" : "min-h-[78px] py-3",
-                    active ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] ring-1 ring-[var(--daira-primary)]/15" : "border-[var(--daira-border)] bg-white hover:border-[#93B5FC] hover:bg-[var(--daira-surface-hover)]",
+                    active ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] ring-1 ring-[var(--daira-primary)]/15" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-brand-300)] hover:bg-[var(--daira-surface-hover)]",
                   ].join(" ")}
                 >
                   <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", active ? "bg-[var(--daira-outline-active-bg)] text-[var(--daira-primary-hover)]" : "bg-[var(--daira-neutral-bg)] text-[var(--daira-text-secondary)]"].join(" ")}>
@@ -483,7 +483,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           </label>
           {message.mediaUrl && !uploading ? (
             <div className="space-y-2">
-              <label className="relative flex min-h-36 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed bg-white text-center transition hover:border-[#93C5FD] hover:bg-[var(--daira-outline-hover-bg)]">
+              <label className="relative flex min-h-36 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed bg-white text-center transition hover:border-[var(--daira-brand-300)] hover:bg-[var(--daira-outline-hover-bg)]">
                 {responseType === "IMAGE" ? <img src={message.mediaUrl} alt="" className="h-56 w-full object-cover" /> : responseType === "VIDEO" ? <video src={message.mediaUrl} controls className="max-h-64 w-full bg-black object-contain" /> : <div className="w-full px-3 py-4"><audio src={message.mediaUrl} controls className="w-full" /></div>}
                 <input type="file" accept={mediaAccept} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
               </label>
@@ -496,7 +496,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   فایل قبلی ذخیره شده است؛ می‌توانی آن را با فایل جدید جایگزین کنی.
                 </p>
               )}
-              <label className={["flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[var(--daira-surface-hover)] px-4 text-center transition", uploading ? "pointer-events-none opacity-60" : "hover:border-[#93C5FD] hover:bg-[var(--daira-outline-hover-bg)]"].join(" ")}>
+              <label className={["flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[var(--daira-surface-hover)] px-4 text-center transition", uploading ? "pointer-events-none opacity-60" : "hover:border-[var(--daira-brand-300)] hover:bg-[var(--daira-outline-hover-bg)]"].join(" ")}>
                 {uploading ? (
                   <div className="flex w-full flex-col items-center justify-center px-6">
                     <div className="mb-2 text-[10px] font-semibold text-[var(--daira-primary)]">{progress}٪</div>
@@ -511,7 +511,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 )}
                 <input type="file" accept={mediaAccept} disabled={uploading} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
               </label>
-              {retryFile && !uploading && error && <div className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] p-3"><div className="flex items-center justify-between text-[11px] font-bold text-[var(--daira-error-text)]"><span>آپلود ناموفق بود</span><span>{progress}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[var(--daira-error-text)]" style={{ width: `${Math.max(3, progress)}%` }} /></div><button type="button" onClick={() => void uploadMedia(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[var(--daira-error-text)] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14}/>تلاش دوباره</button></div>}
+              {retryFile && !uploading && error && <div className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] p-3"><div className="flex items-center justify-between text-[11px] font-bold text-[var(--daira-error-text)]"><span>آپلود ناموفق بود</span><span>{progress}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--daira-error-background)]"><div className="h-full rounded-full bg-[var(--daira-error-text)]" style={{ width: `${Math.max(3, progress)}%` }} /></div><button type="button" onClick={() => void uploadMedia(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[var(--daira-error-text)] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14}/>تلاش دوباره</button></div>}
 {responseType === "AUDIO" && (
                 <>
                   <div className="text-center text-[10px] font-semibold text-[var(--daira-text-disabled)]">یا</div>
@@ -596,7 +596,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
               {slides.map((slide, index) => (
                 <div key={slide.id} className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4">
                   <p className="text-center text-lg font-extrabold text-[var(--daira-heading)]">اسلاید {index + 1}</p>
-                  <label className="relative flex min-h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] text-center hover:border-[#93C5FD] hover:bg-[var(--daira-outline-hover-bg)]">
+                  <label className="relative flex min-h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] text-center hover:border-[var(--daira-brand-300)] hover:bg-[var(--daira-outline-hover-bg)]">
                     {slideUploading[slide.id] ? (
                       <div className="flex w-full flex-col items-center justify-center px-6">
                         <div className="mb-2 text-[10px] font-semibold text-[var(--daira-primary)]">
@@ -611,7 +611,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                     ) : slideRetryFiles[slide.id] ? (
                       <div className="flex w-full flex-col items-center justify-center px-6">
                         <span className="mb-2 text-[10px] font-bold text-[var(--daira-error-text)]">آپلود ناموفق بود — {slideUploadProgress[slide.id] ?? 0}٪</span>
-                        <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[var(--daira-error-text)]" style={{ width: `${Math.max(3, Math.min(100, slideUploadProgress[slide.id] ?? 0))}%` }} /></div>
+                        <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[var(--daira-error-background)]"><div className="h-full rounded-full bg-[var(--daira-error-text)]" style={{ width: `${Math.max(3, Math.min(100, slideUploadProgress[slide.id] ?? 0))}%` }} /></div>
                         <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); void uploadSlideImage(slide.id, slideRetryFiles[slide.id] ?? undefined); }} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[var(--daira-error-text)] px-3 py-2 text-[11px] font-bold text-white">
                           <RotateCcw size={14}/>تلاش دوباره
                         </button>
@@ -670,7 +670,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   
               {message.showcaseId && (
                 <div className="space-y-2">
-                  <p className="rounded-xl border border-[#BBF7D0] bg-[var(--daira-success-bg)] px-3.5 py-3 text-xs font-semibold text-[#166534]">
+                  <p className="rounded-xl border border-[var(--daira-success-border)] bg-[var(--daira-success-bg)] px-3.5 py-3 text-xs font-semibold text-[var(--daira-success-text)]">
                     ویترین ساخته شد و با پاسخ متصل شد.
                   </p>
                   <button
@@ -768,7 +768,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           />
         )}
         <div className="space-y-2 pt-2">
-          {formSaved && <div className="space-y-2"><p className="rounded-xl border border-[#BBF7D0] bg-[var(--daira-success-bg)] px-3.5 py-3 text-xs font-semibold text-[#166534]">فرم ذخیره شده است.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="sd-destructive-button text-xs font-bold text-[var(--daira-error-text)] transition hover:text-[var(--daira-error-text)]">حذف فرم</button></div>}
+          {formSaved && <div className="space-y-2"><p className="rounded-xl border border-[var(--daira-success-border)] bg-[var(--daira-success-bg)] px-3.5 py-3 text-xs font-semibold text-[var(--daira-success-text)]">فرم ذخیره شده است.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="sd-destructive-button text-xs font-bold text-[var(--daira-error-text)] transition hover:text-[var(--daira-error-text)]">حذف فرم</button></div>}
         </div>
         </div>
       )}
@@ -898,7 +898,7 @@ function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hi
     {destinationType==="FORM" && !hideForm && <FormBranchEditor title="فرم مقصد" question={reply.destinationQuestion} replies={reply.destinationQuickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources} onChange={(patch)=>onChange({...(patch.question!==undefined?{destinationQuestion:patch.question}:{}),...(patch.replies!==undefined?{destinationQuickReplies:patch.replies}:{})})} onUploadMedia={onUploadMedia} level={1} hideVideo={hideVideo} hideForm={hideForm} />}
     {FORM_MEDIA_TYPES.includes(destinationType as typeof FORM_MEDIA_TYPES[number]) && (
       <>
-        <label className={["flex min-h-24 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-[var(--daira-surface-hover)] text-center",uploading?"pointer-events-none opacity-60":"hover:border-[#93C5FD] hover:bg-[var(--daira-outline-hover-bg)]"].join(" ")}>
+        <label className={["flex min-h-24 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-[var(--daira-surface-hover)] text-center",uploading?"pointer-events-none opacity-60":"hover:border-[var(--daira-brand-300)] hover:bg-[var(--daira-outline-hover-bg)]"].join(" ")}>
           <span className="text-xs font-bold text-[var(--daira-primary)]">{uploading?"در حال آپلود...":reply.destinationMediaUrl?"تعویض فایل":"انتخاب فایل از دستگاه"}</span>
           <input type="file" accept={destinationType==="IMAGE"?"image/*":destinationType==="VIDEO"?"video/*":"audio/*"} disabled={uploading} className="hidden" onChange={(e)=>{const file=e.currentTarget.files?.[0];e.currentTarget.value="";void upload(destinationType as typeof FORM_MEDIA_TYPES[number],file)}} />
         </label>
@@ -909,7 +909,7 @@ function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hi
           </>
         )}
         {reply.destinationMediaUrl && (
-          <div className="overflow-hidden rounded-xl border border-[#BBF7D0] bg-white">
+          <div className="overflow-hidden rounded-xl border border-[var(--daira-success-border)] bg-white">
             {destinationType === "IMAGE" ? (
               <img src={reply.destinationMediaUrl} alt="" className="h-44 w-full object-cover" />
             ) : destinationType === "VIDEO" ? (
@@ -917,7 +917,7 @@ function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hi
             ) : (
               <audio src={reply.destinationMediaUrl} controls className="w-full px-3 py-3" />
             )}
-            <div className="flex justify-center border-t border-[#DCFCE7] bg-[var(--daira-success-bg)] px-3 py-2.5">
+            <div className="flex justify-center border-t border-[var(--daira-success-bg)] bg-[var(--daira-success-bg)] px-3 py-2.5">
               <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined); onChange({destinationMediaUrl:"",destinationMediaId:""}); }} className="sd-destructive-button text-xs font-bold text-[var(--daira-error-text)] transition hover:text-[var(--daira-error-text)]">
                 حذف {destinationType === "IMAGE" ? "عکس" : destinationType === "VIDEO" ? "ویدیو" : "وویس"}
               </button>

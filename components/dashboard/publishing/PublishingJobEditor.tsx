@@ -890,7 +890,7 @@ export default function PublishingJobEditor({
                     variant="outline"
                     onClick={() => setShowDeleteAutomationConfirm(true)}
                     disabled={deleting || automationLoading}
-                    className="min-h-11 w-full rounded-xl !border-[var(--daira-error-border)] !bg-[var(--daira-error-background)] px-4 text-sm font-bold !text-[var(--daira-error-text)] hover:!bg-[#FEE2E2]"
+                    className="min-h-11 w-full rounded-xl !border-[var(--daira-error-border)] !bg-[var(--daira-error-background)] px-4 text-sm font-bold !text-[var(--daira-error-text)] hover:!bg-[var(--daira-error-background)]"
                   >
                     <span dir="rtl" className="inline-flex items-center justify-center gap-2">
                       {deleting ? "در حال حذف..." : `حذف پاسخ خودکار ${labels[job.type]}`}
@@ -909,7 +909,7 @@ export default function PublishingJobEditor({
             variant="outline"
             onClick={() => void cancelScheduled()}
             disabled={deleting || contentSaving}
-            className="min-h-11 w-full rounded-xl border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-4 text-sm font-bold text-[var(--daira-error-text)] hover:bg-[#FEE2E2]"
+            className="min-h-11 w-full rounded-xl border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-4 text-sm font-bold text-[var(--daira-error-text)] hover:bg-[var(--daira-error-background)]"
           >
             <Trash2 size={17} />
             {deleting ? "در حال حذف..." : "لغو و حذف محتوا"}
@@ -956,7 +956,7 @@ export default function PublishingJobEditor({
                 variant="outline"
                 onClick={() => void deleteAutomation()}
                 disabled={deleting}
-                className="h-10 flex-1 rounded-xl border-[var(--daira-error-border)] bg-[var(--daira-error-background)] text-xs font-semibold text-[var(--daira-error-text)] hover:bg-[#FEE2E2]"
+                className="h-10 flex-1 rounded-xl border-[var(--daira-error-border)] bg-[var(--daira-error-background)] text-xs font-semibold text-[var(--daira-error-text)] hover:bg-[var(--daira-error-background)]"
               >
                 {deleting ? "در حال حذف..." : "بله، حذف شود"}
               </Button>

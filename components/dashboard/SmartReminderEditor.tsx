@@ -99,7 +99,7 @@ export default function SmartReminderEditor({ id }: { id?: string }) {
       <div className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
         <label htmlFor="reminder-automation" className="block text-xs font-semibold text-[var(--daira-input-label)]">انتخاب پاسخ خودکار</label>
         <select id="reminder-automation" value={draft.automationId} onChange={e => patch({ automationId: e.target.value })}
-          className="min-h-12 w-full rounded-xl border border-[#D8E0EC] bg-white px-3.5 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
+          className="min-h-12 w-full rounded-xl border border-[var(--daira-input-border)] bg-white px-3.5 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
           <option value="">یک پاسخ خودکار انتخاب کن</option>
           {automations.map(item => <option key={item.id} value={item.id}>{smartReminderOptionName(item)}</option>)}
         </select>
@@ -114,7 +114,7 @@ export default function SmartReminderEditor({ id }: { id?: string }) {
           {presets.map(minutes => <button type="button" key={minutes} onClick={() => patch({ delayMinutes: String(minutes) })}
             aria-pressed={draft.delayMinutes === String(minutes)}
             className={"min-h-11 rounded-xl border px-2 text-xs font-bold transition " + (draft.delayMinutes === String(minutes)
-              ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[#D8E0EC] bg-white text-[var(--daira-text-secondary)]")}>
+              ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-input-border)] bg-white text-[var(--daira-text-secondary)]")}>
             {minutes < 60 ? new Intl.NumberFormat("fa-IR").format(minutes) + " دقیقه" :
               new Intl.NumberFormat("fa-IR").format(minutes / 60) + " ساعت"}
           </button>)}
@@ -122,7 +122,7 @@ export default function SmartReminderEditor({ id }: { id?: string }) {
         <label htmlFor="reminder-delay" className="block text-xs font-semibold text-[var(--daira-input-label)]">زمان دلخواه (دقیقه)</label>
         <input id="reminder-delay" type="number" min={5} max={1380} step={1} dir="ltr" value={draft.delayMinutes}
           onChange={e => patch({ delayMinutes: e.target.value })}
-          className="min-h-12 w-full rounded-xl border border-[#D8E0EC] px-3.5 text-center text-base outline-none focus:border-[var(--daira-primary)]"/>
+          className="min-h-12 w-full rounded-xl border border-[var(--daira-input-border)] px-3.5 text-center text-base outline-none focus:border-[var(--daira-primary)]"/>
         <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">بین ۵ دقیقه تا ۲۳ ساعت. اگر پنجرهٔ مجاز ۲۴ساعتهٔ Meta بسته شده باشد، پیام ارسال نمی‌شود.</p>
       </div>
     </section>
@@ -131,7 +131,7 @@ export default function SmartReminderEditor({ id }: { id?: string }) {
       <div className="space-y-2 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
         <label htmlFor="reminder-text" className="block text-xs font-semibold text-[var(--daira-input-label)]">متن یادآوری در دایرکت کاربر</label>
         <textarea id="reminder-text" rows={4} maxLength={1000} value={draft.text} onChange={e => patch({ text: e.target.value })}
-          className="w-full resize-y rounded-xl border border-[#D8E0EC] px-3.5 py-3 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]"/>
+          className="w-full resize-y rounded-xl border border-[var(--daira-input-border)] px-3.5 py-3 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]"/>
         <p className="text-left text-[11px] text-[var(--daira-text-disabled)]">{new Intl.NumberFormat("fa-IR").format(draft.text.length)} / ۱۰۰۰</p>
       </div>
     </section>

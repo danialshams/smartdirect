@@ -61,11 +61,11 @@ function StoryBranch({ question, replies, instagramAccountId, showcases, loading
     <section dir="rtl" aria-label={level ? "سؤال بعدی" : "فرم پاسخ استوری"}
       className={level === 0 ? "space-y-6" : "space-y-5 pt-4"}>
       <div className="space-y-2">
-        <h3 className={level ? "text-sm font-semibold text-[#1E40AF]" : "text-base font-bold text-[var(--daira-heading)]"}>{level ? "سؤال بعدی" : "سؤال اصلی"}</h3>
+        <h3 className={level ? "text-sm font-semibold text-[var(--daira-primary-hover)]" : "text-base font-bold text-[var(--daira-heading)]"}>{level ? "سؤال بعدی" : "سؤال اصلی"}</h3>
         <textarea aria-label={level ? "سؤال بعدی" : "سؤال اصلی"} rows={2} maxLength={2000} value={question}
           onChange={(event) => onChange({ question: event.target.value })}
           placeholder={level ? "مثلاً کدام مدل را می‌خواهی ببینی؟" : "مثلاً دوست داری دربارهٔ کدام محصول اطلاعات بگیری؟"}
-          className="w-full resize-y rounded-xl border border-[#D8E0EC] bg-white px-3.5 py-3 text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-[var(--daira-text-disabled)] focus:border-[var(--daira-primary)]" />
+          className="w-full resize-y rounded-xl border border-[var(--daira-input-border)] bg-white px-3.5 py-3 text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-[var(--daira-text-disabled)] focus:border-[var(--daira-primary)]" />
       </div>
       <div className="space-y-3">
         <h4 className="text-sm font-bold text-[var(--daira-heading)]">گزینه‌های پاسخ</h4>
@@ -80,7 +80,7 @@ function StoryBranch({ question, replies, instagramAccountId, showcases, loading
         </div>
         <button type="button" disabled={replies.length >= maxOptions}
           onClick={() => onChange({ replies: [...replies, createEmptyQuickReply()] })}
-          className="sd-neutral-button flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--daira-outline)] bg-white px-3 text-xs font-semibold text-[var(--daira-primary)] transition hover:border-[#93C5FD] hover:bg-[var(--daira-surface-hover)] disabled:opacity-50">
+          className="sd-neutral-button flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--daira-outline)] bg-white px-3 text-xs font-semibold text-[var(--daira-primary)] transition hover:border-[var(--daira-brand-300)] hover:bg-[var(--daira-surface-hover)] disabled:opacity-50">
           <Plus size={16} aria-hidden="true" /> افزودن گزینه
         </button>
       </div>
@@ -161,13 +161,13 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
           <input id={`story-answer-title-${reply.id}`} value={reply.title} maxLength={20}
             onChange={(event) => onChange({ title: event.target.value })}
             placeholder="مثلاً قیمت محصول"
-            className="w-full min-w-0 rounded-xl border border-[#D8E0EC] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]" />
+            className="w-full min-w-0 rounded-xl border border-[var(--daira-input-border)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]" />
         </div>
         <div>
           <label htmlFor={`story-answer-type-${reply.id}`} className="mb-1.5 block text-xs font-semibold text-[var(--daira-text-secondary)]">مقصد پاسخ</label>
           <select id={`story-answer-type-${reply.id}`} value={reply.destinationType || ""}
             onChange={(event) => changeDestination((event.target.value || null) as QuickReplyDraft["destinationType"])}
-            className="w-full min-w-0 rounded-xl border border-[#D8E0EC] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
+            className="w-full min-w-0 rounded-xl border border-[var(--daira-input-border)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
             <option value="">انتخاب مقصد پاسخ</option>
             <option value="TEXT">پیام متنی</option>
             <option value="IMAGE">عکس</option>
@@ -181,7 +181,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
             <textarea aria-label={`متن پاسخ گزینه ${index + 1}`} value={reply.destinationText}
               onChange={(event) => onChange({ destinationText: event.target.value })}
               rows={3} maxLength={2000} placeholder="متنی که بعد از انتخاب این گزینه ارسال می‌شود..."
-              className="w-full resize-y rounded-xl border border-[#D8E0EC] bg-white px-3 py-3 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]" />
+              className="w-full resize-y rounded-xl border border-[var(--daira-input-border)] bg-white px-3 py-3 text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]" />
           )}
           {reply.destinationType === "SHOWCASE" && (
             <div className="space-y-3">
@@ -195,7 +195,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
                       onChange({ destinationShowcaseId: createdShowcaseId });
                     }}
                     className={["sd-neutral-button min-h-11 rounded-xl border px-3 py-2 text-xs font-bold transition",
-                      showcaseMode === "new" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[#D8E0EC] bg-white text-[var(--daira-text-secondary)] hover:border-[#93C5FD]"].join(" ")}>
+                      showcaseMode === "new" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-input-border)] bg-white text-[var(--daira-text-secondary)] hover:border-[var(--daira-brand-300)]"].join(" ")}>
                     <span className="inline-flex items-center justify-center gap-1.5"><Plus size={15} aria-hidden="true" /> ساخت ویترین جدید</span>
                   </button>
                   <button type="button" aria-pressed={showcaseMode === "existing"}
@@ -204,7 +204,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
                       onChange({ destinationShowcaseId: previousShowcaseId });
                     }}
                     className={["sd-neutral-button min-h-11 rounded-xl border px-3 py-2 text-xs font-bold transition",
-                      showcaseMode === "existing" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[#D8E0EC] bg-white text-[var(--daira-text-secondary)] hover:border-[#93C5FD]"].join(" ")}>
+                      showcaseMode === "existing" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary-hover)]" : "border-[var(--daira-input-border)] bg-white text-[var(--daira-text-secondary)] hover:border-[var(--daira-brand-300)]"].join(" ")}>
                     استفاده از ویترین‌های قبلی
                   </button>
                 </div>
@@ -217,13 +217,13 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
                       setPreviousShowcaseId(id);
                       onChange({ destinationShowcaseId: id });
                     }}
-                    className="w-full min-w-0 rounded-xl border border-[#D8E0EC] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
+                    className="w-full min-w-0 rounded-xl border border-[var(--daira-input-border)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
                     <option value="">{loadingResources ? "در حال دریافت..." : showcases.length ? "یک ویترین قبلی را انتخاب کن" : "هنوز ویترینی ساخته نشده"}</option>
                     {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
                   </select>
                 </div>
               ) : showcaseMode === "new" ? (createdShowcaseId ? (
-                <div role="status" className="flex items-center justify-between gap-3 rounded-xl bg-[#ECFDF5] px-3 py-3 text-xs text-[#166534]">
+                <div role="status" className="flex items-center justify-between gap-3 rounded-xl bg-[var(--daira-success-bg)] px-3 py-3 text-xs text-[var(--daira-success-text)]">
                   <span className="font-semibold">ویترین جدید انتخاب شد.</span>
                   <button type="button" onClick={() => {
                     setCreatedShowcaseId("");

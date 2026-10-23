@@ -505,9 +505,9 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           ) : (
             <div className="space-y-2.5">
               {filteredItems.map((item) => (
-                <div key={item.key} className="flex min-h-[84px] items-center justify-between gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
+                <div key={item.key} className="flex min-h-[84px] items-center justify-between gap-3 rounded-[22px] border border-[var(--daira-border)] bg-white px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#E8EDF5] bg-[var(--daira-surface-hover)]">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)]">
                       {item.previewUrl && item.previewKind === "video" ? (
                         <video src={item.previewUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" aria-label="پیش‌نمایش ویدیو" />
                       ) : item.previewUrl ? (

@@ -122,7 +122,7 @@ export default function StoryReplyShowcaseCreator({ instagramAccountId, onUpload
 
   if (created) {
     return (
-      <div role="status" className="flex items-start gap-2 rounded-xl bg-[var(--daira-success-bg)] p-3 text-xs leading-6 text-[#166534]">
+      <div role="status" className="flex items-start gap-2 rounded-xl bg-[var(--daira-success-bg)] p-3 text-xs leading-6 text-[var(--daira-success-text)]">
         <CircleCheck size={18} aria-hidden="true" className="mt-0.5 shrink-0" />
         <div>
           <strong className="block">ویترین ساخته و انتخاب شد.</strong>
