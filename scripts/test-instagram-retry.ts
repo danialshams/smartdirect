@@ -243,4 +243,4 @@ async function main() {
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
-});
+}).finally(async () => { const { disconnectRedis } = await import("../src/lib/redis/client"); await disconnectRedis().catch(() => undefined); });

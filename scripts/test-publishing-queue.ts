@@ -70,4 +70,4 @@ main().catch((error) => {
   console.error("110-121 Publishing Queue: FAILED");
   console.error(error);
   process.exitCode = 1;
-});
+}).finally(async () => { const { disconnectRedis } = await import("../src/lib/redis/client"); await disconnectRedis().catch(() => undefined); });

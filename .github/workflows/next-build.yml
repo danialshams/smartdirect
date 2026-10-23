@@ -143,6 +143,21 @@ jobs:
           npx tsx scripts/test-traffic-lease-recovery.ts
           npx tsx scripts/test-queue-ownership-regressions.ts
 
+      - name: Test rate-limit and publishing test-process cleanup
+        timeout-minutes: 3
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          REDIS_DRIVER: redis
+          REDIS_URL: redis://127.0.0.1:6379
+          NODE_ENV: test
+        run: |
+          npx tsx scripts/test-rate-limit.ts
+          npx tsx scripts/test-instagram-retry.ts
+          npx tsx scripts/test-instagram-container-status-rate-limit.ts
+          npx tsx scripts/test-instagram-publish-container-pressure.ts
+          npx tsx scripts/test-publishing-queue.ts
+
       - name: Test independent Worker processes under account and conversation contention
         env:
           REDIS_DRIVER: redis

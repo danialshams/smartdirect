@@ -57,4 +57,4 @@ async function main() {
  await isolation(); await new Promise(r => setTimeout(r, WINDOW + 100));
  await workers(); console.log(JSON.stringify({ success: true, tests: [47,48,49,50] }, null, 2));
 }
-main().catch(error => { console.error(error); process.exitCode = 1; });
+main().catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => { const { disconnectRedis } = await import("../src/lib/redis/client"); await disconnectRedis().catch(() => undefined); });

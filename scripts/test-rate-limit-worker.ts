@@ -26,4 +26,4 @@ async function main() {
   const denied = results.length - allowed;
   console.log(JSON.stringify({ allowed, denied }));
 }
-main().catch((error) => { console.error(error); process.exitCode = 1; });
+main().catch((error) => { console.error(error); process.exitCode = 1; }).finally(async () => { const { disconnectRedis } = await import("../src/lib/redis/client"); await disconnectRedis().catch(() => undefined); });
