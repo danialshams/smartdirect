@@ -315,8 +315,6 @@ export async function POST(request: NextRequest) {
             }
 
             const automation = payload.purpose === "AUTOMATION";
-      const inbox = payload.purpose === "INBOX";
-      const messageMedia = automation || inbox;
             const inbox = payload.purpose === "INBOX";
             const messageMedia = automation || inbox;
             if (automation && payload.contentType.startsWith("video/")) throw new Error("آپلود ویدیو برای پاسخ‌های خودکار فعلاً غیرفعال است.");
@@ -491,6 +489,8 @@ export async function POST(request: NextRequest) {
       }
 
       const automation = payload.purpose === "AUTOMATION";
+      const inbox = payload.purpose === "INBOX";
+      const messageMedia = automation || inbox;
       const isImage = payload.contentType.startsWith("image/");
       const isAudio = payload.contentType.startsWith("audio/");
       const isVideo = payload.contentType.startsWith("video/");
