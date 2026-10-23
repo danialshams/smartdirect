@@ -63,6 +63,8 @@ export default function ContentSelectionDialog({
 }: Props) {
   const [filter, setFilter] = useState<ContentFilter>("ALL");
   const closeRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const dialogRef = useRef<HTMLElement>(null);
   const sorted = useMemo(() => sortContentNewestFirst(items), [items]);
   const filters: Array<{ value: ContentFilter; label: string }> = mode === "story"
@@ -83,7 +85,7 @@ export default function ContentSelectionDialog({
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { event.preventDefault(); onClose(); }
+      if (event.key === "Escape") { event.preventDefault(); onCloseRef.current(); }
       if (event.key !== "Tab" || !dialogRef.current) return;
       const controls = Array.from(dialogRef.current.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));
       if (!controls.length) return;
@@ -98,7 +100,7 @@ export default function ContentSelectionDialog({
       window.removeEventListener("keydown", handleKeyDown);
       focused?.focus();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[2500] flex items-end justify-center bg-[#101A32]/55 p-0 backdrop-blur-[3px] sm:items-center sm:p-5"
