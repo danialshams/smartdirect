@@ -7,7 +7,7 @@ import path from "node:path";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getUnlinkedUploadExpiry } from "@/lib/instagram/publishing-media-cleanup";
-import { getStorageProvider } from "@/lib/storage/provider";
+import { getStorageProvider, getStorageProviderForObject } from "@/lib/storage/provider";
 import { reserveUpload, releaseUploadReservation } from "@/lib/storage/upload-accounting";
 import { maximumUploadBytes, checkMediaOutputSize } from "@/lib/instagram/media-limits";
 import { normalizeInstagramPublishImage } from "@/lib/instagram/image-normalizer";
@@ -71,8 +71,12 @@ async function finalizeVideoUpload(input: {
     throw new Error("آدرس فایل آپلودشده با فایل ثبت‌شده مطابقت ندارد.");
   }
   if (!sourceObject) {
-    await prisma.instagramStorageObject.create({
-      data: { userId, storageKey: pathname, publicUrl: url, expiresAt: getUnlinkedUploadExpiry() },
+    throw new Error("آپلود مستقیم در سهمیه کاربر ثبت نشده است.");
+  }
+  if (!sourceObject.publicUrl) {
+    await prisma.instagramStorageObject.update({
+      where: { storageKey: pathname },
+      data: { publicUrl: url, fileSize: BigInt(fileSize) },
     });
   }
 
@@ -110,7 +114,7 @@ async function finalizeVideoUpload(input: {
   }
 
   try {
-    await provider.delete(pathname);
+    await getStorageProviderForObject(pathname, url).delete(pathname);
     await prisma.instagramStorageObject.updateMany({
       where: { userId, storageKey: pathname, deletedAt: null },
       data: { deletedAt: new Date(), expiresAt: new Date() },
@@ -161,8 +165,12 @@ async function finalizeAudioUpload(input: {
     throw new Error("آدرس فایل آپلودشده با فایل ثبت‌شده مطابقت ندارد.");
   }
   if (!sourceObject) {
-    await prisma.instagramStorageObject.create({
-      data: { userId, storageKey: pathname, publicUrl: url, expiresAt: getUnlinkedUploadExpiry() },
+    throw new Error("آپلود مستقیم در سهمیه کاربر ثبت نشده است.");
+  }
+  if (!sourceObject.publicUrl) {
+    await prisma.instagramStorageObject.update({
+      where: { storageKey: pathname },
+      data: { publicUrl: url, fileSize: BigInt(fileSize) },
     });
   }
 
@@ -200,7 +208,7 @@ async function finalizeAudioUpload(input: {
   }
 
   try {
-    await provider.delete(pathname);
+    await getStorageProviderForObject(pathname, url).delete(pathname);
     await prisma.instagramStorageObject.updateMany({
       where: { userId, storageKey: pathname, deletedAt: null },
       data: { deletedAt: new Date(), expiresAt: new Date() },
@@ -391,6 +399,7 @@ export async function POST(request: NextRequest) {
           if (!source || source.userId !== session.user.id || source.deletedAt) {
             return NextResponse.json({ success: false, message: "فایل اولیه در سهمیه کاربر ثبت نشده است." }, { status: 400 });
           }
+          await prisma.instagramStorageObject.update({ where: { storageKey: pathname }, data: { publicUrl: url, fileSize: BigInt(fileSize) } });
           const sourceResponse = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(120_000) });
           if (!sourceResponse.ok) throw new Error("دانلود تصویر برای تبدیل ناموفق بود.");
           const raw = Buffer.from(await sourceResponse.arrayBuffer());
@@ -419,7 +428,7 @@ export async function POST(request: NextRequest) {
             throw error;
           }
           try {
-            await provider.delete(pathname);
+            await getStorageProviderForObject(pathname, url).delete(pathname);
             await prisma.instagramStorageObject.updateMany({
               where: { storageKey: pathname, userId: session.user.id, deletedAt: null },
               data: { deletedAt: new Date() },
