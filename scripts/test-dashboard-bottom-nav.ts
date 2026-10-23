@@ -51,4 +51,12 @@ for (const key of toolKeys) {
 }
 assert(!overview.includes("extraTools.map"), "Supplementary tools must appear within smart responses");
 assert(styles.includes(".daira-home__tool-grid--automation .daira-home__tool-card:last-child:nth-child(odd)"), "Odd mobile row should span both columns");
+assert(shell.includes('className="daira-bottom-nav__center"'), "Both navigation states must share a persistent parent");
+assert(shell.includes("aria-hidden={!isHome}") && shell.includes("aria-hidden={isHome}"), "Inactive navigation should be hidden to screen readers");
+assert(shell.includes("tabIndex={isHome ? 0 : -1}") && shell.includes("tabIndex={isHome ? -1 : 0}"), "Only the visible home link may take keyboard focus");
+assert(styles.includes(".daira-bottom-nav__center-home { position:absolute;"), "Home view must stay mounted through a reverse transition");
+assert(styles.includes(".daira-bottom-nav--contextual .daira-bottom-nav__breadcrumb { opacity:1;"), "Breadcrumb must be visible on inner pages");
+assert(styles.includes(".daira-bottom-nav__breadcrumb { direction:ltr;position:absolute;"), "Breadcrumb must not pop during navigation");
+assert(styles.includes("420ms cubic-bezier(.22,1,.36,1)"), "Breadcrumb transition must be smooth");
+assert(styles.includes(".daira-bottom-nav__center-home, .daira-bottom-nav__breadcrumb { transition:none; }"), "Reduced motion must disable both transitions");
 console.log("DAIRA_BOTTOM_NAV_BREADCRUMB_OK", cases.length);
