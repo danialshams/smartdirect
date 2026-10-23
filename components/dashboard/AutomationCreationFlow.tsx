@@ -878,7 +878,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         <X size={16} strokeWidth={2.5} aria-hidden="true" />
                       </button>
                       <p className="truncate px-2 py-2 text-center text-[11px] font-semibold text-[var(--daira-text)]">
-                        {triggerType === "STORY_REPLY_KEYWORD" ? "استوری" : item?.media_product_type === "REELS" ? "ریلز" : item ? "پست" : "محتوای قبلی"}
+                        {triggerType === "STORY_REPLY_KEYWORD" ? "استوری" : item?.media_product_type === "REELS" ? "ریلز" : item?.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : item ? "پست" : "محتوای قبلی"}
                       </p>
                     </div>
                   );
@@ -1334,7 +1334,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             onToggle={(id) => setDraftSelectedMediaIds((current) =>
               triggerType === "COMMENT_KEYWORD"
                 ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id])
-                : [id]
+                : (current.includes(id) ? [] : [id])
             )}
             onClose={() => setMediaDialogOpen(false)}
             onConfirm={confirmMediaSelection}
