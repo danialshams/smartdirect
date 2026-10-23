@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import path from "node:path";
-import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
-import { promisify } from "node:util";
-import ffmpegPath from "ffmpeg-static";
 
 import { authOptions } from "@/lib/auth";
 import { getStorageProvider } from "@/lib/storage/provider";
@@ -13,17 +8,16 @@ import { prisma } from "@/lib/prisma";
 import { getUnlinkedUploadExpiry } from "@/lib/instagram/publishing-media-cleanup";
 import { isStorageObjectReferenced } from "@/lib/instagram/storage-references";
 import { normalizeInstagramVideo } from "@/lib/instagram/video-normalizer";
+import { normalizeInstagramAudio } from "@/lib/instagram/audio-normalizer";
 
 export const dynamic = "force-dynamic";
 
 const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024;
-const SAFE_AUDIO_SIZE = 24_000_000;
 const META_DM_IMAGE_MAX_SIZE = 8_000_000 - 1;
 const META_DM_VIDEO_MAX_SIZE = 25_000_000 - 1;
 const META_DM_AUDIO_MAX_SIZE = 25_000_000 - 1;
-const execFileAsync = promisify(execFile);
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedVideoTypes = new Set(["video/mp4", "video/quicktime"]);
@@ -110,26 +104,9 @@ export async function POST(request: NextRequest) {
       }
     }
     if (isAudio) {
-      if (!ffmpegPath) throw new Error("FFmpeg در سرور در دسترس نیست.");
-      const tempDir = await mkdtemp(path.join(os.tmpdir(), "smartdirect-audio-"));
-      const inputPath = path.join(tempDir, "input" + (path.extname(file.name) || ".audio"));
-      const outputPath = path.join(tempDir, "output.m4a");
-      try {
-        await writeFile(inputPath, uploadBuffer);
-        let normalized: Buffer | null = null;
-        for (const bitrate of ["96k", "64k", "48k"]) {
-          await rm(outputPath, { force: true });
-          await execFileAsync(ffmpegPath, ["-hide_banner", "-loglevel", "error", "-y", "-i", inputPath, "-vn", "-c:a", "aac", "-b:a", bitrate, "-ar", "44100", "-ac", "2", "-movflags", "+faststart", outputPath], { timeout: 120000, maxBuffer: 4 * 1024 * 1024 });
-          normalized = await readFile(outputPath);
-          if (normalized.length <= SAFE_AUDIO_SIZE) break;
-        }
-        if (!normalized || normalized.length > SAFE_AUDIO_SIZE) throw new Error("حجم فایل صوتی پس از تبدیل باید حداکثر 24 مگابایت باشد.");
-        uploadBuffer = normalized;
-        uploadFileName = path.basename(file.name, path.extname(file.name)) + ".m4a";
-        uploadContentType = "audio/mp4";
-      } finally {
-        await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
-      }
+      uploadBuffer = await normalizeInstagramAudio(uploadBuffer, file.name);
+      uploadFileName = path.basename(file.name, path.extname(file.name)) + ".m4a";
+      uploadContentType = "audio/mp4";
     }
 
     const extension = path.extname(uploadFileName) || (isImage ? ".jpg" : isVideo ? ".mp4" : ".m4a");
