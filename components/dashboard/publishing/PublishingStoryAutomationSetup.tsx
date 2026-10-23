@@ -423,8 +423,8 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       {!textOnly && (
         <>
           <div>
-            <p className="text-sm font-bold text-[#0F172A]">{responseTypeTitle}</p>
-            {responseTypeDescription && <p className="mt-1 text-[11px] leading-5 text-[#64748B]">{responseTypeDescription}</p>}
+            <p className="text-sm font-bold text-[var(--daira-heading)]">{responseTypeTitle}</p>
+            {responseTypeDescription && <p className="mt-1 text-[11px] leading-5 text-[var(--daira-text-secondary)]">{responseTypeDescription}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3" role="group" aria-label={storyCreateMode ? "انتخاب نوع پاسخ استوری" : "انتخاب نوع پاسخ"}>
@@ -437,18 +437,18 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   aria-pressed={active}
                   onClick={() => selectType(value)}
                   className={[
-                    "sd-neutral-button group flex items-center gap-2.5 rounded-xl border px-3 text-right transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/30",
+                    "sd-neutral-button group flex items-center gap-2.5 rounded-xl border px-3 text-right transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--daira-primary)]/30",
                     storyCreateMode ? "min-h-[64px] py-2.5" : "min-h-[78px] py-3",
-                    active ? "border-[#2563EB] bg-[#EFF6FF] ring-1 ring-[#2563EB]/15" : "border-[#E2E8F0] bg-white hover:border-[#93B5FC] hover:bg-[#F8FAFC]",
+                    active ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)] ring-1 ring-[var(--daira-primary)]/15" : "border-[var(--daira-border)] bg-white hover:border-[#93B5FC] hover:bg-[var(--daira-surface-hover)]",
                   ].join(" ")}
                 >
-                  <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", active ? "bg-[#DBEAFE] text-[#1D4ED8]" : "bg-[#F1F5F9] text-[#475569]"].join(" ")}>
+                  <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", active ? "bg-[var(--daira-outline-active-bg)] text-[var(--daira-primary-hover)]" : "bg-[var(--daira-neutral-bg)] text-[var(--daira-text-secondary)]"].join(" ")}>
                     <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className={["block text-[13px] font-bold", active ? "text-[#1D4ED8]" : "text-[#0F172A]"].join(" ")}>{label}</span>
+                    <span className={["block text-[13px] font-bold", active ? "text-[var(--daira-primary-hover)]" : "text-[var(--daira-heading)]"].join(" ")}>{label}</span>
                   </span>
-                  <span aria-hidden="true" className={["flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border", active ? "border-[#2563EB] bg-[#2563EB] text-white" : "border-[#CBD5E1] bg-white"].join(" ")}>
+                  <span aria-hidden="true" className={["flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border", active ? "border-[var(--daira-primary)] bg-[var(--daira-primary)] text-white" : "border-[var(--daira-outline)] bg-white"].join(" ")}>
                     {active && <Check size={12} strokeWidth={3} />}
                   </span>
                 </button>
@@ -460,7 +460,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
       {responseType === "TEXT" && (
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#0F172A]">متن پاسخ</label>
+          <label className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">متن پاسخ</label>
           <textarea
             value={message.text}
             onChange={(event) => onUpdate({ text: event.target.value })}
@@ -469,7 +469,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
             inputMode="text"
             autoCapitalize="sentences"
             spellCheck
-            className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10"
+            className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10"
             placeholder={textPlaceholder}
             style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }}
           />
@@ -478,43 +478,43 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
       {(responseType === "IMAGE" || responseType === "VIDEO" || responseType === "AUDIO") && (
         <div className="space-y-3">
-          <label className="block text-sm font-bold text-[#0F172A]">
+          <label className="block text-sm font-bold text-[var(--daira-heading)]">
             {responseType === "IMAGE" ? "آپلود عکس" : responseType === "VIDEO" ? "آپلود ویدیو" : "آپلود وویس"}
           </label>
           {message.mediaUrl && !uploading ? (
             <div className="space-y-2">
-              <label className="relative flex min-h-36 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed bg-white text-center transition hover:border-[#93C5FD] hover:bg-[#EFF6FF]">
+              <label className="relative flex min-h-36 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed bg-white text-center transition hover:border-[#93C5FD] hover:bg-[var(--daira-outline-hover-bg)]">
                 {responseType === "IMAGE" ? <img src={message.mediaUrl} alt="" className="h-56 w-full object-cover" /> : responseType === "VIDEO" ? <video src={message.mediaUrl} controls className="max-h-64 w-full bg-black object-contain" /> : <div className="w-full px-3 py-4"><audio src={message.mediaUrl} controls className="w-full" /></div>}
                 <input type="file" accept={mediaAccept} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
               </label>
-              <div className="flex justify-center"><button type="button" onClick={() => { if (!storyEditMode) void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined); onUpdate({ mediaUrl: "", mediaId: "" }); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف {responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "ویدیو" : "وویس"}</button></div>
+              <div className="flex justify-center"><button type="button" onClick={() => { if (!storyEditMode) void requestStorageCleanupByPublicUrl(message.mediaUrl).catch(() => undefined); onUpdate({ mediaUrl: "", mediaId: "" }); }} className="sd-destructive-button text-xs font-bold text-[var(--daira-error-text)] transition hover:text-[var(--daira-error-text)]">حذف {responseType === "IMAGE" ? "عکس" : responseType === "VIDEO" ? "ویدیو" : "وویس"}</button></div>
             </div>
           ) : (
             <div className="space-y-3">
               {storyEditMode && Boolean(message.mediaId) && !message.mediaUrl && (
-                <p className="rounded-xl bg-[#F1F5F9] p-3 text-xs leading-6 text-[#475569]">
+                <p className="rounded-xl bg-[var(--daira-neutral-bg)] p-3 text-xs leading-6 text-[var(--daira-text-secondary)]">
                   فایل قبلی ذخیره شده است؛ می‌توانی آن را با فایل جدید جایگزین کنی.
                 </p>
               )}
-              <label className={["flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] px-4 text-center transition", uploading ? "pointer-events-none opacity-60" : "hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
+              <label className={["flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[var(--daira-surface-hover)] px-4 text-center transition", uploading ? "pointer-events-none opacity-60" : "hover:border-[#93C5FD] hover:bg-[var(--daira-outline-hover-bg)]"].join(" ")}>
                 {uploading ? (
                   <div className="flex w-full flex-col items-center justify-center px-6">
-                    <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">{progress}٪</div>
-                    <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-[#E2E8F0]"><div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200" style={{ width: `${progress}%` }} /></div>
+                    <div className="mb-2 text-[10px] font-semibold text-[var(--daira-primary)]">{progress}٪</div>
+                    <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-[var(--daira-border)]"><div className="h-full rounded-full bg-[var(--daira-primary)] transition-[width] duration-200" style={{ width: `${progress}%` }} /></div>
                   </div>
                 ) : (
                   <>
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">{responseType === "IMAGE" ? <ImagePlus size={21}/> : responseType === "VIDEO" ? <Video size={21}/> : <Mic size={21}/>}</span>
-                    <span className="mt-3 text-xs font-bold text-[#0F172A]">انتخاب فایل از دستگاه</span>
-                    <span className="mt-1 text-[10px] text-[#64748B]">فایل را از دستگاه انتخاب کن</span>
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]">{responseType === "IMAGE" ? <ImagePlus size={21}/> : responseType === "VIDEO" ? <Video size={21}/> : <Mic size={21}/>}</span>
+                    <span className="mt-3 text-xs font-bold text-[var(--daira-heading)]">انتخاب فایل از دستگاه</span>
+                    <span className="mt-1 text-[10px] text-[var(--daira-text-secondary)]">فایل را از دستگاه انتخاب کن</span>
                   </>
                 )}
                 <input type="file" accept={mediaAccept} disabled={uploading} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadMedia(file); }} />
               </label>
-              {retryFile && !uploading && error && <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3"><div className="flex items-center justify-between text-[11px] font-bold text-[#B91C1C]"><span>آپلود ناموفق بود</span><span>{progress}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, progress)}%` }} /></div><button type="button" onClick={() => void uploadMedia(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14}/>تلاش دوباره</button></div>}
+              {retryFile && !uploading && error && <div className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] p-3"><div className="flex items-center justify-between text-[11px] font-bold text-[var(--daira-error-text)]"><span>آپلود ناموفق بود</span><span>{progress}٪</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[var(--daira-error-text)]" style={{ width: `${Math.max(3, progress)}%` }} /></div><button type="button" onClick={() => void uploadMedia(retryFile)} className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[var(--daira-error-text)] px-3 py-2 text-[11px] font-bold text-white"><RotateCcw size={14}/>تلاش دوباره</button></div>}
 {responseType === "AUDIO" && (
                 <>
-                  <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
+                  <div className="text-center text-[10px] font-semibold text-[var(--daira-text-disabled)]">یا</div>
                   <VoiceRecorder disabled={uploading} onRecorded={uploadMedia} />
                 </>
               )}
@@ -526,7 +526,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       {responseType === "SHOWCASE" && (
         storyCreateMode ? (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="روش انتخاب ویترین">
+            <div className="grid grid-cols-2 gap-1 rounded-xl bg-[var(--daira-neutral-bg)] p-1" role="group" aria-label="روش انتخاب ویترین">
                 {(["new", "existing"] as const).map((value) => (
                   <button key={value} type="button" aria-pressed={showcaseSource === value}
                     onClick={() => {
@@ -540,7 +540,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                       }
                       setShowcaseSource(value);
                     }}
-                    className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", showcaseSource === value ? "bg-white text-[#1D4ED8] shadow-sm" : "bg-transparent text-[#64748B] hover:text-[#0F172A]"].join(" ")}>
+                    className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", showcaseSource === value ? "bg-white text-[var(--daira-primary-hover)] shadow-sm" : "bg-transparent text-[var(--daira-text-secondary)] hover:text-[var(--daira-heading)]"].join(" ")}>
                     {value === "new" ? "ساخت ویترین جدید" : "استفاده از ویترین‌های قبلی"}
                   </button>
                 ))}
@@ -558,12 +558,12 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                     onUpdate({ showcaseId: id });
                     setError("");
                   }}
-                  className="w-full min-w-0 rounded-xl border border-[#CBD5E1] bg-white px-3 py-3 text-base text-[#0F172A] outline-none focus:border-[#2563EB]">
+                  className="w-full min-w-0 rounded-xl border border-[var(--daira-outline)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
                   <option value="">یک ویترین انتخاب کن</option>
                   {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
                 </select>
-                {!loadingResources && showcases.length === 0 && <p className="text-xs text-[#64748B]">هنوز ویترینی نداری.</p>}
-                {existingShowcaseEdited && <p className="text-xs text-[#64748B]">تغییرات در یک نسخهٔ جدید ذخیره می‌شوند.</p>}
+                {!loadingResources && showcases.length === 0 && <p className="text-xs text-[var(--daira-text-secondary)]">هنوز ویترینی نداری.</p>}
+                {existingShowcaseEdited && <p className="text-xs text-[var(--daira-text-secondary)]">تغییرات در یک نسخهٔ جدید ذخیره می‌شوند.</p>}
               </div>
             )}
             {(showcaseSource === "new" || selectedShowcase) && (
@@ -589,60 +589,60 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         ) : (
           <div className={["space-y-5 transition-opacity duration-200", showcaseSaved ? "opacity-55" : ""].join(" ")}>
             <div>
-              <p className="text-sm font-bold text-[#0F172A]">ویترین</p>
-              <p className="mt-1 text-[11px] leading-5 text-[#64748B]">اسلایدهای ویترین را با تصویر، تیتر و توضیحات بساز.</p>
+              <p className="text-sm font-bold text-[var(--daira-heading)]">ویترین</p>
+              <p className="mt-1 text-[11px] leading-5 text-[var(--daira-text-secondary)]">اسلایدهای ویترین را با تصویر، تیتر و توضیحات بساز.</p>
             </div>
             <div className="space-y-4">
               {slides.map((slide, index) => (
-                <div key={slide.id} className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-4">
-                  <p className="text-center text-lg font-extrabold text-[#0F172A]">اسلاید {index + 1}</p>
-                  <label className="relative flex min-h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-center hover:border-[#93C5FD] hover:bg-[#EFF6FF]">
+                <div key={slide.id} className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4">
+                  <p className="text-center text-lg font-extrabold text-[var(--daira-heading)]">اسلاید {index + 1}</p>
+                  <label className="relative flex min-h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[var(--daira-outline)] bg-[var(--daira-surface-hover)] text-center hover:border-[#93C5FD] hover:bg-[var(--daira-outline-hover-bg)]">
                     {slideUploading[slide.id] ? (
                       <div className="flex w-full flex-col items-center justify-center px-6">
-                        <div className="mb-2 text-[10px] font-semibold text-[#2563EB]">
+                        <div className="mb-2 text-[10px] font-semibold text-[var(--daira-primary)]">
                           {slideUploadProgress[slide.id] ?? 0}٪
                         </div>
-                        <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#E2E8F0]">
-                          <div className="h-full rounded-full bg-[#2563EB] transition-[width] duration-150 ease-out" style={{ width: `${slideUploadProgress[slide.id] ?? 0}%` }} />
+                        <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[var(--daira-border)]">
+                          <div className="h-full rounded-full bg-[var(--daira-primary)] transition-[width] duration-150 ease-out" style={{ width: `${slideUploadProgress[slide.id] ?? 0}%` }} />
                         </div>
                       </div>
                     ) : slide.previewUrl ? (
                       <img src={slide.previewUrl} alt="" className="h-44 w-full object-cover" />
                     ) : slideRetryFiles[slide.id] ? (
                       <div className="flex w-full flex-col items-center justify-center px-6">
-                        <span className="mb-2 text-[10px] font-bold text-[#B91C1C]">آپلود ناموفق بود — {slideUploadProgress[slide.id] ?? 0}٪</span>
-                        <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[#DC2626]" style={{ width: `${Math.max(3, Math.min(100, slideUploadProgress[slide.id] ?? 0))}%` }} /></div>
-                        <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); void uploadSlideImage(slide.id, slideRetryFiles[slide.id] ?? undefined); }} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] px-3 py-2 text-[11px] font-bold text-white">
+                        <span className="mb-2 text-[10px] font-bold text-[var(--daira-error-text)]">آپلود ناموفق بود — {slideUploadProgress[slide.id] ?? 0}٪</span>
+                        <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-[#FEE2E2]"><div className="h-full rounded-full bg-[var(--daira-error-text)]" style={{ width: `${Math.max(3, Math.min(100, slideUploadProgress[slide.id] ?? 0))}%` }} /></div>
+                        <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); void uploadSlideImage(slide.id, slideRetryFiles[slide.id] ?? undefined); }} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[var(--daira-error-text)] px-3 py-2 text-[11px] font-bold text-white">
                           <RotateCcw size={14}/>تلاش دوباره
                         </button>
                       </div>
                     ) : (
                       <>
-                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]"><ImagePlus size={21}/></span>
-                        <span className="mt-3 text-xs font-bold text-[#0F172A]">آپلود عکس اسلاید {index + 1}</span>
-                        <span className="mt-1 text-[10px] text-[#64748B]">برای انتخاب تصویر کلیک کن</span>
+                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><ImagePlus size={21}/></span>
+                        <span className="mt-3 text-xs font-bold text-[var(--daira-heading)]">آپلود عکس اسلاید {index + 1}</span>
+                        <span className="mt-1 text-[10px] text-[var(--daira-text-secondary)]">برای انتخاب تصویر کلیک کن</span>
                       </>
                     )}
                     <input type="file" accept="image/*" disabled={slideUploading[slide.id] || savingShowcase || Boolean(message.showcaseId)} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; event.currentTarget.value = ""; void uploadSlideImage(slide.id, file); }} />
                   </label>
                   {slide.previewUrl && !slideUploading[slide.id] && (
                     <div className="flex justify-center">
-                      <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(slide.imageUrl).catch(() => undefined); patchSlide(slide.id, { imageUrl: "", previewUrl: "" }); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">
+                      <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(slide.imageUrl).catch(() => undefined); patchSlide(slide.id, { imageUrl: "", previewUrl: "" }); }} className="sd-destructive-button text-xs font-bold text-[var(--daira-error-text)] transition hover:text-[var(--daira-error-text)]">
                         حذف عکس
                       </button>
                     </div>
                   )}
                   <div>
-                    <label className="mb-2 block text-sm font-bold text-[#0F172A]">تیتر اسلاید {index + 1}</label>
-                    <input value={slide.title} onChange={(event) => patchSlide(slide.id, { title: event.target.value })} placeholder="تیتر اسلاید را وارد کن..." className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                    <label className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">تیتر اسلاید {index + 1}</label>
+                    <input value={slide.title} onChange={(event) => patchSlide(slide.id, { title: event.target.value })} placeholder="تیتر اسلاید را وارد کن..." className="w-full rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-bold text-[#0F172A]">توضیحات اسلاید {index + 1}</label>
-                    <textarea value={slide.description} onChange={(event) => patchSlide(slide.id, { description: event.target.value })} rows={4} maxLength={1000} placeholder="توضیحات اسلاید را وارد کن..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                    <label className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">توضیحات اسلاید {index + 1}</label>
+                    <textarea value={slide.description} onChange={(event) => patchSlide(slide.id, { description: event.target.value })} rows={4} maxLength={1000} placeholder="توضیحات اسلاید را وارد کن..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                   </div>
                   {!message.showcaseId && slides.length > 1 && (
                     <div className="text-center">
-                      <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(slide.imageUrl).catch(() => undefined); setSlides((current) => current.filter((item) => item.id !== slide.id)); }} className="sd-destructive-button text-xs font-semibold text-[#DC2626] transition hover:text-[#B91C1C]">
+                      <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(slide.imageUrl).catch(() => undefined); setSlides((current) => current.filter((item) => item.id !== slide.id)); }} className="sd-destructive-button text-xs font-semibold text-[var(--daira-error-text)] transition hover:text-[var(--daira-error-text)]">
                         حذف اسلاید
                       </button>
                     </div>
@@ -659,7 +659,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                       if (slides.length >= MAX_SHOWCASE_ITEMS) return;
                       setSlides((current) => current.length >= MAX_SHOWCASE_ITEMS ? current : [...current, createSlide()]);
                     }}
-                    className="inline-flex items-center justify-center gap-1.5 text-sm font-bold text-[#2563EB] transition hover:text-[#1D4ED8]"
+                    className="inline-flex items-center justify-center gap-1.5 text-sm font-bold text-[var(--daira-primary)] transition hover:text-[var(--daira-primary-hover)]"
                     dir="ltr"
                   >
                     <Plus size={16} strokeWidth={2.5} />
@@ -670,14 +670,14 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   
               {message.showcaseId && (
                 <div className="space-y-2">
-                  <p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">
+                  <p className="rounded-xl border border-[#BBF7D0] bg-[var(--daira-success-bg)] px-3.5 py-3 text-xs font-semibold text-[#166534]">
                     ویترین ساخته شد و با پاسخ متصل شد.
                   </p>
                   <button
                     type="button"
                     disabled={savingShowcase}
                     onClick={() => void deleteShowcase()}
-                    className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C] disabled:opacity-50"
+                    className="sd-destructive-button text-xs font-bold text-[var(--daira-error-text)] transition hover:text-[var(--daira-error-text)] disabled:opacity-50"
                   >
                     حذف ویترین
                   </button>
@@ -693,7 +693,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         {storyCreateMode ? (
           <div className="space-y-4">
             <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#F1F5F9] p-1" role="group" aria-label="ساخت یا استفاده مجدد از فرم">
+                <div className="grid grid-cols-2 gap-1 rounded-xl bg-[var(--daira-neutral-bg)] p-1" role="group" aria-label="ساخت یا استفاده مجدد از فرم">
                   {(["new", "existing"] as const).map((value) => (
                     <button key={value} type="button" aria-pressed={formSource === value}
                       onClick={() => {
@@ -715,7 +715,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                         setSelectedFormTemplateId("");
                         setFormSaved(false);
                       }}
-                      className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", formSource === value ? "bg-white text-[#1D4ED8] shadow-sm" : "bg-transparent text-[#64748B] hover:text-[#0F172A]"].join(" ")}>
+                      className={["sd-neutral-button min-h-10 rounded-lg px-2 text-xs font-bold transition", formSource === value ? "bg-white text-[var(--daira-primary-hover)] shadow-sm" : "bg-transparent text-[var(--daira-text-secondary)] hover:text-[var(--daira-heading)]"].join(" ")}>
                       {value === "new" ? (initiallyEditingFormRef.current ? "ویرایش فرم فعلی" : "فرم جدید") : "استفاده از فرم‌های قبلی"}
                     </button>
                   ))}
@@ -734,12 +734,12 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                         });
                         setFormSaved(false);
                       }}
-                      className="w-full min-w-0 rounded-xl border border-[#CBD5E1] bg-white px-3 py-3 text-base text-[#0F172A] outline-none focus:border-[#2563EB]">
+                      className="w-full min-w-0 rounded-xl border border-[var(--daira-outline)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
                       <option value="">یک فرم قبلی را انتخاب کن</option>
                       {formTemplates.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
                     </select>
-                    {!loadingResources && formTemplates.length === 0 && <p className="text-xs text-[#64748B]">هنوز فرم ذخیره‌شده‌ای نداری.</p>}
-                    {selectedFormTemplateId && <p className="text-xs text-[#64748B]">فرم قبلی بدون تغییر می‌ماند.</p>}
+                    {!loadingResources && formTemplates.length === 0 && <p className="text-xs text-[var(--daira-text-secondary)]">هنوز فرم ذخیره‌شده‌ای نداری.</p>}
+                    {selectedFormTemplateId && <p className="text-xs text-[var(--daira-text-secondary)]">فرم قبلی بدون تغییر می‌ماند.</p>}
                   </div>
                 )}
               </div>
@@ -768,7 +768,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
           />
         )}
         <div className="space-y-2 pt-2">
-          {formSaved && <div className="space-y-2"><p className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] px-3.5 py-3 text-xs font-semibold text-[#166534]">فرم ذخیره شده است.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">حذف فرم</button></div>}
+          {formSaved && <div className="space-y-2"><p className="rounded-xl border border-[#BBF7D0] bg-[var(--daira-success-bg)] px-3.5 py-3 text-xs font-semibold text-[#166534]">فرم ذخیره شده است.</p><button type="button" onClick={() => { setFormSaved(false); onUpdate({ text: "", quickReplies: [] }); }} className="sd-destructive-button text-xs font-bold text-[var(--daira-error-text)] transition hover:text-[var(--daira-error-text)]">حذف فرم</button></div>}
         </div>
         </div>
       )}
@@ -776,7 +776,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       {extraSettings}
 
       {showFinalSave && (
-        <div className={finalActions ? "space-y-3 border-t border-[#E2E8F0] pt-4" : usePublishingSaveLabel ? "border-t border-[#E2E8F0] pt-4" : ""}>
+        <div className={finalActions ? "space-y-3 border-t border-[var(--daira-border)] pt-4" : usePublishingSaveLabel ? "border-t border-[var(--daira-border)] pt-4" : ""}>
         <button
           type="button"
           disabled={disabled || finalSaveDisabled || finalSaving || !keywordValid || uploading || slideUploadInProgress || formUploadsInFlight > 0 || savingShowcase || formSaving ||
@@ -806,7 +806,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
               setFinalSaving(false);
             }
           }}
-          className="flex h-11 w-full items-center justify-center rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white transition hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-11 w-full items-center justify-center rounded-xl bg-[var(--daira-primary)] px-4 text-sm font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {finalSaving ? (
             <span className="inline-flex items-center gap-2">
@@ -821,7 +821,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         </div>
       )}
 
-      {error && <p className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs text-[#B91C1C]">{error}</p>}
+      {error && <p className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-2.5 text-xs text-[var(--daira-error-text)]">{error}</p>}
     </div>
   );
 });
@@ -850,24 +850,24 @@ function FormBranchEditor({ title, question, replies, showcases, forms, loadingR
   };
 
   return (
-    <div className={["space-y-4", level > 0 ? "rounded-2xl border border-[#DBEAFE] bg-[#F8FAFC] p-3.5" : ""].join(" ")}>
+    <div className={["space-y-4", level > 0 ? "rounded-2xl border border-[var(--daira-outline-active-bg)] bg-[var(--daira-surface-hover)] p-3.5" : ""].join(" ")}>
       <div>
-        <p className="text-right text-lg font-extrabold text-[#0F172A]">{level > 0 ? "فرم مقصد" : "فرم"}</p>
-        <p className="mt-1 text-[11px] leading-5 text-[#64748B]">متن ورودی فرم را بنویس و برای هر گزینه مشخص کن کاربر به کدام پاسخ هدایت شود.</p>
+        <p className="text-right text-lg font-extrabold text-[var(--daira-heading)]">{level > 0 ? "فرم مقصد" : "فرم"}</p>
+        <p className="mt-1 text-[11px] leading-5 text-[var(--daira-text-secondary)]">متن ورودی فرم را بنویس و برای هر گزینه مشخص کن کاربر به کدام پاسخ هدایت شود.</p>
       </div>
 
       <div>
-        <label className="mb-2 block text-center text-lg font-extrabold text-[#0F172A]">متن ورودی</label>
-        <textarea value={question} onChange={(e) => onChange({ question: e.target.value })} rows={4} maxLength={2000} placeholder="متن اولیه فرم را وارد کن..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} />
+        <label className="mb-2 block text-center text-lg font-extrabold text-[var(--daira-heading)]">متن ورودی</label>
+        <textarea value={question} onChange={(e) => onChange({ question: e.target.value })} rows={4} maxLength={2000} placeholder="متن اولیه فرم را وارد کن..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} />
       </div>
 
       <div>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 text-right">
-            <p className="text-right text-lg font-extrabold text-[#0F172A]">گزینه‌ها</p>
-            <p className="mt-1 text-right text-[10px] text-[#64748B]">حداکثر ۱۳ گزینه در هر مرحله.</p>
+            <p className="text-right text-lg font-extrabold text-[var(--daira-heading)]">گزینه‌ها</p>
+            <p className="mt-1 text-right text-[10px] text-[var(--daira-text-secondary)]">حداکثر ۱۳ گزینه در هر مرحله.</p>
           </div>
-          <span className="shrink-0 rounded-full bg-[#EFF6FF] px-2.5 py-1 text-[10px] font-bold text-[#2563EB]">{optionReplies.length} / {FORM_MAX_OPTIONS - (replies.some((reply) => reply.isExit) ? 1 : 0)}</span>
+          <span className="shrink-0 rounded-full bg-[var(--daira-outline-hover-bg)] px-2.5 py-1 text-[10px] font-bold text-[var(--daira-primary)]">{optionReplies.length} / {FORM_MAX_OPTIONS - (replies.some((reply) => reply.isExit) ? 1 : 0)}</span>
         </div>
 
         <div className="mt-3 space-y-3">
@@ -876,7 +876,7 @@ function FormBranchEditor({ title, question, replies, showcases, forms, loadingR
           ))}
         </div>
 
-        <button type="button" disabled={optionReplies.length >= FORM_MAX_OPTIONS} onClick={addReply} className="mx-auto mt-3 flex items-center justify-center gap-2 text-sm font-bold text-[#2563EB] disabled:cursor-not-allowed disabled:opacity-40">
+        <button type="button" disabled={optionReplies.length >= FORM_MAX_OPTIONS} onClick={addReply} className="mx-auto mt-3 flex items-center justify-center gap-2 text-sm font-bold text-[var(--daira-primary)] disabled:cursor-not-allowed disabled:opacity-40">
           <span>افزودن گزینه</span><Plus size={16} strokeWidth={2.5}/>
         </button>
       </div>
@@ -889,22 +889,22 @@ function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hi
   const destinationType = reply.destinationType;
   async function upload(type: typeof FORM_MEDIA_TYPES[number], file?: File) { if (!file) return; setUploading(true); try { const url = await onUploadMedia(file); if (reply.destinationMediaUrl && reply.destinationMediaUrl !== url) void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined); onChange({destinationType:type,destinationMediaUrl:url,destinationMediaId:""}); } finally { setUploading(false); } }
   function selectDestination(value: QuickReplyDraft["destinationType"]) { if (reply.destinationMediaUrl && !FORM_MEDIA_TYPES.includes(value as typeof FORM_MEDIA_TYPES[number])) void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined); onChange({destinationType:value,destinationText:value==="TEXT"?reply.destinationText:"",destinationFormId:value==="FORM"?reply.destinationFormId:"",destinationShowcaseId:value==="SHOWCASE"?reply.destinationShowcaseId:"",destinationMediaUrl:FORM_MEDIA_TYPES.includes(value as typeof FORM_MEDIA_TYPES[number])?reply.destinationMediaUrl:"",destinationMediaId:FORM_MEDIA_TYPES.includes(value as typeof FORM_MEDIA_TYPES[number])?reply.destinationMediaId:"",destinationQuestion:value==="FORM"?reply.destinationQuestion:"",destinationQuickReplies:value==="FORM"?(reply.destinationQuickReplies.length?reply.destinationQuickReplies:[createEmptyQuickReply()]):[]}); }
-  return <div className="space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-3.5">
-    <div className="relative flex items-center justify-center"><p className="text-center text-lg font-extrabold text-[#0F172A]">گزینه {index+1}</p><button type="button" onClick={onRemove} className="sd-destructive-button absolute left-0 text-[11px] font-bold text-[#DC2626]">حذف</button></div>
-    <input value={reply.title} maxLength={20} onChange={(e)=>onChange({title:e.target.value})} placeholder="نام گزینه را وارد کن..." className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}} />
-    <div><label className="mb-2 block text-xs font-bold text-[#0F172A]">کاربر هدایت شود به:</label><Select value={destinationType ?? ""} onChange={(e)=>selectDestination((e.target.value||null) as QuickReplyDraft["destinationType"])} className="!w-full [&_.MuiSelect-select]:!py-3.5 [&_.MuiSelect-select]:!text-base [&_.MuiNativeSelect-icon]:!top-1/2 [&_.MuiNativeSelect-icon]:!-translate-y-1/2"><option value="">انتخاب مقصد</option><option value="TEXT">متن</option><option value="AUDIO">وویس</option><option value="IMAGE">عکس</option>{!hideVideo && <option value="VIDEO">فیلم</option>}<option value="SHOWCASE">ویترین</option>{!hideForm && <option value="FORM">فرم جدید</option>}</Select></div>
-    {destinationType==="TEXT" && <textarea value={reply.destinationText} onChange={(e)=>onChange({destinationText:e.target.value})} rows={4} maxLength={2000} placeholder="متن پاسخ این گزینه..." className="w-full resize-y rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 !text-base leading-7 text-[#0F172A] outline-none focus:border-[#2563EB] focus:bg-white focus:ring-2 focus:ring-[#2563EB]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} />}
-    {destinationType==="SHOWCASE" && <Select value={reply.destinationShowcaseId} disabled={loadingResources} onChange={(e)=>onChange({destinationShowcaseId:e.target.value})} className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-3 text-sm outline-none"><option value="">{loadingResources?"در حال دریافت ویترین‌ها...":"ویترین را انتخاب کن"}</option>{showcases.map((s)=><option key={s.id} value={s.id}>{s.title}</option>)}</Select>}
+  return <div className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-3.5">
+    <div className="relative flex items-center justify-center"><p className="text-center text-lg font-extrabold text-[var(--daira-heading)]">گزینه {index+1}</p><button type="button" onClick={onRemove} className="sd-destructive-button absolute left-0 text-[11px] font-bold text-[var(--daira-error-text)]">حذف</button></div>
+    <input value={reply.title} maxLength={20} onChange={(e)=>onChange({title:e.target.value})} placeholder="نام گزینه را وارد کن..." className="w-full rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}} />
+    <div><label className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">کاربر هدایت شود به:</label><Select value={destinationType ?? ""} onChange={(e)=>selectDestination((e.target.value||null) as QuickReplyDraft["destinationType"])} className="!w-full [&_.MuiSelect-select]:!py-3.5 [&_.MuiSelect-select]:!text-base [&_.MuiNativeSelect-icon]:!top-1/2 [&_.MuiNativeSelect-icon]:!-translate-y-1/2"><option value="">انتخاب مقصد</option><option value="TEXT">متن</option><option value="AUDIO">وویس</option><option value="IMAGE">عکس</option>{!hideVideo && <option value="VIDEO">فیلم</option>}<option value="SHOWCASE">ویترین</option>{!hideForm && <option value="FORM">فرم جدید</option>}</Select></div>
+    {destinationType==="TEXT" && <textarea value={reply.destinationText} onChange={(e)=>onChange({destinationText:e.target.value})} rows={4} maxLength={2000} placeholder="متن پاسخ این گزینه..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} />}
+    {destinationType==="SHOWCASE" && <Select value={reply.destinationShowcaseId} disabled={loadingResources} onChange={(e)=>onChange({destinationShowcaseId:e.target.value})} className="w-full rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 text-sm outline-none"><option value="">{loadingResources?"در حال دریافت ویترین‌ها...":"ویترین را انتخاب کن"}</option>{showcases.map((s)=><option key={s.id} value={s.id}>{s.title}</option>)}</Select>}
     {destinationType==="FORM" && !hideForm && <FormBranchEditor title="فرم مقصد" question={reply.destinationQuestion} replies={reply.destinationQuickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources} onChange={(patch)=>onChange({...(patch.question!==undefined?{destinationQuestion:patch.question}:{}),...(patch.replies!==undefined?{destinationQuickReplies:patch.replies}:{})})} onUploadMedia={onUploadMedia} level={1} hideVideo={hideVideo} hideForm={hideForm} />}
     {FORM_MEDIA_TYPES.includes(destinationType as typeof FORM_MEDIA_TYPES[number]) && (
       <>
-        <label className={["flex min-h-24 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-[#F8FAFC] text-center",uploading?"pointer-events-none opacity-60":"hover:border-[#93C5FD] hover:bg-[#EFF6FF]"].join(" ")}>
-          <span className="text-xs font-bold text-[#2563EB]">{uploading?"در حال آپلود...":reply.destinationMediaUrl?"تعویض فایل":"انتخاب فایل از دستگاه"}</span>
+        <label className={["flex min-h-24 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-[var(--daira-surface-hover)] text-center",uploading?"pointer-events-none opacity-60":"hover:border-[#93C5FD] hover:bg-[var(--daira-outline-hover-bg)]"].join(" ")}>
+          <span className="text-xs font-bold text-[var(--daira-primary)]">{uploading?"در حال آپلود...":reply.destinationMediaUrl?"تعویض فایل":"انتخاب فایل از دستگاه"}</span>
           <input type="file" accept={destinationType==="IMAGE"?"image/*":destinationType==="VIDEO"?"video/*":"audio/*"} disabled={uploading} className="hidden" onChange={(e)=>{const file=e.currentTarget.files?.[0];e.currentTarget.value="";void upload(destinationType as typeof FORM_MEDIA_TYPES[number],file)}} />
         </label>
         {destinationType === "AUDIO" && (
           <>
-            <div className="text-center text-[10px] font-semibold text-[#94A3B8]">یا</div>
+            <div className="text-center text-[10px] font-semibold text-[var(--daira-text-disabled)]">یا</div>
             <VoiceRecorder disabled={uploading} onRecorded={(file) => upload("AUDIO", file)} />
           </>
         )}
@@ -917,8 +917,8 @@ function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hi
             ) : (
               <audio src={reply.destinationMediaUrl} controls className="w-full px-3 py-3" />
             )}
-            <div className="flex justify-center border-t border-[#DCFCE7] bg-[#F0FDF4] px-3 py-2.5">
-              <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined); onChange({destinationMediaUrl:"",destinationMediaId:""}); }} className="sd-destructive-button text-xs font-bold text-[#DC2626] transition hover:text-[#B91C1C]">
+            <div className="flex justify-center border-t border-[#DCFCE7] bg-[var(--daira-success-bg)] px-3 py-2.5">
+              <button type="button" onClick={() => { void requestStorageCleanupByPublicUrl(reply.destinationMediaUrl).catch(() => undefined); onChange({destinationMediaUrl:"",destinationMediaId:""}); }} className="sd-destructive-button text-xs font-bold text-[var(--daira-error-text)] transition hover:text-[var(--daira-error-text)]">
                 حذف {destinationType === "IMAGE" ? "عکس" : destinationType === "VIDEO" ? "ویدیو" : "وویس"}
               </button>
             </div>

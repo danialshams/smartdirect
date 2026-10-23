@@ -97,10 +97,10 @@ export default function ReelSettingsFields({ value, onChange, videoUrl, disabled
   }
 
   return (
-    <div dir="rtl" className="space-y-4 rounded-[22px] border border-[#DFE7F3] bg-white p-4 shadow-sm sm:p-5">
+    <div dir="rtl" className="space-y-4 rounded-[22px] border border-[var(--daira-publishing-border)] bg-white p-4 shadow-sm sm:p-5">
       <div className="space-y-1">
-        <h3 className="text-sm font-extrabold text-[#18233C]">تصویر کاور ریلز</h3>
-        <p className="text-xs leading-6 text-[#64748B]">کاور همان تصویری است که پیش از بازکردن ریلز دیده می‌شود. یکی از روش‌های زیر را انتخاب کن.</p>
+        <h3 className="text-sm font-extrabold text-[var(--daira-heading)]">تصویر کاور ریلز</h3>
+        <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">کاور همان تصویری است که پیش از بازکردن ریلز دیده می‌شود. یکی از روش‌های زیر را انتخاب کن.</p>
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
         {([
@@ -110,30 +110,30 @@ export default function ReelSettingsFields({ value, onChange, videoUrl, disabled
         ] as const).map(([mode, title, hint]) => (
           <button key={mode} type="button" disabled={locked} aria-pressed={value.coverMode === mode}
             onClick={() => selectMode(mode)}
-            className={"min-h-[82px] rounded-xl border p-3 text-right transition disabled:opacity-50 " + (value.coverMode === mode ? "border-[#2F61FD] bg-[#EFF6FF]" : "border-[#E2E8F0] bg-[#F8FAFC] hover:border-[#B9C9EF]")}>
-            <span className="flex items-center gap-2 text-xs font-bold text-[#18233C]">
-              {value.coverMode === mode && <CheckCircle2 size={15} className="text-[#2F61FD]"/>}{title}
+            className={"min-h-[82px] rounded-xl border p-3 text-right transition disabled:opacity-50 " + (value.coverMode === mode ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-[var(--daira-surface-hover)] hover:border-[#B9C9EF]")}>
+            <span className="flex items-center gap-2 text-xs font-bold text-[var(--daira-heading)]">
+              {value.coverMode === mode && <CheckCircle2 size={15} className="text-[var(--daira-primary)]"/>}{title}
             </span>
-            <span className="mt-1 block text-[11px] leading-5 text-[#64748B]">{hint}</span>
+            <span className="mt-1 block text-[11px] leading-5 text-[var(--daira-text-secondary)]">{hint}</span>
           </button>
         ))}
       </div>
       {value.coverMode === "upload" && (
-        <div className="space-y-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
-          {value.coverUrl && <div className="flex items-center gap-3"><img src={value.coverUrl} alt="پیش‌نمایش کاور ریلز" className="h-28 w-[63px] rounded-lg border border-[#DFE7F3] object-cover"/><span className="text-xs font-semibold text-[#15803D]">کاور آماده است</span></div>}
-          <label className={"inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#CBD5E1] bg-white px-4 text-xs font-bold text-[#18233C] " + (locked ? "pointer-events-none opacity-50" : "")}>
+        <div className="space-y-3 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3">
+          {value.coverUrl && <div className="flex items-center gap-3"><img src={value.coverUrl} alt="پیش‌نمایش کاور ریلز" className="h-28 w-[63px] rounded-lg border border-[var(--daira-publishing-border)] object-cover"/><span className="text-xs font-semibold text-[var(--daira-chart-increase)]">کاور آماده است</span></div>}
+          <label className={"inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-[var(--daira-outline)] bg-white px-4 text-xs font-bold text-[var(--daira-heading)] " + (locked ? "pointer-events-none opacity-50" : "")}>
             {busy ? <Loader2 size={16} className="animate-spin"/> : <ImagePlus size={16}/>}
             {busy ? "در حال آپلود کاور..." : value.coverUrl ? "جایگزینی کاور" : "انتخاب عکس کاور"}
             <input type="file" accept="image/jpeg,image/png,image/webp" disabled={locked} className="sr-only"
               onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; void chooseCover(file); }} />
           </label>
-          {busy && <div role="status" className="text-xs text-[#64748B]">آپلود کاور: {persian(progress)}٪</div>}
-          <p className="text-[11px] leading-6 text-[#64748B]">تصویر با نسبت ۹:۱۶ برش می‌خورد و خودکار به JPG تبدیل می‌شود. بخش‌های مهم را در مرکز تصویر قرار بده.</p>
-          {!value.coverUrl && !busy && <p className="text-xs font-medium text-[#B45309]">برای این روش، آپلود عکس الزامی است.</p>}
+          {busy && <div role="status" className="text-xs text-[var(--daira-text-secondary)]">آپلود کاور: {persian(progress)}٪</div>}
+          <p className="text-[11px] leading-6 text-[var(--daira-text-secondary)]">تصویر با نسبت ۹:۱۶ برش می‌خورد و خودکار به JPG تبدیل می‌شود. بخش‌های مهم را در مرکز تصویر قرار بده.</p>
+          {!value.coverUrl && !busy && <p className="text-xs font-medium text-[var(--daira-warning-text)]">برای این روش، آپلود عکس الزامی است.</p>}
         </div>
       )}
       {value.coverMode === "frame" && (
-        <div className="space-y-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
+        <div className="space-y-3 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3">
           {videoUrl ? (
             <>
               <video key={videoUrl} ref={video} src={videoUrl} playsInline muted preload="metadata" controls={false}
@@ -146,7 +146,7 @@ export default function ReelSettingsFields({ value, onChange, videoUrl, disabled
                 }}
                 onError={() => setError("پیش‌نمایش این ویدیو روی دستگاه باز نشد. روش کاور اختصاصی را امتحان کن.")}
                 className="mx-auto aspect-[9/16] max-h-56 rounded-xl bg-black object-contain"/>
-              <label className="block text-xs font-bold text-[#18233C]" htmlFor="reel-cover-time">لحظهٔ انتخاب‌شده: {persian((value.thumbOffsetMs ?? 0) / 1000)} ثانیه</label>
+              <label className="block text-xs font-bold text-[var(--daira-heading)]" htmlFor="reel-cover-time">لحظهٔ انتخاب‌شده: {persian((value.thumbOffsetMs ?? 0) / 1000)} ثانیه</label>
               <input id="reel-cover-time" type="range" min={0} max={Math.max(0, duration - 0.1)} step={0.1}
                 disabled={locked || duration === 0} value={Math.min((value.thumbOffsetMs ?? 0) / 1000, Math.max(0, duration - 0.1))}
                 onChange={(event) => {
@@ -154,21 +154,21 @@ export default function ReelSettingsFields({ value, onChange, videoUrl, disabled
                   if (video.current) video.current.currentTime = seconds;
                   onChange({ ...value, thumbOffsetMs: Math.round(seconds * 1000) });
                 }}
-                dir="ltr" className="w-full accent-[#2F61FD] disabled:opacity-50"/>
-              <p className="text-[11px] leading-5 text-[#64748B]">نوار را حرکت بده تا تصویر دلخواهت را پیدا کنی؛ همان زمان هنگام انتشار برای Meta ارسال می‌شود.</p>
+                dir="ltr" className="w-full accent-[var(--daira-primary)] disabled:opacity-50"/>
+              <p className="text-[11px] leading-5 text-[var(--daira-text-secondary)]">نوار را حرکت بده تا تصویر دلخواهت را پیدا کنی؛ همان زمان هنگام انتشار برای Meta ارسال می‌شود.</p>
             </>
-          ) : <p className="text-xs leading-6 text-[#64748B]">ابتدا ویدیوی ریلز را آپلود کن تا بتوانی فریم انتخاب کنی.</p>}
+          ) : <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">ابتدا ویدیوی ریلز را آپلود کن تا بتوانی فریم انتخاب کنی.</p>}
         </div>
       )}
-      {error && <p role="alert" className="rounded-xl bg-[#FEF2F2] p-3 text-xs leading-6 text-[#B91C1C]">{error}</p>}
-      <div className="border-t border-[#E2E8F0] pt-4">
+      {error && <p role="alert" className="rounded-xl bg-[var(--daira-error-background)] p-3 text-xs leading-6 text-[var(--daira-error-text)]">{error}</p>}
+      <div className="border-t border-[var(--daira-border)] pt-4">
         <label className="flex cursor-pointer items-start gap-3">
           <input type="checkbox" checked={value.shareToFeed} disabled={locked}
             onChange={(event) => onChange({ ...value, shareToFeed: event.target.checked })}
-            className="mt-1 h-4 w-4 accent-[#2F61FD]"/>
+            className="mt-1 h-4 w-4 accent-[var(--daira-primary)]"/>
           <span>
-            <span className="block text-sm font-bold text-[#18233C]">نمایش ریلز در فید</span>
-            <span className="mt-1 block text-xs leading-6 text-[#64748B]">اگر فعال باشد ریلز در فید و تب ریلز نمایش داده می‌شود؛ با خاموش‌کردن، فقط در تب ریلز نمایش داده می‌شود.</span>
+            <span className="block text-sm font-bold text-[var(--daira-heading)]">نمایش ریلز در فید</span>
+            <span className="mt-1 block text-xs leading-6 text-[var(--daira-text-secondary)]">اگر فعال باشد ریلز در فید و تب ریلز نمایش داده می‌شود؛ با خاموش‌کردن، فقط در تب ریلز نمایش داده می‌شود.</span>
           </span>
         </label>
       </div>

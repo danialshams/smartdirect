@@ -122,7 +122,7 @@ export default function StoryReplyShowcaseCreator({ instagramAccountId, onUpload
 
   if (created) {
     return (
-      <div role="status" className="flex items-start gap-2 rounded-xl bg-[#F0FDF4] p-3 text-xs leading-6 text-[#166534]">
+      <div role="status" className="flex items-start gap-2 rounded-xl bg-[var(--daira-success-bg)] p-3 text-xs leading-6 text-[#166534]">
         <CircleCheck size={18} aria-hidden="true" className="mt-0.5 shrink-0" />
         <div>
           <strong className="block">ویترین ساخته و انتخاب شد.</strong>
@@ -151,9 +151,9 @@ export default function StoryReplyShowcaseCreator({ instagramAccountId, onUpload
         onAdd={() => setSlides((current) => current.length >= MAX_SLIDES ? current : [...current, newSlide()])}
         onUpload={(id, file) => { void uploadSlide(id, file); }}
       />
-      {error && <p role="alert" className="text-xs leading-6 text-[#B91C1C]">{error}</p>}
+      {error && <p role="alert" className="text-xs leading-6 text-[var(--daira-error-text)]">{error}</p>}
       <button type="button" onClick={() => void createShowcase()} disabled={!ready}
-        className="flex min-h-11 w-full items-center justify-center rounded-xl bg-[#2563EB] px-3 text-sm font-bold text-white transition hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-45">
+        className="flex min-h-11 w-full items-center justify-center rounded-xl bg-[var(--daira-primary)] px-3 text-sm font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:opacity-45">
         {saving ? "در حال ذخیره..." : "ساخت و انتخاب ویترین"}
       </button>
     </div>
