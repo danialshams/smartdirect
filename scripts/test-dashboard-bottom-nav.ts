@@ -20,6 +20,10 @@ const cases: Array<[string, string]> = [
   ["/dashboard/story-automation/private-id", "ویرایش پاسخ خودکار استوری"],
   ["/dashboard/direct-automation/new", "ایجاد پاسخ خودکار دایرکت"],
   ["/dashboard/live-automation/private-id", "ویرایش پاسخ خودکار لایو"],
+  ["/dashboard/share-mention", "پاسخ به اشتراک‌گذاری"],
+  ["/dashboard/share-mention/", "پاسخ به اشتراک‌گذاری"],
+  ["/dashboard/share-mention/new", "ایجاد پاسخ به اشتراک‌گذاری"],
+  ["/dashboard/share-mention/private-id", "ویرایش پاسخ به اشتراک‌گذاری"],
   ["/dashboard/reminders/private-id", "ویرایش یادآوری هوشمند"],
   ["/dashboard/unknown/private-id", "صفحه فعلی"],
 ];
@@ -30,6 +34,10 @@ for (const [route, expected] of cases) {
 
 const shell = readFileSync("components/dashboard/DahboardShell.tsx", "utf8");
 const styles = readFileSync("app/globals.css", "utf8");
+const shareManager = readFileSync("components/dashboard/ShareMentionManager.tsx", "utf8");
+assert(/href="\/dashboard\/share-mention\/new"[^>]*flex-row-reverse/.test(shareManager), "Share create button must match RTL icon ordering of other automation lists");
+const picker = readFileSync("components/dashboard/ContentSelectionDialog.tsx", "utf8");
+assert(picker.includes("h-[min(92dvh,720px)]") && picker.includes("sm:h-[min(86dvh,720px)]"), "Content picker must have a stable viewport-bounded height across filters");
 assert(shell.includes('href="/dashboard" className="daira-bottom-nav__home-link"'), "Home link must remain navigable");
 assert(shell.includes('className="daira-bottom-nav__current-page"'), "Current-page title missing");
 assert(shell.includes('key={pathname}'), "Page transitions must restart the title animation");

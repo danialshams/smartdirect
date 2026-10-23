@@ -12,6 +12,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/comment-automation": "پاسخ خودکار کامنت",
   "/dashboard/story-automation": "پاسخ خودکار استوری",
   "/dashboard/live-automation": "پاسخ خودکار لایو",
+  "/dashboard/share-mention": "پاسخ به اشتراک‌گذاری",
   "/dashboard/auto-replies": "ویرایش پاسخ‌های خودکار",
   "/dashboard/reminders": "یادآوری‌های هوشمند",
   "/dashboard/content-analytics": "عملکرد محتوا",
@@ -37,6 +38,10 @@ const nestedPages: Record<string, { create?: string; edit?: string }> = {
   "/dashboard/live-automation": {
     create: "ایجاد پاسخ خودکار لایو",
     edit: "ویرایش پاسخ خودکار لایو",
+  },
+  "/dashboard/share-mention": {
+    create: "ایجاد پاسخ به اشتراک‌گذاری",
+    edit: "ویرایش پاسخ به اشتراک‌گذاری",
   },
   "/dashboard/reminders": {
     create: "ایجاد یادآوری هوشمند",
