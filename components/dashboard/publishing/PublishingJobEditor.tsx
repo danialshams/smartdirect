@@ -931,7 +931,7 @@ export default function PublishingJobEditor({
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-automation-title"
-            className="w-full max-w-sm rounded-2xl border border-[var(--daira-border)] bg-white p-5 shadow-2xl"
+            className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm rounded-2xl p-5"
           >
             <h3 id="delete-automation-title" className="text-base font-bold text-[var(--daira-heading)]">
               مطمئنی می‌خوای این مورد رو پاک کنی؟

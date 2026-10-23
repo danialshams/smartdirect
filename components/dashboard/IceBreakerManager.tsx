@@ -25,7 +25,7 @@ const number = (value: number) => new Intl.NumberFormat("fa-IR").format(value);
 function Guide({ numberText, title, description }: { numberText: number; title: string; description: string }) {
   return (
     <div
-      className="mb-3 flex items-start gap-3 rounded-xl border px-3.5 py-3"
+      className="daira-guide-glass mb-3 flex items-start gap-3 rounded-xl border px-3.5 py-3"
       style={{
         background: dairaPalette.guide.background,
         borderColor: dairaPalette.guide.border,
@@ -395,7 +395,7 @@ export default function IceBreakerManager({
       )}
 
       {deleteTarget && (
-        <div role="presentation" className="fixed inset-0 z-[2500] flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-[2px]"
+        <div role="presentation" className="daira-glass-overlay fixed inset-0 z-[2500] flex items-center justify-center px-4"
           onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setDeleteTarget(null); }}>
           <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="ice-breaker-delete-title" className="daira-glass-dialog daira-glass-dialog--danger w-full max-w-sm rounded-2xl p-5">
             <h3 id="ice-breaker-delete-title" className="text-base font-extrabold text-[var(--daira-heading)]">حذف پیام شروع گفتگو</h3>

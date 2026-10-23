@@ -348,3 +348,30 @@
  }
  .daira-guide-glass {background:var(--daira-warning-bg)!important}
 }
+
+/* The same interactive focus treatment must be visible on all glass modals. */
+.daira-glass-dialog :is(button,a,input,select,textarea):focus-visible {
+  outline:2px solid var(--daira-primary);
+  outline-offset:2px;
+}
+.daira-glass-dialog button:disabled {cursor:not-allowed;opacity:.6}
+.daira-glass-dialog--danger button[class*="bg-red"],
+.daira-glass-dialog--danger button[class*="daira-error"] {
+  background:var(--daira-delete-emphasis);
+  color:var(--daira-inverse-text);
+}
+.daira-app-shell .daira-keyword-field .daira-keyword-input::placeholder {
+  color:var(--daira-search-placeholder);
+}
+.daira-app-shell :is(.daira-flow-glass,.daira-guide-glass,.daira-empty-state) {
+  -webkit-backdrop-filter:blur(9px) saturate(110%);
+  backdrop-filter:blur(9px) saturate(110%);
+}
+.daira-app-shell .daira-keyword-field button:not(:disabled) {
+  border-radius:12px;
+}
+@media(prefers-reduced-transparency:reduce) {
+ .daira-app-shell :is(.daira-flow-glass,.daira-guide-glass,.daira-empty-state) {
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+ }
+}

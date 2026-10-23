@@ -73,7 +73,7 @@ function AutomationSectionGuide({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="flex items-start gap-3 rounded-xl border px-3.5 py-3"
+      className="daira-guide-glass flex items-start gap-3 rounded-xl border px-3.5 py-3"
       style={{
         background: dairaPalette.guide.background,
         borderColor: dairaPalette.guide.border,

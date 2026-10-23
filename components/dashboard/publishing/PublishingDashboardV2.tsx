@@ -1536,7 +1536,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                       {keywords.trim() && (
                         <div className="mb-3 flex flex-wrap gap-2">
                           {keywords.split(",").map((keyword) => keyword.trim()).filter(Boolean).map((keyword) => (
-                            <span key={keyword} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
+                            <span key={keyword} className="daira-keyword-chip inline-flex items-center gap-1.5 rounded-full bg-[var(--daira-outline-hover-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--daira-primary)]">
                               <span>{keyword}</span>
                               <button type="button" onClick={() => { setKeywords(keywords.split(",").map(item => item.trim()).filter(item => item && item !== keyword).join(",")); if (storyResponseEditing) setStoryResponseDirty(true); }} aria-label={`حذف ${keyword}`} className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"><X size={12} /></button>
                             </span>
