@@ -245,7 +245,6 @@ const optionalSettings = (
           </div>
         )}
         </GlassModalPresence>
-      </GlassModalPresence>
       </div>
     </div>
   );
