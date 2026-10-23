@@ -385,7 +385,7 @@ export default function AutomationManager({
                 type="button"
                 onClick={openCreate}
                 disabled={!selectedAccount}
-                className="min-h-11 shrink-0 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm"
+                className="daira-leading-action min-h-11 shrink-0 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm"
               >
                 <Plus size={16} />
                 پاسخ جدید
@@ -476,7 +476,7 @@ export default function AutomationManager({
             </p>
           </section>
         ) : (
-          <section className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm">
+          <section className="daira-automation-list-card overflow-hidden rounded-3xl border border-[var(--daira-border)] bg-[var(--daira-surface)]">
             <div className="divide-y divide-border/70">
               {filteredGroups.map((group) => {
                 const automation = group.automations[0];

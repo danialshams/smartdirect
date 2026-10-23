@@ -1,0 +1,16 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const read = (file: string) => readFileSync(file, "utf8");
+const pkg = JSON.parse(read("package.json")) as { scripts: Record<string,string> };
+assert.equal(pkg.scripts.build, "prisma generate && next build", "Build must not run database migrations, on CI or Vercel");
+assert.ok(pkg.scripts["db:migrate:deploy"], "Deploy migrations must remain available as a separate release operation");
+const css = read("app/daira-glass.css");
+for (const token of ["--daira-glass-card", "--daira-glass-rim", "--daira-shadow-card", "--daira-glass-raised"]) assert(css.includes("var("+token+")"));
+assert(css.includes(".daira-app-shell .daira-leading-action") && css.includes("flex-direction:row-reverse!important"), "All create buttons must place icon on the visual leading edge in RTL");
+const createFiles = ["CommentAutomationLanding.tsx","StoryAutomationLanding.tsx","DirectAutomationList.tsx","LiveAutomationList.tsx","SmartRemindersList.tsx","ShareMentionManager.tsx","IceBreakerManager.tsx","PersistentMenuManager.tsx"];
+for (const name of createFiles) assert(read("components/dashboard/"+name).includes("daira-leading-action"), "Create button must have unified icon ordering: "+name);
+const cardFiles = ["AutoRepliesManager.tsx","DirectAutomationList.tsx","LiveAutomationList.tsx","SmartRemindersList.tsx","ShareMentionManager.tsx","IceBreakerManager.tsx","PersistentMenuManager.tsx"];
+for (const name of cardFiles) assert(read("components/dashboard/"+name).includes("daira-automation-list-card"), "Automation lists must use shared glass cards: "+name);
+const publishing = read("components/dashboard/publishing/PublishingDashboardV2.tsx");
+assert.equal(publishing.match(/daira-leading-action/g)?.length,2,"Upload and publish/schedule buttons should share icon alignment");
+console.log("DASHBOARD_CREATE_ACTIONS_GLASS_AND_BUILD_PARITY_OK");

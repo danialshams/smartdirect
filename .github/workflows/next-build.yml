@@ -86,6 +86,9 @@ jobs:
       - name: Test cross-module Daira Liquid Glass coverage
         run: npx tsx scripts/test-daira-glass-coverage.ts
 
+      - name: Verify dashboard create-action alignment, glass cards and safe build parity
+        run: npx tsx scripts/test-dashboard-create-actions-glass.ts
+
       - name: Build application
         env:
           NODE_ENV: production

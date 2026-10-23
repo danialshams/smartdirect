@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/apply-vercel-production-migrations.mjs && prisma generate && next build",
+    "build": "prisma generate && next build",
     "start": "tsx scripts/validate-production-env.ts && next start",
     "lint": "eslint",
     "redis:test": "tsx --env-file=.env --env-file=.env.local scripts/test-redis.ts",

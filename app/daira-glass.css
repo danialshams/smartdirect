@@ -674,3 +674,33 @@
     background:var(--daira-surface)!important;
   }
 }
+
+
+/* One visual contract for RTL create actions and all automation list cards. */
+.daira-app-shell .daira-leading-action {
+  direction:rtl;
+  flex-direction:row-reverse!important;
+}
+.daira-app-shell .daira-leading-action > :is(svg,span:first-child) { flex-shrink:0; }
+.daira-app-shell .daira-leading-action > span { direction:rtl; }
+.daira-app-shell .daira-automation-list-card {
+  background:var(--daira-glass-card)!important;
+  border:1px solid var(--daira-glass-rim)!important;
+  border-radius:20px;
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim)!important;
+  transition:background-color .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.daira-app-shell .daira-automation-list-card:hover,
+.daira-app-shell .daira-automation-list-card:focus-within {
+  background:var(--daira-glass-raised)!important;
+  border-color:var(--daira-glass-rim)!important;
+  box-shadow:var(--daira-shadow-card-hover),inset 0 1px 0 var(--daira-glass-rim)!important;
+}
+/* Avoid repeated backdrop filters while scrolling large automation lists. */
+.daira-app-shell .daira-automation-list-card { backdrop-filter:none; -webkit-backdrop-filter:none; }
+@media(prefers-reduced-transparency:reduce) {
+  .daira-app-shell .daira-automation-list-card { background:var(--daira-surface)!important; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .daira-app-shell .daira-automation-list-card { transition:none; }
+}

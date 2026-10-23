@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 
-// Only the production Vercel build performs automatic schema migrations.
-// CI and preview builds use placeholder or separate databases and must not mutate production data.
+// Optional manual production migration helper. Do not call from npm run build.
+// CI, preview and production builds must never mutate the production database.
 if (process.env.VERCEL_ENV === "production") {
   const url = process.env.DIRECT_URL || process.env.DATABASE_URL;
   if (!url) {

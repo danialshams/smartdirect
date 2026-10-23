@@ -310,7 +310,7 @@ function UploadArea({ id, accept, multiple, disabled, isDragging, setIsDragging,
           <strong className="block text-sm text-[var(--daira-heading)]">{title}</strong>
           <span className="mt-1.5 block text-xs leading-6 text-[var(--daira-text-secondary)]">{multiple?"چند فایل را هم‌زمان انتخاب کن یا اینجا رها کن.":"یک فایل را انتخاب کن یا اینجا رها کن."}</span>
         </span>
-        <span className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-5 text-xs font-bold text-white shadow-sm sm:w-auto">
+        <span className="daira-leading-action inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--daira-primary)] px-5 text-xs font-bold text-white shadow-sm sm:w-auto">
           <ImagePlus size={17}/> انتخاب فایل
         </span>
       </label>
@@ -1847,7 +1847,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
                     <button type="button" disabled={!canPublish || (!publishNow && (!stage6Date || stage6Hour===null || stage6Minute===null))}
                       onClick={()=>void createJob(publishNow)}
-                      className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[var(--daira-primary)] px-5 text-sm font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:bg-[var(--daira-border)] disabled:text-[var(--daira-text-disabled)]">
+                      className="daira-leading-action flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[var(--daira-primary)] px-5 text-sm font-bold text-white transition hover:bg-[var(--daira-primary-hover)] disabled:cursor-not-allowed disabled:bg-[var(--daira-border)] disabled:text-[var(--daira-text-disabled)]">
                       {publishing?<Loader2 size={18} className="animate-spin"/>:publishNow?<Send size={18}/>:<CalendarClock size={18}/>}
                       {publishing?"در حال ثبت انتشار...":publishNow?"انتشار همین حالا":"ثبت زمان‌بندی انتشار"}
                     </button>

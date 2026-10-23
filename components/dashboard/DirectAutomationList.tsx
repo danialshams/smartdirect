@@ -80,7 +80,7 @@ export default function DirectAutomationList() {
       <div className="mx-auto w-full max-w-4xl">
         <section className="mb-4 px-0 pt-1">
           <button type="button" onClick={() => router.push("/dashboard/direct-automation/new")}
-            className="flex min-h-[54px] w-full flex-row items-center justify-center gap-2 rounded-full px-5 text-base font-bold text-white shadow-sm transition hover:brightness-95"
+            className="daira-leading-action flex min-h-[54px] w-full flex-row items-center justify-center gap-2 rounded-full px-5 text-base font-bold text-white shadow-sm transition hover:brightness-95"
             style={{ background: dairaPalette.primary.main }}>
             <Plus size={20} aria-hidden="true" />
             <span>ایجاد پاسخ جدید</span>
@@ -110,7 +110,7 @@ export default function DirectAutomationList() {
             ) : (
               <div className="space-y-2.5">
                 {filtered.map(item => (
-                  <div key={item.id} className="flex min-h-[84px] items-center justify-between gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
+                  <div key={item.id} className="daira-automation-list-card flex min-h-[84px] items-center justify-between gap-3 rounded-[22px] border border-[var(--daira-border)] bg-[var(--daira-surface)] px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
                         <div className="max-w-full rounded-xl px-3 py-2 text-[13px] font-bold leading-6"
