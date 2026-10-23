@@ -50,7 +50,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
     <DashboardTheme>
     <SupportNotifications>
       <div dir="rtl" className={`daira-app-shell${isAutomationCreateFlow ? " daira-app-shell--automation-flow" : ""}`}>
-        <div className="daira-header-backdrop" aria-hidden="true" />
+        <div className="daira-header-backdrop daira-header-backdrop--liquid" aria-hidden="true" />
         <DashboardHeader instagramAccounts={instagramAccounts} showBackButton={!isHome} />
         <main className={`daira-app-main${isHome ? " daira-app-main--home" : ""}${isAutomationCreateFlow ? " daira-app-main--flow-actions" : ""}`}>
           <div className="daira-app-content">
