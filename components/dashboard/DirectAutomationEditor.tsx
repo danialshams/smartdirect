@@ -29,6 +29,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
  const router=useRouter();
  const [account,setAccount]=useState<Account|null>(null);
  const [original,setOriginal]=useState<Automation|null>(null);
+ const [responseName,setResponseName]=useState("");
  const [keywords,setKeywords]=useState<string[]>([]);
  const [draft,setDraft]=useState("");
  const [message,setMessage]=useState<MessageDraft>(()=>createEmptyMessage());
@@ -46,7 +47,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
   setKeywords(current=>Array.from(new Set([...current,...next])).slice(0,10));setDraft("");};
  const effectiveKeywords=Array.from(new Set([...keywords,...wordsFrom(draft)]));
  const keywordValid=effectiveKeywords.length>0&&effectiveKeywords.length<=10;
- const hasChanges=!original||directAutomationHasChanges({
+ const hasChanges=!original||responseName.trim()!==(original.title||"").trim()||directAutomationHasChanges({
   originalKeywords:wordsFrom(original.keyword||""),
   currentKeywords:effectiveKeywords,
   originalResponseSignature,
@@ -95,6 +96,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
      const initialMessage=existing?normalizeMessages(existing.messages)[0]||createEmptyMessage():createEmptyMessage();
      setAccount(active);
      setOriginal(existing);
+     setResponseName(existing?.title || "");
      setKeywords(existing?wordsFrom(existing.keyword||""):[]);
      setDraft("");
      setMessage(initialMessage);
@@ -111,6 +113,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
  },[id,retry]);
  async function save(prepared?:MessageDraft){
   if(saving||!account||(original&&!hasChanges))return;
+  if(!responseName.trim()||responseName.trim().length>80){setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه).");return;}
   const entries=effectiveKeywords.slice(0,11);
   if(!entries.length||entries.length>10){setError("بین ۱ تا ۱۰ کلمه کلیدی وارد کنید.");return;}
   setSaving(true);setError("");
@@ -118,7 +121,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
    const response=await fetch("/api/direct-automation",{method:original?"PUT":"POST",credentials:"include",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({id:original?.id,expectedUpdatedAt:original?.updatedAt,
-     instagramAccountId:account.id,keyword:entries.join(","),message:prepared||message})});
+     instagramAccountId:account.id,title:responseName.trim(),keyword:entries.join(","),message:prepared||message})});
    const body=await response.json();
    if(!response.ok||!body.success)throw new Error(body.error||"ذخیره پاسخ خودکار ناموفق بود.");
    setCompleted(true);
@@ -155,6 +158,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
      <PublishingStoryAutomationSetup key={original?.id||account.id} message={message} showcases={showcases} forms={forms}
       formTemplates={formTemplates} loadingResources={false} instagramAccountId={account.id} onUpdate={patch=>setMessage(m=>({...m,...patch}))}
       keywordValid={keywordValid} storyCreateMode storyEditMode={Boolean(original)}
+      onResponseNameChange={setResponseName}
       onDraftChange={setShowcaseDraftChanged}
       disabled={saving} showFinalSave finalSaveDisabled={saving||!hasChanges} onContinue={save}
       finalSaveLabel={original?"ذخیره تغییرات":"ساخت پاسخ خودکار دایرکت"}
