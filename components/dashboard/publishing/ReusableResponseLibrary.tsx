@@ -16,6 +16,7 @@ type Props = {
   onUpdate: (patch: Partial<MessageDraft>) => void;
   allowedTypes: MessageDraft["messageType"][];
   prefix?: string;
+  onNameChange?: (name: string) => void;
   disabled?: boolean;
 };
 const typeNames: Record<MessageDraft["messageType"], string> = {
@@ -58,7 +59,7 @@ function ResponsePreview({ value }: { value: Saved }) {
   </div>;
 }
 
-export default function ReusableResponseLibrary({ instagramAccountId, message, onUpdate, allowedTypes, prefix = "پاسخ", disabled = false }: Props) {
+export default function ReusableResponseLibrary({ instagramAccountId, message, onUpdate, allowedTypes, prefix = "پاسخ", onNameChange, disabled = false }: Props) {
   const [mode, setMode] = useState<"new" | "existing">("new");
   const [items, setItems] = useState<Saved[]>([]);
   const [loading, setLoading] = useState(false);
@@ -92,6 +93,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     setMode("new");
     setEditingId(edit ? item.id : "");
     setName(edit ? item.title : "");
+    onNameChange?.(edit ? item.title : "");
     setError("");
   }
   async function saveToLibrary() {
@@ -138,7 +140,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     </div>
     {mode === "new" ? <div className="daira-flow-glass space-y-3 rounded-xl p-3">
       <label htmlFor="reusable-response-name" className="block text-xs font-bold text-[var(--daira-heading)]">نام پاسخ</label>
-      <input id="reusable-response-name" type="text" value={name} maxLength={80} onChange={(event) => setName(event.target.value)}
+      <input id="reusable-response-name" type="text" value={name} maxLength={80} onChange={(event) => { setName(event.target.value); onNameChange?.(event.target.value); }}
         placeholder="مثلاً کفش" disabled={disabled || saving}
         className="w-full rounded-xl border border-[var(--daira-input-border)] bg-[var(--daira-surface)] px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)]" style={{fontSize:"16px"}}/>
       <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">نامی برای این پاسخ انتخاب کن تا بعداً بتوانی دوباره از آن استفاده کنی.</p>
