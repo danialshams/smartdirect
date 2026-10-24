@@ -170,7 +170,7 @@ const optionalSettings = (
           <Button
             type="button"
             onClick={() => router.back()}
-            className="min-h-9 rounded-lg border border-[#BFDBFE] bg-[var(--daira-outline-hover-bg)] px-3 text-xs font-semibold text-[#3B82F6] shadow-none hover:bg-[var(--daira-outline-active-bg)] hover:text-[var(--daira-primary)]"
+            className="min-h-9 rounded-lg border border-[var(--daira-input-border)] bg-[var(--daira-glass-raised)] px-3 text-xs font-semibold text-[var(--daira-text)] shadow-none hover:border-[var(--daira-input-border-hover)] hover:bg-[var(--daira-surface-hover)]"
           >
             <ArrowRight size={15} strokeWidth={2} />
             بازگشت
