@@ -143,6 +143,8 @@ assert(scopedRoute.includes("commentAutomationId: clone.id"), "Selected publishi
 assert(scopedRoute.includes("nextMessageId: reply.nextMessageId ? remap.get(reply.nextMessageId) || null : null"),
   "Cloned quick replies must never point to old sibling automation messages.");
 const picker = readFileSync("components/dashboard/publishing/ReusableResponseLibrary.tsx", "utf8");
+assert(picker.includes("quickReplyId: usage.quickReplyId, nodePath: usage.nodePath || []"),
+  "Nested scope selections must carry the exact root row ID and immutable JSON path.");
 assert(picker.includes("GlassModalPresence open={scopeOpen}") && picker.includes("selectedScopes()"),
   "Reusable response editing must require explicit checked destinations.");
 
