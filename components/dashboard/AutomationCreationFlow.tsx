@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X } from "lucide-react";
+import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X, Eye, Pencil } from "lucide-react";
 import CommentReplyVariantsField from "./CommentReplyVariantsField";
 import { readPublicCommentReplies, validatePublicCommentReplies, publicCommentReplyKey } from "@/lib/automation/comment-reply-variants";
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
@@ -185,6 +185,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const MAX_LINK_BUTTONS = 3;
   const [linkButtons, setLinkButtons] = useState<LinkButton[]>(() => initialEditState?.linkButtons ?? [{ title: "", url: "" }]);
   const [linkedMediaItems, setLinkedMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null}>>([]);
+  const [previewTemplate, setPreviewTemplate] = useState<AutomationTemplate | null>(null);
   const [editScopeOpen, setEditScopeOpen] = useState(false);
   const [editScopeIds, setEditScopeIds] = useState<string[]>([]);
   const originalMediaIds = useMemo(() => editAutomation ? Array.from(new Set([...(editAutomation.mediaId ? [editAutomation.mediaId] : []), ...(editAutomation.mediaIds || "").split(",").map((id) => id.trim()).filter(Boolean)])) : [], [editAutomation]);
@@ -998,13 +999,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     const preview = previewMessages[0]?.messageType === "SHOWCASE" ? "ویترین" : previewMessages[0]?.messageType === "FORM" ? "فرم" : previewMessages[0]?.messageType === "IMAGE" ? "تصویر" : previewMessages[0]?.messageType === "VIDEO" ? "ویدیو" : previewMessages[0]?.messageType === "AUDIO" ? "پیام صوتی" : "";
                     const selected = selectedTemplateId === template.id;
                     return (
-                      <label
+                      <div
                         key={template.id}
-                        className="flex min-h-[72px] cursor-pointer items-start gap-2 rounded-xl border p-2.5 text-right transition focus-within:ring-2 focus-within:ring-[color:var(--daira-primary)]/20"
+                        className="daira-flow-glass flex min-h-[72px] items-start gap-2 rounded-xl border p-2.5 text-right transition focus-within:ring-2 focus-within:ring-[color:var(--daira-primary)]/20"
                         style={{
                           borderColor: selected ? dairaPalette.primary.main : dairaPalette.border,
                           background: selected ? dairaPalette.secondary.hoverBackground : dairaPalette.background.surface,
-                          boxShadow: selected ? `0 2px 8px ${dairaPalette.primary.main}20` : undefined,
                         }}
                       >
                         <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -1013,6 +1013,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                           </strong>
                           {preview && <span className="block text-[10px] leading-4" style={{ color: dairaPalette.text.body }}>{preview}</span>}
                         </span>
+                        <button type="button" onClick={() => setPreviewTemplate(template)} aria-label="مشاهده پاسخ کامل" className="daira-glass-dialog__secondary self-center rounded-lg border p-2"><Eye size={17}/></button>
                         <input
                           type="radio"
                           name="existing-automation-template"
@@ -1022,7 +1023,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                           className="mt-0 h-4 w-4 shrink-0 self-center accent-[var(--daira-primary)]"
                           aria-label={`انتخاب پاسخ ${(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}`}
                         />
-                      </label>
+                      </div>
                     );
                   })}
                   </div>
@@ -1356,6 +1357,36 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           {error && <div role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-6 text-[var(--daira-error-text)]">{error}</div>}
 
 
+        <GlassModalPresence open={Boolean(previewTemplate)} onEscape={() => setPreviewTemplate(null)}>
+          <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreviewTemplate(null); }}>
+            <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="previous-automation-title" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]">
+              <div className="daira-glass-dialog__header flex items-center justify-between border-b p-4">
+                <h2 id="previous-automation-title" className="text-sm font-extrabold text-[var(--daira-heading)]">{previewTemplate?.title?.trim() || "پاسخ بدون نام"}</h2>
+                <button type="button" aria-label="بستن" onClick={() => setPreviewTemplate(null)} className="daira-glass-dialog__close rounded-lg p-2"><X size={18}/></button>
+              </div>
+              <div className="space-y-3 overflow-y-auto p-4 text-sm leading-7 text-[var(--daira-heading)]">
+                <p className="text-xs text-[var(--daira-text-secondary)]">کلمات کلیدی: {previewTemplate?.keyword || "تمام کامنت‌ها"}</p>
+                {previewTemplate?.commentReplyText && readPublicCommentReplies(previewTemplate.commentReplyText).map((reply, i) =>
+                  <div key={i} className="daira-flow-glass rounded-xl p-3"><span className="mb-1 block text-xs font-bold">پاسخ زیر کامنت {new Intl.NumberFormat("fa-IR").format(i+1)}</span><p className="whitespace-pre-wrap">{reply}</p></div>
+                )}
+                {previewTemplate && normalizeMessages(previewTemplate.messages).map((entry, i) =>
+                  <div key={entry.id || i} className="daira-flow-glass space-y-2 rounded-xl p-3">
+                    <p className="text-xs font-bold text-[var(--daira-text-secondary)]">پیام {new Intl.NumberFormat("fa-IR").format(i+1)} — {entry.messageType}</p>
+                    {entry.text && <p className="whitespace-pre-wrap break-words">{entry.text}</p>}
+                    {entry.mediaUrl && entry.messageType === "IMAGE" && <img src={entry.mediaUrl} alt="" className="max-h-60 w-full rounded-xl object-contain"/>}
+                    {entry.mediaUrl && entry.messageType === "AUDIO" && <audio src={entry.mediaUrl} controls className="w-full"/>}
+                    {entry.mediaUrl && entry.messageType === "VIDEO" && <video src={entry.mediaUrl} controls className="w-full"/>}
+                    {entry.quickReplies.map((reply) => <div key={reply.id} className="rounded-lg bg-[var(--daira-surface-hover)] p-2 text-xs"><strong>{reply.title}</strong> — {reply.destinationText || reply.destinationQuestion || reply.destinationType}</div>)}
+                  </div>
+                )}
+              </div>
+              <div className="daira-glass-dialog__footer flex gap-2 border-t p-4">
+                <button type="button" disabled={!previewTemplate} onClick={() => { if (previewTemplate) router.push((triggerType === "COMMENT_KEYWORD" ? "/dashboard/comment-automation/" : "/dashboard/story-automation/") + encodeURIComponent(previewTemplate.id)); }} className="daira-glass-dialog__secondary flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold"><span>ویرایش پاسخ</span><Pencil size={15}/></button>
+                <button type="button" disabled={!previewTemplate} onClick={() => { if (previewTemplate) applyAutomationTemplate(previewTemplate); setPreviewTemplate(null); }} className="daira-glass-dialog__primary min-h-11 flex-1 rounded-xl px-3 text-xs font-bold">استفاده از پاسخ</button>
+              </div>
+            </div>
+          </div>
+        </GlassModalPresence>
         <GlassModalPresence open={editScopeOpen} onEscape={() => setEditScopeOpen(false)}>
           <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditScopeOpen(false); }}>
             <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="edit-response-scope-title" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]">
