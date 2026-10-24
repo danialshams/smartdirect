@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, Check, Eye, Pencil, Plus, Save, X } from "lucide-react";
 import GlassModalPresence from "../GlassModalPresence";
+import { responseFingerprint } from "../automation-response-compare";
 import type { MessageDraft, QuickReplyDraft } from "../automation-form-utils";
 
 type Saved = {
@@ -84,6 +85,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
   const [name, setName] = useState(initialName);
   useEffect(() => { setName(initialName); }, [initialName]);
   const [editingId, setEditingId] = useState("");
+  const [reusedOriginal, setReusedOriginal] = useState<{id:string; fingerprint:string} | null>(null);
   const [preview, setPreview] = useState<Saved | null>(null);
   const [error, setError] = useState("");
   const filtered = useMemo(() => items.filter((item) => allowedTypes.includes(item.messageType)), [items, allowedTypes.join(",")]);
@@ -101,23 +103,26 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
   }, [instagramAccountId]);
 
   function loadResponse(item: Saved, edit = false) {
-    onUpdate({
+    const applied: Partial<MessageDraft> = {
       messageType: item.messageType, text: item.text || "",
       mediaUrl: item.mediaUrl || "", mediaId: item.mediaId || "",
       showcaseId: item.showcaseId || "", formId: item.formId || "",
       quickReplies: cloneTree(Array.isArray(item.quickReplies) ? item.quickReplies : []),
-    });
+    };
+    onUpdate(applied);
+    setReusedOriginal(edit ? null : { id: item.id, fingerprint: responseFingerprint({ ...message, ...applied } as MessageDraft) });
     setPreview(null);
     setMode("new");
     setEditingId(edit ? item.id : "");
-    setName(edit ? item.title : "");
-    onNameChange?.(edit ? item.title : "");
+    setName(item.title);
+    onNameChange?.(item.title);
     setError("");
   }
   async function saveToLibrary(override?: MessageDraft): Promise<boolean> {
     if (saving || disabled) return false;
     const draft = override || message;
     const title = name.trim();
+    if (!editingId && reusedOriginal && responseFingerprint(draft) === reusedOriginal.fingerprint && title === items.find((item) => item.id === reusedOriginal.id)?.title) return true;
     if (!title || title.length > 80) { setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه)."); return false; }
     if (!allowedTypes.includes(draft.messageType)) { setError("این نوع پاسخ در این بخش پشتیبانی نمی‌شود."); return false; }
     const original = items.find((item) => item.id === editingId);
@@ -142,6 +147,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
       const saved = result.data as Saved;
       setItems((current) => [saved, ...current.filter((item) => item.id !== saved.id)]);
       setEditingId(saved.id);
+      setReusedOriginal(null);
       setName(saved.title);
       setError("");
       return true;
