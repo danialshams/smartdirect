@@ -2,10 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, CheckCircle2, Lightbulb, Loader2, Pencil } from "lucide-react";
+import { BookOpen, CheckCircle2, Lightbulb, Loader2 } from "lucide-react";
 import ResponseModeSwitcher from "./ResponseModeSwitcher";
 import CompleteAutomationPicker from "./CompleteAutomationPicker";
-import CompleteResponseNameField from "./CompleteResponseNameField";
 import { dairaPalette } from "../../lib/design-system/palette";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle } from "./publishing/PublishingStoryAutomationSetup";
@@ -78,7 +77,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   const [loadingLiveRules, setLoadingLiveRules] = useState(true);
   const [creationMode, setCreationMode] = useState<"new" | "existing">("new");
   const [selectedLiveRuleId, setSelectedLiveRuleId] = useState("");
-  const [editingView, setEditingView] = useState<"summary" | "edit" | "replace">("summary");
+  const [editingView, setEditingView] = useState<"edit" | "replace">("edit");
   const initialSnapshot = useRef("");
   const initialVersion = useRef("");
 
@@ -155,8 +154,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   const keywords = useMemo(() => draft.keyword.split(/[,،;؛\n]+/).map(s => s.trim()).filter(Boolean), [draft.keyword]);
   const anyComment = draft.matchMode === "CONTAINS_ANY" && !draft.keyword.trim();
   const legacySubstring = draft.matchMode === "CONTAINS_ANY" && Boolean(draft.keyword.trim());
-  const basicValid = Boolean(draft.responseName.trim()) && draft.responseName.trim().length <= 80 &&
-    (anyComment || (keywords.length > 0 && keywords.length <= 10)) && draft.initialText.trim().length > 0 &&
+  const basicValid = (anyComment || (keywords.length > 0 && keywords.length <= 10)) && draft.initialText.trim().length > 0 &&
     draft.initialText.trim().length <= 1000 && (!draft.requireFollow ||
     (Boolean(draft.followGateText.trim()) && Boolean(draft.followGateButtonText.trim()) && draft.followGateButtonText.trim().length <= 20)) &&
     (!draft.followupEnabled || Boolean(draft.followupKeyword.trim()));
@@ -195,7 +193,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
     }
     const payload = {
       instagramAccountId: account.id,
-      title: draft.responseName.trim(),
+      title: ("پاسخ لایو - " + (anyComment ? "هر کامنت" : keywords.join("، "))).slice(0,80),
       keyword: draft.keyword, matchMode: draft.matchMode, initialText: draft.initialText,
       followupEnabled: draft.followupEnabled, followupKeyword: draft.followupKeyword,
       requireFollow: draft.requireFollow, followGateText: draft.followGateText,
@@ -227,64 +225,40 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-3 sm:py-4">
       {id ? (
-        <section className="space-y-3" aria-label="پاسخ فعلی لایو">
-          <div className="daira-complete-reply space-y-4 rounded-2xl border p-4 sm:p-5">
-            <div className="flex items-center gap-3">
-              <span className="daira-complete-reply__check flex h-10 w-10 items-center justify-center rounded-xl"><CheckCircle2 size={20}/></span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-[var(--daira-heading)]">{draft.responseName || "پاسخ فعلی لایو"}</p>
-                <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">این پاسخ از قبل برای لایو ثبت شده است.</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" aria-pressed={editingView === "edit"} disabled={saving}
-                onClick={() => {setSelectedLiveRuleId("");setEditingView("edit");}}
-                className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-1.5 py-2 text-[10px] font-bold sm:gap-2 sm:px-2.5 sm:text-xs " + (editingView === "edit" ? "is-selected" : "")}>
-                <Pencil size={16}/> ویرایش پاسخ فعلی
-              </button>
-              <button type="button" aria-pressed={editingView === "replace"}
-                disabled={saving || loadingLiveRules || liveRules.length === 0}
-                onClick={() => setEditingView("replace")}
-                className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-1.5 py-2 text-[10px] font-bold sm:gap-2 sm:px-2.5 sm:text-xs " + (editingView === "replace" ? "is-selected" : "")}>
-                <BookOpen size={16}/> مشاهده پاسخ‌های دیگر
-              </button>
-            </div>
-            <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">هر قانون لایو مستقل فعال است. برای جلوگیری از تداخل کلمات کلیدی، پاسخ قبلی دوباره ثبت نمی‌شود.</p>
-          </div>
-          {editingView === "replace" && (
-            <div className="space-y-3">
-              <CompleteAutomationPicker kind="LIVE" items={liveRules}
-                selected={liveRules.find((rule) => rule.id === selectedLiveRuleId) || null}
-                onSelect={(rule) => setSelectedLiveRuleId(rule.id)}
-                onChange={() => setSelectedLiveRuleId("")} showcases={showcases} forms={forms}/>
-              {selectedLiveRuleId && <button type="button"
-                onClick={() => router.push("/dashboard/live-automation/" + encodeURIComponent(selectedLiveRuleId))}
-                className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold">رفتن به پاسخ انتخاب‌شده</button>}
-            </div>
-          )}
+        <section className="space-y-3" aria-label="استفاده از پاسخ‌های قبلی">
+          <button type="button" aria-expanded={editingView === "replace"}
+            disabled={saving || loadingLiveRules || liveRules.length === 0}
+            onClick={() => { setSelectedLiveRuleId(""); setEditingView(value => value === "replace" ? "edit" : "replace"); }}
+            className={"daira-response-library__mode flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold " + (editingView === "replace" ? "is-selected" : "")}>
+            <BookOpen size={17}/> استفاده از پاسخ‌های قبلی
+          </button>
+          {editingView === "replace" && <div className="space-y-3">
+            <CompleteAutomationPicker kind="LIVE" items={liveRules}
+              selected={liveRules.find(rule => rule.id === selectedLiveRuleId) || null}
+              onSelect={rule => setSelectedLiveRuleId(rule.id)}
+              onChange={() => setSelectedLiveRuleId("")} showcases={showcases} forms={forms}/>
+            {selectedLiveRuleId && <button type="button"
+              onClick={() => router.push("/dashboard/live-automation/" + encodeURIComponent(selectedLiveRuleId))}
+              className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold">مشاهده پاسخ انتخاب‌شده</button>}
+          </div>}
         </section>
       ) : (
         <section className="space-y-3">
           <ResponseModeSwitcher value={creationMode} existingAvailable={liveRules.length > 0}
             loading={loadingLiveRules} disabled={saving}
             onChange={(next) => {setCreationMode(next);setSelectedLiveRuleId("");}}/>
-          {creationMode === "existing" &&
-            <div className="space-y-3">
-              <CompleteAutomationPicker kind="LIVE" items={liveRules}
-                selected={liveRules.find((rule) => rule.id === selectedLiveRuleId) || null}
-                onSelect={(rule) => setSelectedLiveRuleId(rule.id)}
-                onChange={() => setSelectedLiveRuleId("")} showcases={showcases} forms={forms}/>
-              {selectedLiveRuleId &&
-                <button type="button" onClick={() => router.push("/dashboard/live-automation/" + encodeURIComponent(selectedLiveRuleId))}
-                  className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold">
-                  رفتن به پاسخ انتخاب‌شده
-                </button>}
-              <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">پاسخ لایو قبلی از قبل فعال است؛ برای جلوگیری از ارسال تکراری، به همان پاسخ هدایت می‌شوی.</p>
-            </div>}
+          {creationMode === "existing" && <div className="space-y-3">
+            <CompleteAutomationPicker kind="LIVE" items={liveRules}
+              selected={liveRules.find(rule => rule.id === selectedLiveRuleId) || null}
+              onSelect={rule => setSelectedLiveRuleId(rule.id)}
+              onChange={() => setSelectedLiveRuleId("")} showcases={showcases} forms={forms}/>
+            {selectedLiveRuleId && <button type="button"
+              onClick={() => router.push("/dashboard/live-automation/" + encodeURIComponent(selectedLiveRuleId))}
+              className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold">مشاهده پاسخ انتخاب‌شده</button>}
+          </div>}
         </section>
       )}
       {(id ? editingView === "edit" : creationMode === "new") && (<>
-      <CompleteResponseNameField value={draft.responseName} onChange={(responseName) => patch({ responseName })} disabled={saving}/>
       <section>
         <Guide number={1} title="شرط پاسخ‌دهی به کامنت لایو" hint={anyComment ? "برای هر کامنت متنی در لایو، بدون نیاز به کلمه کلیدی، پاسخ دایرکت ارسال می‌شود." : "وقتی بیننده یکی از عبارت‌های تعیین‌شده را در لایو بنویسد، پاسخ در دایرکت ارسال می‌شود."} />
         <div className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
