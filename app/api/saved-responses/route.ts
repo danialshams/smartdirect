@@ -60,9 +60,9 @@ export async function GET(request: NextRequest) {
     const appliedMessages = sourceIds.length ? await prisma.automationMessage.findMany({
       where: { savedResponseId: { in: sourceIds }, automation: { instagramAccountId } },
       select: {
-        id: true, savedResponseId: true,
+        id: true, savedResponseId: true, updatedAt: true,
         automation: { select: {
-          id: true, title: true, triggerType: true, mediaId: true, mediaIds: true,
+          id: true, title: true, triggerType: true, mediaId: true, mediaIds: true, updatedAt: true,
           persistentMenuItems: { select: { id: true, title: true } },
           iceBreakers: { select: { id: true, question: true } },
         } },
@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
     }) : [];
     const usageMap = new Map<string, Array<{
       messageId: string; automationId: string; automationTitle: string | null;
+      messageUpdatedAt: string; automationUpdatedAt: string;
       triggerType: string; mediaIds: string[]; menuTitles: string[]; icebreakerQuestions: string[];
     }>>();
     for (const linked of appliedMessages) {
@@ -82,6 +83,7 @@ export async function GET(request: NextRequest) {
       const previous = usageMap.get(linked.savedResponseId) || [];
       previous.push({
         messageId: linked.id, automationId: a.id, automationTitle: a.title,
+        messageUpdatedAt: linked.updatedAt.toISOString(), automationUpdatedAt: a.updatedAt.toISOString(),
         triggerType: a.triggerType, mediaIds,
         menuTitles: a.persistentMenuItems.map((item) => item.title),
         icebreakerQuestions: a.iceBreakers.map((item) => item.question),
