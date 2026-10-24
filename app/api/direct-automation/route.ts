@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validateSavedResponseOrigin } from "@/lib/automation/saved-response-origin";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 import { splitAutomationKeywords } from "@/lib/automation/trigger";
 
@@ -52,6 +53,9 @@ async function save(request:NextRequest,editing:boolean){
   const replies=messageType==="FORM"?parseReplies(raw.quickReplies):[];
   const account=await prisma.instagramAccount.findFirst({where:{id:instagramAccountId,userId:session.user.id,isConnected:true},select:{id:true}});
   if(!account)throw new RuleError("پیج اینستاگرام متصل و متعلق به شما نیست.",403);
+  let savedOrigin: string | null | undefined;
+  try { savedOrigin = await validateSavedResponseOrigin(raw.savedResponseId, instagramAccountId, session.user.id); }
+  catch (error) { throw new RuleError(error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست."); }
   const expected=clean(body.expectedUpdatedAt);
   if(editing&&(!id||!expected||!Number.isFinite(Date.parse(expected))))throw new RuleError("صفحه ویرایش را دوباره باز کنید.",409);
   const showcaseIds=new Set<string>();
@@ -72,7 +76,7 @@ async function save(request:NextRequest,editing:boolean){
     ?await tx.automation.update({where:{id:current.id},data:{title,keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}})
     :await tx.automation.create({data:{instagramAccountId,title,triggerType:"DM",keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}});
    const existing=await tx.automationMessage.findMany({where:{automationId:automation.id},orderBy:{order:"asc"},select:{id:true}});
-   const fields={messageType,order:0,text:text||null,
+   const fields={messageType,order:0,text:text||null,...(savedOrigin !== undefined ? { savedResponseId: savedOrigin } : {}),
     mediaUrl:["IMAGE","VIDEO","AUDIO"].includes(messageType)?mediaUrl||null:null,
     mediaId:["IMAGE","VIDEO","AUDIO"].includes(messageType)?mediaId||null:null,
     showcaseId:messageType==="SHOWCASE"?showcaseId:null,
