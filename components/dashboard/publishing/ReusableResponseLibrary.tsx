@@ -11,7 +11,8 @@ type Saved = {
   text: string | null; mediaUrl: string | null; mediaId: string | null;
   showcaseId: string | null; formId: string | null; quickReplies: QuickReplyDraft[] | null;
   usages?: Array<{ messageId: string; automationId: string; automationTitle: string | null;
-    triggerType: string; mediaIds: string[]; menuTitles: string[]; icebreakerQuestions: string[] }>;
+    triggerType: string; mediaIds: string[]; menuTitles: string[]; icebreakerQuestions: string[];
+    messageUpdatedAt: string; automationUpdatedAt: string }>;
   showcase?: { title: string; items: Array<{ id: string; title: string; description?: string | null; imageUrl?: string | null }> } | null;
   form?: { title: string; fields: Array<{ id: string; label: string }> } | null;
 };
@@ -118,6 +119,8 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
   const [editingId, setEditingId] = useState("");
   const [reusedOriginal, setReusedOriginal] = useState<{id:string; fingerprint:string} | null>(null);
   const [preview, setPreview] = useState<Saved | null>(null);
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const [scopeSelected, setScopeSelected] = useState<Record<string, string[] | null>>({});
   const [error, setError] = useState("");
   const filtered = useMemo(() => items.filter((item) => allowedTypes.includes(item.messageType)), [items, allowedTypes.join(",")]);
 
@@ -182,7 +185,27 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     }
   }, [message, reusedOriginal, onUpdate]);
 
-  async function saveToLibrary(override?: MessageDraft): Promise<boolean> {
+  type Selection = { messageId: string; mediaIds: string[];
+    expectedMessageUpdatedAt: string; expectedAutomationUpdatedAt: string };
+  function selectedScopes(): Selection[] {
+    const source = items.find((item) => item.id === editingId);
+    return (source?.usages || []).flatMap((usage) => {
+      const choice = scopeSelected[usage.messageId];
+      if (choice === undefined || (Array.isArray(choice) && !choice.length)) return [];
+      return [{ messageId: usage.messageId, mediaIds: choice || [],
+        expectedMessageUpdatedAt: usage.messageUpdatedAt,
+        expectedAutomationUpdatedAt: usage.automationUpdatedAt }];
+    });
+  }
+  function chooseScopes(item: Saved) {
+    const selected: Record<string, string[] | null> = {};
+    for (const usage of item.usages || [])
+      selected[usage.messageId] = usage.mediaIds.length ? [...usage.mediaIds] : null;
+    setScopeSelected(selected);
+    setScopeOpen(true);
+  }
+
+  async function saveToLibrary(override?: MessageDraft, approved?: Selection[]): Promise<boolean> {
     // Primary form saves mark the parent disabled while assembling the payload.
     if (saving || (disabled && !override)) return false;
     const draft = override || message;
@@ -191,12 +214,31 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     if (!title || title.length > 80) { setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه)."); return false; }
     if (!allowedTypes.includes(draft.messageType)) { setError("این نوع پاسخ در این بخش پشتیبانی نمی‌شود."); return false; }
     const original = items.find((item) => item.id === editingId);
+    if (!override && !approved && original?.usages?.length) {
+      chooseScopes(original);
+      return false;
+    }
     if (editingId && !original) { setError("پاسخ قبلی پیدا نشد. فهرست را تازه‌سازی کن."); return false; }
+    // The parent editor must never silently edit a shared template.
+    // Explicit edits go through the scope dialog; parent autosave forks a copy.
+    const manualEdit = Boolean(editingId && !override);
+    if (override && original && responseFingerprint(draft) === responseFingerprint({
+      ...draft, messageType: original.messageType,
+      text: original.text || "", mediaUrl: original.mediaUrl || "", mediaId: original.mediaId || "",
+      showcaseId: original.showcaseId || "", formId: original.formId || "",
+      quickReplies: Array.isArray(original.quickReplies) ? original.quickReplies : [],
+    }) && title === original.title) {
+      override.savedResponseId = original.id;
+      return true;
+    }
     setSaving(true);
     setError("");
     try {
-      const response = await fetch(editingId ? "/api/saved-responses/" + encodeURIComponent(editingId) : "/api/saved-responses", {
-        method: editingId ? "PATCH" : "POST",
+      const response = await fetch(approved
+        ? "/api/saved-responses/" + encodeURIComponent(editingId) + "/apply"
+        : manualEdit ? "/api/saved-responses/" + encodeURIComponent(editingId)
+        : "/api/saved-responses", {
+        method: approved || manualEdit ? "PATCH" : "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -204,12 +246,15 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
           text: draft.text || null, mediaUrl: draft.mediaUrl || null,
           mediaId: draft.mediaId || null, showcaseId: draft.showcaseId || null,
           formId: draft.formId || null, quickReplies: draft.quickReplies || [],
-          ...(original ? { expectedUpdatedAt: original.updatedAt } : {}),
+          ...(manualEdit || approved ? { expectedUpdatedAt: original?.updatedAt } : {}),
+          ...(approved ? { selections: approved } : {}),
         }),
       });
       const result = await response.json();
-      if (!response.ok || !result?.success || !result.data?.id) throw Error(result?.error || "ذخیره پاسخ ناموفق بود.");
-      const saved = result.data as Saved;
+      if (!response.ok || !result?.success || (approved ? !result.data : !result.data?.id))
+        throw Error(result?.error || "ذخیره پاسخ ناموفق بود.");
+      const saved = approved ? { ...original!, updatedAt: new Date().toISOString(), usages: [] } : result.data as Saved;
+      setScopeOpen(false);
       // The parent save receives this same prepared draft. Set its source before persisting.
       if (override) override.savedResponseId = saved.id;
       onUpdate({ savedResponseId: saved.id });
@@ -266,6 +311,61 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
         </div>}
     </div>}
     {error && <p role="alert" className="text-xs leading-6 text-[var(--daira-error-text)]">{error}</p>}
+    <GlassModalPresence open={scopeOpen} onEscape={() => { if (!saving) setScopeOpen(false); }}>
+      <div dir="rtl" className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setScopeOpen(false); }}>
+        <div role="dialog" aria-modal="true" aria-labelledby="saved-scope-title" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]">
+          <div className="daira-glass-dialog__header flex items-center justify-between border-b p-4">
+            <h3 id="saved-scope-title" className="text-sm font-extrabold text-[var(--daira-heading)]">اعمال ویرایش پاسخ مشترک</h3>
+            <button type="button" aria-label="بستن" disabled={saving} onClick={() => setScopeOpen(false)} className="daira-glass-dialog__close rounded-lg p-2"><X size={18}/></button>
+          </div>
+          <p className="px-4 pt-3 text-xs leading-6 text-[var(--daira-text-secondary)]">
+            مشخص کن تغییرات برای کدام محتوا یا محل استفاده اعمال شود. موارد تیک‌نخورده بدون تغییر باقی می‌مانند.
+          </p>
+          <div className="space-y-3 overflow-y-auto p-4">
+            {(items.find((item) => item.id === editingId)?.usages || []).map((usage) => (
+              <div key={usage.messageId} className="daira-flow-glass space-y-2 rounded-xl p-3">
+                <p className="text-xs font-bold text-[var(--daira-heading)]">{usage.automationTitle ||
+                  (usage.menuTitles.length ? "منوی دایرکت" : usage.icebreakerQuestions.length ? "پیام شروع گفتگو" :
+                   usage.triggerType === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ دایرکت")}</p>
+                {usage.menuTitles.map((label, i) => <p key={i} className="text-xs text-[var(--daira-text-secondary)]">گزینه منو: {label}</p>)}
+                {usage.icebreakerQuestions.map((label, i) => <p key={i} className="text-xs text-[var(--daira-text-secondary)]">شروع گفتگو: {label}</p>)}
+                {usage.mediaIds.length ? usage.mediaIds.map((id) => (
+                  <label key={id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg bg-[var(--daira-surface-hover)] p-2">
+                    <input type="checkbox" disabled={saving} className="h-5 w-5 accent-[var(--daira-primary)]"
+                      checked={Array.isArray(scopeSelected[usage.messageId]) && scopeSelected[usage.messageId].includes(id)}
+                      onChange={(event) => setScopeSelected((current) => {
+                        const old = current[usage.messageId] || [];
+                        const next = event.target.checked ? [...old, id] : old.filter((item) => item !== id);
+                        return { ...current, [usage.messageId]: next };
+                      })}/>
+                    <span className="min-w-0 break-all text-xs text-[var(--daira-heading)]">{id === "__smartdirect_live_comments_v1__" ? "پاسخ لایو" : "محتوا " + id}</span>
+                  </label>
+                )) : (
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg bg-[var(--daira-surface-hover)] p-2">
+                    <input type="checkbox" disabled={saving} className="h-5 w-5 accent-[var(--daira-primary)]"
+                      checked={Object.prototype.hasOwnProperty.call(scopeSelected, usage.messageId) && scopeSelected[usage.messageId] === null}
+                      onChange={(event) => setScopeSelected((current) => {
+                        const next = { ...current };
+                        if (event.target.checked) next[usage.messageId] = null; else delete next[usage.messageId];
+                        return next;
+                      })}/>
+                    <span className="text-xs text-[var(--daira-heading)]">اعمال برای این محل استفاده</span>
+                  </label>
+                )}
+              </div>
+            ))}
+          </div>
+          {error && <p role="alert" className="px-4 text-xs text-[var(--daira-error-text)]">{error}</p>}
+          <div className="daira-glass-dialog__footer flex gap-2 border-t p-4">
+            <button type="button" disabled={saving} onClick={() => setScopeOpen(false)} className="daira-glass-dialog__secondary min-h-11 flex-1 rounded-xl border px-3 text-xs font-bold">انصراف</button>
+            <button type="button" disabled={saving || selectedScopes().length === 0} onClick={() => void saveToLibrary(undefined, selectedScopes())}
+              className="daira-glass-dialog__primary min-h-11 flex-1 rounded-xl px-3 text-xs font-bold disabled:opacity-50">
+              {saving ? "در حال ذخیره..." : "اعمال برای " + new Intl.NumberFormat("fa-IR").format(selectedScopes().length) + " محل"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </GlassModalPresence>
     <GlassModalPresence open={Boolean(preview)} onEscape={() => setPreview(null)}>
       <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview(null); }}>
         <div role="dialog" aria-modal="true" aria-label="مشاهده پاسخ ذخیره‌شده" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]" dir="rtl">
