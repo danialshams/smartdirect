@@ -40,7 +40,7 @@ function AssetContent({ kind, id, assets }: { kind: "FORM" | "SHOWCASE"; id: str
         {image && <img src={image} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-xl object-cover" />}
         <div className="min-w-0 space-y-1">
           <p className="text-xs font-bold text-[var(--daira-heading)]">{string(item.title || item.label || item.question) || "گزینه " + new Intl.NumberFormat("fa-IR").format(index + 1)}</p>
-          {(item.description || item.value || item.text) &&
+          {Boolean(string(item.description || item.value || item.text)) &&
             <p className="whitespace-pre-wrap break-words text-xs leading-6 text-[var(--daira-text-secondary)]">{string(item.description || item.value || item.text)}</p>}
         </div>
       </div>;
