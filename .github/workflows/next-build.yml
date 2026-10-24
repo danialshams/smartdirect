@@ -124,6 +124,13 @@ jobs:
           npx prisma db push
           npx tsx scripts/test-durable-webhook-migration.ts
 
+      - name: Test saved response provenance and multi-account isolation in PostgreSQL
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          NODE_ENV: test
+        run: npx tsx scripts/test-saved-response-origin.ts
+
       - name: Test durable webhook recovery against PostgreSQL and Redis
         env:
           DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
