@@ -105,6 +105,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
 
   function loadResponse(item: Saved, edit = false) {
     const applied: Partial<MessageDraft> = {
+      savedResponseId: item.id,
       messageType: item.messageType, text: item.text || "",
       mediaUrl: item.mediaUrl || "", mediaId: item.mediaId || "",
       showcaseId: item.showcaseId || "", formId: item.formId || "",
@@ -119,6 +120,16 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     onNameChange?.(item.title);
     setError("");
   }
+  // Editing the body of a reused response creates an independent draft;
+  // the original saved template and other active uses remain untouched.
+  useEffect(() => {
+    if (reusedOriginal && message.savedResponseId === reusedOriginal.id
+        && responseFingerprint(message) !== reusedOriginal.fingerprint) {
+      setReusedOriginal(null);
+      onUpdate({ savedResponseId: null });
+    }
+  }, [message, reusedOriginal, onUpdate]);
+
   async function saveToLibrary(override?: MessageDraft): Promise<boolean> {
     // Primary form saves mark the parent disabled while assembling the payload.
     if (saving || (disabled && !override)) return false;
