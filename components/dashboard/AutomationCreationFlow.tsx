@@ -1,9 +1,11 @@
 "use client";
 
 import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X, Eye, Pencil } from "lucide-react";
+import ResponseModeSwitcher from "./ResponseModeSwitcher";
+import ResponseTemplateDetails from "./ResponseTemplateDetails";
 import CommentReplyVariantsField from "./CommentReplyVariantsField";
 import { readPublicCommentReplies, validatePublicCommentReplies, publicCommentReplyKey } from "@/lib/automation/comment-reply-variants";
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/PublishingStoryAutomationSetup"), { ssr: false });
@@ -188,6 +190,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [linkButtons, setLinkButtons] = useState<LinkButton[]>(() => initialEditState?.linkButtons ?? [{ title: "", url: "" }]);
   const [linkedMediaItems, setLinkedMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null}>>([]);
   const [previewTemplate, setPreviewTemplate] = useState<AutomationTemplate | null>(null);
+  const saveCommentReplyRef = useRef<((draft: MessageDraft) => Promise<boolean>) | null>(null);
   const [editScopeOpen, setEditScopeOpen] = useState(false);
   const [editScopeIds, setEditScopeIds] = useState<string[]>([]);
   const originalMediaIds = useMemo(() => editAutomation ? Array.from(new Set([...(editAutomation.mediaId ? [editAutomation.mediaId] : []), ...(editAutomation.mediaIds || "").split(",").map((id) => id.trim()).filter(Boolean)])) : [], [editAutomation]);
@@ -540,9 +543,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       setSaving(true);
       setError("");
       try {
+        const preparedPrimary = { ...currentMessage };
+        if (enteredDm && saveCommentReplyRef.current &&
+          !await saveCommentReplyRef.current(preparedPrimary)) return;
         const previouslySavedMessages = normalizeMessages(editAutomation.messages);
         const originalById = new Map(previouslySavedMessages.map((entry) => [entry.id, entry]));
-        const allMessages = [currentMessage, ...extraMessages].map((entry, index) => ({
+        const allMessages = [preparedPrimary, ...extraMessages].map((entry, index) => ({
           ...entry,
           updateQuickReplies: !originalById.has(entry.id) ||
             JSON.stringify(originalById.get(entry.id)?.quickReplies) !== JSON.stringify(entry.quickReplies),
@@ -644,6 +650,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     setSaving(true);
     setError("");
     try {
+      const preparedPrimary = { ...currentMessage };
+      if (triggerType === "COMMENT_KEYWORD" && enteredDm &&
+        saveCommentReplyRef.current && !await saveCommentReplyRef.current(preparedPrimary)) return;
       const response = await fetch("/api/automations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -675,7 +684,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
       const automationId = result.data.id as string;
       const messagesToCreate = triggerType === "COMMENT_KEYWORD"
-        ? (enteredDm ? [currentMessage, ...extraMessages] : [])
+        ? (enteredDm ? [preparedPrimary, ...extraMessages] : [])
         : [currentMessage];
       for (const [index, entry] of messagesToCreate.entries()) {
         const entryLinks = triggerType === "COMMENT_KEYWORD" && entry.messageType === "TEXT"
@@ -755,23 +764,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   ];
   const pageStyles = (
     <style jsx global>{`
-      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]),
-      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]) * {
-        color: var(--daira-inverse-text) !important;
-      }
-      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]) {
-        background-color: var(--daira-primary) !important;
-        border-color: var(--daira-primary) !important;
-      }
-      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]):hover:not(:disabled) {
-        background-color: var(--daira-primary-hover) !important;
-        border-color: var(--daira-primary-hover) !important;
-      }
-      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]):disabled {
-        background-color: var(--daira-primary) !important;
-        border-color: var(--daira-primary) !important;
-        opacity: .48;
-      }
+      /* Only explicit submit buttons use the strong primary treatment.
+         Generic button selectors previously painted every reply card, eye
+         icon and active mode solid blue. */
       .sd-success-ring {
         stroke-dasharray: 183;
         stroke-dashoffset: 183;
@@ -938,16 +933,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         {!isEditing && (<>
         <div className="mb-2 mt-6"><AutomationSectionGuide>۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن.</AutomationSectionGuide></div>
         <section aria-label="روش پاسخ" className="space-y-2">
-          <div role="radiogroup" aria-label="روش پاسخ خودکار" className="grid grid-cols-2 gap-2">
-            <label className={"daira-response-mode flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-2xl border p-3 text-[var(--daira-heading)] " + (creationMode === "new" ? "is-selected" : "")}>
-              <input type="radio" name="automation-creation-mode" value="new" checked={creationMode === "new"} onChange={startNewAutomation} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
-              <span className="flex min-h-10 min-w-0 flex-1 items-center justify-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">ساخت پاسخ جدید</strong></span>
-            </label>
-            <label className={"daira-response-mode flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-2xl border p-3 text-[var(--daira-heading)] " + (creationMode === "existing" ? "is-selected" : "")}>
-              <input type="radio" name="automation-creation-mode" value="existing" checked={creationMode === "existing"} onChange={() => { setCreationMode("existing"); setError(""); }} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
-              <span className="flex min-h-10 min-w-0 flex-1 items-center justify-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">استفاده از پاسخ‌های قبلی</strong></span>
-            </label>
-          </div>
+          <ResponseModeSwitcher value={creationMode}
+            onChange={(next) => {
+              if (next === "new") startNewAutomation();
+              else { setCreationMode("existing"); setError(""); }
+            }} disabled={saving} />
         </section>
 
         </>)}
@@ -977,31 +967,41 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {automationTemplates.map((template) => {
                     const previewMessages = normalizeMessages(template.messages);
-                    const preview = previewMessages[0]?.messageType === "SHOWCASE" ? "ویترین" : previewMessages[0]?.messageType === "FORM" ? "فرم" : previewMessages[0]?.messageType === "IMAGE" ? "تصویر" : previewMessages[0]?.messageType === "VIDEO" ? "ویدیو" : previewMessages[0]?.messageType === "AUDIO" ? "پیام صوتی" : "";
                     const selected = selectedTemplateId === template.id;
-                    return (
-                      <div
-                        key={template.id}
-                        className={"daira-response-template flex min-h-[76px] items-start gap-3 rounded-xl border p-3 text-right transition " + (selected ? "is-selected" : "")}
-                      >
-                        <button type="button" onClick={() => setPreviewTemplate(template)} className="flex min-w-0 flex-1 flex-col gap-1 text-right">
-                          <strong className="block text-xs font-bold leading-5" style={{ color: dairaPalette.text.heading }}>
-                            {(template.title?.trim() ? (triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت - " : "پاسخ خودکار استوری - ") + template.title.trim() : "پاسخ بدون نام")}
+                    const expanded = previewTemplate?.id === template.id;
+                    return <div key={template.id} className={"daira-response-library__item overflow-hidden rounded-xl border " + (selected ? "is-selected" : "")}>
+                      <div className="flex min-h-[76px] items-center gap-3 p-3">
+                        <button type="button" onClick={() => applyAutomationTemplate(template)}
+                          className="min-w-0 flex-1 text-right" aria-label={"انتخاب پاسخ " + (template.title || "بدون نام")}>
+                          <strong className="block truncate text-xs font-bold leading-5 text-[var(--daira-heading)]">
+                            {template.title?.trim() ? (triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت - " : "پاسخ خودکار استوری - ") + template.title.trim() : "پاسخ بدون نام"}
                           </strong>
-                          {preview && <span className="block text-[10px] leading-4" style={{ color: dairaPalette.text.body }}>{preview}</span>}
+                          <span className="mt-1 block text-[11px] text-[var(--daira-text-secondary)]">
+                            {new Intl.NumberFormat("fa-IR").format(previewMessages.length)} پیام · {selected ? "انتخاب‌شده" : "برای انتخاب لمس کن"}
+                          </span>
                         </button>
-                        <button type="button" onClick={() => setPreviewTemplate(template)} aria-label="مشاهده پاسخ کامل" className="daira-glass-dialog__secondary self-center rounded-lg border p-2"><Eye size={17}/></button>
-                        <input
-                          type="radio"
-                          name="existing-automation-template"
-                          value={template.id}
-                          checked={selected}
-                          onChange={() => applyAutomationTemplate(template)}
-                          className="mt-0 h-4 w-4 shrink-0 self-center accent-[var(--daira-primary)]"
-                          aria-label={`انتخاب پاسخ ${(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}`}
-                        />
+                        <button type="button" aria-label={"مشاهده پاسخ " + (template.title || "")}
+                          aria-expanded={expanded} aria-controls={"automation-template-" + template.id}
+                          onClick={() => setPreviewTemplate((current) => current?.id === template.id ? null : template)}
+                          className="daira-response-library__eye flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"><Eye size={18} aria-hidden="true"/></button>
                       </div>
-                    );
+                      <div id={"automation-template-" + template.id} aria-hidden={!expanded} inert={!expanded}
+                        className={"daira-response-library__expander grid " + (expanded ? "is-expanded" : "")}>
+                        <div className="min-h-0 overflow-hidden">
+                          <div className="space-y-3 border-t border-[var(--daira-glass-rim)] p-3">
+                            <ResponseTemplateDetails messages={previewMessages}
+                              showcases={showcases} forms={forms}
+                              keyword={template.keyword} commentReplyText={template.commentReplyText}/>
+                            <div className="flex gap-2">
+                              <button type="button" onClick={() => applyAutomationTemplate(template)}
+                                className="daira-response-library__action min-h-11 flex-1 rounded-xl border px-3 text-xs font-bold">انتخاب پاسخ</button>
+                              <button type="button" onClick={() => router.push((triggerType === "COMMENT_KEYWORD" ? "/dashboard/comment-automation/" : "/dashboard/story-automation/") + encodeURIComponent(template.id))}
+                                className="daira-response-library__action min-h-11 flex-1 rounded-xl border px-3 text-xs font-bold">ویرایش پاسخ</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>;
                   })}
                   </div>
                   </div>
@@ -1077,13 +1077,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               <div className="space-y-3">
               <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. پاسخ زیر کامنت — حداقل سه و حداکثر پنج پاسخ متفاوت تنظیم کن؛ برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم در اینستاگرام، بهتر است چند پاسخ متفاوت تنظیم کنی." : "۴. پاسخ زیر کامنت — سه تا پنج متن متفاوت بنویس؛ برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم در اینستاگرام، بهتر است چند پاسخ متفاوت تنظیم کنی."}</AutomationSectionGuide></div>
               <section aria-label="پاسخ‌های عمومی به کامنت" className="daira-comment-replies space-y-4 rounded-2xl p-4 sm:p-5">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={17} strokeWidth={2.1} aria-hidden="true" /></span>
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <h2 className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های عمومی به کامنت</h2>
-                    <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">سه تا پنج متن متفاوت وارد کن. یکی از این متن‌ها برای هر کامنت به‌صورت تصادفی انتخاب می‌شود.</p>
-                  </div>
-                </div>
                 <CommentReplyVariantsField values={commentReplies} onChange={setCommentReplies} disabled={saving} />
               </section>
               </div>
@@ -1106,6 +1099,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
                     allowedTypes={["TEXT"]}
                     prefix="پاسخ خودکار دایرکت"
+                    initialName={responseName}
+                    onNameChange={setResponseName}
+                    onRegisterSave={(handler) => { saveCommentReplyRef.current = handler; }}
                     disabled={saving}
                   />
                   <div role="radiogroup" aria-label="قالب پیام متنی دایرکت" className={"grid grid-cols-1 gap-2 sm:grid-cols-2 " + (isEditing && message.messageType !== "TEXT" ? "hidden" : "")}>
@@ -1350,36 +1346,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           {error && <div role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-6 text-[var(--daira-error-text)]">{error}</div>}
 
 
-        <GlassModalPresence open={Boolean(previewTemplate)} onEscape={() => setPreviewTemplate(null)}>
-          <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreviewTemplate(null); }}>
-            <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="previous-automation-title" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]">
-              <div className="daira-glass-dialog__header flex items-center justify-between border-b p-4">
-                <h2 id="previous-automation-title" className="text-sm font-extrabold text-[var(--daira-heading)]">{previewTemplate?.title?.trim() || "پاسخ بدون نام"}</h2>
-                <button type="button" aria-label="بستن" onClick={() => setPreviewTemplate(null)} className="daira-glass-dialog__close rounded-lg p-2"><X size={18}/></button>
-              </div>
-              <div className="space-y-3 overflow-y-auto p-4 text-sm leading-7 text-[var(--daira-heading)]">
-                <p className="text-xs text-[var(--daira-text-secondary)]">کلمات کلیدی: {previewTemplate?.keyword || "تمام کامنت‌ها"}</p>
-                {previewTemplate?.commentReplyText && readPublicCommentReplies(previewTemplate.commentReplyText).map((reply, i) =>
-                  <div key={i} className="daira-flow-glass rounded-xl p-3"><span className="mb-1 block text-xs font-bold">پاسخ زیر کامنت {new Intl.NumberFormat("fa-IR").format(i+1)}</span><p className="whitespace-pre-wrap">{reply}</p></div>
-                )}
-                {previewTemplate && normalizeMessages(previewTemplate.messages).map((entry, i) =>
-                  <div key={entry.id || i} className="daira-flow-glass space-y-2 rounded-xl p-3">
-                    <p className="text-xs font-bold text-[var(--daira-text-secondary)]">پیام {new Intl.NumberFormat("fa-IR").format(i+1)} — {entry.messageType}</p>
-                    {entry.text && <p className="whitespace-pre-wrap break-words">{entry.text}</p>}
-                    {entry.mediaUrl && entry.messageType === "IMAGE" && <img src={entry.mediaUrl} alt="" className="max-h-60 w-full rounded-xl object-contain"/>}
-                    {entry.mediaUrl && entry.messageType === "AUDIO" && <audio src={entry.mediaUrl} controls className="w-full"/>}
-                    {entry.mediaUrl && entry.messageType === "VIDEO" && <video src={entry.mediaUrl} controls className="w-full"/>}
-                    {entry.quickReplies.map((reply) => <div key={reply.id} className="rounded-lg bg-[var(--daira-surface-hover)] p-2 text-xs"><strong>{reply.title}</strong> — {reply.destinationText || reply.destinationQuestion || reply.destinationType}</div>)}
-                  </div>
-                )}
-              </div>
-              <div className="daira-glass-dialog__footer flex gap-2 border-t p-4">
-                <button type="button" disabled={!previewTemplate} onClick={() => { if (previewTemplate) router.push((triggerType === "COMMENT_KEYWORD" ? "/dashboard/comment-automation/" : "/dashboard/story-automation/") + encodeURIComponent(previewTemplate.id)); }} className="daira-glass-dialog__secondary flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold"><span>ویرایش پاسخ</span><Pencil size={15}/></button>
-                <button type="button" disabled={!previewTemplate} onClick={() => { if (previewTemplate) applyAutomationTemplate(previewTemplate); setPreviewTemplate(null); }} className="daira-glass-dialog__primary min-h-11 flex-1 rounded-xl px-3 text-xs font-bold">استفاده از پاسخ</button>
-              </div>
-            </div>
-          </div>
-        </GlassModalPresence>
         <GlassModalPresence open={editScopeOpen} onEscape={() => setEditScopeOpen(false)}>
           <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditScopeOpen(false); }}>
             <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="edit-response-scope-title" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]">

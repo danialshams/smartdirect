@@ -43,9 +43,36 @@ export async function GET(request: NextRequest) {
       where: { userId: session.user.id, instagramAccountId },
       orderBy: { updatedAt: "desc" },
     });
-    // Embed owned asset previews without changing the reusable template record.
-    const showcaseIds = data.map((item) => item.showcaseId).filter((id): id is string => Boolean(id));
-    const formIds = data.map((item) => item.formId).filter((id): id is string => Boolean(id));
+    // Include assets referenced by nested form branches, not just the top-level
+    // response. An inline preview should show the full owned showcase/form.
+    const findNestedAssets = (value: unknown, showcases: Set<string>, forms: Set<string>, depth = 0): void => {
+      if (!value || depth > 15 || typeof value !== "object") return;
+      if (Array.isArray(value)) {
+        for (const entry of value) findNestedAssets(entry, showcases, forms, depth + 1);
+        return;
+      }
+      const record = value as Record<string, unknown>;
+      for (const [key, id] of Object.entries(record)) {
+        if (typeof id !== "string" || !id.trim()) continue;
+        if (key === "showcaseId" || key === "destinationShowcaseId") showcases.add(id);
+        if (key === "formId" || key === "destinationFormId") forms.add(id);
+      }
+      for (const key of ["quickReplies", "destinationQuickReplies"])
+        findNestedAssets(record[key], showcases, forms, depth + 1);
+    };
+    const nestedAssets = new Map<string, { showcases: Set<string>; forms: Set<string> }>();
+    const showcaseSet = new Set<string>(), formSet = new Set<string>();
+    for (const item of data) {
+      const refs = { showcases: new Set<string>(), forms: new Set<string>() };
+      if (item.showcaseId) refs.showcases.add(item.showcaseId);
+      if (item.formId) refs.forms.add(item.formId);
+      findNestedAssets(item.quickReplies, refs.showcases, refs.forms);
+      refs.showcases.forEach((id) => showcaseSet.add(id));
+      refs.forms.forEach((id) => formSet.add(id));
+      nestedAssets.set(item.id, refs);
+    }
+    const showcaseIds = [...showcaseSet];
+    const formIds = [...formSet];
     const [showcases, forms] = await Promise.all([
       showcaseIds.length ? prisma.showcase.findMany({
         where: { id: { in: showcaseIds }, userId: session.user.id, instagramAccountId },
@@ -142,6 +169,10 @@ export async function GET(request: NextRequest) {
       usages: usageMap.get(item.id) || [],
       showcase: item.showcaseId ? showcaseMap.get(item.showcaseId) || null : null,
       form: item.formId ? formMap.get(item.formId) || null : null,
+      referencedShowcases: [...(nestedAssets.get(item.id)?.showcases || [])]
+        .map((id) => showcaseMap.get(id)).filter(Boolean),
+      referencedForms: [...(nestedAssets.get(item.id)?.forms || [])]
+        .map((id) => formMap.get(id)).filter(Boolean),
     })) });
   } catch (error) {
     console.error("GET /api/saved-responses error:", error);

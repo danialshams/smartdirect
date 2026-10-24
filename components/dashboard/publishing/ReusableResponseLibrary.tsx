@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId, useMemo, useState } from "react";
-import { BookOpen, Check, Eye, Pencil, Plus, Save, X } from "lucide-react";
+import { Eye, X } from "lucide-react";
+import ResponseModeSwitcher from "../ResponseModeSwitcher";
+import ResponseTemplateDetails from "../ResponseTemplateDetails";
 import GlassModalPresence from "../GlassModalPresence";
 import { responseFingerprint } from "../automation-response-compare";
 import type { MessageDraft, QuickReplyDraft } from "../automation-form-utils";
@@ -16,6 +18,8 @@ type Saved = {
     quickReplyId?: string; nodePath?: Array<string | number>; branchTitle?: string }>;
   showcase?: { title: string; items: Array<{ id: string; title: string; description?: string | null; imageUrl?: string | null }> } | null;
   form?: { title: string; fields: Array<{ id: string; label: string }> } | null;
+  referencedShowcases?: Array<{ id: string; title: string; items: unknown[] }>;
+  referencedForms?: Array<{ id: string; title: string; fields: unknown[] }>;
 };
 type Props = {
   instagramAccountId: string;
@@ -56,39 +60,19 @@ function cloneTree(replies: QuickReplyDraft[]): QuickReplyDraft[] {
     destinationQuickReplies: cloneTree(item.destinationQuickReplies || []),
   }));
 }
-function BranchPreview({ replies, depth = 0 }: { replies: QuickReplyDraft[]; depth?: number }) {
-  if (depth > 4) return null;
-  return <div className="space-y-2">
-    {replies.map((reply, index) => <div key={reply.id || index}
-      className="daira-response-library__preview-branch space-y-2 rounded-xl p-3">
-      <p className="text-xs font-bold text-[var(--daira-heading)]">{reply.title}</p>
-      <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">{reply.destinationType === "FORM" ? reply.destinationQuestion : reply.destinationType === "TEXT" ? reply.destinationText : typeNames[reply.destinationType as MessageDraft["messageType"]] || "پاسخ"}</p>
-      {reply.destinationType === "FORM" && <BranchPreview replies={reply.destinationQuickReplies || []} depth={depth + 1}/>}
-    </div>)}
-  </div>;
-}
 function ResponsePreview({ value }: { value: Saved }) {
   return <div className="space-y-3">
-    <p className="text-xs font-bold text-[var(--daira-text-secondary)]">نوع پاسخ: {typeNames[value.messageType]}</p>
-    {value.text && <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[var(--daira-heading)]">{value.text}</p>}
-    {value.messageType === "IMAGE" && value.mediaUrl && <img src={value.mediaUrl} alt="پیش‌نمایش پاسخ" className="max-h-72 w-full rounded-xl object-contain"/>}
-    {value.messageType === "VIDEO" && value.mediaUrl && <video src={value.mediaUrl} controls className="max-h-72 w-full rounded-xl"/>}
-    {value.messageType === "AUDIO" && value.mediaUrl && <audio src={value.mediaUrl} controls className="w-full"/>}
-    {value.messageType === "FORM" && Array.isArray(value.quickReplies) && <BranchPreview replies={value.quickReplies}/>}
-    {value.messageType === "SHOWCASE" && value.showcase && <div className="space-y-3">
-      <p className="text-xs font-bold text-[var(--daira-heading)]">{value.showcase.title}</p>
-      {value.showcase.items.map((item) => <div key={item.id} className="daira-response-library__preview-branch flex items-center gap-3 rounded-xl p-3">
-        {item.imageUrl && <img src={item.imageUrl} alt="" className="h-20 w-20 rounded-lg object-cover"/>}
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-[var(--daira-heading)]">{item.title}</p>
-          {item.description && <p className="mt-1 text-xs leading-5 text-[var(--daira-text-secondary)]">{item.description}</p>}
-        </div>
-      </div>)}
-    </div>}
-    {value.messageType === "FORM" && value.form && <div className="space-y-2">
-      <p className="text-xs font-bold text-[var(--daira-heading)]">{value.form.title}</p>
-      {value.form.fields.map((field) => <p key={field.id} className="daira-response-library__preview-branch rounded-lg p-2 text-xs text-[var(--daira-text)]">{field.label}</p>)}
-    </div>}
+    <ResponseTemplateDetails
+      messages={[{
+        messageType: value.messageType, text: value.text || "", mediaUrl: value.mediaUrl || "",
+        showcaseId: value.showcaseId || "", formId: value.formId || "",
+        quickReplies: Array.isArray(value.quickReplies) ? value.quickReplies : [],
+      }]}
+      showcases={value.referencedShowcases?.length ? value.referencedShowcases :
+        value.showcase && value.showcaseId ? [{ id: value.showcaseId, ...value.showcase }] : []}
+      forms={value.referencedForms?.length ? value.referencedForms :
+        value.form && value.formId ? [{ id: value.formId, ...value.form }] : []}
+    />
     <div className="space-y-2 border-t border-[var(--daira-border)] pt-3">
       <p className="text-xs font-bold text-[var(--daira-heading)]">محل‌های استفاده از این پاسخ</p>
       {!value.usages?.length ? <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">هنوز اتصال فعالی برای این پاسخ ثبت نشده است.</p>
@@ -322,23 +306,14 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
   });
 
   return <section dir="rtl" className="daira-response-library mb-5 space-y-4" aria-label="کتابخانه پاسخ‌ها">
-    <div className="grid grid-cols-2 gap-3" role="group" aria-label="روش ساخت پاسخ">
-      {([{ value: "new", label: "ساخت پاسخ جدید", Icon: Plus }, { value: "existing", label: "استفاده از پاسخ قبلی", Icon: BookOpen }] as const).map(({ value, label, Icon }) =>
-        <button type="button" key={value} aria-pressed={mode === value} onClick={() => { setMode(value); setError(""); }}
-          className={"daira-response-library__mode flex min-h-[68px] items-center justify-center gap-2.5 rounded-2xl border px-3 py-3 text-xs font-bold " + (mode === value ? "is-selected" : "")}>
-          <span className="min-w-0 text-center leading-5">{label}</span><span className="daira-response-library__mode-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"><Icon size={17} aria-hidden="true"/></span>
-        </button>)}
-    </div>
+    <ResponseModeSwitcher value={mode} onChange={(next) => { setMode(next); setError(""); }} disabled={disabled || saving} />
     {mode === "new" ? <div className="daira-response-library__panel space-y-4 rounded-2xl border p-4 sm:p-5">
       <label htmlFor={nameFieldId} className="block text-xs font-bold text-[var(--daira-heading)]">{message.messageType === "FORM" ? "نام فرم" : message.messageType === "SHOWCASE" ? "نام ویترین" : "نام پاسخ"}</label>
       <input id={nameFieldId} type="text" value={name} maxLength={80} onChange={(event) => { setName(event.target.value); onNameChange?.(event.target.value); }}
         placeholder="مثلاً کفش" disabled={disabled || saving}
         className="daira-response-library__input block min-h-12 w-full rounded-xl border px-3.5 py-3 text-base text-[var(--daira-heading)] outline-none" style={{fontSize:"16px"}}/>
       <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">{message.messageType === "FORM" ? "نامی برای فرم" : message.messageType === "SHOWCASE" ? "نامی برای ویترین" : "نامی برای پاسخ"} انتخاب کن تا بعداً بتوانی دوباره از آن استفاده کنی.</p>
-      <button type="button" onClick={() => void saveToLibrary()} disabled={saving || disabled || !name.trim()}
-        className="daira-glass-dialog__primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold disabled:opacity-50">
-        <span>{saving ? "در حال ذخیره..." : editingId ? "ذخیره ویرایش پاسخ" : "ذخیره در پاسخ‌های قبلی"}</span><Save size={16}/>
-      </button>
+      <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">این پاسخ با دکمه اصلی ذخیره یا ایجاد پاسخ، به‌صورت خودکار در پاسخ‌های قبلی ثبت می‌شود.</p>
       {editingId && <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">ویرایش کتابخانه فقط قالب ذخیره‌شده را تغییر می‌دهد؛ تنظیمات پاسخ‌های فعال به صورت خودکار بازنویسی نمی‌شوند.</p>}
       {editingId && <button type="button" onClick={() => {setEditingId("");setName("");}} className="ml-2 text-xs text-[var(--daira-text-secondary)]">انصراف از ویرایش پاسخ ذخیره‌شده</button>}
     </div> : <div className="daira-response-library__panel space-y-3 rounded-2xl border p-4 sm:p-5">
@@ -349,14 +324,38 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
       {loading ? <div role="status" className="daira-skeleton__bar h-14 w-full rounded-xl"/> : filtered.length === 0 ?
         <p className="py-4 text-center text-xs text-[var(--daira-text-secondary)]">پاسخ سازگاری ذخیره نشده است.</p> :
         <div className="max-h-72 space-y-2.5 overflow-y-auto py-1">
-          {filtered.map((item) => <div key={item.id} className="daira-response-library__item flex min-h-[76px] items-center gap-2 rounded-xl border p-3">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-bold text-[var(--daira-heading)]">{displayName(item, prefix)}</p>
-              <p className="mt-1 text-[11px] text-[var(--daira-text-secondary)]">{typeNames[item.messageType]} · {new Intl.NumberFormat("fa-IR").format(item.usages?.length || 0)} استفاده ثبت‌شده</p>
-            </div>
-            <button type="button" onClick={() => setPreview(item)} aria-label={"مشاهده " + item.title} className="daira-response-library__icon-button flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"><Eye size={17}/></button>
-            <button type="button" onClick={() => loadResponse(item)} aria-label={"استفاده از " + item.title} className="daira-response-library__icon-button daira-response-library__use flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"><Check size={17}/></button>
-          </div>)}
+          {filtered.map((item) => {
+            const expanded = preview?.id === item.id;
+            return <div key={item.id} className="daira-response-library__item overflow-hidden rounded-xl border">
+              <div className="flex min-h-[76px] items-center gap-3 p-3">
+                <button type="button" onClick={() => loadResponse(item)}
+                  className="min-w-0 flex-1 text-right" aria-label={"انتخاب " + item.title}>
+                  <p className="truncate text-xs font-bold text-[var(--daira-heading)]">{displayName(item, prefix)}</p>
+                  <p className="mt-1 text-[11px] text-[var(--daira-text-secondary)]">{typeNames[item.messageType]} · {new Intl.NumberFormat("fa-IR").format(item.usages?.length || 0)} استفاده ثبت‌شده</p>
+                </button>
+                <button type="button" aria-expanded={expanded} aria-controls={"response-detail-" + item.id}
+                  onClick={() => setPreview((current) => current?.id === item.id ? null : item)}
+                  aria-label={(expanded ? "بستن پیش‌نمایش " : "مشاهده ") + item.title}
+                  className="daira-response-library__eye flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
+                  <Eye size={18} aria-hidden="true"/>
+                </button>
+              </div>
+              <div id={"response-detail-" + item.id} aria-hidden={!expanded} inert={!expanded}
+                className={"daira-response-library__expander grid " + (expanded ? "is-expanded" : "")}>
+                <div className="min-h-0 overflow-hidden">
+                  <div className="space-y-3 border-t border-[var(--daira-glass-rim)] p-3 sm:p-4">
+                    <ResponsePreview value={item} />
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" onClick={() => loadResponse(item)}
+                        className="daira-response-library__action min-h-11 flex-1 rounded-xl border px-3 text-xs font-bold">استفاده از پاسخ</button>
+                      <button type="button" onClick={() => loadResponse(item, true)}
+                        className="daira-response-library__action min-h-11 flex-1 rounded-xl border px-3 text-xs font-bold">ویرایش پاسخ</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>;
+          })}
         </div>}
     </div>}
     {error && <p role="alert" className="text-xs leading-6 text-[var(--daira-error-text)]">{error}</p>}
@@ -420,21 +419,6 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
               className="daira-glass-dialog__primary min-h-11 flex-1 rounded-xl px-3 text-xs font-bold disabled:opacity-50">
               {saving ? "در حال ذخیره..." : "اعمال برای " + new Intl.NumberFormat("fa-IR").format(selectedScopes().reduce((total, item) => total + (item.mediaIds.length || 1), 0)) + " مورد"}
             </button>
-          </div>
-        </div>
-      </div>
-    </GlassModalPresence>
-    <GlassModalPresence open={Boolean(preview)} onEscape={() => setPreview(null)}>
-      <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview(null); }}>
-        <div role="dialog" aria-modal="true" aria-label="مشاهده پاسخ ذخیره‌شده" className="daira-glass-dialog daira-response-library__dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]" dir="rtl">
-          <div className="daira-glass-dialog__header flex items-center justify-between border-b p-4">
-            <h3 className="text-sm font-extrabold text-[var(--daira-heading)]">{preview ? displayName(preview, prefix) : ""}</h3>
-            <button type="button" onClick={() => setPreview(null)} className="daira-glass-dialog__close rounded-lg p-2" aria-label="بستن"><X size={18}/></button>
-          </div>
-          <div className="overflow-y-auto p-4">{preview && <ResponsePreview value={preview}/>}</div>
-          <div className="daira-glass-dialog__footer flex gap-2 border-t p-4">
-            <button type="button" disabled={!preview} onClick={() => { if (preview) loadResponse(preview, true); }} className="daira-glass-dialog__secondary flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold"><span>ویرایش پاسخ</span><Pencil size={15}/></button>
-            <button type="button" disabled={!preview} onClick={() => { if (preview) loadResponse(preview); }} className="daira-glass-dialog__primary flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold"><span>استفاده از پاسخ</span><Check size={15}/></button>
           </div>
         </div>
       </div>
