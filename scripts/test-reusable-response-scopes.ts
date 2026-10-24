@@ -140,7 +140,8 @@ assert(scopedRoute.includes("if (!lockedMixed.has(automationId))"),
 
 assert(scopedRoute.includes("updatedAt: expected"), "Template edits require optimistic version checks.");
 assert(scopedRoute.includes("commentAutomationId: clone.id"), "Selected publishing jobs must follow their cloned comment automation.");
-assert(scopedRoute.includes("nextMessageId: reply.nextMessageId ? remap.get(reply.nextMessageId) || null : null"),
+assert(scopedRoute.includes("nextMessageId: reply.nextMessageId ? remap.get(reply.nextMessageId)! : null") &&
+  scopedRoute.includes("if (reply.nextMessageId && !remap.has(reply.nextMessageId))"),
   "Cloned quick replies must never point to old sibling automation messages.");
 const picker = readFileSync("components/dashboard/publishing/ReusableResponseLibrary.tsx", "utf8");
 assert(picker.includes("quickReplyId: usage.quickReplyId, nodePath: usage.nodePath || []"),
