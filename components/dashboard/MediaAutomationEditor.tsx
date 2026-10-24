@@ -113,7 +113,7 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
   const isStory = expectedTriggerType === "STORY_REPLY_KEYWORD";
 
 const commentReplyField = !isStory ? (
-  <div className="border-t border-[var(--daira-border)] pt-5">
+  <div className="pt-5">
     <CommentReplyVariantsField values={commentReplies} onChange={(next) => { setCommentReplies(next); setDirty(true); }} disabled={deleting} />
   </div>
 ) : null;
