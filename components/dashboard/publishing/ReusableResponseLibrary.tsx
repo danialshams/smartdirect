@@ -3,6 +3,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { Eye, Pencil, X } from "lucide-react";
 import ResponseModeSwitcher from "../ResponseModeSwitcher";
+import ResponseTemplateDetails from "../ResponseTemplateDetails";
 import GlassModalPresence from "../GlassModalPresence";
 import { responseFingerprint } from "../automation-response-compare";
 import type { MessageDraft, QuickReplyDraft } from "../automation-form-utils";
@@ -57,39 +58,17 @@ function cloneTree(replies: QuickReplyDraft[]): QuickReplyDraft[] {
     destinationQuickReplies: cloneTree(item.destinationQuickReplies || []),
   }));
 }
-function BranchPreview({ replies, depth = 0 }: { replies: QuickReplyDraft[]; depth?: number }) {
-  if (depth > 4) return null;
-  return <div className="space-y-2">
-    {replies.map((reply, index) => <div key={reply.id || index}
-      className="daira-response-library__preview-branch space-y-2 rounded-xl p-3">
-      <p className="text-xs font-bold text-[var(--daira-heading)]">{reply.title}</p>
-      <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">{reply.destinationType === "FORM" ? reply.destinationQuestion : reply.destinationType === "TEXT" ? reply.destinationText : typeNames[reply.destinationType as MessageDraft["messageType"]] || "پاسخ"}</p>
-      {reply.destinationType === "FORM" && <BranchPreview replies={reply.destinationQuickReplies || []} depth={depth + 1}/>}
-    </div>)}
-  </div>;
-}
 function ResponsePreview({ value }: { value: Saved }) {
   return <div className="space-y-3">
-    <p className="text-xs font-bold text-[var(--daira-text-secondary)]">نوع پاسخ: {typeNames[value.messageType]}</p>
-    {value.text && <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[var(--daira-heading)]">{value.text}</p>}
-    {value.messageType === "IMAGE" && value.mediaUrl && <img src={value.mediaUrl} alt="پیش‌نمایش پاسخ" className="max-h-72 w-full rounded-xl object-contain"/>}
-    {value.messageType === "VIDEO" && value.mediaUrl && <video src={value.mediaUrl} controls className="max-h-72 w-full rounded-xl"/>}
-    {value.messageType === "AUDIO" && value.mediaUrl && <audio src={value.mediaUrl} controls className="w-full"/>}
-    {value.messageType === "FORM" && Array.isArray(value.quickReplies) && <BranchPreview replies={value.quickReplies}/>}
-    {value.messageType === "SHOWCASE" && value.showcase && <div className="space-y-3">
-      <p className="text-xs font-bold text-[var(--daira-heading)]">{value.showcase.title}</p>
-      {value.showcase.items.map((item) => <div key={item.id} className="daira-response-library__preview-branch flex items-center gap-3 rounded-xl p-3">
-        {item.imageUrl && <img src={item.imageUrl} alt="" className="h-20 w-20 rounded-lg object-cover"/>}
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-[var(--daira-heading)]">{item.title}</p>
-          {item.description && <p className="mt-1 text-xs leading-5 text-[var(--daira-text-secondary)]">{item.description}</p>}
-        </div>
-      </div>)}
-    </div>}
-    {value.messageType === "FORM" && value.form && <div className="space-y-2">
-      <p className="text-xs font-bold text-[var(--daira-heading)]">{value.form.title}</p>
-      {value.form.fields.map((field) => <p key={field.id} className="daira-response-library__preview-branch rounded-lg p-2 text-xs text-[var(--daira-text)]">{field.label}</p>)}
-    </div>}
+    <ResponseTemplateDetails
+      messages={[{
+        messageType: value.messageType, text: value.text || "", mediaUrl: value.mediaUrl || "",
+        showcaseId: value.showcaseId || "", formId: value.formId || "",
+        quickReplies: Array.isArray(value.quickReplies) ? value.quickReplies : [],
+      }]}
+      showcases={value.showcase && value.showcaseId ? [{ id: value.showcaseId, ...value.showcase }] : []}
+      forms={value.form && value.formId ? [{ id: value.formId, ...value.form }] : []}
+    />
     <div className="space-y-2 border-t border-[var(--daira-border)] pt-3">
       <p className="text-xs font-bold text-[var(--daira-heading)]">محل‌های استفاده از این پاسخ</p>
       {!value.usages?.length ? <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">هنوز اتصال فعالی برای این پاسخ ثبت نشده است.</p>
