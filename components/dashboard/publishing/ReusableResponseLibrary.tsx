@@ -220,7 +220,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     if (saving || (disabled && !override)) return false;
     const draft = override || message;
     const title = (editingId ? name.trim() : "") || (prefix + " - " + typeNames[draft.messageType] + " - " + (draft.text || draft.quickReplies?.[0]?.title || "پاسخ آماده")).slice(0,80);
-    if (!editingId && reusedOriginal && responseFingerprint(draft) === reusedOriginal.fingerprint && title === items.find((item) => item.id === reusedOriginal.id)?.title) return true;
+    if (!editingId && reusedOriginal && responseFingerprint(draft) === reusedOriginal.fingerprint) { draft.savedResponseId = reusedOriginal.id; return true; }
     if (!allowedTypes.includes(draft.messageType)) { setError("این نوع پاسخ در این بخش پشتیبانی نمی‌شود."); return false; }
     const original = items.find((item) => item.id === editingId);
     if (!override && !approved && original?.usages?.length) {
