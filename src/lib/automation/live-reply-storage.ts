@@ -18,6 +18,13 @@ function destinationShowcases(replies: QuickReplyDraft[], ids: Set<string>) {
 
 export async function verifyLiveResponseOwnership(input: ValidatedLiveRule, accountId: string, userId: string) {
   if (!input.message) return;
+  if (input.message.savedResponseId) {
+    const template = await prisma.savedAutomationResponse.findFirst({
+      where: { id: input.message.savedResponseId, userId, instagramAccountId: accountId },
+      select: { id: true },
+    });
+    if (!template) throw new LiveReplyValidationError("پاسخ ذخیره‌شده به این پیج تعلق ندارد.");
+  }
   const ids = new Set<string>();
   if (input.message.messageType === "SHOWCASE") ids.add(input.message.showcaseId);
   destinationShowcases(input.message.quickReplies, ids);
@@ -54,6 +61,7 @@ function savedMessageData(message: MessageDraft) {
   const media = ["IMAGE", "VIDEO", "AUDIO"].includes(message.messageType);
   return {
     messageType: message.messageType,
+    savedResponseId: message.savedResponseId || null,
     text: message.text || null,
     mediaUrl: media ? message.mediaUrl || null : null,
     mediaId: media ? message.mediaId || null : null,
