@@ -109,12 +109,10 @@ const typeOptions: Array<{
   value: MessageDraft["messageType"];
   label: string;
   Icon: LucideIcon;
-  color: string;
-  softColor: string;
 }> = [
-  { value: "TEXT", label: "متن", Icon: MessageSquareText, color: palette.primary, softColor: "var(--daira-outline-hover-bg)" },
-  { value: "IMAGE", label: "تصویر", Icon: ImagePlus, color: palette.automation, softColor: "#F5F3FF" },
-  { value: "AUDIO", label: "وویس", Icon: Mic, color: palette.warning, softColor: "var(--daira-warning-bg)" },
+  { value: "TEXT", label: "متن", Icon: MessageSquareText },
+  { value: "IMAGE", label: "تصویر", Icon: ImagePlus },
+  { value: "AUDIO", label: "وویس", Icon: Mic },
 ];
 
 export default function AutomationFlowMessage({
@@ -211,7 +209,7 @@ export default function AutomationFlowMessage({
       >
         <div className="p-5 sm:p-7">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {availableTypes.map(({ value, label, Icon, color, softColor }) => (
+            {availableTypes.map(({ value, label, Icon }) => (
               <button
                 key={value}
                 type="button"
@@ -219,16 +217,14 @@ export default function AutomationFlowMessage({
                   onUpdate({ messageType: value });
                   setContentStep(true);
                 }}
-                className="group flex min-h-[170px] flex-col items-center justify-center rounded-[24px] border-2 bg-white p-5 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)] active:translate-y-0 sm:min-h-[190px]"
-                style={{ borderColor: color }}
+                className="daira-response-type-card group flex min-h-[170px] flex-col items-center justify-center rounded-[24px] border p-5 text-center transition-all duration-200 hover:-translate-y-1 active:translate-y-0 sm:min-h-[190px]"
               >
                 <span
-                  className="flex h-20 w-20 items-center justify-center rounded-[22px] transition-transform duration-200 group-hover:scale-105"
-                  style={{ background: softColor, color }}
+                  className="daira-response-type-icon flex h-20 w-20 items-center justify-center rounded-[22px] transition-transform duration-200 group-hover:scale-105"
                 >
                   <Icon size={34} strokeWidth={1.9} />
                 </span>
-                <span className="mt-5 text-sm font-bold" style={{ color: palette.text }}>
+                <span className="mt-5 text-sm font-bold text-[var(--daira-heading)]">
                   {label}
                 </span>
               </button>
