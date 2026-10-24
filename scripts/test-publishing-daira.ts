@@ -14,6 +14,12 @@ const route=src("app/dashboard/publishing/page.tsx");
 
 assert.ok(editor.includes('activeTab==="queue"') && editor.includes('<PublishingQueue'),"Queue must remain a separate tab");
 assert.ok(editor.includes('setActiveTab("queue")'),"Both publishing modes must move to queue for tracking");
+assert.ok(editor.includes('ref={publishingTabsRef}') &&
+  editor.includes('if (activeTab === "queue") publishingTabsRef.current?.scrollIntoView('),
+  "Queue switches must scroll the actual dashboard container to the queue header.");
+assert.ok(!editor.includes('getElementById("publishing-active")?.scrollIntoView'),
+  "Scheduled publishes must not scroll users back to the bottom of the queue.");
+
 assert.ok(editor.includes("max-w-4xl") && editor.includes('className="space-y-5 pb-7"'),"Create form should remain one continuous page");
 assert.ok(!editor.includes("<PublishingWizardProgress") && !editor.includes("goToWizardStep("),"Old wizard navigation must be removed");
 assert.ok(editor.includes('<PublishingSectionGuide number={1}') && editor.includes('<PublishingSectionGuide number={type==="STORY"?3:4}'),"Contextual guide section order missing");
