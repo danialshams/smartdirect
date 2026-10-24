@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getStorageProviderForObject } from "@/lib/storage/provider";
+import { collectSavedResponseMedia } from "@/lib/automation/saved-response-media";
 
 export const dynamic = "force-dynamic";
 
@@ -76,30 +78,39 @@ export async function POST(request: NextRequest) {
     if ((messageType === "TEXT" || messageType === "FORM") && !text) {
       return NextResponse.json({ success: false, error: "متن پاسخ الزامی است." }, { status: 400 });
     }
-    if (["IMAGE", "VIDEO", "AUDIO"].includes(messageType) && !mediaUrl && !mediaId) {
-      return NextResponse.json({ success: false, error: "فایل رسانه‌ای پاسخ مشخص نشده است." }, { status: 400 });
+    // Every saved image/audio/video (including nested form replies) needs a
+    // retrievable original. Meta attachment IDs are not permanent backups.
+    const quickReplies = Array.isArray(body?.quickReplies) ? body.quickReplies : [];
+    let mediaReferences: ReturnType<typeof collectSavedResponseMedia>;
+    try {
+      mediaReferences = collectSavedResponseMedia({ messageType, mediaUrl, quickReplies });
+    } catch (error) {
+      return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "ساختار پاسخ معتبر نیست." }, { status: 400 });
     }
-
-    if (mediaUrl) {
-      const [storageObject, existingMessage, showcaseItem] = await Promise.all([
-        prisma.instagramStorageObject.findFirst({
-          where: { userId: session.user.id, publicUrl: mediaUrl, deletedAt: null },
-          select: { id: true },
-        }),
-        prisma.automationMessage.findFirst({
-          where: {
-            mediaUrl,
-            automation: { instagramAccountId, instagramAccount: { userId: session.user.id } },
-          },
-          select: { id: true },
-        }),
-        prisma.showcaseItem.findFirst({
-          where: { imageUrl: mediaUrl, showcase: { userId: session.user.id, instagramAccountId } },
-          select: { id: true },
-        }),
-      ]);
-      if (!storageObject && !existingMessage && !showcaseItem) {
-        return NextResponse.json({ success: false, error: "فایل پیدا نشد یا متعلق به این اکانت نیست. فایل را دوباره آپلود کنید." }, { status: 400 });
+    if (mediaReferences.missingOriginal) {
+      return NextResponse.json({
+        success: false,
+        error: "برای ذخیره دائمی عکس یا وویس، فایل اصلی را آپلود کنید؛ شناسه متا به‌تنهایی کافی نیست.",
+      }, { status: 400 });
+    }
+    for (const publicUrl of mediaReferences.urls) {
+      const original = await prisma.instagramStorageObject.findFirst({
+        where: { userId: session.user.id, publicUrl, deletedAt: null },
+        select: { storageKey: true, publicUrl: true },
+      });
+      if (!original) {
+        return NextResponse.json({
+          success: false,
+          error: "نسخه اصلی یکی از فایل‌های پاسخ در فضای ذخیره‌سازی شما پیدا نشد. فایل را دوباره آپلود کنید.",
+        }, { status: 400 });
+      }
+      // An expired Meta media URL or a stale database record is not an original.
+      const provider = getStorageProviderForObject(original.storageKey, original.publicUrl);
+      if (!await provider.exists(original.storageKey)) {
+        return NextResponse.json({
+          success: false,
+          error: "فایل اصلی دیگر در فضای ذخیره‌سازی موجود نیست. لطفاً آن را دوباره آپلود کنید.",
+        }, { status: 400 });
       }
     }
 
@@ -118,7 +129,6 @@ export async function POST(request: NextRequest) {
       if (!form) return NextResponse.json({ success: false, error: "فرم انتخاب‌شده پیدا نشد." }, { status: 400 });
     }
 
-    const quickReplies = Array.isArray(body?.quickReplies) ? body.quickReplies : [];
     const saved = await prisma.savedAutomationResponse.create({
       data: {
         userId: session.user.id,

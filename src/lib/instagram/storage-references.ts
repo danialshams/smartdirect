@@ -9,7 +9,7 @@ export async function isStorageObjectReferenced(input: {
   publicUrl: string | null;
   ignorePublishMediaId?: string;
 }) {
-  const [publishMedia, automationMessage, showcaseItem, savedResponse, reelCover, nestedSavedResponse] = await Promise.all([
+  const [publishMedia, automationMessage, showcaseItem, savedResponse, reelCover, nestedSavedResponse, nestedAutomationResponse] = await Promise.all([
     prisma.instagramPublishMedia.findFirst({
       where: {
         storageKey: input.storageKey,
@@ -48,7 +48,16 @@ export async function isStorageObjectReferenced(input: {
           LIMIT 1
         `
       : Promise.resolve([]),
+    // Media inside nested form/quick-reply destinations is stored in replyText
+    // rather than AutomationMessage.mediaUrl. Never delete a referenced original.
+    input.publicUrl
+      ? prisma.$queryRaw<Array<{ id: string }>>`
+          SELECT "id" FROM "QuickReply"
+          WHERE position(${input.publicUrl} in "replyText") > 0
+          LIMIT 1
+        `
+      : Promise.resolve([]),
   ]);
 
-  return Boolean(publishMedia || automationMessage || showcaseItem || savedResponse || reelCover || nestedSavedResponse.length);
+  return Boolean(publishMedia || automationMessage || showcaseItem || savedResponse || reelCover || nestedSavedResponse.length || nestedAutomationResponse.length);
 }
