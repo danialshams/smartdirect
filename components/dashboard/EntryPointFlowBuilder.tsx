@@ -135,6 +135,7 @@ export default function EntryPointFlowBuilder({
 }: EntryPointFlowBuilderProps) {
     const [messages, setMessages] =
         useState<MessageDraft[]>([]);
+    const [responseName, setResponseName] = useState("");
     const originalResponseRef = useRef<string | null>(null);
     const [showcaseDraftChanged, setShowcaseDraftChanged] = useState(false);
     const [keywordDraft, setKeywordDraft] = useState("");
@@ -408,6 +409,7 @@ export default function EntryPointFlowBuilder({
                             body: JSON.stringify(
                                 {
                                     triggerType,
+                                    ...(responseName.trim() ? { title: responseName.trim() } : {}),
                                     keyword:
                                         triggerType === "DM" ? null : keyword.trim(),
                                     isActive,
@@ -451,6 +453,7 @@ export default function EntryPointFlowBuilder({
                                 {
                                     instagramAccountId:
                                         accountId,
+                                    title: responseName.trim() || null,
                                     triggerType,
                                     mediaId:
                                         null,
@@ -923,6 +926,7 @@ export default function EntryPointFlowBuilder({
                         finalSaveDisabled={!dirty || !canSave}
                         onUpdate={updateEntryMessage}
                         onSavedChange={setSuccess}
+                        onResponseNameChange={setResponseName}
                         onContinue={(messageOverride) =>
                             saveAutomation(messageOverride)
                         }
