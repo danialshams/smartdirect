@@ -123,6 +123,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const raw = await request.json();
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new StoryEditError("اطلاعات ویرایش نامعتبر است.");
     const body = raw as JsonRecord;
+    const title = clean(body.title);
+    if (title.length > 80) throw new StoryEditError("نام پاسخ حداکثر ۸۰ نویسه است.");
     const expected = clean(body.expectedUpdatedAt);
     if (!expected || !Number.isFinite(Date.parse(expected))) throw new StoryEditError("صفحه را مجدداً باز کنید.", 409);
     if (current.updatedAt.getTime() !== new Date(expected).getTime())
@@ -199,6 +201,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       const updated = await tx.automation.updateMany({
         where: { id, updatedAt: new Date(expected) },
         data: {
+          title: title || null,
           mediaId, keyword: keywordMatchMode === "CONTAINS_ANY" ? null : keywords.join(","),
           keywordMatchMode, requireFollow,
           followGateText: requireFollow ? followGateText : null,
