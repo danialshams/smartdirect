@@ -118,7 +118,6 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     if (saving || disabled) return false;
     const draft = override || message;
     const title = name.trim();
-    if (override && !title) return true;
     if (!title || title.length > 80) { setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه)."); return false; }
     if (!allowedTypes.includes(draft.messageType)) { setError("این نوع پاسخ در این بخش پشتیبانی نمی‌شود."); return false; }
     const original = items.find((item) => item.id === editingId);
