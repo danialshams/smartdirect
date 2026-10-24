@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { prisma } from "../src/lib/prisma";
 import { validateSavedResponseOrigin } from "../src/lib/automation/saved-response-origin";
 
+async function main() {
 const seed = randomUUID().replace(/-/g, "");
 const owners: string[] = [];
 try {
@@ -49,3 +50,7 @@ try {
   for (const id of owners) await prisma.user.delete({ where: { id } }).catch(() => undefined);
   await prisma.$disconnect();
 }
+
+}
+
+void main().catch((error) => { console.error(error); process.exitCode = 1; });
