@@ -316,12 +316,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       // All nested usages are held in QuickReply.replyText; compare their row
       // versions again inside the same serializable transaction.
       const touchedRootIds = Array.from(new Set(nested.map((item) => item.quickReplyId)));
-      const refreshedRoots = touchedRootIds.length ? await tx.quickReply.findMany({
-        where: { id: { in: touchedRootIds } },
+      // Re-scan the full set inside the serializable transaction; a new
+      // QuickReply linked after the modal was opened must not be overlooked.
+      const refreshedRoots = await tx.quickReply.findMany({
+        where: { replyText: { contains: "savedResponseId" },
+          automationMessage: { automation: { instagramAccountId: saved.instagramAccountId } } },
         select: { id: true, updatedAt: true, replyText: true,
           automationMessage: { select: { automation: { select: { updatedAt: true } } } } },
-      }) : [];
-      if (refreshedRoots.length !== touchedRootIds.length ||
+      });
+      const actualUses = refreshedRoots.flatMap((root) =>
+        nestedReplyUses(root.replyText)
+          .filter((use) => use.savedResponseId === id)
+          .map((use) => root.id + ":" + JSON.stringify(use.path)));
+      const expectedNestedKeys = nested.map((item) => item.quickReplyId + ":" + JSON.stringify(item.path));
+      if (actualUses.length !== expectedNestedKeys.length ||
+        actualUses.some((key) => !expectedNestedKeys.includes(key)) ||
+        touchedRootIds.some((rootId) => !refreshedRoots.some((root) => root.id === rootId)) ||
         nested.some((item) => {
           const check = refreshedRoots.find((row) => row.id === item.quickReplyId);
           return !check || check.updatedAt.getTime() !== item.root.updatedAt.getTime() ||
