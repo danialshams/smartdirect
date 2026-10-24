@@ -106,6 +106,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         expectedAutomationUpdatedAt: string(v.expectedAutomationUpdatedAt) };
     });
 
+    const expectedUsagesRaw = body.expectedUsages;
+    if (!Array.isArray(expectedUsagesRaw) || expectedUsagesRaw.length > 100)
+      throw new ApplyError("اطلاعات محل‌های استفاده ناقص است. فهرست را تازه‌سازی کن.", 409);
+    const expectedUsages = expectedUsagesRaw.map((raw) => {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new ApplyError("اطلاعات محل استفاده معتبر نیست.", 409);
+      const item = raw as JsonRecord;
+      if (!string(item.messageId) || !Number.isFinite(Date.parse(string(item.messageUpdatedAt))) ||
+        !Number.isFinite(Date.parse(string(item.automationUpdatedAt))))
+        throw new ApplyError("نسخه محل استفاده معتبر نیست.", 409);
+      return {
+        messageId: string(item.messageId), messageUpdatedAt: string(item.messageUpdatedAt),
+        automationUpdatedAt: string(item.automationUpdatedAt),
+      };
+    });
+    if (new Set(expectedUsages.map((item) => item.messageId)).size !== expectedUsages.length)
+      throw new ApplyError("اطلاعات محل‌های استفاده تکراری است.", 409);
     const saved = await prisma.savedAutomationResponse.findFirst({
       where: { id, userId: session.user.id },
     });
@@ -161,6 +177,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       where: { savedResponseId: id, automation: { instagramAccountId: saved.instagramAccountId } },
       include: { automation: true, quickReplies: { orderBy: { createdAt: "asc" } } },
     });
+    if (current.length !== expectedUsages.length ||
+      current.some((item) => {
+        const snapshot = expectedUsages.find((expected) => expected.messageId === item.id);
+        return !snapshot || item.updatedAt.getTime() !== Date.parse(snapshot.messageUpdatedAt) ||
+          item.automation.updatedAt.getTime() !== Date.parse(snapshot.automationUpdatedAt);
+      }))
+      throw new ApplyError("اتصال‌های این پاسخ تغییر کرده‌اند. فهرست را تازه‌سازی کن.", 409);
     const mediaFor = (a: { mediaId: string | null; mediaIds: string | null }) =>
       Array.from(new Set([...(a.mediaId ? [a.mediaId] : []), ...(a.mediaIds || "").split(",").map((i) => i.trim()).filter(Boolean)]));
     const plan = checkedUsagePlan(
@@ -191,6 +214,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           formId: type === "FORM" ? formId : null, quickReplies },
       });
       if (locked.count !== 1) throw new ApplyError("پاسخ هم‌زمان تغییر کرده است.", 409);
+
+      const refreshed = await tx.automationMessage.findMany({
+        where: { savedResponseId: id, automation: { instagramAccountId: saved.instagramAccountId } },
+        select: { id: true, updatedAt: true, automation: { select: { updatedAt: true } } },
+      });
+      if (refreshed.length !== expectedUsages.length ||
+        refreshed.some((item) => {
+          const expectedUsage = expectedUsages.find((usage) => usage.messageId === item.id);
+          return !expectedUsage || item.updatedAt.getTime() !== Date.parse(expectedUsage.messageUpdatedAt) ||
+            item.automation.updatedAt.getTime() !== Date.parse(expectedUsage.automationUpdatedAt);
+        }))
+        throw new ApplyError("اتصال‌ها هم‌زمان تغییر کرده‌اند. دوباره بارگذاری کن.", 409);
 
       async function applyToMessage(messageId: string, previousUpdatedAt: Date) {
         const data = {
