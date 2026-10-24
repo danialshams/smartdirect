@@ -437,7 +437,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
               replyMap.set(reply.id, created.id);
             }
           }
-          if (mixedGroups.has(automationId)) mixedForks.set(automationId, { id: clone.id, replyMap });
+          mixedForks.set(automationId, { id: clone.id, replyMap });
           for (const message of selected) {
             const targetId = remap.get(message.id);
             if (!targetId) throw new ApplyError("پیام انتخاب‌شده دیگر در اتوماسیون وجود ندارد.", 409);
@@ -462,7 +462,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           });
           if (lockedAutomation.count !== 1)
             throw new ApplyError("این اتوماسیون هم‌زمان تغییر کرده است؛ صفحه را تازه‌سازی کن.", 409);
-          if (mixedGroups.has(automationId)) lockedMixed.add(automationId);
+          lockedMixed.add(automationId);
           // Update selected linked messages in place; unchecked messages remain independent.
           for (const message of selected) {
             await applyToMessage(message.id, message.updatedAt);
@@ -505,6 +505,31 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           return result;
         };
         const partial = Boolean(selection?.split);
+        // The main-message pass already forked this automation. Reuse precisely
+        // that fork for nested destinations and never create a second clone.
+        const mainFork = mixedForks.get(automationId);
+        if (mainFork) {
+          for (const rootId of sourceRoots) {
+            const original = originalData.get(rootId);
+            const mappedId = mainFork.replyMap.get(rootId);
+            if (!original || !mappedId)
+              throw new ApplyError("اتصال فرم در نسخه جدید ناقص است.", 409);
+            const fresh = await tx.quickReply.findUniqueOrThrow({ where: { id: mappedId } });
+            const relevant = links.filter((link) => link.quickReplyId === rootId);
+            const forkText = mutate(rootId, fresh.replyText, relevant, true);
+            const newCount = await tx.quickReply.updateMany({
+              where: { id: mappedId, updatedAt: fresh.updatedAt }, data: { replyText: forkText },
+            });
+            if (newCount.count !== 1) throw new ApplyError("فرم نسخه جدید هم‌زمان تغییر کرده است.", 409);
+            const untouched = mutate(rootId, original.replyText, relevant, false);
+            const oldCount = await tx.quickReply.updateMany({
+              where: { id: rootId, updatedAt: original.updatedAt }, data: { replyText: untouched },
+            });
+            if (oldCount.count !== 1) throw new ApplyError("فرم اصلی هم‌زمان تغییر کرده است.", 409);
+          }
+          nestedChanged += selected.length;
+          continue;
+        }
         if (partial) {
           const fullMedia = mediaFor(automation);
           if (automation.triggerType !== "COMMENT_KEYWORD" || fullMedia.length < 2 ||
@@ -582,11 +607,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           nestedChanged += selected.length;
           split++;
         } else {
-          const touched = await tx.automation.updateMany({
-            where: { id: automationId, updatedAt: automation.updatedAt },
-            data: { updatedAt: new Date() },
-          });
-          if (touched.count !== 1) throw new ApplyError("اتصال‌های فرم هم‌زمان تغییر کرده‌اند.", 409);
+          if (!lockedMixed.has(automationId)) {
+            const touched = await tx.automation.updateMany({
+              where: { id: automationId, updatedAt: automation.updatedAt },
+              data: { updatedAt: new Date() },
+            });
+            if (touched.count !== 1)
+              throw new ApplyError("اتصال‌های فرم هم‌زمان تغییر کرده‌اند.", 409);
+          }
           for (const rootId of sourceRoots) {
             const original = originalData.get(rootId);
             if (!original) throw new ApplyError("گزینه فرم دیگر وجود ندارد.", 409);
