@@ -688,6 +688,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           credentials: "include",
           body: JSON.stringify({
             messageType: entry.messageType,
+            savedResponseId: entry.savedResponseId ?? null,
             text: entry.text.trim() || null,
             mediaUrl: entry.mediaUrl.trim() || null,
             mediaId: entry.mediaId.trim() || null,
