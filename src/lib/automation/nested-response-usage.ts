@@ -68,8 +68,7 @@ export function editQuickReplyDestination(raw: string | null, path: ReplyPath,
     throw new Error("پاسخ ذخیره‌شده دیگر به این مقصد متصل نیست.");
   if (action === "detach") {
     destination.savedResponseId = null;
-    return JSON.stringify(root);
-  }
+  } else {
   if (!template) throw new Error("قالب جدید مشخص نیست.");
   const type = typeof destination.type === "string" ? destination.type : destination.destinationType;
   if (type !== template.messageType) throw new Error("نوع مقصد با پاسخ ذخیره‌شده برابر نیست.");
@@ -121,6 +120,7 @@ export function editQuickReplyDestination(raw: string | null, path: ReplyPath,
     const merged = children.map((item, index) => merge(item, fresh[index], 0));
     destination.quickReplies = merged;
     destination.destinationQuickReplies = merged;
+  }
   }
   // Older saved destinations can have both arrays. Synchronize corresponding
   // nodes so the editor and executor see the same answer after an update.
