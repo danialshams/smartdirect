@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { collectSavedResponseMedia } from "@/lib/automation/saved-response-media";
 import { getStorageProviderForObject } from "@/lib/storage/provider";
-import { checkedUsagePlan, type ResponseUsageSelection } from "@/lib/automation/saved-response-scope";
+import { checkedUsagePlan, assertCoherentMixedScope, type ResponseUsageSelection } from "@/lib/automation/saved-response-scope";
 import { nestedReplyUses, editQuickReplyDestination } from "@/lib/automation/nested-response-usage";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 
@@ -260,16 +260,28 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       list.push(message);
       groups.set(message.automationId, list);
     }
-    // A single automation can contain both standalone and nested references.
-    // Mixed structural edits are refused rather than risking a partial clone.
+    // When the same saved reply is used as an automation message AND inside a
+    // nested form, all checked references must share a single selected media
+    // subset. The editing transaction will fork the automation only once.
+    const mixedGroups = new Set<string>();
     for (const [automationId, links] of nestedGroups) {
-      if (links.some((item) => byNested.has(item.usageId)) &&
-        groups.get(automationId)?.some((message) => byMessage.has(message.id)))
-        throw new ApplyError("این اتوماسیون هم پاسخ اصلی و هم شاخه فرم را استفاده می‌کند. آن‌ها را جداگانه ویرایش کن.", 409);
-      const active = links.filter((item) => byNested.has(item.usageId));
-      const partitions = active.map((item) => byNested.get(item.usageId)!.selected.join(","));
-      if (new Set(partitions).size > 1)
+      const selectedNested = links.filter((item) => byNested.has(item.usageId));
+      const selectedMain = (groups.get(automationId) || []).filter((m) => byMessage.has(m.id));
+      const partitions = selectedNested.map((item) => byNested.get(item.usageId)!.selected);
+      if (new Set(partitions.map((ids) => [...ids].sort().join(","))).size > 1)
         throw new ApplyError("برای شاخه‌های یک اتوماسیون باید یک محدوده محتوایی انتخاب شود.");
+      try {
+        if (assertCoherentMixedScope(
+          selectedMain.map((m) => byMessage.get(m.id)!.selected), partitions,
+        )) {
+          if (type === "FORM")
+            throw new ApplyError("ویرایش ترکیبی ساختار فرم اصلی و شاخه‌های آن باید از ویرایشگر همان اتوماسیون انجام شود.", 409);
+          mixedGroups.add(automationId);
+        }
+      } catch (error) {
+        if (error instanceof ApplyError) throw error;
+        throw new ApplyError(error instanceof Error ? error.message : "محدوده ویرایش سازگار نیست.", 409);
+      }
     }
     // The same automation cannot receive contradictory media selections.
     for (const group of groups.values()) {
@@ -350,6 +362,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         }
       }
 
+      const mixedForks = new Map<string, { id: string; replyMap: Map<string, string> }>();
+      const lockedMixed = new Set<string>();
       let changed = 0, split = 0;
       for (const [automationId, messages] of groups) {
         const a = messages[0].automation;
@@ -406,15 +420,24 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             });
             remap.set(old.id, fresh.id);
           }
+          const replyMap = new Map<string, string>();
           for (const old of originalMessages) {
             const destination = remap.get(old.id)!;
-            for (const reply of old.quickReplies) await tx.quickReply.create({
-              data: {
-                automationMessageId: destination, title: reply.title, payload: reply.payload,
-                replyText: reply.replyText, nextMessageId: reply.nextMessageId ? remap.get(reply.nextMessageId) || null : null,
-              },
-            });
+            for (const reply of old.quickReplies) {
+              if (reply.nextMessageId && !remap.has(reply.nextMessageId))
+                throw new ApplyError("این گزینه به مرحله‌ای خارج از اتوماسیون متصل است.", 409);
+              const created = await tx.quickReply.create({
+                data: {
+                  automationMessageId: destination, title: reply.title, payload: reply.payload,
+                  replyText: reply.replyText,
+                  nextMessageId: reply.nextMessageId ? remap.get(reply.nextMessageId)! : null,
+                },
+                select: { id: true },
+              });
+              replyMap.set(reply.id, created.id);
+            }
           }
+          if (mixedGroups.has(automationId)) mixedForks.set(automationId, { id: clone.id, replyMap });
           for (const message of selected) {
             const targetId = remap.get(message.id);
             if (!targetId) throw new ApplyError("پیام انتخاب‌شده دیگر در اتوماسیون وجود ندارد.", 409);
@@ -439,6 +462,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           });
           if (lockedAutomation.count !== 1)
             throw new ApplyError("این اتوماسیون هم‌زمان تغییر کرده است؛ صفحه را تازه‌سازی کن.", 409);
+          if (mixedGroups.has(automationId)) lockedMixed.add(automationId);
           // Update selected linked messages in place; unchecked messages remain independent.
           for (const message of selected) {
             await applyToMessage(message.id, message.updatedAt);
