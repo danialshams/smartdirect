@@ -73,6 +73,9 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   const [retry, setRetry] = useState(0);
   const [saved, setSaved] = useState(false);
   const [showcaseDirty, setShowcaseDirty] = useState(false);
+  const [liveMedia, setLiveMedia] = useState<Array<{ id: string; permalink?: string | null }>>([]);
+  const [liveMediaLoading, setLiveMediaLoading] = useState(true);
+  const [liveMediaError, setLiveMediaError] = useState("");
   const [liveRules, setLiveRules] = useState<Rule[]>([]);
   const [loadingLiveRules, setLoadingLiveRules] = useState(true);
   const [creationMode, setCreationMode] = useState<"new" | "existing">("new");
@@ -150,6 +153,30 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
     return () => controller.abort();
   }, [id, retry]);
 
+  useEffect(() => {
+    if (!account?.id) return;
+    const controller = new AbortController();
+    setLiveMediaLoading(true);
+    setLiveMediaError("");
+    void fetch("/api/instagram/live-media?instagramAccountId=" + encodeURIComponent(account.id), {
+      cache: "no-store", credentials: "include", signal: controller.signal,
+    }).then(async response => {
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "دریافت لایو فعلی ناموفق بود.");
+      return result.data as Array<{ id: string; permalink?: string | null }>;
+    }).then(data => {
+      if (!controller.signal.aborted) setLiveMedia(Array.isArray(data) ? data : []);
+    }).catch(error => {
+      if (!controller.signal.aborted) {
+        setLiveMedia([]);
+        setLiveMediaError(error instanceof Error ? error.message : "دریافت لایو فعلی ناموفق بود.");
+      }
+    }).finally(() => {
+      if (!controller.signal.aborted) setLiveMediaLoading(false);
+    });
+    return () => controller.abort();
+  }, [account?.id]);
+
   const dirty = useMemo(() => snapshot(draft) !== initialSnapshot.current || showcaseDirty, [draft, showcaseDirty]);
   const keywords = useMemo(() => draft.keyword.split(/[,،;؛\n]+/).map(s => s.trim()).filter(Boolean), [draft.keyword]);
   const anyComment = draft.matchMode === "CONTAINS_ANY" && !draft.keyword.trim();
@@ -224,6 +251,19 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
 
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-3 sm:py-4">
+      <section className="daira-complete-reply space-y-2 rounded-2xl border p-4 sm:p-5" aria-label="لایو فعلی">
+        <h2 className="text-sm font-bold text-[var(--daira-heading)]">لایو فعلی</h2>
+        {liveMediaLoading ? <p className="text-xs text-[var(--daira-text-secondary)]">در حال بررسی لایو فعال...</p> :
+          liveMediaError ? <p role="status" className="text-xs leading-6 text-[var(--daira-text-secondary)]">{liveMediaError} — قوانین پاسخ برای لایو بعدی نیز قابل تنظیم‌اند.</p> :
+          liveMedia.length > 0 ? <div className="space-y-2">
+            {liveMedia.map((item, index) => <div key={item.id} className="flex items-center justify-between gap-2 rounded-xl border border-[var(--daira-primary)] bg-[var(--daira-surface-hover)] p-3">
+              <span className="min-w-0 text-xs font-bold text-[var(--daira-heading)]">لایو فعال {new Intl.NumberFormat("fa-IR").format(index + 1)}</span>
+              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[var(--daira-primary)]"><CheckCircle2 size={16}/> انتخاب‌شده</span>
+            </div>)}
+            <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">پاسخ‌های خودکار به لایوهای فعال این پیج متصل هستند و نیازی به انتخاب دستی ندارند.</p>
+          </div> :
+          <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">در حال حاضر لایو فعالی وجود ندارد. قوانین پاسخ برای لایو بعدی آماده خواهند بود.</p>}
+      </section>
       {id ? (
         <section className="space-y-3" aria-label="استفاده از پاسخ‌های قبلی">
           <button type="button" aria-expanded={editingView === "replace"}
