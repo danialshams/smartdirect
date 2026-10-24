@@ -179,6 +179,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         if (result.count !== 1) throw new ApplyError("یک پیام هم‌زمان تغییر کرده است.", 409);
         if (type !== "FORM") return;
         const old = await tx.quickReply.findMany({ where: { automationMessageId: messageId }, orderBy: { createdAt: "asc" } });
+        if (old.some((reply) => reply.nextMessageId))
+          throw new ApplyError("این فرم به مرحله‌های جداگانه متصل است؛ برای حفظ مسیر گفتگو آن را از صفحه اتوماسیون ویرایش کن.", 409);
         if (old.length > quickReplies.length)
           throw new ApplyError("حذف گزینه‌های فرم مشترک باید از صفحه همان اتوماسیون انجام شود تا تاریخچه گفتگو حفظ شود.", 409);
         for (const [index, reply] of quickReplies.entries()) {
@@ -291,9 +293,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return { changed, split };
     }, { maxWait: 10000, timeout: 30000 });
 
+    const updatedTemplate = await prisma.savedAutomationResponse.findUniqueOrThrow({ where: { id } });
     try { await invalidateAutomationCache(saved.instagramAccountId); }
     catch (error) { console.warn("Reusable response cache invalidation failed:", error); }
-    return NextResponse.json({ success: true, data: applied });
+    return NextResponse.json({ success: true, data: { ...applied, template: updatedTemplate } });
   } catch (error) {
     console.error("PATCH saved response scoped apply error:", error);
     const status = error instanceof ApplyError ? error.status : 500;
