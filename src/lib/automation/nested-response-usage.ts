@@ -182,3 +182,31 @@ export function reconcileActiveQuickReply(oldRaw: string | null, nextRaw: string
   };
   return JSON.stringify(merge(oldRoot, nextRoot, 0));
 }
+
+
+/** Parent FORM edits must not overwrite the content of a nested reused reply
+ * explicitly unchecked in the scope dialog. Keep its original destination,
+ * then remove only the shared-template association (including mirrored JSON).
+ */
+export function preserveUncheckedNestedReply(originalRaw: string | null,
+  incomingRaw: string | null, path: ReplyPath, sourceId: string): string {
+  const original = parseQuickReplyJson(originalRaw);
+  const incoming = parseQuickReplyJson(incomingRaw);
+  if (!original || !incoming) throw new Error("محتوای فرم قبلی معتبر نیست.");
+  const before = nestedReplyAt(original, path);
+  const after = nestedReplyAt(incoming, path);
+  if (!before || !after || before.savedResponseId !== sourceId)
+    throw new Error("شاخه انتخاب‌نشده دیگر به پاسخ قبلی متصل نیست.");
+  if (before.payload !== after.payload)
+    throw new Error("شناسه دکمه شاخه انتخاب‌نشده تغییر کرده است.");
+  const contentKeys = ["type", "destinationType", "text", "destinationText",
+    "question", "destinationQuestion", "mediaUrl", "destinationMediaUrl",
+    "mediaId", "destinationMediaId", "showcaseId", "destinationShowcaseId",
+    "formId", "destinationFormId", "quickReplies", "destinationQuickReplies"];
+  for (const key of contentKeys) {
+    if (key in before) after[key] = before[key];
+    else delete after[key];
+  }
+  after.savedResponseId = sourceId;
+  return editQuickReplyDestination(JSON.stringify(incoming), path, sourceId, "detach");
+}
