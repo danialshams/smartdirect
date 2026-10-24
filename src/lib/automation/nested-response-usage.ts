@@ -94,11 +94,19 @@ export function editQuickReplyDestination(raw: string | null, path: ReplyPath,
   // Older saved destinations can have both arrays. Synchronize corresponding
   // nodes so the editor and executor see the same answer after an update.
   if (path.length) {
-    const alternative: ReplyPath = [...path];
-    for (let i = 0; i < alternative.length; i += 2)
-      alternative[i] = alternative[i] === "quickReplies" ? "destinationQuickReplies" : "quickReplies";
-    const counterpart = nestedReplyAt(root, alternative);
-    if (counterpart && counterpart.payload === destination.payload) {
+    let variations: ReplyPath[] = [[]];
+    for (let i = 0; i < path.length; i += 2) {
+      const key = path[i], index = path[i + 1];
+      const alternatives = key === "quickReplies"
+        ? ["quickReplies", "destinationQuickReplies"]
+        : ["destinationQuickReplies", "quickReplies"];
+      variations = variations.flatMap((candidate) =>
+        alternatives.map((alternative) => [...candidate, alternative, index]));
+    }
+    for (const variant of variations) {
+      if (JSON.stringify(variant) === JSON.stringify(path)) continue;
+      const counterpart = nestedReplyAt(root, variant);
+      if (!counterpart || !destination.payload || counterpart.payload !== destination.payload) continue;
       for (const key of ["savedResponseId", "text", "destinationText", "question", "destinationQuestion",
         "mediaUrl", "destinationMediaUrl", "mediaId", "destinationMediaId",
         "showcaseId", "destinationShowcaseId", "formId", "destinationFormId"])
