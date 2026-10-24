@@ -61,7 +61,9 @@ assert.throws(() => validatePublicCommentReplies(["كفش", "کفش", "درود"
 
 const library = readFileSync("components/dashboard/publishing/ReusableResponseLibrary.tsx", "utf8");
 assert(library.includes("GlassModalPresence") && library.includes("allowedTypes.includes(item.messageType)"));
-assert(library.includes('method: editingId ? "PATCH" : "POST"'));
+assert(library.includes('method: approved || manualEdit ? "PATCH" : "POST"') &&
+       library.includes('"/api/saved-responses/" + encodeURIComponent(editingId) + "/apply"'),
+  "Explicit shared edits must use scoped PATCH while new templates use POST.");
 const editRoute = readFileSync("app/api/automations/[id]/comment-edit/route.ts", "utf8");
 assert(editRoute.includes("partitionResponseMediaScope(oldMediaIds, mediaIds)"));
 assert(editRoute.includes("const remaining = scope.untouchedIds;"));
