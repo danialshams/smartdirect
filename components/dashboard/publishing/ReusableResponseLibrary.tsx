@@ -29,6 +29,17 @@ type Props = {
 const typeNames: Record<MessageDraft["messageType"], string> = {
   TEXT: "متن", IMAGE: "عکس", VIDEO: "ویدیو", AUDIO: "وویس", FORM: "فرم", SHOWCASE: "ویترین",
 };
+function usageEditUrl(usage: NonNullable<Saved["usages"]>[number]): string {
+  if (usage.menuTitles.length) return "/dashboard/persistent-menu";
+  if (usage.icebreakerQuestions.length) return "/dashboard/ice-breaker";
+  if (usage.mediaIds.includes("__smartdirect_live_comments_v1__"))
+    return "/dashboard/live-automation/" + encodeURIComponent(usage.automationId);
+  if (usage.triggerType === "STORY_REPLY_KEYWORD")
+    return "/dashboard/story-automation/" + encodeURIComponent(usage.automationId);
+  if (usage.triggerType === "COMMENT_KEYWORD")
+    return "/dashboard/comment-automation/" + encodeURIComponent(usage.automationId);
+  return "/dashboard/direct-automation/" + encodeURIComponent(usage.automationId);
+}
 function displayName(saved: Saved, prefix: string) {
   const title = saved.title.trim()
     .replace(/^(?:فرم|ویترین|پاسخ خودکار کامنت|پاسخ خودکار استوری|پاسخ خودکار دایرکت)\s*[-—–]?\s*/u, "");
@@ -87,6 +98,9 @@ function ResponsePreview({ value }: { value: Saved }) {
           {usage.menuTitles.map((title, index) => <p key={index} className="text-xs text-[var(--daira-text-secondary)]">گزینه منو: {title}</p>)}
           {usage.icebreakerQuestions.map((question, index) => <p key={index} className="text-xs text-[var(--daira-text-secondary)]">شروع گفتگو: {question}</p>)}
           {usage.mediaIds.length > 0 && <p className="text-xs text-[var(--daira-text-secondary)]">متصل به {new Intl.NumberFormat("fa-IR").format(usage.mediaIds.length)} محتوا</p>}
+          <a href={usageEditUrl(usage)} className="inline-flex min-h-9 items-center rounded-lg px-2 text-xs font-bold text-[var(--daira-primary)] hover:underline">
+            ویرایش این محل استفاده
+          </a>
         </div>)
       }
     </div>
