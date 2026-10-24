@@ -43,6 +43,12 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
   kind, disabled = false, onEdit,
 }: Props<T>) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Build expensive nested forms/media only after their row was previewed.
+  const [visited, setVisited] = useState<string[]>([]);
+  const toggleDetails = (id: string) => {
+    setVisited((current) => current.includes(id) ? current : [...current, id]);
+    setExpandedId((current) => current === id ? null : id);
+  };
   const label = (item: T) => item.title?.trim() || "پاسخ بدون نام";
   const renderDetail = (item: T) => {
     const messages = normalizeMessages(item.messages || []);
@@ -85,7 +91,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
       <button type="button" disabled={disabled} onClick={() => { setExpandedId(null); onChange(); }}
         className="daira-response-library__action min-h-11 flex-1 rounded-xl border px-3 text-xs font-bold">تغییر پاسخ</button>
       <button type="button" aria-expanded={expandedId === selected.id}
-        onClick={() => setExpandedId((current) => current === selected.id ? null : selected.id)}
+        onClick={() => toggleDetails(selected.id)}
         className="daira-response-library__eye flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold">
         {expandedId === selected.id ? <X size={17}/> : <Eye size={17}/>}
         <span>{expandedId === selected.id ? "بستن جزئیات" : "مشاهده جزئیات"}</span>
@@ -94,7 +100,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
     <div aria-hidden={expandedId !== selected.id} inert={expandedId !== selected.id}
       className={"daira-response-library__expander grid " + (expandedId === selected.id ? "is-expanded" : "")}>
       <div className="min-h-0 overflow-hidden">
-        <div className="mt-3 border-t border-[var(--daira-glass-rim)] pt-3">{renderDetail(selected)}</div>
+        <div className="mt-3 border-t border-[var(--daira-glass-rim)] pt-3">{visited.includes(selected.id) && renderDetail(selected)}</div>
       </div>
     </div>
   </section>;
@@ -116,7 +122,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
               </p>
             </div>
             <button type="button" aria-expanded={expanded} aria-controls={"complete-preview-" + item.id}
-              onClick={() => setExpandedId((current) => current === item.id ? null : item.id)}
+              onClick={() => toggleDetails(item.id)}
               aria-label={(expanded ? "بستن جزئیات " : "مشاهده ") + label(item)}
               className="daira-response-library__eye flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
               {expanded ? <X size={18}/> : <Eye size={18}/>}
@@ -126,7 +132,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
             className={"daira-response-library__expander grid " + (expanded ? "is-expanded" : "")}>
             <div className="min-h-0 overflow-hidden">
               <div className="space-y-3 border-t border-[var(--daira-glass-rim)] p-3">
-                {renderDetail(item)}
+                {visited.includes(item.id) && renderDetail(item)}
                 {onEdit && <button type="button" onClick={() => onEdit(item)}
                   className="daira-response-library__action flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold">
                   <Pencil size={15}/> ویرایش پاسخ اصلی
