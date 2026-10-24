@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ImagePlus, Plus, Trash2 } from "lucide-react";
 import StoryReplyShowcaseCreator from "./StoryReplyShowcaseCreator";
+import { displayReusableAssetTitle } from "@/lib/automation/reusable-titles";
 import VoiceRecorder from "../VoiceRecorder";
 import { createEmptyQuickReply, type MessageDraft, type QuickReplyDraft, type Showcase } from "../automation-form-utils";
 import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./useStorageUploadLease";
@@ -219,7 +220,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
                     }}
                     className="w-full min-w-0 rounded-xl border border-[var(--daira-input-border)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
                     <option value="">{loadingResources ? "در حال دریافت..." : showcases.length ? "یک ویترین قبلی را انتخاب کن" : "هنوز ویترینی ساخته نشده"}</option>
-                    {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                    {showcases.map((item) => <option key={item.id} value={item.id}>{displayReusableAssetTitle("SHOWCASE", item.title)}</option>)}
                   </select>
                 </div>
               ) : showcaseMode === "new" ? (createdShowcaseId ? (
