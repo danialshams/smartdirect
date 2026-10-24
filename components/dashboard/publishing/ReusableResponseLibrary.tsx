@@ -9,6 +9,8 @@ type Saved = {
   id: string; title: string; updatedAt: string; messageType: MessageDraft["messageType"];
   text: string | null; mediaUrl: string | null; mediaId: string | null;
   showcaseId: string | null; formId: string | null; quickReplies: QuickReplyDraft[] | null;
+  showcase?: { title: string; items: Array<{ id: string; title: string; description?: string | null; imageUrl?: string | null }> } | null;
+  form?: { title: string; fields: Array<{ id: string; label: string }> } | null;
 };
 type Props = {
   instagramAccountId: string;
@@ -56,7 +58,20 @@ function ResponsePreview({ value }: { value: Saved }) {
     {value.messageType === "VIDEO" && value.mediaUrl && <video src={value.mediaUrl} controls className="max-h-72 w-full rounded-xl"/>}
     {value.messageType === "AUDIO" && value.mediaUrl && <audio src={value.mediaUrl} controls className="w-full"/>}
     {value.messageType === "FORM" && Array.isArray(value.quickReplies) && <BranchPreview replies={value.quickReplies}/>}
-    {value.messageType === "SHOWCASE" && <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">شناسه ویترین: {value.showcaseId || "نامشخص"}. جزئیات ویترین در ویرایشگر مربوط نمایش داده می‌شود.</p>}
+    {value.messageType === "SHOWCASE" && value.showcase && <div className="space-y-3">
+      <p className="text-xs font-bold text-[var(--daira-heading)]">{value.showcase.title}</p>
+      {value.showcase.items.map((item) => <div key={item.id} className="daira-flow-glass flex items-center gap-3 rounded-xl p-3">
+        {item.imageUrl && <img src={item.imageUrl} alt="" className="h-20 w-20 rounded-lg object-cover"/>}
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold text-[var(--daira-heading)]">{item.title}</p>
+          {item.description && <p className="mt-1 text-xs leading-5 text-[var(--daira-text-secondary)]">{item.description}</p>}
+        </div>
+      </div>)}
+    </div>}
+    {value.messageType === "FORM" && value.form && <div className="space-y-2">
+      <p className="text-xs font-bold text-[var(--daira-heading)]">{value.form.title}</p>
+      {value.form.fields.map((field) => <p key={field.id} className="daira-flow-glass rounded-lg p-2 text-xs">{field.label}</p>)}
+    </div>}
   </div>;
 }
 
@@ -150,15 +165,16 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
         </button>)}
     </div>
     {mode === "new" ? <div className="daira-flow-glass space-y-3 rounded-xl p-3">
-      <label htmlFor="reusable-response-name" className="block text-xs font-bold text-[var(--daira-heading)]">نام پاسخ</label>
+      <label htmlFor="reusable-response-name" className="block text-xs font-bold text-[var(--daira-heading)]">{message.messageType === "FORM" ? "نام فرم" : message.messageType === "SHOWCASE" ? "نام ویترین" : "نام پاسخ"}</label>
       <input id="reusable-response-name" type="text" value={name} maxLength={80} onChange={(event) => { setName(event.target.value); onNameChange?.(event.target.value); }}
         placeholder="مثلاً کفش" disabled={disabled || saving}
         className="w-full rounded-xl border border-[var(--daira-input-border)] bg-[var(--daira-surface)] px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)]" style={{fontSize:"16px"}}/>
-      <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">نامی برای این پاسخ انتخاب کن تا بعداً بتوانی دوباره از آن استفاده کنی.</p>
+      <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">{message.messageType === "FORM" ? "نامی برای فرم" : message.messageType === "SHOWCASE" ? "نامی برای ویترین" : "نامی برای پاسخ"} انتخاب کن تا بعداً بتوانی دوباره از آن استفاده کنی.</p>
       <button type="button" onClick={() => void saveToLibrary()} disabled={saving || disabled || !name.trim()}
         className="daira-glass-dialog__primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold disabled:opacity-50">
         <span>{saving ? "در حال ذخیره..." : editingId ? "ذخیره ویرایش پاسخ" : "ذخیره در پاسخ‌های قبلی"}</span><Save size={16}/>
       </button>
+      {editingId && <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">ویرایش کتابخانه فقط قالب ذخیره‌شده را تغییر می‌دهد؛ تنظیمات پاسخ‌های فعال به صورت خودکار بازنویسی نمی‌شوند.</p>}
       {editingId && <button type="button" onClick={() => {setEditingId("");setName("");}} className="ml-2 text-xs text-[var(--daira-text-secondary)]">انصراف از ویرایش پاسخ ذخیره‌شده</button>}
     </div> : <div className="daira-flow-glass space-y-2 rounded-xl p-3">
       {loading ? <div role="status" className="daira-skeleton__bar h-14 w-full rounded-xl"/> : filtered.length === 0 ?
