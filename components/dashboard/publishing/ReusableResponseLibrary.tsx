@@ -119,7 +119,8 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     setError("");
   }
   async function saveToLibrary(override?: MessageDraft): Promise<boolean> {
-    if (saving || disabled) return false;
+    // Primary form saves mark the parent disabled while assembling the payload.
+    if (saving || (disabled && !override)) return false;
     const draft = override || message;
     const title = name.trim();
     if (!editingId && reusedOriginal && responseFingerprint(draft) === reusedOriginal.fingerprint && title === items.find((item) => item.id === reusedOriginal.id)?.title) return true;
