@@ -18,6 +18,7 @@ type Props = {
   onUpdate: (patch: Partial<MessageDraft>) => void;
   allowedTypes: MessageDraft["messageType"][];
   prefix?: string;
+  initialName?: string;
   onNameChange?: (name: string) => void;
   onRegisterSave?: (save: ((draft: MessageDraft) => Promise<boolean>) | null) => void;
   disabled?: boolean;
@@ -75,12 +76,13 @@ function ResponsePreview({ value }: { value: Saved }) {
   </div>;
 }
 
-export default function ReusableResponseLibrary({ instagramAccountId, message, onUpdate, allowedTypes, prefix = "پاسخ", onNameChange, onRegisterSave, disabled = false }: Props) {
+export default function ReusableResponseLibrary({ instagramAccountId, message, onUpdate, allowedTypes, prefix = "پاسخ", initialName = "", onNameChange, onRegisterSave, disabled = false }: Props) {
   const [mode, setMode] = useState<"new" | "existing">("new");
   const [items, setItems] = useState<Saved[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [name, setName] = useState("");
+  const [name, setName] = useState(initialName);
+  useEffect(() => { setName(initialName); }, [initialName]);
   const [editingId, setEditingId] = useState("");
   const [preview, setPreview] = useState<Saved | null>(null);
   const [error, setError] = useState("");
@@ -140,8 +142,8 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
       if (!response.ok || !result?.success || !result.data?.id) throw Error(result?.error || "ذخیره پاسخ ناموفق بود.");
       const saved = result.data as Saved;
       setItems((current) => [saved, ...current.filter((item) => item.id !== saved.id)]);
-      setEditingId("");
-      setName("");
+      setEditingId(saved.id);
+      setName(saved.title);
       setError("");
       return true;
     } catch (err) {
