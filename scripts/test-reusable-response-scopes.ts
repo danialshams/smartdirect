@@ -51,6 +51,29 @@ const preserved = parseQuickReplyJson(editQuickReplyDestination(unknownLegacy, [
 assert.equal(preserved.nextMessageId, "legacy-next");
 assert.deepEqual(preserved.extra, { safe: true });
 
+const legacyForm = JSON.stringify({
+  savedResponseId: "form-root", type: "FORM", text: "سؤال قدیمی",
+  quickReplies: [{ id: "old-option", title: "ادامه", payload: "stay",
+    nextMessageId: "next-stage", destinationType: "TEXT", destinationText: "قدیمی" }],
+});
+const safeForm = parseQuickReplyJson(editQuickReplyDestination(legacyForm, [],
+  "form-root", "apply", {
+    messageType: "FORM", text: "سؤال جدید", mediaUrl: null, mediaId: null,
+    showcaseId: null, formId: null,
+    quickReplies: [{ id: "new-id", title: "ادامه جدید", payload: "stay",
+      nextMessageId: null, destinationType: "TEXT", destinationText: "متن جدید" }],
+  }))!;
+const safeOption = (safeForm.quickReplies as Record<string, unknown>[])[0];
+assert.equal(safeOption.nextMessageId, "next-stage");
+assert.equal(safeOption.id, "old-option");
+assert.equal(safeOption.destinationText, "متن جدید");
+assert.throws(() => editQuickReplyDestination(legacyForm, [], "form-root", "apply", {
+  messageType: "FORM", text: "تغییر نامعتبر", mediaUrl: null, mediaId: null,
+  showcaseId: null, formId: null,
+  quickReplies: [{ title: "غلط", payload: "changed" }],
+}));
+
+
 const checked = checkedUsagePlan([
   { messageId: "m1", mediaIds: ["post-1", "post-2", "post-3"] },
   { messageId: "m2", mediaIds: [] },
