@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, CheckCircle2, Lightbulb, Loader2, Pencil } from "lucide-react";
 import ResponseModeSwitcher from "./ResponseModeSwitcher";
 import CompleteAutomationPicker from "./CompleteAutomationPicker";
+import CompleteResponseNameField from "./CompleteResponseNameField";
 import { dairaPalette } from "../../lib/design-system/palette";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle } from "./publishing/PublishingStoryAutomationSetup";
@@ -283,6 +284,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
         </section>
       )}
       {(id ? editingView === "edit" : creationMode === "new") && (<>
+      <CompleteResponseNameField value={draft.responseName} onChange={(responseName) => patch({ responseName })} disabled={saving}/>
       <section>
         <Guide number={1} title="شرط پاسخ‌دهی به کامنت لایو" hint={anyComment ? "برای هر کامنت متنی در لایو، بدون نیاز به کلمه کلیدی، پاسخ دایرکت ارسال می‌شود." : "وقتی بیننده یکی از عبارت‌های تعیین‌شده را در لایو بنویسد، پاسخ در دایرکت ارسال می‌شود."} />
         <div className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
