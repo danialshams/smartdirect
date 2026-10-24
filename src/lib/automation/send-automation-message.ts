@@ -300,7 +300,8 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   if (message.messageType === "IMAGE" || message.messageType === "VIDEO" || message.messageType === "AUDIO") {
     if (!message.mediaUrl && !message.mediaId) throw new Error(`${message.messageType} requires mediaUrl or mediaId`);
     const type = message.messageType.toLowerCase();
-    const attachmentPayload = message.mediaId ? { attachment_id: message.mediaId } : { url: message.mediaUrl };
+    // Use the durable original when present. An old Meta attachment_id may expire.
+    const attachmentPayload = message.mediaUrl ? { url: message.mediaUrl } : { attachment_id: message.mediaId };
     const result = await callInstagramMessagesApi({ instagramAccountId, tenantId, instagramUserId, accessToken, body: {
         recipient: payload.commentId ? { comment_id: payload.commentId } : { id: recipientId },
         ...(payload.commentId ? {} : { messaging_type: "RESPONSE" }),
