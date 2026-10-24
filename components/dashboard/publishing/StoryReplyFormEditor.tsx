@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ImagePlus, Plus, Trash2 } from "lucide-react";
 import StoryReplyShowcaseCreator from "./StoryReplyShowcaseCreator";
-import ReusableResponseLibrary from "./ReusableResponseLibrary";
 import { displayReusableAssetTitle } from "@/lib/automation/reusable-titles";
 import VoiceRecorder from "../VoiceRecorder";
 import { createEmptyQuickReply, type MessageDraft, type QuickReplyDraft, type Showcase } from "../automation-form-utils";
@@ -179,37 +178,6 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
             {level < 3 && <option value="FORM">سؤال بعدی</option>}
           </select>
         </div>
-          {reply.destinationType && (
-            <div className="space-y-2">
-              <ReusableResponseLibrary
-                instagramAccountId={instagramAccountId}
-                message={{
-                  id: reply.id,
-                  savedResponseId: reply.savedResponseId || null,
-                  messageType: reply.destinationType,
-                  text: reply.destinationType === "FORM" ? reply.destinationQuestion : reply.destinationText,
-                  mediaUrl: reply.destinationMediaUrl,
-                  mediaId: reply.destinationMediaId,
-                  showcaseId: reply.destinationShowcaseId,
-                  formId: reply.destinationFormId,
-                  quickReplies: reply.destinationQuickReplies,
-                }}
-                allowedTypes={[reply.destinationType]}
-                prefix="پاسخ"
-                onUpdate={(patch) => onChange({
-                  ...(patch.savedResponseId !== undefined ? { savedResponseId: patch.savedResponseId } : {}),
-                  ...(patch.messageType !== undefined ? { destinationType: patch.messageType } : {}),
-                  ...(patch.text !== undefined ? (reply.destinationType === "FORM"
-                    ? { destinationQuestion: patch.text } : { destinationText: patch.text }) : {}),
-                  ...(patch.mediaUrl !== undefined ? { destinationMediaUrl: patch.mediaUrl } : {}),
-                  ...(patch.mediaId !== undefined ? { destinationMediaId: patch.mediaId } : {}),
-                  ...(patch.showcaseId !== undefined ? { destinationShowcaseId: patch.showcaseId } : {}),
-                  ...(patch.formId !== undefined ? { destinationFormId: patch.formId } : {}),
-                  ...(patch.quickReplies !== undefined ? { destinationQuickReplies: patch.quickReplies } : {}),
-                })}
-              />
-            </div>
-          )}
           {reply.destinationType === "TEXT" && (
             <textarea aria-label={`متن پاسخ گزینه ${index + 1}`} value={reply.destinationText}
               onChange={(event) => onChange({ destinationText: event.target.value })}

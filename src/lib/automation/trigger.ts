@@ -72,11 +72,18 @@ export function matchesAutomationTrigger({
     return false;
   }
 
-  const selectedMediaIds = configuredMediaIds ? configuredMediaIds.split(",").filter(Boolean) : [];
-  if (selectedMediaIds.length > 0 && (!incomingMediaId || !selectedMediaIds.includes(incomingMediaId))) return false;
-  if (selectedMediaIds.length === 0 && automationMediaId && automationMediaId !== incomingMediaId) return false;
-  if (selectedMediaIds.length === 0 && automationMediaId && !incomingMediaId) return false;
+  // Story replies are account-wide, including older rules that still have a
+  // historical mediaId. Only comment automations remain bound to media.
+  if (triggerType === "COMMENT_KEYWORD") {
+    const selectedMediaIds = configuredMediaIds ? configuredMediaIds.split(",").filter(Boolean) : [];
+    if (selectedMediaIds.length > 0 && (!incomingMediaId || !selectedMediaIds.includes(incomingMediaId))) return false;
+    if (selectedMediaIds.length === 0 && automationMediaId && automationMediaId !== incomingMediaId) return false;
+    if (selectedMediaIds.length === 0 && automationMediaId && !incomingMediaId) return false;
+  }
 
+  // A scheduled story's placeholder must not reply before publication.
+  // Once publishing binds the real story ID, this rule applies to all stories.
+  if (triggerType === "STORY_REPLY_KEYWORD" && automationMediaId?.startsWith("pending:")) return false;
   return true;
 }
 

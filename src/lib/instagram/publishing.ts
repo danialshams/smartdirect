@@ -903,6 +903,8 @@ async function bindConditionalAutomations(
       instagramMediaId,
     );
   }
+  // Newly bound story rules must stop using their cached pending media marker.
+  await invalidateAutomationCache(job.instagramAccountId);
 }
 
 async function publishInstagramJobInternal(jobId: string) {
