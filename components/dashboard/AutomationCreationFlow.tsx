@@ -985,12 +985,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                           background: selected ? dairaPalette.secondary.hoverBackground : dairaPalette.background.surface,
                         }}
                       >
-                        <span className="flex min-w-0 flex-1 flex-col gap-1">
+                        <button type="button" onClick={() => setPreviewTemplate(template)} className="flex min-w-0 flex-1 flex-col gap-1 text-right">
                           <strong className="block text-xs font-bold leading-5" style={{ color: dairaPalette.text.heading }}>
                             {(template.title?.trim() ? (triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت - " : "پاسخ خودکار استوری - ") + template.title.trim() : "پاسخ بدون نام")}
                           </strong>
                           {preview && <span className="block text-[10px] leading-4" style={{ color: dairaPalette.text.body }}>{preview}</span>}
-                        </span>
+                        </button>
                         <button type="button" onClick={() => setPreviewTemplate(template)} aria-label="مشاهده پاسخ کامل" className="daira-glass-dialog__secondary self-center rounded-lg border p-2"><Eye size={17}/></button>
                         <input
                           type="radio"
