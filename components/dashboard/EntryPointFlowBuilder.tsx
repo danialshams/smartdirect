@@ -701,6 +701,7 @@ export default function EntryPointFlowBuilder({
                                             crypto.randomUUID(),
                                         destinationType:
                                             quickReply.destinationType,
+                                        savedResponseId: quickReply.savedResponseId ?? null,
                                         destinationText:
                                             quickReply.destinationText,
                                         destinationFormId:
