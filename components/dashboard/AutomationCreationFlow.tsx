@@ -214,6 +214,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [creationMode, setCreationMode] = useState<CreationMode>("new");
   const [editingView, setEditingView] = useState<"summary" | "edit" | "replace">("summary");
+  const [showCurrentDetails, setShowCurrentDetails] = useState(false);
   const [loadingResources, setLoadingResources] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -1003,6 +1004,24 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 <div className="min-w-0 flex-1">
                   <h2 className="text-sm font-bold text-[var(--daira-heading)]">{editAutomation?.title || "پاسخ فعلی"}</h2>
                   <p className="mt-1 text-xs leading-6 text-[var(--daira-text-secondary)]">این پاسخ به محتوای انتخاب‌شده متصل است.</p>
+                </div>
+              </div>
+              <button type="button" aria-expanded={showCurrentDetails}
+                onClick={() => setShowCurrentDetails((current) => !current)}
+                className="daira-response-library__eye flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold">
+                {showCurrentDetails ? <X size={17}/> : <Eye size={17}/>}
+                {showCurrentDetails ? "بستن جزئیات" : "مشاهده جزئیات پاسخ فعلی"}
+              </button>
+              <div aria-hidden={!showCurrentDetails} inert={!showCurrentDetails}
+                className={"daira-response-library__expander grid " + (showCurrentDetails ? "is-expanded" : "")}>
+                <div className="min-h-0 overflow-hidden">
+                  <div className="border-t border-[var(--daira-glass-rim)] pt-3">
+                    {editAutomation && <ResponseTemplateDetails
+                      messages={normalizeMessages(editAutomation.messages)}
+                      keyword={editAutomation.keyword}
+                      commentReplyText={triggerType === "COMMENT_KEYWORD" ? editAutomation.commentReplyText : undefined}
+                      showcases={showcases} forms={forms}/>}
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
