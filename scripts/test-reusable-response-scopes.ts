@@ -2,8 +2,54 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { partitionResponseMediaScope } from "../src/lib/automation/response-media-scope";
 import { checkedUsagePlan, checkedUsageMedia } from "../src/lib/automation/saved-response-scope";
+import { nestedReplyUses, editQuickReplyDestination, parseQuickReplyJson } from "../src/lib/automation/nested-response-usage";
 import { displayReusableAssetTitle } from "../src/lib/automation/reusable-titles";
 import { validatePublicCommentReplies } from "../src/lib/automation/comment-reply-variants";
+
+const duplicated = JSON.stringify({
+  savedResponseId: "form-src", type: "FORM", question: "سؤال اول",
+  quickReplies: [
+    { title: "بله", payload: "yes", savedResponseId: "text-src", destinationType: "TEXT",
+      destinationText: "متن قبلی", text: "متن قبلی" },
+    { title: "نه", payload: "no", destinationType: "FORM", destinationQuestion: "مرحله دوم",
+      destinationQuickReplies: [
+        { title: "سبز", payload: "green", savedResponseId: "media-src", destinationType: "IMAGE",
+          destinationMediaUrl: "https://example.test/old.jpg" },
+      ] },
+  ],
+  destinationQuickReplies: [
+    { title: "بله", payload: "yes", savedResponseId: "text-src", destinationType: "TEXT",
+      destinationText: "متن قبلی" },
+    { title: "نه", payload: "no", destinationType: "FORM", destinationQuestion: "مرحله دوم",
+      destinationQuickReplies: [
+        { title: "سبز", payload: "green", savedResponseId: "media-src", destinationType: "IMAGE",
+          destinationMediaUrl: "https://example.test/old.jpg" },
+      ] },
+  ],
+});
+const uses = nestedReplyUses(duplicated);
+assert.equal(uses.length, 3, "Mirrored compatibility arrays cannot double-count a saved reply.");
+assert.deepEqual(uses.map((item) => item.savedResponseId), ["form-src", "text-src", "media-src"]);
+const textUpdated = editQuickReplyDestination(duplicated, uses[1].path, "text-src", "apply",
+  { messageType: "TEXT", text: "پاسخ جدید", mediaUrl: null, mediaId: null,
+    showcaseId: null, formId: null, quickReplies: [] });
+const parsedText = parseQuickReplyJson(textUpdated)!;
+assert.equal((parsedText.quickReplies as Record<string, unknown>[])[0].text, "پاسخ جدید");
+assert.equal((parsedText.destinationQuickReplies as Record<string, unknown>[])[0].destinationText, "پاسخ جدید");
+assert.deepEqual(nestedReplyUses(textUpdated).map((item) => item.savedResponseId),
+  ["form-src", "text-src", "media-src"]);
+const detached = editQuickReplyDestination(textUpdated, uses[1].path, "text-src", "detach");
+assert.deepEqual(nestedReplyUses(detached).map((item) => item.savedResponseId), ["form-src", "media-src"]);
+assert.throws(() => editQuickReplyDestination(detached, uses[1].path, "text-src", "apply",
+  { messageType: "TEXT", text: "نباید اعمال شود", mediaUrl: null,
+    mediaId: null, showcaseId: null, formId: null, quickReplies: [] }));
+const unknownLegacy = JSON.stringify({ payload: "old", nextMessageId: "legacy-next",
+  savedResponseId: "text-src", type: "TEXT", text: "قدیمی", extra: { safe: true } });
+const preserved = parseQuickReplyJson(editQuickReplyDestination(unknownLegacy, [], "text-src", "apply",
+  { messageType: "TEXT", text: "جدید", mediaUrl: null, mediaId: null,
+    showcaseId: null, formId: null, quickReplies: [] }))!;
+assert.equal(preserved.nextMessageId, "legacy-next");
+assert.deepEqual(preserved.extra, { safe: true });
 
 const checked = checkedUsagePlan([
   { messageId: "m1", mediaIds: ["post-1", "post-2", "post-3"] },
