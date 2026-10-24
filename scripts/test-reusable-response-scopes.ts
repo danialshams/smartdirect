@@ -251,9 +251,20 @@ assert(editRoute.includes("partitionResponseMediaScope(oldMediaIds, mediaIds)"))
 assert(editRoute.includes("const remaining = scope.untouchedIds;"));
 const pick = readFileSync("components/dashboard/AutomationCreationFlow.tsx", "utf8");
 assert(pick.includes("editScopeIds") && pick.includes("GlassModalPresence open={editScopeOpen}"));
-assert(pick.includes("mediaIds: targetIds"), "Reusing a story reply must pass its selected story to the API.");
+assert(pick.includes("const copyNested =") && pick.includes('savedResponseId:null') &&
+  !pick.includes('linkMediaOnly: true'),
+  "Reusing a previous reply must create an independent rule with detached message references.");
 const api = readFileSync("app/api/automations/[id]/route.ts", "utf8");
-assert(api.includes("...previousIds, ...targetIds"), "Reusing a response must preserve existing media links.");
+assert(api.includes("isActive: Boolean") || api.includes("Boolean(isActive)"),
+  "Each independent reply must still support its own activation state.");
+const storyMatch = readFileSync("src/lib/automation/trigger.ts", "utf8");
+assert(storyMatch.includes('if (triggerType === "COMMENT_KEYWORD")') &&
+  storyMatch.includes('Story replies are account-wide'),
+  "Story keyword matches must ignore media, while comment replies remain media-scoped.");
+const storyCreate = readFileSync("components/dashboard/StoryAutomationCreate.tsx", "utf8");
+assert(storyCreate.includes('StoryAutomationConfigure'),"New story replies must open without selecting media.");
+const detachedMigration = readFileSync("prisma/migrations/20261025000000_detach_shared_reply_links/migration.sql", "utf8");
+assert(detachedMigration.includes('SET "savedResponseId" = NULL'),"Previously linked replies must lose template dependencies.");
 const menu = readFileSync("components/dashboard/EntryPointFlowBuilder.tsx","utf8");
 assert(menu.includes("hideReusableLibrary") && menu.includes("responseFingerprint"), "Menu and icebreaker reply edits must remain detectable without response names.");
 const schema = readFileSync("prisma/schema.prisma", "utf8");
