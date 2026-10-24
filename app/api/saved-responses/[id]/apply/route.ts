@@ -274,8 +274,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         if (assertCoherentMixedScope(
           selectedMain.map((m) => byMessage.get(m.id)!.selected), partitions,
         )) {
-          if (type === "FORM")
-            throw new ApplyError("ویرایش ترکیبی ساختار فرم اصلی و شاخه‌های آن باید از ویرایشگر همان اتوماسیون انجام شود.", 409);
+          if (type === "FORM") {
+            const uses = groups.get(automationId) || [];
+            const originals = mediaFor(uses[0].automation);
+            const complete = selectedMain.length === uses.length &&
+              selectedNested.length === links.length &&
+              [...partitions[0]].sort().join(",") === [...originals].sort().join(",");
+            if (!complete)
+              throw new ApplyError("برای ویرایش هم‌زمان فرم اصلی و شاخه‌های آن، تمام استفاده‌های همین اتوماسیون و همه محتواهایش را انتخاب کن. برای ویرایش جزئی از صفحه همان اتوماسیون استفاده کن.", 409);
+          }
           mixedGroups.add(automationId);
         }
       } catch (error) {
@@ -361,8 +368,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         // that may already exist in users' conversations.
         if (old.length > 0 && old.length !== quickReplies.length)
           throw new ApplyError("تغییر تعداد گزینه‌های فرم فعال باید از ویرایشگر همان فرم انجام شود.", 409);
+        // In a combined edit, the nested pass must reconcile this row ONCE
+        // against its original version before applying its nested template.
+        const deferred = mixedGroups.has(
+          current.find((item) => item.id === messageId)?.automationId || "",
+        ) ? new Set(nested
+          .filter((item) => item.root.automationMessageId === messageId)
+          .map((item) => item.quickReplyId)) : new Set<string>();
         for (const [index, reply] of quickReplies.entries()) {
           const previous = old[index];
+          if (previous && deferred.has(previous.id)) continue;
           if (previous) {
             let merged: string;
             try {
@@ -637,7 +652,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           for (const rootId of sourceRoots) {
             const original = originalData.get(rootId);
             if (!original) throw new ApplyError("گزینه فرم دیگر وجود ندارد.", 409);
-            const updatedText = mutate(rootId, original.replyText,
+            const directOwner = type === "FORM" && mixedGroups.has(automationId)
+              ? current.find((item) => item.id === links.find((link) => link.quickReplyId === rootId)?.root.automationMessageId &&
+                byMessage.has(item.id))
+              : undefined;
+            let draftText = original.replyText;
+            if (directOwner) {
+              const topLevel = await tx.quickReply.findMany({
+                where: { automationMessageId: directOwner.id }, orderBy: { createdAt: "asc" },
+                select: { id: true },
+              });
+              const index = topLevel.findIndex((item) => item.id === rootId);
+              if (index < 0 || !quickReplies[index])
+                throw new ApplyError("گزینه فرم اصلی دیگر قابل تطبیق نیست.", 409);
+              try { draftText = reconcileActiveQuickReply(original.replyText, encodeReply(quickReplies[index])); }
+              catch (error) { throw new ApplyError(error instanceof Error ? error.message : "فرم اصلی قابل تطبیق نیست.", 409); }
+            }
+            const updatedText = mutate(rootId, draftText,
               links.filter((link) => link.quickReplyId === rootId), true);
             const changedRoot = await tx.quickReply.updateMany({
               where: { id: rootId, updatedAt: original.updatedAt }, data: { replyText: updatedText },
