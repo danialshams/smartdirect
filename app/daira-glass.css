@@ -827,6 +827,33 @@
   .daira-response-template { background:var(--daira-surface);backdrop-filter:none;-webkit-backdrop-filter:none; }
 }
 
+/* Response type chooser matches the saved/new selectors (neutral until chosen). */
+.daira-response-type-card {
+  border-color:var(--daira-glass-rim);
+  background:var(--daira-glass-raised);
+  color:var(--daira-heading);
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
+}
+.daira-response-type-card:hover {
+  border-color:var(--daira-input-border-hover);
+  background:var(--daira-surface-hover);
+}
+.daira-response-type-card:focus-visible {
+  outline:2px solid var(--daira-primary);
+  outline-offset:2px;
+}
+.daira-response-type-icon {
+  background:var(--daira-neutral-bg);
+  color:var(--daira-icon);
+}
+.daira-response-type-card:hover .daira-response-type-icon {
+  background:var(--daira-outline-hover-bg);
+  color:var(--daira-primary-hover);
+}
+@media(prefers-reduced-transparency:reduce) {
+  .daira-response-type-card {background:var(--daira-surface);}
+}
+
 /* Public comment variants are one designed section, not free-floating fields. */
 .daira-comment-replies {
   border:1px solid var(--daira-glass-rim);
