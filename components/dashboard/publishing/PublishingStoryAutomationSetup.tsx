@@ -10,6 +10,7 @@ import { createEmptyQuickReply } from "../automation-form-utils";
 import StoryReplyFormEditor from "./StoryReplyFormEditor";
 import StoryShowcaseSlidesEditor from "./StoryShowcaseSlidesEditor";
 import ReusableResponseLibrary from "./ReusableResponseLibrary";
+import { displayReusableAssetTitle } from "@/lib/automation/reusable-titles";
 import { uploadFileWithProgress } from "./shared-upload";
 
 export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean>; prepareExternalSave: () => Promise<MessageDraft | null> };
@@ -101,6 +102,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const [progress, setProgress] = useState(0);
   const [retryFile, setRetryFile] = useState<File | null>(null);
   const [error, setError] = useState("");
+  const [assetName, setAssetName] = useState("");
   const [slides, setSlides] = useState<ShowcaseSlide[]>([createSlide()]);
   useStorageUploadLease([message.mediaUrl, ...slides.map((slide) => slide.imageUrl)]);
   const [savingShowcase, setSavingShowcase] = useState(false);
@@ -262,6 +264,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       return savedShowcaseCopyRef.current.id;
     if (saveShowcaseLockRef.current || savingShowcase || slideUploadInProgress) return null;
     saveShowcaseLockRef.current = true;
+    if (!assetName.trim() && !message.showcaseId) { setError("برای ویترین یک نام انتخاب کن."); saveShowcaseLockRef.current = false; return null; }
     if (!hasValidSlide) {
       setError("برای ساخت ویترین، حداقل یک اسلاید کامل با تصویر، تیتر و توضیحات بسازید.");
       saveShowcaseLockRef.current = false;
@@ -282,9 +285,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           instagramAccountId,
-          title: existingShowcaseEdited && selectedShowcase
-            ? `کپی ویرایش‌شدهٔ ${selectedShowcase.title}`
-            : `ویترین ${new Date().toLocaleDateString("fa-IR")}`,
+          title: assetName.trim() || (existingShowcaseEdited && selectedShowcase ? selectedShowcase.title : "ویترین بدون نام"),
           description: existingShowcaseEdited ? selectedShowcase?.description || null : null,
           isActive: true,
         }),
@@ -427,6 +428,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         onUpdate={onUpdate}
         allowedTypes={textOnly ? ["TEXT"] : (["TEXT", "IMAGE", "AUDIO", "SHOWCASE", ...(hideVideo ? [] : ["VIDEO"]), ...(hideForm ? [] : ["FORM"])] as ResponseType[])}
         prefix="پاسخ خودکار"
+        onNameChange={setAssetName}
         disabled={Boolean(disabled)}
       />
       {!textOnly && (
@@ -569,7 +571,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   }}
                   className="w-full min-w-0 rounded-xl border border-[var(--daira-outline)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
                   <option value="">یک ویترین انتخاب کن</option>
-                  {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                  {showcases.map((item) => <option key={item.id} value={item.id}>{displayReusableAssetTitle("SHOWCASE", item.title)}</option>)}
                 </select>
                 {!loadingResources && showcases.length === 0 && <p className="text-xs text-[var(--daira-text-secondary)]">هنوز ویترینی نداری.</p>}
                 {existingShowcaseEdited && <p className="text-xs text-[var(--daira-text-secondary)]">تغییرات در یک نسخهٔ جدید ذخیره می‌شوند.</p>}
@@ -745,7 +747,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                       }}
                       className="w-full min-w-0 rounded-xl border border-[var(--daira-outline)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
                       <option value="">یک فرم قبلی را انتخاب کن</option>
-                      {formTemplates.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                      {formTemplates.map((item) => <option key={item.id} value={item.id}>{displayReusableAssetTitle("FORM", item.title)}</option>)}
                     </select>
                     {!loadingResources && formTemplates.length === 0 && <p className="text-xs text-[var(--daira-text-secondary)]">هنوز فرم ذخیره‌شده‌ای نداری.</p>}
                     {selectedFormTemplateId && <p className="text-xs text-[var(--daira-text-secondary)]">فرم قبلی بدون تغییر می‌ماند.</p>}
