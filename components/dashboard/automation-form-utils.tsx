@@ -58,6 +58,7 @@ export type QuickReplyDraft = {
 
 export type MessageDraft = {
     id: string;
+    savedResponseId?: string | null;
     messageType: MessageType;
     text: string;
     mediaUrl: string;
@@ -244,6 +245,7 @@ export function normalizeMessages(value: unknown): MessageDraft[] {
                         ? item.id
                         : createLocalId("message"),
                 messageType,
+                savedResponseId: typeof item.savedResponseId === "string" ? item.savedResponseId : null,
                 text: typeof item.text === "string" ? item.text : "",
                 mediaUrl:
                     typeof item.mediaUrl === "string"
