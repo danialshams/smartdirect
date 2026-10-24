@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validateSavedResponseOrigin } from "@/lib/automation/saved-response-origin";
 import { storePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
 import { partitionResponseMediaScope } from "@/lib/automation/response-media-scope";
 import { getCachedInstagramMedia, invalidateAutomationCache } from "@/lib/cache/instagram";
@@ -34,6 +35,7 @@ type MessageInput = {
   mediaId?: string;
   showcaseId?: string;
   formId?: string;
+  savedResponseId?: string | null;
   quickReplies?: QuickReplyInput[];
   updateQuickReplies?: boolean;
   linkButtons?: LinkButton[];
@@ -120,7 +122,9 @@ function validateMessage(raw: unknown, index: number): MessageInput {
   if (messageType === "FORM" && !(Array.isArray(item.quickReplies) && item.quickReplies.length)) throw new EditError("برای فرم حداقل یک گزینه لازم است.");
   if (linkButtons.length && messageType !== "TEXT") throw new EditError("دکمه لینک فقط برای پیام متنی است.");
   if (text.length > (linkButtons.length ? 640 : 2000)) throw new EditError("متن پیام از حد مجاز طولانی‌تر است.");
-  return { id: clean(item.id) || undefined, messageType, text, mediaUrl, mediaId, showcaseId, formId, linkButtons, quickReplies, updateQuickReplies };
+  return { id: clean(item.id) || undefined, messageType, text, mediaUrl, mediaId, showcaseId, formId,
+    savedResponseId: item.savedResponseId === undefined ? undefined : clean(item.savedResponseId) || null,
+    linkButtons, quickReplies, updateQuickReplies };
 }
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -220,6 +224,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (mediaIds.some((value) => occupied.has(value)))
       throw new EditError("یکی از محتواهای انتخابی به پاسخ دیگری متصل است.", 409);
     for (const item of messages) {
+      try { await validateSavedResponseOrigin(item.savedResponseId, automation.instagramAccountId, session.user.id); }
+      catch (error) { throw new EditError(error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست."); }
       if (item.messageType === "SHOWCASE") {
         const showcase = await prisma.showcase.findFirst({ where: { id: item.showcaseId, instagramAccountId: automation.instagramAccountId, userId: session.user.id }, select: { id: true } });
         if (!showcase) throw new EditError("ویترین انتخاب‌شده متعلق به این پیج نیست.");
@@ -280,6 +286,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           const created = await tx.automationMessage.create({
             data: {
               automationId: cloned.id, order: index, messageType: type,
+              savedResponseId: item.savedResponseId || null,
               text: item.text || null,
               mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(type) ? item.mediaUrl || null : null,
               mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(type) ? item.mediaId || null : null,
@@ -366,6 +373,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         const data = {
           order: index,
           messageType: type,
+          ...(item.savedResponseId !== undefined ? { savedResponseId: item.savedResponseId } : {}),
           text: item.text || null,
           mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(type) ? item.mediaUrl || null : null,
           mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(type) ? item.mediaId || null : null,
