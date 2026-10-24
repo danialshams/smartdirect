@@ -5,7 +5,7 @@ import ResponseModeSwitcher from "./ResponseModeSwitcher";
 import ResponseTemplateDetails from "./ResponseTemplateDetails";
 import CommentReplyVariantsField from "./CommentReplyVariantsField";
 import { readPublicCommentReplies, validatePublicCommentReplies, publicCommentReplyKey } from "@/lib/automation/comment-reply-variants";
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 const PublishingStoryAutomationSetup = dynamic(() => import("./publishing/PublishingStoryAutomationSetup"), { ssr: false });
@@ -190,6 +190,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [linkButtons, setLinkButtons] = useState<LinkButton[]>(() => initialEditState?.linkButtons ?? [{ title: "", url: "" }]);
   const [linkedMediaItems, setLinkedMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null}>>([]);
   const [previewTemplate, setPreviewTemplate] = useState<AutomationTemplate | null>(null);
+  const saveCommentReplyRef = useRef<((draft: MessageDraft) => Promise<boolean>) | null>(null);
   const [editScopeOpen, setEditScopeOpen] = useState(false);
   const [editScopeIds, setEditScopeIds] = useState<string[]>([]);
   const originalMediaIds = useMemo(() => editAutomation ? Array.from(new Set([...(editAutomation.mediaId ? [editAutomation.mediaId] : []), ...(editAutomation.mediaIds || "").split(",").map((id) => id.trim()).filter(Boolean)])) : [], [editAutomation]);
@@ -542,9 +543,12 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       setSaving(true);
       setError("");
       try {
+        const preparedPrimary = { ...currentMessage };
+        if (enteredDm && saveCommentReplyRef.current &&
+          !await saveCommentReplyRef.current(preparedPrimary)) return;
         const previouslySavedMessages = normalizeMessages(editAutomation.messages);
         const originalById = new Map(previouslySavedMessages.map((entry) => [entry.id, entry]));
-        const allMessages = [currentMessage, ...extraMessages].map((entry, index) => ({
+        const allMessages = [preparedPrimary, ...extraMessages].map((entry, index) => ({
           ...entry,
           updateQuickReplies: !originalById.has(entry.id) ||
             JSON.stringify(originalById.get(entry.id)?.quickReplies) !== JSON.stringify(entry.quickReplies),
@@ -646,6 +650,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     setSaving(true);
     setError("");
     try {
+      const preparedPrimary = { ...currentMessage };
+      if (triggerType === "COMMENT_KEYWORD" && enteredDm &&
+        saveCommentReplyRef.current && !await saveCommentReplyRef.current(preparedPrimary)) return;
       const response = await fetch("/api/automations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -677,7 +684,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
       const automationId = result.data.id as string;
       const messagesToCreate = triggerType === "COMMENT_KEYWORD"
-        ? (enteredDm ? [currentMessage, ...extraMessages] : [])
+        ? (enteredDm ? [preparedPrimary, ...extraMessages] : [])
         : [currentMessage];
       for (const [index, entry] of messagesToCreate.entries()) {
         const entryLinks = triggerType === "COMMENT_KEYWORD" && entry.messageType === "TEXT"
@@ -1092,6 +1099,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
                     allowedTypes={["TEXT"]}
                     prefix="پاسخ خودکار دایرکت"
+                    initialName={responseName}
+                    onNameChange={setResponseName}
+                    onRegisterSave={(handler) => { saveCommentReplyRef.current = handler; }}
                     disabled={saving}
                   />
                   <div role="radiogroup" aria-label="قالب پیام متنی دایرکت" className={"grid grid-cols-1 gap-2 sm:grid-cols-2 " + (isEditing && message.messageType !== "TEXT" ? "hidden" : "")}>
