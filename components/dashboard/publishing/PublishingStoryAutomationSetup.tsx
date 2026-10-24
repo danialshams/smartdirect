@@ -431,7 +431,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
   return (
     <div className={["space-y-5", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
-      {!hideLibrary && <ReusableResponseLibrary
+      {false && !hideLibrary && <ReusableResponseLibrary
         instagramAccountId={instagramAccountId}
         message={message}
         onUpdate={onUpdate}

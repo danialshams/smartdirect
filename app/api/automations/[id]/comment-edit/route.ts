@@ -336,7 +336,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                   replyText: JSON.stringify({
                     isExit: reply.isExit === true,
                     destinationType: reply.destinationType,
-                    savedResponseId: reply.savedResponseId || null,
+                    savedResponseId: null,
                     destinationText: reply.destinationText,
                     destinationFormId: reply.destinationFormId,
                     destinationShowcaseId: reply.destinationShowcaseId,
@@ -405,7 +405,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             replyText: JSON.stringify({
               isExit: reply.isExit === true,
               destinationType: reply.destinationType,
-              savedResponseId: reply.savedResponseId || null,
+              savedResponseId: null,
               destinationText: reply.destinationText,
               destinationFormId: reply.destinationFormId,
               destinationShowcaseId: reply.destinationShowcaseId,
