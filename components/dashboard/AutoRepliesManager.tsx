@@ -277,6 +277,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
         const nextItems: ReplyItem[] = [];
         for (const automation of allAutomations) {
           if (automation.mediaId === "__smartdirect_live_comments_v1__") continue;
+          if (automation.triggerType === "STORY_REPLY_KEYWORD" && automation.mediaId?.startsWith("pending:")) continue;
           const automationMediaIds = Array.from(new Set([
             ...(automation.mediaId ? [automation.mediaId] : []),
             ...(typeof automation.mediaIds === "string" ? automation.mediaIds.split(",").map((id) => id.trim()).filter(Boolean) : []),
@@ -576,7 +577,6 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                     <Link
                       href={item.href}
                       className="daira-reply-list-edit"
-                      style={{ color: dairaPalette.primary.main, border: `1px solid ${dairaPalette.secondary.outline}`, backgroundColor: dairaPalette.background.surface }}
                     >
                       <span>ویرایش</span>
                       <Pencil size={14} />
@@ -586,7 +586,6 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                       onClick={() => { setDeleteError(""); setDeleteTarget(item); }}
                       aria-label={`حذف پاسخ این محتوا برای ${item.keyword}`}
                       className="daira-reply-list-delete"
-                      style={{ color: dairaPalette.status.error, border: `1px solid ${dairaPalette.status.error}55`, backgroundColor: dairaPalette.background.surface }}
                     >
                       <span>حذف</span>
                       <Trash2 size={14} />

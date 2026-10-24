@@ -66,7 +66,7 @@ export default function ShareMentionManager(){
      </div>
      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t pt-3" style={{borderColor:dairaPalette.border}}>
       
-      <div className="flex gap-2"><Link href={"/dashboard/share-mention/"+item.id} className="daira-reply-list-edit" style={{borderColor:dairaPalette.border}}>ویرایش <Pencil size={14}/></Link>
+      <div className="flex gap-2"><Link href={"/dashboard/share-mention/"+item.id} className="daira-reply-list-edit">ویرایش <Pencil size={14}/></Link>
        <button type="button" disabled={busy===item.id} onClick={()=>setDeleteId(item.id)} className="daira-reply-list-delete">حذف {busy===item.id?<LoaderCircle size={14} className="animate-spin"/>:<Trash2 size={14}/>}</button></div>
      </div>
      {deleteId===item.id&&<div className="mt-3 rounded-xl bg-red-50 p-3 text-xs leading-7 text-red-700">این پاسخ حذف شود؟ <div className="mt-2 flex gap-2"><button type="button" disabled={Boolean(busy)} onClick={()=>void change(item,"delete")} className="rounded-lg bg-red-600 px-4 py-2 text-white">حذف پاسخ</button><button type="button" onClick={()=>setDeleteId("")} className="rounded-lg border bg-white px-4 py-2">انصراف</button></div></div>}

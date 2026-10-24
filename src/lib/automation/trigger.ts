@@ -81,6 +81,9 @@ export function matchesAutomationTrigger({
     if (selectedMediaIds.length === 0 && automationMediaId && !incomingMediaId) return false;
   }
 
+  // A scheduled story's placeholder must not reply before publication.
+  // Once publishing binds the real story ID, this rule applies to all stories.
+  if (triggerType === "STORY_REPLY_KEYWORD" && automationMediaId?.startsWith("pending:")) return false;
   return true;
 }
 

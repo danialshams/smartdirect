@@ -1092,7 +1092,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       instagramAccountId: selectedAccountId,
       triggerType,
       keyword: storyKeywords,
-      mediaId: null,
+      mediaId: `pending:${crypto.randomUUID()}`,
       commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReplyText.trim() || null : null,
       sendDm: true,
       likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? (source?Boolean(source.likeStoryReply):likeStoryReply) : false,

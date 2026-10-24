@@ -122,6 +122,16 @@ async function main() {
     }),
     "Story keyword automations must work across all stories on the account.",
   );
+  assert(
+    !matchesAutomationTrigger({
+      triggerType: "STORY_REPLY_KEYWORD",
+      configuredKeyword: "قیمت",
+      incomingKeyword: "قیمت",
+      automationMediaId: "pending:scheduled-story-1",
+      incomingMediaId: "story-123",
+    }),
+    "A scheduled story rule must remain dormant until publishing binds its media ID.",
+  );
 
   assert(
     matchesAutomationTrigger({
