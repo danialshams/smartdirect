@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { collectSavedResponseMedia } from "@/lib/automation/saved-response-media";
 import { getStorageProviderForObject } from "@/lib/storage/provider";
 import { checkedUsagePlan, assertCoherentMixedScope, type ResponseUsageSelection } from "@/lib/automation/saved-response-scope";
-import { nestedReplyUses, editQuickReplyDestination, reconcileActiveQuickReply } from "@/lib/automation/nested-response-usage";
+import { nestedReplyUses, editQuickReplyDestination, reconcileActiveQuickReply, preserveUncheckedNestedReply } from "@/lib/automation/nested-response-usage";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
@@ -525,13 +525,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         });
         const originalData = new Map(allOriginal.map((item) => [item.id, item]));
         const mutate = (rootId: string, value: string | null, targets: NestedLink[],
-          applySelected: boolean): string => {
+          applySelected: boolean, composedParentForm = false): string => {
           let result = value;
           for (const link of targets) {
             const checked = applySelected && byNested.has(link.usageId);
             try {
-              result = editQuickReplyDestination(result, link.path, id,
-                checked ? "apply" : "detach", checked ? replacement : undefined);
+              result = !checked && composedParentForm
+                ? preserveUncheckedNestedReply(originalData.get(rootId)?.replyText || null,
+                    result, link.path, id)
+                : editQuickReplyDestination(result, link.path, id,
+                    checked ? "apply" : "detach", checked ? replacement : undefined);
             } catch (error) {
               throw new ApplyError(error instanceof Error ? error.message : "ویرایش مقصد فرم ناموفق بود.", 409);
             }
@@ -567,7 +570,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
                 catch (error) { throw new ApplyError(error instanceof Error ? error.message : "ترکیب فرم اصلی و شاخه آن ناموفق بود.", 409); }
               }
             }
-            const forkText = mutate(rootId, baseText, relevant, true);
+            const forkText = mutate(rootId, baseText, relevant, true,
+              type === "FORM" && Boolean(current.find((msg) =>
+                msg.id === relevant[0]?.root.automationMessageId && byMessage.has(msg.id))));
             const newCount = await tx.quickReply.updateMany({
               where: { id: mappedId, updatedAt: fresh.updatedAt }, data: { replyText: forkText },
             });
@@ -686,7 +691,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
               catch (error) { throw new ApplyError(error instanceof Error ? error.message : "فرم اصلی قابل تطبیق نیست.", 409); }
             }
             const updatedText = mutate(rootId, draftText,
-              links.filter((link) => link.quickReplyId === rootId), true);
+              links.filter((link) => link.quickReplyId === rootId), true, Boolean(directOwner));
             const changedRoot = await tx.quickReply.updateMany({
               where: { id: rootId, updatedAt: original.updatedAt }, data: { replyText: updatedText },
             });
