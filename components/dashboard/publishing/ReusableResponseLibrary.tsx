@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { BookOpen, Check, Eye, Pencil, Plus, Save, X } from "lucide-react";
 import GlassModalPresence from "../GlassModalPresence";
 import { responseFingerprint } from "../automation-response-compare";
@@ -95,6 +95,7 @@ function ResponsePreview({ value }: { value: Saved }) {
 
 export default function ReusableResponseLibrary({ instagramAccountId, message, onUpdate, allowedTypes, prefix = "پاسخ", initialName = "", onNameChange, onRegisterSave, disabled = false }: Props) {
   const [mode, setMode] = useState<"new" | "existing">("new");
+  const nameFieldId = useId();
   const [items, setItems] = useState<Saved[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -118,6 +119,27 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [instagramAccountId, mode]);
+
+  useEffect(() => {
+    const sourceId = message.savedResponseId;
+    if (!instagramAccountId || !sourceId) return;
+    const controller = new AbortController();
+    fetch("/api/saved-responses/" + encodeURIComponent(sourceId), {
+      cache: "no-store", credentials: "include", signal: controller.signal,
+    }).then(async (response) => {
+      const result = await response.json();
+      if (!response.ok || !result.success || !result.data) throw Error("پاسخ ذخیره‌شده در دسترس نیست.");
+      return result.data as Saved;
+    }).then((saved) => {
+      if (controller.signal.aborted) return;
+      setItems((current) => current.some((item) => item.id === saved.id) ? current : [saved, ...current]);
+      setName((previous) => previous.trim() ? previous : saved.title);
+      setReusedOriginal({ id: saved.id, fingerprint: responseFingerprint(message) });
+    }).catch(() => {
+      // The message remains usable even if an old template was removed.
+    });
+    return () => controller.abort();
+  }, [instagramAccountId, message.savedResponseId]);
 
   function loadResponse(item: Saved, edit = false) {
     const applied: Partial<MessageDraft> = {
@@ -201,8 +223,8 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
         </button>)}
     </div>
     {mode === "new" ? <div className="daira-flow-glass space-y-3 rounded-xl p-3">
-      <label htmlFor="reusable-response-name" className="block text-xs font-bold text-[var(--daira-heading)]">{message.messageType === "FORM" ? "نام فرم" : message.messageType === "SHOWCASE" ? "نام ویترین" : "نام پاسخ"}</label>
-      <input id="reusable-response-name" type="text" value={name} maxLength={80} onChange={(event) => { setName(event.target.value); onNameChange?.(event.target.value); }}
+      <label htmlFor={nameFieldId} className="block text-xs font-bold text-[var(--daira-heading)]">{message.messageType === "FORM" ? "نام فرم" : message.messageType === "SHOWCASE" ? "نام ویترین" : "نام پاسخ"}</label>
+      <input id={nameFieldId} type="text" value={name} maxLength={80} onChange={(event) => { setName(event.target.value); onNameChange?.(event.target.value); }}
         placeholder="مثلاً کفش" disabled={disabled || saving}
         className="w-full rounded-xl border border-[var(--daira-input-border)] bg-[var(--daira-surface)] px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)]" style={{fontSize:"16px"}}/>
       <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">{message.messageType === "FORM" ? "نامی برای فرم" : message.messageType === "SHOWCASE" ? "نامی برای ویترین" : "نامی برای پاسخ"} انتخاب کن تا بعداً بتوانی دوباره از آن استفاده کنی.</p>
