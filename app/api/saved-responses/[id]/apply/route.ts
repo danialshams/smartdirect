@@ -184,6 +184,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           item.automation.updatedAt.getTime() !== Date.parse(snapshot.automationUpdatedAt);
       }))
       throw new ApplyError("اتصال‌های این پاسخ تغییر کرده‌اند. فهرست را تازه‌سازی کن.", 409);
+    if (current.some((item) => item.messageType !== type))
+      throw new ApplyError("نوع یکی از پیام‌های متصل با قالب ذخیره‌شده متفاوت است. آن را از صفحه مربوط بررسی کن.", 409);
     const mediaFor = (a: { mediaId: string | null; mediaIds: string | null }) =>
       Array.from(new Set([...(a.mediaId ? [a.mediaId] : []), ...(a.mediaIds || "").split(",").map((i) => i.trim()).filter(Boolean)]));
     const plan = checkedUsagePlan(
