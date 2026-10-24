@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { storePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
+import { partitionResponseMediaScope } from "@/lib/automation/response-media-scope";
 import { getCachedInstagramMedia, invalidateAutomationCache } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
@@ -192,10 +193,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (sourceMediaId && !oldMediaIds.has(sourceMediaId))
       throw new EditError("این محتوا دیگر به پاسخ انتخاب‌شده متصل نیست.", 409);
     // Editing a subset forks only those media; editing the complete set updates in place.
-    const appliedExistingIds = mediaIds.filter((value) => oldMediaIds.has(value));
-    if (!appliedExistingIds.length)
+    const scope = partitionResponseMediaScope(oldMediaIds, mediaIds);
+    if (!scope.appliedExistingIds.length)
       throw new EditError("حداقل یکی از محتواهای متصل باید برای ویرایش انتخاب شود.", 400);
-    const splitShared = appliedExistingIds.length < oldMediaIds.size;
+    const splitShared = scope.splitShared;
     const newMediaIds = mediaIds.filter((value) => !oldMediaIds.has(value));
     if (newMediaIds.length) {
       const account = await prisma.instagramAccount.findFirst({
@@ -246,7 +247,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       if (splitShared) {
         // Split the selected content away from the shared automation. Do not
         // change the shared messages, keywords, or follow settings of siblings.
-        const remaining = [...oldMediaIds].filter((value) => !appliedExistingIds.includes(value));
+        const remaining = scope.untouchedIds;
         const detached = await tx.automation.updateMany({
           where: { id, updatedAt: new Date(expectedUpdatedAt) },
           data: {
