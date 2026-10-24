@@ -253,12 +253,20 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
       const result = await response.json();
       if (!response.ok || !result?.success || (approved ? !result.data : !result.data?.id))
         throw Error(result?.error || "ذخیره پاسخ ناموفق بود.");
-      const saved = approved ? { ...original!, updatedAt: new Date().toISOString(), usages: [] } : result.data as Saved;
+      const saved = approved ? result.data.template as Saved : result.data as Saved;
       setScopeOpen(false);
       // The parent save receives this same prepared draft. Set its source before persisting.
       if (override) override.savedResponseId = saved.id;
       onUpdate({ savedResponseId: saved.id });
       setItems((current) => [{ ...saved, usages: original?.usages || [] }, ...current.filter((item) => item.id !== saved.id)]);
+      if (approved) {
+        // Refresh real relations (including forked comment media) after a committed edit.
+        void fetch("/api/saved-responses?instagramAccountId=" + encodeURIComponent(instagramAccountId), {
+          cache: "no-store", credentials: "include",
+        }).then((r) => r.json()).then((data) => {
+          if (data?.success && Array.isArray(data.data)) setItems(data.data);
+        }).catch(() => undefined);
+      }
       setEditingId(saved.id);
       setReusedOriginal(null);
       setName(saved.title);
