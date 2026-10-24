@@ -153,7 +153,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       throw new StoryEditError("وضعیت تنظیمات استوری نامعتبر است.");
     const message = parseMessage(body.message);
     let origin: string | null | undefined;
-    try { origin = await validateSavedResponseOrigin(message.savedResponseId, current.instagramAccountId, session.user.id); }
+    try { origin = await validateSavedResponseOrigin(message.savedResponseId, current.instagramAccountId, session.user.id, message.messageType); }
     catch (error) { throw new StoryEditError(error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست."); }
     const originalMessageId = current.messages[0]?.id;
     if (message.id && message.id !== originalMessageId &&
