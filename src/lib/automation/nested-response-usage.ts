@@ -1,0 +1,94 @@
+/** Track saved-response links explicitly embedded inside legacy QuickReply JSON.
+ * Preserve user-facing payloads and unknown legacy fields while editing.
+ */
+export type ReplyJson = Record<string, unknown>;
+export type ReplyPath = Array<string | number>;
+export type NestedReplyUse = { savedResponseId: string; path: ReplyPath; label: string; messageType: string };
+const kinds = new Set(["TEXT", "FORM", "SHOWCASE", "IMAGE", "VIDEO", "AUDIO"]);
+function record(value: unknown): value is ReplyJson {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+export function parseQuickReplyJson(raw: string | null): ReplyJson | null {
+  if (!raw) return null;
+  try { const parsed: unknown = JSON.parse(raw); return record(parsed) ? parsed : null; }
+  catch { return null; }
+}
+export function nestedReplyUses(raw: string | null): NestedReplyUse[] {
+  const root = parseQuickReplyJson(raw);
+  if (!root) return [];
+  const out: NestedReplyUse[] = [];
+  const visit = (node: ReplyJson, path: ReplyPath, label: string, depth: number) => {
+    if (depth > 8) return;
+    const type = typeof node.destinationType === "string" ? node.destinationType
+      : typeof node.type === "string" ? node.type : "";
+    const id = typeof node.savedResponseId === "string" ? node.savedResponseId.trim() : "";
+    if (id && kinds.has(type)) out.push({ savedResponseId: id, path, label, messageType: type });
+    for (const key of ["quickReplies", "destinationQuickReplies"]) {
+      const children = node[key];
+      if (!Array.isArray(children)) continue;
+      children.forEach((child, index) => {
+        if (record(child)) visit(child, [...path, key, index],
+          typeof child.title === "string" && child.title.trim() ? child.title.trim() : label,
+          depth + 1);
+      });
+    }
+  };
+  visit(root, [], "گزینه پاسخ", 0);
+  return out;
+}
+export function nestedReplyAt(root: ReplyJson, path: ReplyPath): ReplyJson | null {
+  if (path.length % 2 !== 0 || path.length > 16) return null;
+  let node: unknown = root;
+  for (let i = 0; i < path.length; i += 2) {
+    const key = path[i], index = path[i + 1];
+    if (!record(node) || (key !== "quickReplies" && key !== "destinationQuickReplies")
+      || !Array.isArray(node[key]) || !Number.isSafeInteger(index) || (index as number) < 0) return null;
+    node = (node[key] as unknown[])[index as number];
+  }
+  return record(node) ? node : null;
+}
+export function editQuickReplyDestination(raw: string | null, path: ReplyPath,
+  sourceId: string, action: "apply" | "detach", template?: {
+    messageType: string; text: string | null; mediaUrl: string | null; mediaId: string | null;
+    showcaseId: string | null; formId: string | null; quickReplies: unknown;
+  }): string {
+  const root = parseQuickReplyJson(raw);
+  if (!root) throw new Error("ساختار مقصد قبلی نامعتبر است.");
+  const destination = nestedReplyAt(root, path);
+  if (!destination || destination.savedResponseId !== sourceId)
+    throw new Error("پاسخ ذخیره‌شده دیگر به این مقصد متصل نیست.");
+  if (action === "detach") {
+    destination.savedResponseId = null;
+    return JSON.stringify(root);
+  }
+  if (!template) throw new Error("قالب جدید مشخص نیست.");
+  const type = typeof destination.destinationType === "string" ? destination.destinationType : destination.type;
+  if (type !== template.messageType) throw new Error("نوع مقصد با پاسخ ذخیره‌شده برابر نیست.");
+  const text = template.text || "";
+  const question = template.messageType === "FORM" ? text : "";
+  destination.savedResponseId = sourceId;
+  destination.text = template.messageType === "FORM" ? "" : text;
+  destination.destinationText = template.messageType === "FORM" ? "" : text;
+  destination.question = question;
+  destination.destinationQuestion = question;
+  destination.mediaUrl = template.mediaUrl || "";
+  destination.destinationMediaUrl = template.mediaUrl || "";
+  destination.mediaId = template.mediaId || "";
+  destination.destinationMediaId = template.mediaId || "";
+  destination.showcaseId = template.showcaseId || "";
+  destination.destinationShowcaseId = template.showcaseId || "";
+  destination.formId = template.formId || "";
+  destination.destinationFormId = template.formId || "";
+  if (template.messageType === "FORM") {
+    const children = Array.isArray(destination.destinationQuickReplies) ? destination.destinationQuickReplies
+      : Array.isArray(destination.quickReplies) ? destination.quickReplies : [];
+    const fresh = Array.isArray(template.quickReplies) ? template.quickReplies : [];
+    const oldPayloads = children.map((c) => record(c) ? c.payload : null);
+    const newPayloads = fresh.map((c) => record(c) ? c.payload : null);
+    if (JSON.stringify(oldPayloads) !== JSON.stringify(newPayloads))
+      throw new Error("تغییر گزینه‌ها یا شناسه‌های فرم فعال باید از ویرایشگر خود فرم انجام شود.");
+    destination.quickReplies = fresh;
+    destination.destinationQuickReplies = fresh;
+  }
+  return JSON.stringify(root);
+}
