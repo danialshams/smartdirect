@@ -19,6 +19,7 @@ type QuickReplyInput = {
   nextMessageId?: string | null;
   isExit?: boolean;
   destinationType?: string | null;
+  savedResponseId?: string | null;
   destinationText?: string;
   destinationFormId?: string;
   destinationShowcaseId?: string;
@@ -92,6 +93,7 @@ function validateQuickReplies(value: unknown, depth = 0): QuickReplyInput[] {
       id: clean(item.id) || undefined, title, payload,
       isExit: item.isExit === true,
       destinationType, destinationText,
+      savedResponseId: clean(item.savedResponseId) || null,
       destinationQuestion, destinationQuickReplies: children,
       destinationFormId: clean(item.destinationFormId),
       destinationShowcaseId: clean(item.destinationShowcaseId),
@@ -334,6 +336,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                   replyText: JSON.stringify({
                     isExit: reply.isExit === true,
                     destinationType: reply.destinationType,
+                    savedResponseId: reply.savedResponseId || null,
                     destinationText: reply.destinationText,
                     destinationFormId: reply.destinationFormId,
                     destinationShowcaseId: reply.destinationShowcaseId,
@@ -402,6 +405,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             replyText: JSON.stringify({
               isExit: reply.isExit === true,
               destinationType: reply.destinationType,
+              savedResponseId: reply.savedResponseId || null,
               destinationText: reply.destinationText,
               destinationFormId: reply.destinationFormId,
               destinationShowcaseId: reply.destinationShowcaseId,
