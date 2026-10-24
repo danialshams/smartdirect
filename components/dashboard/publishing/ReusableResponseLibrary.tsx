@@ -91,7 +91,8 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
   const filtered = useMemo(() => items.filter((item) => allowedTypes.includes(item.messageType)), [items, allowedTypes.join(",")]);
 
   useEffect(() => {
-    if (!instagramAccountId) return;
+    // Nested branching forms may render dozens of pickers; only fetch when browsing.
+    if (!instagramAccountId || mode !== "existing") return;
     const controller = new AbortController();
     setLoading(true);
     fetch("/api/saved-responses?instagramAccountId=" + encodeURIComponent(instagramAccountId), { cache: "no-store", credentials: "include", signal: controller.signal })
@@ -100,7 +101,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
       .catch((err) => { if (!controller.signal.aborted) setError(err instanceof Error ? err.message : "دریافت پاسخ‌ها ناموفق بود."); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [instagramAccountId]);
+  }, [instagramAccountId, mode]);
 
   function loadResponse(item: Saved, edit = false) {
     const applied: Partial<MessageDraft> = {
