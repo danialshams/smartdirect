@@ -1027,13 +1027,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" aria-pressed={editingView === "edit"} disabled={saving}
                   onClick={() => { resetEditableResponse(); setEditingView("edit"); }}
-                  className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-bold " + (editingView === "edit" ? "is-selected" : "")}>
+                  className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-1.5 py-2 text-[10px] font-bold sm:gap-2 sm:px-2.5 sm:text-xs " + (editingView === "edit" ? "is-selected" : "")}>
                   <Pencil size={17} aria-hidden="true"/> ویرایش پاسخ فعلی
                 </button>
                 <button type="button" aria-pressed={editingView === "replace"}
                   disabled={saving || loadingResources || automationTemplates.length === 0}
                   onClick={() => { resetEditableResponse(); setEditingView("replace"); }}
-                  className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-bold " + (editingView === "replace" ? "is-selected" : "")}>
+                  className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-1.5 py-2 text-[10px] font-bold sm:gap-2 sm:px-2.5 sm:text-xs " + (editingView === "replace" ? "is-selected" : "")}>
                   <BookOpen size={17} aria-hidden="true"/> جایگزینی پاسخ
                 </button>
               </div>
