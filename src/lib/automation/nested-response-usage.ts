@@ -23,15 +23,16 @@ export function nestedReplyUses(raw: string | null): NestedReplyUse[] {
       : typeof node.type === "string" ? node.type : "";
     const id = typeof node.savedResponseId === "string" ? node.savedResponseId.trim() : "";
     if (id && kinds.has(type)) out.push({ savedResponseId: id, path, label, messageType: type });
-    for (const key of ["quickReplies", "destinationQuickReplies"]) {
-      const children = node[key];
-      if (!Array.isArray(children)) continue;
-      children.forEach((child, index) => {
-        if (record(child)) visit(child, [...path, key, index],
-          typeof child.title === "string" && child.title.trim() ? child.title.trim() : label,
-          depth + 1);
-      });
-    }
+    // Executor traverses quickReplies first. Treat duplicated compatibility arrays
+    // as one logical branch instead of double-counting a saved reply.
+    const key = Array.isArray(node.quickReplies) ? "quickReplies" : "destinationQuickReplies";
+    const children = node[key];
+    if (!Array.isArray(children)) return;
+    children.forEach((child, index) => {
+      if (record(child)) visit(child, [...path, key, index],
+        typeof child.title === "string" && child.title.trim() ? child.title.trim() : label,
+        depth + 1);
+    });
   };
   visit(root, [], "گزینه پاسخ", 0);
   return out;
@@ -89,6 +90,20 @@ export function editQuickReplyDestination(raw: string | null, path: ReplyPath,
       throw new Error("تغییر گزینه‌ها یا شناسه‌های فرم فعال باید از ویرایشگر خود فرم انجام شود.");
     destination.quickReplies = fresh;
     destination.destinationQuickReplies = fresh;
+  }
+  // Older saved destinations can have both arrays. Synchronize corresponding
+  // nodes so the editor and executor see the same answer after an update.
+  if (path.length) {
+    const alternative: ReplyPath = [...path];
+    for (let i = 0; i < alternative.length; i += 2)
+      alternative[i] = alternative[i] === "quickReplies" ? "destinationQuickReplies" : "quickReplies";
+    const counterpart = nestedReplyAt(root, alternative);
+    if (counterpart && counterpart.payload === destination.payload) {
+      for (const key of ["savedResponseId", "text", "destinationText", "question", "destinationQuestion",
+        "mediaUrl", "destinationMediaUrl", "mediaId", "destinationMediaId",
+        "showcaseId", "destinationShowcaseId", "formId", "destinationFormId"])
+        if (key in destination) counterpart[key] = destination[key];
+    }
   }
   return JSON.stringify(root);
 }
