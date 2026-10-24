@@ -126,6 +126,7 @@ function serializeQuickReplies(replies: QuickReplyDraft[]): unknown[] {
     title: reply.title.trim(),
     payload: reply.payload,
     destinationType: reply.destinationType,
+    savedResponseId: reply.savedResponseId || null,
     destinationText: reply.destinationText.trim(),
     destinationFormId: reply.destinationFormId,
     destinationShowcaseId: reply.destinationShowcaseId,
