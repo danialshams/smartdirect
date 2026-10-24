@@ -172,6 +172,16 @@ assert(liveEditor.includes("liveRules.length === 0") &&
   liveEditor.includes("creationMode === \"existing\"") &&
   liveEditor.includes("رفتن به پاسخ انتخاب‌شده"),
   "Live reuse must not duplicate overlapping live comment rules.");
+const directEditor = src("components/dashboard/DirectAutomationEditor.tsx");
+const nameField = src("components/dashboard/CompleteResponseNameField.tsx");
+assert(liveEditor.includes("<CompleteResponseNameField") &&
+  directEditor.includes("<CompleteResponseNameField") &&
+  nameField.includes("نام پاسخ") && nameField.includes("daira-response-library__input"),
+  "Complete live and direct editor names must remain writable after nested message library removal.");
+assert(directEditor.includes("completeRules.length>0") &&
+  directEditor.includes("hideLibrary") &&
+  directEditor.includes("<CompleteAutomationPicker"),
+  "Direct automation must use a complete-rule picker, disable empty reuse, and hide nested message selector.");
 for (const token of [".daira-complete-reply", ".daira-complete-reply__select",
   ".daira-complete-reply__check", ".daira-response-library__mode:disabled"]) {
   assert(css.includes(token), "Missing semantic glass rule: " + token);
