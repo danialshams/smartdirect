@@ -32,6 +32,8 @@ type Props = {
   hideVideo?: boolean;
   hideForm?: boolean;
   textOnly?: boolean;
+  /** Whole-automation editors select a complete rule at the top; do not repeat message-level reuse. */
+  hideLibrary?: boolean;
   /** New story auto-reply creator: isolate its streamlined UI from other consumers. */
   storyCreateMode?: boolean;
   storyEditMode?: boolean;
@@ -99,7 +101,7 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "", price: "", originalPrice: "", linkUrl: "", buttonText: "", isActive: true };
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, onResponseNameChange, initialResponseName, keywordValid, onContinue, disabled, hideVideo = true, hideForm = false, textOnly = false, storyCreateMode = false, storyEditMode = false, onDraftChange, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, onResponseNameChange, initialResponseName, keywordValid, onContinue, disabled, hideVideo = true, hideForm = false, textOnly = false, hideLibrary = false, storyCreateMode = false, storyEditMode = false, onDraftChange, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [retryFile, setRetryFile] = useState<File | null>(null);
@@ -429,7 +431,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
   return (
     <div className={["space-y-5", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
-      <ReusableResponseLibrary
+      {!hideLibrary && <ReusableResponseLibrary
         instagramAccountId={instagramAccountId}
         message={message}
         onUpdate={onUpdate}
@@ -439,7 +441,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         onNameChange={(value) => { setAssetName(value); onResponseNameChange?.(value); }}
         onRegisterSave={(handler) => { saveNamedResponseRef.current = handler; }}
         disabled={Boolean(disabled)}
-      />
+      />}
       {!textOnly && (
         <>
           <div>
