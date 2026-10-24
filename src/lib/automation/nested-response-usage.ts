@@ -19,8 +19,8 @@ export function nestedReplyUses(raw: string | null): NestedReplyUse[] {
   const out: NestedReplyUse[] = [];
   const visit = (node: ReplyJson, path: ReplyPath, label: string, depth: number) => {
     if (depth > 8) return;
-    const type = typeof node.destinationType === "string" ? node.destinationType
-      : typeof node.type === "string" ? node.type : "";
+    const type = typeof node.type === "string" ? node.type
+      : typeof node.destinationType === "string" ? node.destinationType : "";
     const id = typeof node.savedResponseId === "string" ? node.savedResponseId.trim() : "";
     if (id && kinds.has(type)) out.push({ savedResponseId: id, path, label, messageType: type });
     // Executor traverses quickReplies first. Treat duplicated compatibility arrays
@@ -63,7 +63,7 @@ export function editQuickReplyDestination(raw: string | null, path: ReplyPath,
     return JSON.stringify(root);
   }
   if (!template) throw new Error("قالب جدید مشخص نیست.");
-  const type = typeof destination.destinationType === "string" ? destination.destinationType : destination.type;
+  const type = typeof destination.type === "string" ? destination.type : destination.destinationType;
   if (type !== template.messageType) throw new Error("نوع مقصد با پاسخ ذخیره‌شده برابر نیست.");
   const text = template.text || "";
   const question = template.messageType === "FORM" ? text : "";
