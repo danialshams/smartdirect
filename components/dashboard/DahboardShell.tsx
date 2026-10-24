@@ -62,8 +62,6 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
           </div>
         </main>
 
-        {!isAutomationCreateFlow && (
-          <>
         <div className="daira-bottom-nav-backdrop daira-bottom-nav-backdrop--liquid" aria-hidden="true" />
         <div className="daira-liquid-corner-guard daira-liquid-corner-guard--nav" aria-hidden="true" />
         <nav className={`daira-bottom-nav daira-bottom-nav--liquid${isHome ? "" : " daira-bottom-nav--contextual"}`} aria-label="ناوبری اصلی">
@@ -108,8 +106,6 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
             );
           })}
         </nav>
-          </>
-        )}
       </div>
       
     </SupportNotifications>

@@ -84,7 +84,7 @@ export default function ResponseTemplateDetails({ messages, showcases = [], form
         <p className="whitespace-pre-wrap break-words text-xs leading-6">{reply}</p>
       </div>)}
     {messages.map((message, index) => <div key={index} className="daira-response-library__preview-branch space-y-3 rounded-xl p-3">
-      <p className="text-xs font-bold text-[var(--daira-text-secondary)]">پیام {new Intl.NumberFormat("fa-IR").format(index + 1)} — {names[message.messageType]}</p>
+      <p className="text-xs font-bold text-[var(--daira-text-secondary)]">نوع پاسخ — {names[message.messageType]}</p>
       {message.text && <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[var(--daira-heading)]">{message.text}</p>}
       {["IMAGE", "VIDEO", "AUDIO"].includes(message.messageType) &&
         <MediaContent type={message.messageType} url={message.mediaUrl}/>}
