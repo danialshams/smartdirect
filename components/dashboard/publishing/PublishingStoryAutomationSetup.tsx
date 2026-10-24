@@ -9,6 +9,7 @@ import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./useSt
 import { createEmptyQuickReply } from "../automation-form-utils";
 import StoryReplyFormEditor from "./StoryReplyFormEditor";
 import StoryShowcaseSlidesEditor from "./StoryShowcaseSlidesEditor";
+import ReusableResponseLibrary from "./ReusableResponseLibrary";
 import { uploadFileWithProgress } from "./shared-upload";
 
 export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean>; prepareExternalSave: () => Promise<MessageDraft | null> };
@@ -420,6 +421,14 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
   return (
     <div className={["space-y-5", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
+      <ReusableResponseLibrary
+        instagramAccountId={instagramAccountId}
+        message={message}
+        onUpdate={onUpdate}
+        allowedTypes={textOnly ? ["TEXT"] : (["TEXT", "IMAGE", "AUDIO", "SHOWCASE", ...(hideVideo ? [] : ["VIDEO"]), ...(hideForm ? [] : ["FORM"])] as ResponseType[])}
+        prefix="پاسخ خودکار"
+        disabled={Boolean(disabled)}
+      />
       {!textOnly && (
         <>
           <div>
