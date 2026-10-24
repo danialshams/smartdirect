@@ -128,7 +128,7 @@ function serializeQuickReplies(replies: QuickReplyDraft[]): unknown[] {
     title: reply.title.trim(),
     payload: reply.payload,
     destinationType: reply.destinationType,
-    savedResponseId: reply.savedResponseId || null,
+    savedResponseId: null,
     destinationText: reply.destinationText.trim(),
     destinationFormId: reply.destinationFormId,
     destinationShowcaseId: reply.destinationShowcaseId,
@@ -213,6 +213,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [automationTemplates, setAutomationTemplates] = useState<AutomationTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [creationMode, setCreationMode] = useState<CreationMode>("new");
+  const [reuseKeywords, setReuseKeywords] = useState("");
   const [editingView, setEditingView] = useState<"edit" | "replace">("edit");
   const [loadingResources, setLoadingResources] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -305,6 +306,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   function applyAutomationTemplate(template: AutomationTemplate) {
     setSelectedTemplateId(template.id);
+    setReuseKeywords("");
     setCreationMode("existing");
     setPreviewTemplate(null);
     setError("");
@@ -655,32 +657,71 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
     if (creationMode === "existing") {
       const template = automationTemplates.find((item) => item.id === selectedTemplateId);
-      const targetIds = targetMediaIds;
-      if (!template) { setError("ابتدا پاسخ خودکار موجود را انتخاب کنید."); return; }
-      if (triggerType === "COMMENT_KEYWORD" && targetIds.length === 0) { setError("حداقل یک پست یا ریلز انتخاب کنید."); return; }
-      
+      if (!template) { setError("ابتدا پاسخ قبلی را انتخاب کن."); return; }
+      if (triggerType === "COMMENT_KEYWORD" && !targetMediaIds.length) { setError("ابتدا یک محتوا انتخاب کن."); return; }
+      const copiedKeyword = triggerType === "STORY_REPLY_KEYWORD"
+        ? reuseKeywords.split(/[,،;؛\n]+/).map(value => value.trim()).filter(Boolean).join(",")
+        : template.keyword || "";
+      if (triggerType === "STORY_REPLY_KEYWORD" && !copiedKeyword) {
+        setError("برای این پاسخ مستقل، کلمات کلیدی جدید تعیین کن."); return;
+      }
       setSaving(true);
       setError("");
+      let createdId = "";
       try {
-        const response = await fetch("/api/automations/" + encodeURIComponent(template.id), {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+        const result = await fetch("/api/automations", {
+          method: "POST", headers: {"Content-Type":"application/json"}, credentials:"include",
           body: JSON.stringify({
-            linkMediaOnly: true,
+            instagramAccountId: account.id, title: autoTitle,
             triggerType,
-            mediaId: triggerType === "COMMENT_KEYWORD" ? (targetIds.length === 1 ? targetIds[0] : null) : targetIds[0],
-            mediaIds: targetIds,
+            mediaId: triggerType === "COMMENT_KEYWORD" && targetMediaIds.length === 1 ? targetMediaIds[0] : null,
+            mediaIds: triggerType === "COMMENT_KEYWORD" ? targetMediaIds : [],
+            keyword: copiedKeyword,
+            keywordMatchMode: template.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT",
+            commentReplyVariants: triggerType === "COMMENT_KEYWORD" ? readPublicCommentReplies(template.commentReplyText) : undefined,
+            sendDm: triggerType === "STORY_REPLY_KEYWORD" ? true : template.sendDm !== false,
+            likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? Boolean(template.likeStoryReply) : false,
+            requireFollow: Boolean(template.requireFollow),
+            followGateText: template.requireFollow ? template.followGateText : null,
+            followGateButtonText: template.requireFollow ? template.followGateButtonText : null,
+            isActive: true,
           }),
         });
-        const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.error || result.message || "اتصال پاسخ خودکار ناموفق بود.");
+        const created = await result.json();
+        if (!result.ok || !created.success || !created.data?.id) throw new Error(created.error || "ایجاد نسخه مستقل ناموفق بود.");
+        createdId = created.data.id;
+        const raw = Array.isArray(template.messages) ? template.messages : [];
+        const source = template.sendDm === false && triggerType === "COMMENT_KEYWORD" ? [] : normalizeMessages(raw);
+        const copyNested = (replies: QuickReplyDraft[]): QuickReplyDraft[] => replies.map(reply => ({
+          ...reply, id: "local_" + crypto.randomUUID(), payload: "copy_" + crypto.randomUUID(),
+          savedResponseId: null, destinationQuickReplies: copyNested(reply.destinationQuickReplies),
+        }));
+        for (const [index, entry] of source.entries()) {
+          const buttons = readSavedLinks(raw[index]).map(button => ({...button, url:normalizeExternalLink(button.url)}));
+          const response = await fetch("/api/automations/" + createdId + "/messages", {
+            method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",
+            body:JSON.stringify({
+              messageType:entry.messageType,text:entry.text||null,mediaUrl:entry.mediaUrl||null,
+              mediaId:entry.mediaId||null,showcaseId:entry.showcaseId||null,formId:entry.formId||null,
+              savedResponseId:null,order:index,linkButtons:buttons,
+            }),
+          });
+          const saved = await response.json();
+          if (!response.ok || !saved.success || !saved.data?.id) throw new Error(saved.error || "کپی پیام ناموفق بود.");
+          for (const reply of copyNested(entry.quickReplies)) {
+            const replyResponse = await fetch("/api/automations/" + createdId + "/messages/" + saved.data.id + "/quick-replies", {
+              method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",
+              body:JSON.stringify({...reply, savedResponseId:null, destinationQuickReplies:serializeQuickReplies(reply.destinationQuickReplies),nextMessageId:null}),
+            });
+            const replyResult=await replyResponse.json();
+            if (!replyResponse.ok || !replyResult.success) throw new Error(replyResult.error || "کپی گزینه‌های فرم ناموفق بود.");
+          }
+        }
         setCompleted(true);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "اتصال پاسخ خودکار ناموفق بود.");
-      } finally {
-        setSaving(false);
-      }
+      } catch (error) {
+        if (createdId) await fetch("/api/automations/" + encodeURIComponent(createdId), {method:"DELETE",credentials:"include"}).catch(()=>undefined);
+        setError(error instanceof Error ? error.message : "کپی پاسخ قبلی ناموفق بود.");
+      } finally { setSaving(false); }
       return;
     }
 
@@ -1056,8 +1097,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               kind={triggerType}
               disabled={saving}
             />
+            {triggerType === "STORY_REPLY_KEYWORD" && <div className="rounded-xl border border-[var(--daira-outline)] bg-[var(--daira-glass-raised)] p-3">
+              <label className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">کلمات کلیدی این پاسخ جدید</label>
+              <input value={reuseKeywords} onChange={e => setReuseKeywords(e.target.value)} aria-label="کلمات کلیدی پاسخ مستقل" placeholder="مثلاً سفارش، موجودی" className="w-full rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-3 text-base outline-none"/>
+              <p className="mt-2 text-xs text-[var(--daira-text-secondary)]">محتوای پاسخ قبلی بدون تغییر کپی می‌شود. کلمات جدید فقط مخصوص این پاسخ‌اند.</p>
+            </div>}
             <button type="button" onClick={() => { void saveAutomation(); }}
-              disabled={!selectedTemplateId || loadingResources || mediaLoading || (triggerType === "COMMENT_KEYWORD" && selectedMediaCount === 0) || saving}
+              disabled={!selectedTemplateId || loadingResources || mediaLoading || (triggerType === "COMMENT_KEYWORD" && selectedMediaCount === 0) || (triggerType === "STORY_REPLY_KEYWORD" && !reuseKeywords.trim()) || saving}
               className="daira-complete-reply__select flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold disabled:opacity-50">
               {saving ? "در حال ثبت پاسخ..." : "ایجاد پاسخ مستقل"}
             </button>
