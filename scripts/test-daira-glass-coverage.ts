@@ -182,6 +182,9 @@ assert(directEditor.includes("completeRules.length>0") &&
   directEditor.includes("hideLibrary") &&
   directEditor.includes("<CompleteAutomationPicker"),
   "Direct automation must use a complete-rule picker, disable empty reuse, and hide nested message selector.");
+assert((directEditor.match(/<CompleteAutomationPicker kind="DM"/g) || []).length === 2 &&
+  !directEditor.includes('<CompleteAutomationPicker kind="COMMENT_KEYWORD"'),
+  "Saved DM rule previews and labels must never be rendered as comment automations.");
 for (const token of [".daira-complete-reply", ".daira-complete-reply__select",
   ".daira-complete-reply__check", ".daira-response-library__mode:disabled"]) {
   assert(css.includes(token), "Missing semantic glass rule: " + token);
