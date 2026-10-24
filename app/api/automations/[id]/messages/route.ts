@@ -92,7 +92,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     let origin: string | null | undefined;
-    try { origin = await validateSavedResponseOrigin(savedResponseId, automation.instagramAccountId, session.user.id); }
+    try { origin = await validateSavedResponseOrigin(savedResponseId, automation.instagramAccountId, session.user.id, messageType); }
     catch (error) { return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست." }, { status: 400 }); }
     const message = await prisma.automationMessage.create({
       data: {
