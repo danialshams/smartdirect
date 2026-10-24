@@ -164,7 +164,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
      </button>
     </div>
     {editingView==="replace"&&<div className="space-y-3">
-     <CompleteAutomationPicker kind="COMMENT_KEYWORD" items={completeRules}
+     <CompleteAutomationPicker kind="DM" items={completeRules}
       selected={completeRules.find(x=>x.id===selectedRuleId)||null}
       onSelect={x=>setSelectedRuleId(x.id)} onChange={()=>setSelectedRuleId("")} showcases={showcases} forms={forms}/>
      {selectedRuleId&&<button type="button" onClick={()=>router.push("/dashboard/direct-automation/"+encodeURIComponent(selectedRuleId))}
