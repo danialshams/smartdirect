@@ -213,6 +213,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
   }, [message, reusedOriginal, onUpdate]);
 
   type Selection = { messageId: string; mediaIds: string[];
+    quickReplyId?: string; nodePath?: Array<string | number>;
     expectedMessageUpdatedAt: string; expectedAutomationUpdatedAt: string };
   function selectedScopes(): Selection[] {
     const source = items.find((item) => item.id === editingId);
@@ -220,6 +221,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
       const choice = scopeSelected[usage.messageId];
       if (choice === undefined || (Array.isArray(choice) && !choice.length)) return [];
       return [{ messageId: usage.messageId, mediaIds: choice || [],
+        ...(usage.quickReplyId ? { quickReplyId: usage.quickReplyId, nodePath: usage.nodePath || [] } : {}),
         expectedMessageUpdatedAt: usage.messageUpdatedAt,
         expectedAutomationUpdatedAt: usage.automationUpdatedAt }];
     });
