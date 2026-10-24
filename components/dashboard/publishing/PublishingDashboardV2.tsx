@@ -660,7 +660,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const controller=new AbortController();setPreviousLoading(true);
     void fetch("/api/automations?instagramAccountId="+encodeURIComponent(selectedAccountId),{credentials:"include",cache:"no-store",signal:controller.signal})
       .then(async r=>{const v=await r.json();if(!r.ok||!v.success)throw Error(v.error||"دریافت پاسخ‌های قبلی ناموفق بود.");return v;})
-      .then(v=>{if(!controller.signal.aborted)setPreviousRules((Array.isArray(v.data)?v.data:[]).filter((x:CompleteAutomation)=>x.triggerType===(type==="STORY"?"STORY_REPLY_KEYWORD":"COMMENT_KEYWORD")));})
+      .then(v=>{if(!controller.signal.aborted)setPreviousRules((Array.isArray(v.data)?v.data:[]).filter((x:CompleteAutomation)=>x.triggerType===(type==="STORY"?"STORY_REPLY_KEYWORD":"COMMENT_KEYWORD") && (type==="STORY" ? normalizeMessages(x.messages).length>0 : readPublicCommentReplies(x.commentReplyText).length>=3)));})
       .catch(()=>{if(!controller.signal.aborted)setPreviousRules([]);})
       .finally(()=>{if(!controller.signal.aborted)setPreviousLoading(false);});
     return()=>controller.abort();
@@ -1030,7 +1030,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       const replyText=source?copiedText:directMessageText;
       const follower=source?Boolean(source.requireFollow):requireFollow;
       const followCopy=source?(source.followGateText||""):followGateText;
-      if (!normalizedKeywords.length) throw new Error("حداقل یک کلمه کلیدی اضافه کن.");
+      if (!normalizedKeywords.length && source?.keywordMatchMode!=="CONTAINS_ANY") throw new Error("حداقل یک کلمه کلیدی اضافه کن.");
       if (follower && !followCopy.trim()) throw new Error("متن درخواست فالو را وارد کن.");
 
       const automationResponse = await fetch("/api/automations", {
@@ -1040,6 +1040,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           instagramAccountId: selectedAccountId,
           triggerType: "COMMENT_KEYWORD",
           keyword: normalizedKeywords.join(","),
+          keywordMatchMode: source?.keywordMatchMode==="CONTAINS_ANY"?"CONTAINS_ANY":"EXACT",
           mediaId: `pending:${crypto.randomUUID()}`,
           commentReplyVariants: validatePublicCommentReplies(replyVariants),
           sendDm: Boolean(replyText.trim()),

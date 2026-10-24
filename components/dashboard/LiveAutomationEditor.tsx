@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, CheckCircle2, Lightbulb, Loader2 } from "lucide-react";
+import { CheckCircle2, Lightbulb, Loader2 } from "lucide-react";
 import ResponseModeSwitcher from "./ResponseModeSwitcher";
 import CompleteAutomationPicker from "./CompleteAutomationPicker";
 import { dairaPalette } from "../../lib/design-system/palette";

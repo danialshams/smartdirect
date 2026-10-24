@@ -338,6 +338,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
         }
 
         for (const job of visiblePublishedJobs) {
+          // Account-wide story rules already appear once in the automation list.
+          if (job.type === "STORY") continue;
           const storyKeywords = normalizeKeywordList(job.storyReplyTriggerKeywords);
           const commentKeywords = normalizeKeywordList(job.commentTriggerKeywords);
           const isStory = Boolean(storyKeywords) || (!commentKeywords && Boolean(job.storyReplyAutomationId));

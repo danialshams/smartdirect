@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, CheckCircle2, Eye, Pencil, X } from "lucide-react";
+import { Check, CheckCircle2, Eye, X } from "lucide-react";
 import { createEmptyMessage, normalizeMessages } from "./automation-form-utils";
 import type { FormItem, Showcase } from "./automation-form-utils";
 import ResponseTemplateDetails from "./ResponseTemplateDetails";
@@ -41,7 +41,7 @@ type Props<T extends CompleteAutomation> = {
 /** A complete rule (not a lone DM message) is the unit of reuse. */
 export default function CompleteAutomationPicker<T extends CompleteAutomation>({
   items, selected, onSelect, onChange, showcases = [], forms = [],
-  kind, disabled = false, onEdit,
+  kind, disabled = false,
 }: Props<T>) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   // Build expensive nested forms/media only after their row was previewed.
@@ -85,7 +85,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
       <div className="min-w-0 flex-1 space-y-1">
         <p className="text-xs font-bold text-[var(--daira-success-text)]">پاسخ انتخاب شد</p>
         <h3 className="break-words text-sm font-bold text-[var(--daira-heading)]">{label(selected)}</h3>
-        <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">همه تنظیمات این پاسخ، شامل شرایط فعال‌سازی و پیام‌ها، حفظ می‌شود. نیازی به تکمیل مجدد فرم نیست.</p>
+        <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">محتوای پاسخ قبلی برای ایجاد یک پاسخ مستقل استفاده می‌شود. پاسخ اصلی بدون تغییر باقی می‌ماند.</p>
       </div>
     </div>
     <div className="mt-4 flex flex-wrap gap-2">
