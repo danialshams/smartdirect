@@ -21,7 +21,8 @@ export function publicCommentReplyKey(value: string): string {
   return value.normalize("NFKC")
     .replace(/[يى]/g, "ی")
     .replace(/ك/g, "ک")
-    .replace(/[\u200c\u200d\u200e\u200f]/g, "")
+    .replace(/\u200c/g, " ")
+    .replace(/[\u200d\u200e\u200f]/g, "")
     .replace(/\s+/g, " ")
     .trim()
     .toLocaleLowerCase("fa-IR");
