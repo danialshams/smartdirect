@@ -902,13 +902,13 @@
 /* Canonical reply modes: dark readable labels, white/neutral glass and a
    restrained border/icon selection cue, identical in live/comment/story. */
 .daira-response-library__mode {
-  border-color:var(--daira-primary)!important;
+  border-color:var(--daira-glass-rim)!important;
   background:var(--daira-glass-raised)!important;
   color:var(--daira-heading)!important;
 }
 .daira-response-library__mode.is-selected {
   border-color:var(--daira-primary)!important;
-  background:var(--daira-glass-raised)!important;
+  background:var(--daira-outline-hover-bg)!important;
   box-shadow:inset 0 1px 0 var(--daira-glass-rim),0 0 0 1px var(--daira-input-border-hover);
 }
 .daira-response-library__mode-icon,
@@ -979,15 +979,24 @@
 .daira-response-library__mode:disabled {
   cursor:not-allowed;
   opacity:.42;
-  border-color:var(--daira-primary)!important;
+  border-color:var(--daira-glass-rim)!important;
   background:var(--daira-glass-raised)!important;
   box-shadow:none!important;
 }
 .daira-response-library__mode:disabled:hover {
-  border-color:var(--daira-primary)!important;
+  border-color:var(--daira-glass-rim)!important;
   background:var(--daira-glass-raised)!important;
 }
 .daira-complete-reply__select:disabled {cursor:not-allowed;opacity:.45;}
 @media(prefers-reduced-transparency:reduce) {
   .daira-complete-reply {background:var(--daira-surface);backdrop-filter:none;-webkit-backdrop-filter:none;}
 }
+
+.daira-response-library__item:has([aria-expanded="true"]){overflow:visible!important;}
+.daira-response-library__panel:has(.daira-response-library__item)>div{max-height:none!important;overflow:visible!important;}
+.daira-response-library__action{border-color:var(--daira-primary)!important;color:var(--daira-primary)!important;}
+.daira-reply-list-edit,.daira-reply-list-delete{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:0 10px;border:1px solid;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;transition:background .2s ease;}
+.daira-reply-list-edit{color:var(--daira-primary);border-color:var(--daira-input-border-hover);background:var(--daira-surface);}
+.daira-reply-list-delete{color:var(--daira-error-text);border-color:var(--daira-error-border);background:var(--daira-surface);}
+.daira-reply-list-edit:hover{background:var(--daira-outline-hover-bg);}
+.daira-reply-list-delete:hover{background:var(--daira-error-background);}

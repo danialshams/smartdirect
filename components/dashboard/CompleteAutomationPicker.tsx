@@ -100,21 +100,21 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
     </div>
     <div aria-hidden={expandedId !== selected.id} inert={expandedId !== selected.id}
       className={"daira-response-library__expander grid " + (expandedId === selected.id ? "is-expanded" : "")}>
-      <div className="min-h-0 overflow-hidden">
+      <div className="min-h-0">
         <div className="mt-3 border-t border-[var(--daira-glass-rim)] pt-3">{visited.includes(selected.id) && renderDetail(selected)}</div>
       </div>
     </div>
   </section>;
 
-  return <section className="daira-complete-reply rounded-2xl border p-3 sm:p-5" aria-label="پاسخ‌های کامل قبلی">
+  return <section className="daira-complete-reply rounded-2xl border p-3 sm:p-5" aria-label="پاسخ‌های قبلی">
     <div className="mb-4 flex items-center justify-between gap-2">
-      <h3 className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های کامل قبلی</h3>
+      <h3 className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های قبلی</h3>
       <span className="daira-response-library__count rounded-full px-3 py-1.5 text-xs text-[var(--daira-text-secondary)]">{new Intl.NumberFormat("fa-IR").format(items.length)} پاسخ</span>
     </div>
     <div className="space-y-3">
       {items.map((item) => {
         const expanded = expandedId === item.id;
-        return <article key={item.id} className="daira-response-library__item overflow-hidden rounded-xl border">
+        return <article key={item.id} className="daira-response-library__item rounded-xl border">
           <div className="flex min-h-[72px] items-center gap-2 p-3">
             <div className="min-w-0 flex-1">
               <h4 className="truncate text-xs font-bold leading-6 text-[var(--daira-heading)]">{label(item)}</h4>
@@ -131,10 +131,10 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
           </div>
           <div id={"complete-preview-" + item.id} aria-hidden={!expanded} inert={!expanded}
             className={"daira-response-library__expander grid " + (expanded ? "is-expanded" : "")}>
-            <div className="min-h-0 overflow-hidden">
+            <div className="min-h-0">
               <div className="space-y-3 border-t border-[var(--daira-glass-rim)] p-3">
                 {visited.includes(item.id) && renderDetail(item)}
-                {onEdit && <button type="button" onClick={() => onEdit(item)}
+                {false && onEdit && <button type="button" onClick={() => onEdit(item)}
                   className="daira-response-library__action flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold">
                   <Pencil size={15}/> ویرایش پاسخ اصلی
                 </button>}
