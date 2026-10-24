@@ -7,6 +7,7 @@ import { dairaPalette } from "../../lib/design-system/palette";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle } from "./publishing/PublishingStoryAutomationSetup";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
+import ReusableResponseLibrary from "./publishing/ReusableResponseLibrary";
 
 type Account = { id: string; igUsername: string; isConnected: boolean };
 type Rule = {
@@ -58,6 +59,7 @@ function Guide({ number, title, hint }: { number: number; title: string; hint?: 
 export default function LiveAutomationEditor({ id }: { id?: string }) {
   const router = useRouter();
   const responseEditorRef = useRef<PublishingStoryAutomationSetupHandle>(null);
+  const introSaveRef = useRef<((draft: MessageDraft) => Promise<boolean>) | null>(null);
   const [account, setAccount] = useState<Account | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [keywordDraft, setKeywordDraft] = useState("");
@@ -165,6 +167,10 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
         return;
       }
     }
+    if (introSaveRef.current && !await introSaveRef.current({ ...createEmptyMessage(), text: draft.initialText.trim() })) {
+      setSaving(false);
+      return;
+    }
     const payload = {
       instagramAccountId: account.id,
       title: draft.responseName.trim(),
@@ -247,12 +253,16 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
       </section>
 
       <section>
-        <div className="daira-flow-glass mb-4 space-y-2 rounded-xl p-4">
-          <label htmlFor="live-response-name" className="block text-xs font-bold text-[var(--daira-heading)]">نام پاسخ</label>
-          <input id="live-response-name" value={draft.responseName} maxLength={80} onChange={(event) => patch({responseName:event.target.value})}
-            placeholder="مثلاً کفش" className="w-full rounded-xl border border-[var(--daira-input-border)] bg-[var(--daira-surface)] px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)]" style={{fontSize:"16px"}}/>
-          <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">نامی برای این پاسخ انتخاب کن تا بعداً دوباره از آن استفاده کنی.</p>
-        </div>
+        {account && <ReusableResponseLibrary
+          instagramAccountId={account.id}
+          message={{ ...createEmptyMessage(), text: draft.initialText }}
+          onUpdate={(value) => patch({ initialText: value.text ?? "" })}
+          initialName={draft.responseName}
+          onNameChange={(value) => patch({responseName: value})}
+          onRegisterSave={(handler) => { introSaveRef.current = handler; }}
+          allowedTypes={["TEXT"]}
+          prefix="پاسخ خودکار لایو"
+        />}
         <Guide number={2} title="متن پاسخ در دایرکت کاربر" hint={anyComment ? "با ارسال هر کامنت متنی در لایو، این پاسخ در دایرکت کاربر ارسال می‌شود." : "پس از ارسال کلمه کلیدی مشخص در لایو، این پاسخ در دایرکت کاربر ارسال می‌شود."} />
         <div className="space-y-2 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
           <label htmlFor="live-intro" className="block text-xs font-semibold text-[var(--daira-input-label)]">متن پاسخ در دایرکت کاربر</label>
