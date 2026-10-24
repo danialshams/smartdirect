@@ -50,7 +50,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
     setVisited((current) => current.includes(id) ? current : [...current, id]);
     setExpandedId((current) => current === id ? null : id);
   };
-  const label = (item: T) => item.title?.trim() || "پاسخ بدون نام";
+  const label = (item: T) => `${item.keyword?.trim() ? "کلمات کلیدی: " + item.keyword : "فعال‌سازی برای همه"} - ${item.keyword?.trim() ? "کلمات کلیدی: " + item.keyword : "تمام پیام‌ها"}`;
   const renderDetail = (item: T) => {
     const messages = normalizeMessages(item.messages || []);
     const displayedMessages = kind === "LIVE"
@@ -59,7 +59,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
       : messages;
     return <div className="space-y-3">
       <div className="daira-response-library__preview-branch space-y-2 rounded-xl p-3 text-xs leading-6 text-[var(--daira-text)]">
-        <p><strong className="text-[var(--daira-heading)]">روش فعال‌سازی:</strong>{" "}
+        <p><strong className="text-[var(--daira-heading)]">کلمات کلیدی:</strong>{" "}
           {(item.keywordMatchMode === "CONTAINS_ANY" || item.matchMode === "CONTAINS_ANY") && !item.keyword ? "هر کامنت / ریپلای" : item.keyword || "بدون کلمات کلیدی"}</p>
         {kind === "LIVE" && item.followupEnabled &&
           <p><strong>ادامه گفتگو:</strong> {item.followupKeyword || "تنظیم شده"}</p>}

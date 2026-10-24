@@ -379,6 +379,7 @@ export default function IceBreakerManager({
                   accountId={account.id}
                   automationId={editor.automationId}
                   modernResponseFlow
+                  hideReusableLibrary
                   canSave={draftReady && !saving}
                   dirty={canSaveChanges}
                   onResponseDirtyChange={setResponseDirty}

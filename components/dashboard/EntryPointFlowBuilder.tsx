@@ -28,6 +28,7 @@ type EntryPointFlowBuilderProps = {
     responseTypeDescription?: string;
     textPlaceholder?: string;
     hideVideo?: boolean;
+    hideReusableLibrary?: boolean;
     modernResponseFlow?: boolean;
     canSave?: boolean;
     onResponseDirtyChange?: (dirty: boolean) => void;
@@ -114,6 +115,7 @@ export default function EntryPointFlowBuilder({
     responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.",
     textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...",
     hideVideo = false,
+    hideReusableLibrary = false,
     modernResponseFlow = false,
     canSave = true,
     onResponseDirtyChange,
@@ -918,6 +920,7 @@ export default function EntryPointFlowBuilder({
                         instagramAccountId={accountId}
                         showFinalSave
                         hideVideo={hideVideo}
+                        hideLibrary={hideReusableLibrary}
                         storyCreateMode={modernResponseFlow}
                         storyEditMode={modernResponseFlow && Boolean(automationId)}
                         onDraftChange={modernResponseFlow && Boolean(automationId) ? setShowcaseDraftChanged : undefined}

@@ -902,12 +902,12 @@
 /* Canonical reply modes: dark readable labels, white/neutral glass and a
    restrained border/icon selection cue, identical in live/comment/story. */
 .daira-response-library__mode {
-  border-color:var(--daira-glass-rim)!important;
+  border-color:var(--daira-primary)!important;
   background:var(--daira-glass-raised)!important;
   color:var(--daira-heading)!important;
 }
 .daira-response-library__mode.is-selected {
-  border-color:var(--daira-input-border-hover)!important;
+  border-color:var(--daira-primary)!important;
   background:var(--daira-glass-raised)!important;
   box-shadow:inset 0 1px 0 var(--daira-glass-rim),0 0 0 1px var(--daira-input-border-hover);
 }
@@ -979,12 +979,12 @@
 .daira-response-library__mode:disabled {
   cursor:not-allowed;
   opacity:.42;
-  border-color:var(--daira-glass-rim)!important;
+  border-color:var(--daira-primary)!important;
   background:var(--daira-glass-raised)!important;
   box-shadow:none!important;
 }
 .daira-response-library__mode:disabled:hover {
-  border-color:var(--daira-glass-rim)!important;
+  border-color:var(--daira-primary)!important;
   background:var(--daira-glass-raised)!important;
 }
 .daira-complete-reply__select:disabled {cursor:not-allowed;opacity:.45;}

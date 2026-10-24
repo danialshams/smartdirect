@@ -213,8 +213,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [automationTemplates, setAutomationTemplates] = useState<AutomationTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [creationMode, setCreationMode] = useState<CreationMode>("new");
-  const [editingView, setEditingView] = useState<"summary" | "edit" | "replace">("summary");
-  const [showCurrentDetails, setShowCurrentDetails] = useState(false);
+  const [editingView, setEditingView] = useState<"edit" | "replace">("edit");
   const [loadingResources, setLoadingResources] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -350,7 +349,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       nextExtraLinks[entry.id] = readSavedLinks(raw[index + 1]);
     });
     setSelectedTemplateId(template.id);
-    setResponseName(template.title?.trim() || initialEditState?.responseName || "پاسخ قبلی");
+    setResponseName(template.title?.trim() || initialEditState?.responseName || "");
     setKeyword(template.keyword || "");
     setKeywordMatchMode(template.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT");
     setCommentReplies((() => {
@@ -517,7 +516,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       setError(commentFormError || "برای ذخیره، ابتدا تغییری در پاسخ خودکار ایجاد کنید.");
       return;
     }
-    if ((isEditing || creationMode === "new") && (!responseName.trim() || responseName.trim().length > 80)) { setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه)."); return; }
+    
     if (isEditing && triggerType === "COMMENT_KEYWORD" && originalMediaIds.length > 1 && !applyScope) {
       setEditScopeIds([...originalMediaIds]);
       setEditScopeOpen(true);
@@ -525,6 +524,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     }
     if (applyScope && !applyScope.length) { setError("حداقل یک محتوا را برای ویرایش انتخاب کن."); return; }
     const cleanKeywords = keywords;
+    const autoTitle = (triggerType === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ استوری") + " - " + (keywordMatchMode === "CONTAINS_ANY" ? "همه" : cleanKeywords.join("، ")).slice(0, 60);
     const currentMessage = finalMessage ?? message;
     const targetMediaIds = Array.from(new Set(applyScope
       ? [...applyScope, ...selectedMediaIds.filter((id) => !originalMediaIds.includes(id))]
@@ -555,7 +555,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             credentials: "include",
             body: JSON.stringify({
               expectedUpdatedAt: editAutomation.updatedAt,
-              title: responseName.trim(),
+              title: autoTitle,
               mediaId: targetMediaIds[0],
               keywordMatchMode,
               keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
@@ -631,7 +631,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             mediaIds: targetMediaIds,
             sourceMediaId: editingMediaId || (initialEditState?.mediaIds.length === 1 ? initialEditState.mediaIds[0] : null),
             expectedUpdatedAt: editAutomation.updatedAt,
-            title: responseName.trim(),
+            title: autoTitle,
             commentReplyVariants: validatePublicCommentReplies(commentReplies),
             requireFollow,
             followGateText: requireFollow ? followGateText.trim() : null,
@@ -722,7 +722,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         credentials: "include",
         body: JSON.stringify({
           instagramAccountId: account.id,
-          title: responseName.trim(),
+          title: autoTitle,
           triggerType,
           mediaId: triggerType === "COMMENT_KEYWORD" ? (targetMediaIds.length === 1 ? targetMediaIds[0] : null) : targetMediaIds[0] || null,
           keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
@@ -994,72 +994,33 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         )}
 
         {isEditing && (
-          <section className="mt-5 space-y-3" aria-label="مدیریت پاسخ فعلی">
-            <div><AutomationSectionGuide>۲. پاسخ فعلی — می‌توانی همین پاسخ را ویرایش کنی یا آن را برای محتوای انتخاب‌شده جایگزین کنی.</AutomationSectionGuide></div>
-            <div className="daira-complete-reply space-y-4 rounded-2xl border p-4 sm:p-5">
-              <div className="flex items-start gap-3">
-                <span className="daira-complete-reply__check flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
-                  <ShieldCheck size={20} aria-hidden="true"/>
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-bold text-[var(--daira-heading)]">{editAutomation?.title || "پاسخ فعلی"}</h2>
-                  <p className="mt-1 text-xs leading-6 text-[var(--daira-text-secondary)]">این پاسخ به محتوای انتخاب‌شده متصل است.</p>
-                </div>
-              </div>
-              <button type="button" aria-expanded={showCurrentDetails}
-                onClick={() => setShowCurrentDetails((current) => !current)}
-                className="daira-response-library__eye flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold">
-                {showCurrentDetails ? <X size={17}/> : <Eye size={17}/>}
-                {showCurrentDetails ? "بستن جزئیات" : "مشاهده جزئیات پاسخ فعلی"}
-              </button>
-              <div aria-hidden={!showCurrentDetails} inert={!showCurrentDetails}
-                className={"daira-response-library__expander grid " + (showCurrentDetails ? "is-expanded" : "")}>
-                <div className="min-h-0 overflow-hidden">
-                  <div className="border-t border-[var(--daira-glass-rim)] pt-3">
-                    {editAutomation && <ResponseTemplateDetails
-                      messages={normalizeMessages(editAutomation.messages)}
-                      keyword={editAutomation.keyword}
-                      commentReplyText={triggerType === "COMMENT_KEYWORD" ? editAutomation.commentReplyText : undefined}
-                      showcases={showcases} forms={forms}/>}
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" aria-pressed={editingView === "edit"} disabled={saving}
-                  onClick={() => { resetEditableResponse(); setEditingView("edit"); }}
-                  className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-1.5 py-2 text-[10px] font-bold sm:gap-2 sm:px-2.5 sm:text-xs " + (editingView === "edit" ? "is-selected" : "")}>
-                  <Pencil size={17} aria-hidden="true"/> ویرایش پاسخ فعلی
-                </button>
-                <button type="button" aria-pressed={editingView === "replace"}
-                  disabled={saving || loadingResources || automationTemplates.length === 0}
-                  onClick={() => { resetEditableResponse(); setEditingView("replace"); }}
-                  className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-1.5 py-2 text-[10px] font-bold sm:gap-2 sm:px-2.5 sm:text-xs " + (editingView === "replace" ? "is-selected" : "")}>
-                  <BookOpen size={17} aria-hidden="true"/> جایگزینی پاسخ
-                </button>
-              </div>
-              {loadingResources && <p className="text-xs text-[var(--daira-text-secondary)]">در حال بررسی پاسخ‌های سازگار...</p>}
-              {!loadingResources && automationTemplates.length === 0 &&
-                <p className="text-xs text-[var(--daira-text-secondary)]">هنوز پاسخ کامل دیگری برای جایگزینی وجود ندارد.</p>}
-            </div>
+          <section className="mt-5 space-y-3" aria-label="استفاده از پاسخ‌های قبلی">
+            <button type="button" aria-expanded={editingView === "replace"}
+              disabled={saving || loadingResources || automationTemplates.length === 0}
+              onClick={() => {
+                if (editingView === "replace") {
+                  resetEditableResponse();
+                  setEditingView("edit");
+                } else {
+                  setEditingView("replace");
+                }
+              }}
+              className={"daira-response-library__mode flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold " + (editingView === "replace" ? "is-selected" : "")}>
+              <BookOpen size={17} aria-hidden="true" /> استفاده از پاسخ‌های قبلی
+            </button>
             {editingView === "replace" && (
               <div className="space-y-3">
-                <CompleteAutomationPicker
-                  items={automationTemplates}
+                <CompleteAutomationPicker items={automationTemplates}
                   selected={replacementTemplate || null}
                   onSelect={selectReplacementTemplate}
                   onChange={() => { setSelectedTemplateId(""); setPreviewTemplate(null); }}
-                  showcases={showcases}
-                  forms={forms}
-                  kind={triggerType}
-                  disabled={saving}
-                />
-                {replacementTemplate && <button type="button"
-                  onClick={() => { void saveAutomation(); }}
+                  showcases={showcases} forms={forms} kind={triggerType} disabled={saving} />
+                {replacementTemplate && <button type="button" onClick={() => { void saveAutomation(); }}
                   disabled={saving || mediaLoading || !selectedMediaIds.length}
                   className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold disabled:opacity-50">
                   {saving ? "در حال جایگزینی..." : "ذخیره پاسخ جایگزین"}
                 </button>}
-                <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">این عملیات تنظیمات پاسخ انتخاب‌شده را برای محتوای فعلی جایگزین می‌کند؛ سایر محل‌های استفاده بدون تأیید صریح تغییر نمی‌کنند.</p>
+                <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">انتخاب پاسخ قبلی، تنظیمات را فقط برای محتوای تأییدشده جایگزین می‌کند.</p>
               </div>
             )}
           </section>
@@ -1101,14 +1062,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         )}
             {(creationMode === "new" && !isEditing || isEditing && editingView === "edit") && (
             <div className="mt-5 space-y-5">
-              {triggerType === "COMMENT_KEYWORD" && <section className="daira-flow-glass space-y-2 rounded-2xl p-4 sm:p-5">
-                <label htmlFor="automation-response-name" className="block text-sm font-bold text-[var(--daira-heading)]">نام پاسخ</label>
-                <input id="automation-response-name" value={responseName} onChange={(event) => setResponseName(event.target.value)}
-                  maxLength={80} placeholder="مثلاً کفش"
-                  className="w-full rounded-xl border border-[var(--daira-input-border)] bg-[var(--daira-surface)] px-3.5 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)]"
-                  style={{fontSize:"16px"}} />
-                <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">نامی برای این پاسخ انتخاب کن تا بتوانی بعداً دوباره از آن استفاده کنی.</p>
-              </section>}
             <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? (isEditing ? "۲. شرط فعال‌سازی — روش فعال شدن پاسخ خودکار را ویرایش کن." : "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص.") : (isEditing ? "۲. شرط فعال‌سازی — کلمات کلیدی ریپلای استوری را ویرایش کن." : "۳. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند.")}</AutomationSectionGuide></div>
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
               {triggerType === "COMMENT_KEYWORD" && (
