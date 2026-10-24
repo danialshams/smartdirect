@@ -1,8 +1,41 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { partitionResponseMediaScope } from "../src/lib/automation/response-media-scope";
+import { checkedUsagePlan, checkedUsageMedia } from "../src/lib/automation/saved-response-scope";
 import { displayReusableAssetTitle } from "../src/lib/automation/reusable-titles";
 import { validatePublicCommentReplies } from "../src/lib/automation/comment-reply-variants";
+
+const checked = checkedUsagePlan([
+  { messageId: "m1", mediaIds: ["post-1", "post-2", "post-3"] },
+  { messageId: "m2", mediaIds: [] },
+], [
+  { messageId: "m1", mediaIds: ["post-1", "post-3"], expectedMessageUpdatedAt: "v1", expectedAutomationUpdatedAt: "v1" },
+  { messageId: "m2", mediaIds: [], expectedMessageUpdatedAt: "v2", expectedAutomationUpdatedAt: "v2" },
+]);
+assert.deepEqual(checked[0].remaining, ["post-2"]);
+assert.equal(checked[0].split, true);
+assert.deepEqual(checked[1].selected, []);
+assert.equal(checked[1].split, false);
+assert.deepEqual(checkedUsageMedia(["one","two"], ["one","two"]).remaining, []);
+assert.throws(() => checkedUsageMedia(["one"], ["another"]));
+assert.throws(() => checkedUsageMedia(["one"], []));
+assert.throws(() => checkedUsagePlan([{ messageId: "one", mediaIds: [] }], [
+  { messageId: "one", mediaIds: [], expectedMessageUpdatedAt: "1", expectedAutomationUpdatedAt: "1" },
+  { messageId: "one", mediaIds: [], expectedMessageUpdatedAt: "1", expectedAutomationUpdatedAt: "1" },
+]));
+assert.throws(() => checkedUsagePlan([], [
+  { messageId: "not-owned", mediaIds: [], expectedMessageUpdatedAt: "1", expectedAutomationUpdatedAt: "1" },
+]));
+
+const scopedRoute = readFileSync("app/api/saved-responses/[id]/apply/route.ts", "utf8");
+assert(scopedRoute.includes("prisma.$transaction"), "Applying reply changes must be atomic.");
+assert(scopedRoute.includes("updatedAt: expected"), "Template edits require optimistic version checks.");
+assert(scopedRoute.includes("commentAutomationId: clone.id"), "Selected publishing jobs must follow their cloned comment automation.");
+assert(scopedRoute.includes("nextMessageId: reply.nextMessageId ? remap.get(reply.nextMessageId) || null : null"),
+  "Cloned quick replies must never point to old sibling automation messages.");
+const picker = readFileSync("components/dashboard/publishing/ReusableResponseLibrary.tsx", "utf8");
+assert(picker.includes("GlassModalPresence open={scopeOpen}") && picker.includes("selectedScopes()"),
+  "Reusable response editing must require explicit checked destinations.");
 
 const all = partitionResponseMediaScope(["post-1","reel-2","post-3"], ["post-1","reel-2","post-3"]);
 assert.equal(all.splitShared, false);
