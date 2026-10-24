@@ -41,6 +41,7 @@ function parseOption(raw: unknown, level: number, seen: Set<string>): QuickReply
   const children = destinationType === "FORM" ? parseOptions(data.destinationQuickReplies, level + 1, seen) : [];
   return {
     id: asString(data.id), isExit: data.isExit === true, title, payload, destinationType,
+    savedResponseId: asString(data.savedResponseId) || null,
     nextMessageId: null, destinationText, destinationFormId: asString(data.destinationFormId),
     destinationShowcaseId, destinationMediaUrl, destinationMediaId, destinationQuestion,
     destinationQuickReplies: children,
@@ -113,6 +114,7 @@ export function serializeLiveQuickReply(item: QuickReplyDraft) {
     payload: item.payload,
     replyText: JSON.stringify({
       type: item.destinationType, isExit: item.isExit === true, text: item.destinationText,
+      savedResponseId: item.savedResponseId || null,
       formId: item.destinationFormId, showcaseId: item.destinationShowcaseId,
       mediaUrl: item.destinationMediaUrl, mediaId: item.destinationMediaId,
       question: item.destinationQuestion, destinationQuestion: item.destinationQuestion,
