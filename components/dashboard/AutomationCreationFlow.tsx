@@ -597,7 +597,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             linkMediaOnly: true,
             triggerType,
             mediaId: triggerType === "COMMENT_KEYWORD" ? (targetIds.length === 1 ? targetIds[0] : null) : targetIds[0],
-            mediaIds: triggerType === "COMMENT_KEYWORD" ? targetIds : [],
+            mediaIds: targetIds,
           }),
         });
         const result = await response.json();
