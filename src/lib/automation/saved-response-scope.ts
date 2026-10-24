@@ -43,3 +43,16 @@ export function checkedUsagePlan(
     return { messageId: entry.messageId, ...plan };
   });
 }
+
+/** A shared media automation has one media assignment, even if several messages
+ * or nested branches reuse the same response. A partial edit must select the
+ * same media subset for every simultaneously edited reference.
+ */
+export function assertCoherentMixedScope(direct: string[][], nested: string[][]): boolean {
+  if (!direct.length || !nested.length) return false;
+  const selected = [...direct, ...nested];
+  const normalized = selected.map((ids) => Array.from(new Set(ids)).sort().join("\\u0000"));
+  if (new Set(normalized).size !== 1)
+    throw new Error("برای پیام اصلی و شاخه‌های فرم یک اتوماسیون، محتوای یکسانی را انتخاب کن.");
+  return true;
+}
