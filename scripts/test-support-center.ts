@@ -38,7 +38,8 @@ async function main() {
     const glass = source("app/daira-glass.css");
     assert(glass.includes(".daira-support__header") && glass.includes("var(--daira-glass-raised)"), "Support titles must use the shared raised glass material");
     assert(styles.includes("background:var(--daira-glass-raised)") && styles.includes("background:var(--daira-brand-200)"), "Support heading and icon must draw from canonical palette tokens");
-    assert(styles.includes("flex-direction:row;direction:ltr"), "Plus icon should follow the create button label visually in RTL");
+    assert(styles.includes("flex-direction:row;direction:rtl") && list.includes('<span>درخواست جدید</span><Plus'), "Support create button must show its label first and plus icon after it in RTL");
+    assert(newForm.includes("انتخاب تصویر <ImagePlus") && newForm.includes('"ثبت درخواست"}<Send'), "Upload and submit actions should also show labels before icons");
     const global = source("components/dashboard/SupportNotifications.tsx");
     assert(global.includes("SupportUnreadBadge") && global.includes("setTimeout") && global.includes("EventSource"), "Global notifications missing");
     const shell = source("components/dashboard/DahboardShell.tsx");
