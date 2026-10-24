@@ -33,7 +33,7 @@ type Props<T extends CompleteAutomation> = {
   onChange: () => void;
   showcases?: Showcase[];
   forms?: FormItem[];
-  kind: "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD" | "LIVE" | "DM";
+  kind: "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD" | "LIVE" | "DM" | "SHARE";
   disabled?: boolean;
   onEdit?: (item: T) => void;
 };
@@ -50,7 +50,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
     setVisited((current) => current.includes(id) ? current : [...current, id]);
     setExpandedId((current) => current === id ? null : id);
   };
-  const label = (item: T) => `${kind === "LIVE" ? "پاسخ لایو" : kind === "COMMENT_KEYWORD" ? "پاسخ کامنت" : kind === "STORY_REPLY_KEYWORD" ? "پاسخ استوری" : "پاسخ دایرکت"} - ${item.keyword?.trim() ? "کلمات کلیدی: " + item.keyword : "فعال‌سازی برای همه"}`;
+  const label = (item: T) => `${kind === "LIVE" ? "پاسخ لایو" : kind === "COMMENT_KEYWORD" ? "پاسخ کامنت" : kind === "STORY_REPLY_KEYWORD" ? "پاسخ استوری" : kind === "SHARE" ? (item.triggerType === "STORY_MENTION" ? "پاسخ منشن" : "پاسخ اشتراک‌گذاری") : "پاسخ دایرکت"} - ${item.keyword?.trim() ? "کلمات کلیدی: " + item.keyword : "فعال‌سازی برای همه"}`;
   const renderDetail = (item: T) => {
     const messages = normalizeMessages(item.messages || []);
     const displayedMessages = kind === "LIVE"
@@ -100,7 +100,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
     </div>
     <div aria-hidden={expandedId !== selected.id} inert={expandedId !== selected.id}
       className={"daira-response-library__expander grid " + (expandedId === selected.id ? "is-expanded" : "")}>
-      <div className="min-h-0">
+      <div className={expandedId === selected.id ? "min-h-0 overflow-visible" : "min-h-0 overflow-hidden"}>
         <div className="mt-3 border-t border-[var(--daira-glass-rim)] pt-3">{visited.includes(selected.id) && renderDetail(selected)}</div>
       </div>
     </div>
@@ -131,7 +131,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
           </div>
           <div id={"complete-preview-" + item.id} aria-hidden={!expanded} inert={!expanded}
             className={"daira-response-library__expander grid " + (expanded ? "is-expanded" : "")}>
-            <div className="min-h-0">
+            <div className={expanded ? "min-h-0 overflow-visible" : "min-h-0 overflow-hidden"}>
               <div className="space-y-3 border-t border-[var(--daira-glass-rim)] p-3">
                 {visited.includes(item.id) && renderDetail(item)}
                 

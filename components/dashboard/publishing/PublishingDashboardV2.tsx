@@ -1761,7 +1761,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   </div>
 
                   <div className="border-t border-[var(--daira-border)] pt-5">
-                    <p className="daira-guide-glass mb-3 rounded-xl border p-3 text-xs leading-6 text-[var(--daira-text)]">برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم، حداقل ۳ پاسخ متفاوت بنویس. حداکثر ۵ پاسخ ثبت می‌شود و یکی به‌صورت تصادفی انتخاب خواهد شد.</p>
+                    <PublishingSectionGuide number={4} title="متن‌های پاسخ زیر کامنت">برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم، حداقل ۳ پاسخ متفاوت بنویس. حداکثر ۵ پاسخ ثبت می‌شود و یکی به‌صورت تصادفی انتخاب خواهد شد.</PublishingSectionGuide>
                       <CommentReplyVariantsField values={publishingCommentReplies} onChange={setPublishingCommentReplies} disabled={publishing} />
                   </div>
 

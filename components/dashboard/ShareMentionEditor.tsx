@@ -203,7 +203,7 @@ export default function ShareMentionEditor({id}:{id?:string}){
       <CompleteAutomationPicker items={previousAutomations.filter(item=>item.triggerType===trigger)}
         selected={previousAutomations.find(item=>item.id===selectedPreviousId)||null}
         onSelect={item=>setSelectedPreviousId(item.id)}
-        onChange={()=>setSelectedPreviousId("")} showcases={showcases} forms={forms} kind="DM" disabled={saving}/>
+        onChange={()=>setSelectedPreviousId("")} showcases={showcases} forms={forms} kind="SHARE" disabled={saving}/>
       <button type="button" disabled={saving || !selectedPreviousId || !responseValid}
         onClick={()=>void save()} className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold disabled:opacity-50">
         {saving?"در حال ثبت...":"ثبت پاسخ مستقل"}

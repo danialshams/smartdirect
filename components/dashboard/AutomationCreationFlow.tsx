@@ -1071,7 +1071,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         )}
 
         {!isEditing && (<>
-        <div className="mb-2 mt-6"><AutomationSectionGuide>۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن.</AutomationSectionGuide></div>
+        <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "STORY_REPLY_KEYWORD" ? "۱. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن." : "۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن."}</AutomationSectionGuide></div>
         <section aria-label="روش پاسخ" className="space-y-2">
           <ResponseModeSwitcher value={creationMode}
             existingAvailable={automationTemplates.length > 0}
@@ -1111,7 +1111,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         )}
             {(creationMode === "new" && !isEditing || isEditing && editingView === "edit") && (
             <div className="mt-5 space-y-5">
-            <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? (isEditing ? "۲. شرط فعال‌سازی — روش فعال شدن پاسخ خودکار را ویرایش کن." : "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص.") : (isEditing ? "۲. شرط فعال‌سازی — کلمات کلیدی ریپلای استوری را ویرایش کن." : "۳. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند.")}</AutomationSectionGuide></div>
+            <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? (isEditing ? "۲. شرط فعال‌سازی — روش فعال شدن پاسخ خودکار را ویرایش کن." : "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص.") : (isEditing ? "۱. شرط فعال‌سازی — کلمات کلیدی ریپلای استوری را ویرایش کن." : "۲. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند.")}</AutomationSectionGuide></div>
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
               {triggerType === "COMMENT_KEYWORD" && (
                 <div className="mb-3">
@@ -1319,7 +1319,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 </div>
               ) : (
                 <div className="space-y-3">
-                <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. نوع پاسخ — محتوای پاسخ استوری را ویرایش کن." : "۴. نوع پاسخ — مشخص کن در جواب استوری متن، عکس، ویدیو، وویس، ویترین یا فرم ارسال شود."}</AutomationSectionGuide></div>
+                <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۲. نوع پاسخ — محتوای پاسخ استوری را ویرایش کن." : "۳. نوع پاسخ — مشخص کن در جواب استوری متن، عکس، ویدیو، وویس، ویترین یا فرم ارسال شود."}</AutomationSectionGuide></div>
                 <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                 <PublishingStoryAutomationSetup
                   message={message}
@@ -1345,7 +1345,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   extraSettings={
                     <div className="space-y-3 pt-2">
                       <div className="mb-2 mt-4">
-                        <AutomationSectionGuide>{isEditing ? "۴. اجبار به فالو — تنظیمات فالو را ویرایش کن." : "۵. اجبار به فالو — اختیاری است؛ وقتی فعال باشد کاربر قبل از دریافت پاسخ باید پیج را فالو کند."}</AutomationSectionGuide>
+                        <AutomationSectionGuide>{isEditing ? "۳. اجبار به فالو — تنظیمات فالو را ویرایش کن." : "۴. اجبار به فالو — اختیاری است؛ وقتی فعال باشد کاربر قبل از دریافت پاسخ باید پیج را فالو کند."}</AutomationSectionGuide>
                       </div>
                       <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                         <label className="flex cursor-pointer items-center justify-between gap-3">
@@ -1377,7 +1377,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         )}
                       </section>
                       <div className="mb-2 mt-4">
-                        <AutomationSectionGuide>{isEditing ? "۵. لایک ریپلای — لایک خودکار ریپلای استوری را تنظیم کن." : "۶. لایک ریپلای — اختیاری است؛ در صورت فعال بودن، ریپلای کاربر به استوری لایک می‌شود."}</AutomationSectionGuide>
+                        <AutomationSectionGuide>{isEditing ? "۴. لایک ریپلای — لایک خودکار ریپلای استوری را تنظیم کن." : "۵. لایک ریپلای — اختیاری است؛ در صورت فعال بودن، ریپلای کاربر به استوری لایک می‌شود."}</AutomationSectionGuide>
                       </div>
                       <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                         <label className="flex cursor-pointer items-center justify-between gap-3">

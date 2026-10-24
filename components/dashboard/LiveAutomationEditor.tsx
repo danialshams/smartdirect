@@ -314,6 +314,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
           </div>}
         </section>
       )}
+      {!id && creationMode==="existing" && error && <p role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] p-3 text-xs leading-6 text-[var(--daira-error-text)]">{error}</p>}
       {(id ? editingView === "edit" : creationMode === "new") && (<>
       <section>
         <Guide number={1} title="شرط پاسخ‌دهی به کامنت لایو" hint={anyComment ? "برای هر کامنت متنی در لایو، بدون نیاز به کلمه کلیدی، پاسخ دایرکت ارسال می‌شود." : "وقتی بیننده یکی از عبارت‌های تعیین‌شده را در لایو بنویسد، پاسخ در دایرکت ارسال می‌شود."} />

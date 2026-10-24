@@ -572,7 +572,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                   </div>
 
                   <div className="flex shrink-0 items-center gap-1.5">
-                    {scope === "stories" && item.title === "پاسخ خودکار استوری" && !item.key.startsWith("publish:") && <label className="inline-flex items-center gap-1 text-[11px] text-[var(--daira-text)]"><input type="checkbox" aria-label="فعال‌سازی پاسخ استوری" checked={item.isActive !== false} onChange={() => void toggleStoryRule(item)} className="accent-blue-600"/>فعال</label>}
+                    {scope === "stories" && item.title === "پاسخ خودکار استوری" && !item.key.startsWith("publish:") && <label className="inline-flex items-center gap-1 text-[11px] text-[var(--daira-text)]"><input type="checkbox" aria-label="فعال‌سازی پاسخ استوری" checked={item.isActive !== false} onChange={() => void toggleStoryRule(item)} className="accent-blue-600"/>{item.isActive !== false ? "فعال" : "غیرفعال"}</label>}
                     <Link
                       href={item.href}
                       className="daira-reply-list-edit"
