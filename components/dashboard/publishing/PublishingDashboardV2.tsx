@@ -7,7 +7,7 @@ import { uploadFileWithProgress } from "./shared-upload";
 import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, CircleSlash2, Clapperboard, Clock3, ChevronDown, ImagePlus, Images, Loader2, Pencil, RotateCcw, Send, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent, type Modifier } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -347,6 +347,14 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [isDragging, setIsDragging] = useState(false);
   const [type, setType] = useState<PublishType>("POST");
   const [activeTab, setActiveTab] = useState<"create" | "queue">("create");
+  const publishingTabsRef = useRef<HTMLElement>(null);
+  // Both the window and dashboard's own scrolling container must return to
+  // the top of the queue when publishing changes the visible tab.
+  useLayoutEffect(() => {
+    if (activeTab === "queue") publishingTabsRef.current?.scrollIntoView({
+      behavior: "instant", block: "start",
+    });
+  }, [activeTab]);
   const [selectionConfirmed, setSelectionConfirmed] = useState(true);
   const [captionStepConfirmed, setCaptionStepConfirmed] = useState(false);
   const [tagStepConfirmed, setTagStepConfirmed] = useState(false);
@@ -1249,9 +1257,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           setError("");
         });
         await loadJobs();
-        window.setTimeout(() => {
-          document.getElementById("publishing-active")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 250);
         return;
       }
       setCaption(""); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(currentJalaliDate()); await loadJobs();
@@ -1281,7 +1286,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   return (
     <div dir="rtl" className="daira-publishing-glass min-h-full bg-transparent px-1 py-2 pb-24 sm:px-2 sm:py-3 sm:pb-10">
       <div className="mx-auto w-full max-w-4xl">
-        <nav className="daira-publishing-tabs mb-5 grid grid-cols-2 gap-2 rounded-[20px] bg-[var(--daira-section-alt)] p-1.5" aria-label="بخش‌های انتشار">
+        <nav ref={publishingTabsRef} className="daira-publishing-tabs mb-5 grid grid-cols-2 gap-2 rounded-[20px] bg-[var(--daira-section-alt)] p-1.5" aria-label="بخش‌های انتشار">
           <button type="button" onClick={()=>setActiveTab("create")} aria-current={activeTab==="create"?"page":undefined}
             className={"flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-3 text-sm font-bold transition "+(activeTab==="create"?"bg-white text-[var(--daira-primary)] shadow-sm":"text-[var(--daira-text-secondary)]")}>
             <ImagePlus size={18}/> انتشار محتوا
