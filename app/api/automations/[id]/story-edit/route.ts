@@ -15,6 +15,7 @@ type QuickReplyInput = {
   title: string;
   payload: string;
   destinationType: MessageType;
+  savedResponseId?: string | null;
   destinationText: string;
   destinationFormId: string;
   destinationShowcaseId: string;
@@ -76,6 +77,7 @@ function parseQuickReplies(value: unknown, depth: number, payloads: Set<string>)
     const children = destinationType === "FORM" ? parseQuickReplies(node.destinationQuickReplies, depth + 1, payloads) : [];
     return {
       id: clean(node.id), title, payload, destinationType, destinationText,
+      savedResponseId: clean(node.savedResponseId) || null,
       destinationFormId: clean(node.destinationFormId), destinationShowcaseId,
       destinationMediaUrl, destinationMediaId, destinationQuestion, destinationQuickReplies: children,
       isExit: node.isExit === true,
@@ -246,6 +248,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             title: reply.title, payload: reply.payload,
             replyText: JSON.stringify({
               type: reply.destinationType, isExit: reply.isExit,
+              savedResponseId: reply.savedResponseId || null,
               text: reply.destinationText, formId: reply.destinationFormId,
               showcaseId: reply.destinationShowcaseId, mediaUrl: reply.destinationMediaUrl,
               mediaId: reply.destinationMediaId, question: reply.destinationQuestion,
