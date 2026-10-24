@@ -1356,6 +1356,33 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           {error && <div role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-6 text-[var(--daira-error-text)]">{error}</div>}
 
 
+        <GlassModalPresence open={editScopeOpen} onEscape={() => setEditScopeOpen(false)}>
+          <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditScopeOpen(false); }}>
+            <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="edit-response-scope-title" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]">
+              <div className="daira-glass-dialog__header flex items-center justify-between border-b p-4">
+                <h2 id="edit-response-scope-title" className="text-sm font-extrabold text-[var(--daira-heading)]">اعمال تغییرات پاسخ</h2>
+                <button type="button" aria-label="بستن" onClick={() => setEditScopeOpen(false)} className="daira-glass-dialog__close rounded-lg p-2"><X size={18}/></button>
+              </div>
+              <p className="px-4 pt-4 text-xs leading-6 text-[var(--daira-text-secondary)]">این پاسخ به چند محتوا متصل است. تیک محتوایی را که نباید تغییر کند بردار.</p>
+              <div className="space-y-2 overflow-y-auto p-4">
+                {originalMediaIds.map((id) => {
+                  const media = linkedMediaItems.find((item) => item.id === id);
+                  return <label key={id} className="daira-flow-glass flex min-h-16 cursor-pointer items-center gap-3 rounded-xl p-3">
+                    <input type="checkbox" checked={editScopeIds.includes(id)} onChange={(event) => setEditScopeIds((current) => event.target.checked ? [...current,id] : current.filter((item) => item !== id))} className="h-5 w-5 accent-[var(--daira-primary)]"/>
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--daira-surface-hover)]">
+                      {media?.thumbnail_url || media?.media_url ? <img alt="" src={media.thumbnail_url || media.media_url || ""} className="h-full w-full object-cover"/> : <Camera size={18} className="text-[var(--daira-text-secondary)]"/>}
+                    </div>
+                    <span className="min-w-0 flex-1 truncate text-xs font-bold text-[var(--daira-heading)]">{media?.caption?.trim() || (media?.media_product_type === "REELS" ? "ریلز" : "محتوای متصل")}</span>
+                  </label>;
+                })}
+              </div>
+              <div className="daira-glass-dialog__footer flex gap-2 border-t p-4">
+                <button type="button" onClick={() => setEditScopeOpen(false)} className="daira-glass-dialog__secondary min-h-11 flex-1 rounded-xl border px-3 text-xs font-bold">انصراف</button>
+                <button type="button" disabled={!editScopeIds.length || saving} onClick={() => { setEditScopeOpen(false); void saveAutomation(undefined, editScopeIds); }} className="daira-glass-dialog__primary min-h-11 flex-1 rounded-xl px-3 text-xs font-bold disabled:opacity-50">اعمال برای {new Intl.NumberFormat("fa-IR").format(editScopeIds.length)} محتوا</button>
+              </div>
+            </div>
+          </div>
+        </GlassModalPresence>
         {mediaDialogOpen && (
           <ContentSelectionDialog
             items={mediaItems}
