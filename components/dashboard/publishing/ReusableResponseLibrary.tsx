@@ -372,7 +372,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
                 {usage.mediaIds.length ? usage.mediaIds.map((id) => (
                   <label key={id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg bg-[var(--daira-surface-hover)] p-2">
                     <input type="checkbox" disabled={saving} className="h-5 w-5 accent-[var(--daira-primary)]"
-                      checked={Array.isArray(scopeSelected[usage.messageId]) && scopeSelected[usage.messageId].includes(id)}
+                      checked={scopeSelected[usage.messageId]?.includes(id) ?? false}
                       onChange={(event) => setScopeSelected((current) => {
                         const old = current[usage.messageId] || [];
                         const next = event.target.checked ? [...old, id] : old.filter((item) => item !== id);
