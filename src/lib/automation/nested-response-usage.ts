@@ -147,3 +147,38 @@ export function editQuickReplyDestination(raw: string | null, path: ReplyPath,
   }
   return JSON.stringify(root);
 }
+
+/** Update the text/configuration of an already-published form option while
+ * retaining Meta payload identities, legacy pointers and nested branch shape.
+ * Structural changes must be made through the individual automation editor.
+ */
+export function reconcileActiveQuickReply(oldRaw: string | null, nextRaw: string): string {
+  const oldRoot = parseQuickReplyJson(oldRaw);
+  const nextRoot = parseQuickReplyJson(nextRaw);
+  if (!oldRoot || !nextRoot)
+    throw new Error("اطلاعات یکی از گزینه‌های فعال فرم نامعتبر است.");
+  const merge = (before: ReplyJson, after: ReplyJson, level: number): ReplyJson => {
+    if (level > 8) throw new Error("تعداد مراحل فرم بیش از حد مجاز است.");
+    const beforeChildren = Array.isArray(before.quickReplies) ? before.quickReplies
+      : Array.isArray(before.destinationQuickReplies) ? before.destinationQuickReplies : [];
+    const afterChildren = Array.isArray(after.quickReplies) ? after.quickReplies
+      : Array.isArray(after.destinationQuickReplies) ? after.destinationQuickReplies : [];
+    if (beforeChildren.length !== afterChildren.length)
+      throw new Error("افزودن یا حذف گزینه‌های فرم فعال فقط از ویرایشگر همان فرم مجاز است.");
+    const result: ReplyJson = { ...before, ...after };
+    for (const key of ["payload", "id", "nextMessageId"]) {
+      if (key in before) result[key] = before[key];
+    }
+    if (beforeChildren.length) {
+      const children = beforeChildren.map((child, index) => {
+        if (!record(child) || !record(afterChildren[index]))
+          throw new Error("ساختار یک گزینه داخلی فرم معتبر نیست.");
+        return merge(child, afterChildren[index] as ReplyJson, level + 1);
+      });
+      result.quickReplies = children;
+      result.destinationQuickReplies = children;
+    }
+    return result;
+  };
+  return JSON.stringify(merge(oldRoot, nextRoot, 0));
+}
