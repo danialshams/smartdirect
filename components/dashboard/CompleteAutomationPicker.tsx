@@ -32,7 +32,7 @@ type Props<T extends CompleteAutomation> = {
   onChange: () => void;
   showcases?: Showcase[];
   forms?: FormItem[];
-  kind: "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD" | "LIVE";
+  kind: "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD" | "LIVE" | "DM";
   disabled?: boolean;
   onEdit?: (item: T) => void;
 };
@@ -112,7 +112,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
             <div className="min-w-0 flex-1">
               <h4 className="truncate text-xs font-bold leading-6 text-[var(--daira-heading)]">{label(item)}</h4>
               <p className="text-[11px] text-[var(--daira-text-secondary)]">
-                {kind === "LIVE" ? "پاسخ لایو" : kind === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ استوری"}
+                {kind === "LIVE" ? "پاسخ لایو" : kind === "COMMENT_KEYWORD" ? "پاسخ کامنت" : kind === "DM" ? "پاسخ دایرکت" : "پاسخ استوری"}
               </p>
             </div>
             <button type="button" aria-expanded={expanded} aria-controls={"complete-preview-" + item.id}
