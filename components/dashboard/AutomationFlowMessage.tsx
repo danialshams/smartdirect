@@ -21,6 +21,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import VoiceRecorder from "./VoiceRecorder";
 import ReusableResponseLibrary from "./publishing/ReusableResponseLibrary";
+import { displayReusableAssetTitle } from "@/lib/automation/reusable-titles";
 import { uploadFileWithProgress } from "./publishing/shared-upload";
 import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./publishing/useStorageUploadLease";
 import type { AutomationTriggerType } from "./AutomationManager";
@@ -818,7 +819,7 @@ function ShowcaseDestination({
           disabled={loading}
         >
           <option value="">{loading ? "در حال دریافت ویترین‌ها..." : "انتخاب ویترین"}</option>
-          {showcases.map((showcase) => <option key={showcase.id} value={showcase.id}>{showcase.title}</option>)}
+          {showcases.map((showcase) => <option key={showcase.id} value={showcase.id}>{displayReusableAssetTitle("SHOWCASE", showcase.title)}</option>)}
         </Select>
       </Field>
       {showcases.length === 0 && !loading && (
