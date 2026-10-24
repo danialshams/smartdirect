@@ -113,14 +113,14 @@ async function main() {
   );
 
   assert(
-    !matchesAutomationTrigger({
+    matchesAutomationTrigger({
       triggerType: "STORY_REPLY_KEYWORD",
       configuredKeyword: "1",
       incomingKeyword: "1",
       automationMediaId: "story-1",
       incomingMediaId: "story-2",
     }),
-    "Story keyword trigger must reject a different story.",
+    "Story keyword automations must work across all stories on the account.",
   );
 
   assert(
@@ -170,7 +170,7 @@ async function main() {
         architecture: "central-trigger-model",
         supportedTriggers: AUTOMATION_TRIGGER_TYPES,
         keywordNormalization: "persian-arabic-digits",
-        mediaScopedTriggers: ["COMMENT_KEYWORD", "STORY_REPLY_KEYWORD"],
+        mediaScopedTriggers: ["COMMENT_KEYWORD"],
       },
       null,
       2,
