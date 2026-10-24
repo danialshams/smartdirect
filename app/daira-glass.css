@@ -704,3 +704,173 @@
 @media(prefers-reduced-motion:reduce) {
   .daira-app-shell .daira-automation-list-card { transition:none; }
 }
+
+/* Reusable reply library: glass is the surface, blue only signals an action.
+   Scoped styles keep the automation editor and dialog states consistent. */
+.daira-response-library {
+  isolation:isolate;
+  color:var(--daira-text);
+}
+.daira-response-library__panel,
+.daira-response-library__item,
+.daira-response-library__scope-item,
+.daira-response-library__preview-branch,
+.daira-response-template {
+  border:1px solid var(--daira-glass-rim);
+  background:var(--daira-glass-raised);
+  color:var(--daira-text);
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
+  -webkit-backdrop-filter:blur(9px) saturate(110%);
+  backdrop-filter:blur(9px) saturate(110%);
+}
+.daira-response-library__panel { background:var(--daira-flow-card-glass); }
+.daira-response-library__mode,
+.daira-response-mode {
+  border:1px solid var(--daira-glass-rim)!important;
+  background:var(--daira-glass-raised)!important;
+  color:var(--daira-heading);
+  box-shadow:inset 0 1px 0 var(--daira-glass-inner-rim);
+  transition:background .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.daira-response-library__mode:hover,
+.daira-response-mode:hover,
+.daira-response-library__item:hover,
+.daira-response-template:hover {
+  border-color:var(--daira-input-border-hover)!important;
+  background:var(--daira-surface-hover)!important;
+}
+.daira-response-library__mode.is-selected,
+.daira-response-mode.is-selected,
+.daira-response-template.is-selected {
+  border-color:var(--daira-input-focus)!important;
+  background:var(--daira-outline-hover-bg)!important;
+  box-shadow:0 0 0 1px var(--daira-input-focus),inset 0 1px 0 var(--daira-glass-inner-rim);
+  color:var(--daira-heading);
+}
+.daira-response-library__mode-icon {
+  background:var(--daira-surface-hover);
+  color:var(--daira-icon);
+}
+.daira-response-library__mode.is-selected .daira-response-library__mode-icon {
+  background:var(--daira-brand-100);
+  color:var(--daira-primary);
+}
+.daira-response-library__input {
+  border-color:var(--daira-input-border);
+  background:var(--daira-input-bg);
+  color:var(--daira-heading);
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+.daira-response-library__input::placeholder { color:var(--daira-text-secondary); }
+.daira-response-library__input:focus-visible {
+  border-color:var(--daira-input-focus);
+  box-shadow:0 0 0 2px var(--daira-outline-hover-bg);
+}
+.daira-response-library__count {
+  border:1px solid var(--daira-glass-rim);
+  background:var(--daira-glass-raised);
+}
+.daira-response-library__item { transition:border-color .2s ease,background .2s ease; }
+.daira-response-library__icon-button {
+  border-color:var(--daira-input-border);
+  background:var(--daira-surface);
+  color:var(--daira-text);
+  transition:border-color .2s ease,background .2s ease,color .2s ease;
+}
+.daira-response-library__icon-button:hover {
+  border-color:var(--daira-input-border-hover);
+  background:var(--daira-outline-hover-bg);
+  color:var(--daira-primary-hover);
+}
+.daira-response-library__use {
+  border-color:var(--daira-input-border-hover);
+  background:var(--daira-outline-hover-bg);
+  color:var(--daira-primary-hover);
+}
+.daira-response-library__dialog .daira-response-library__scope-item,
+.daira-response-library__dialog .daira-response-library__preview-branch {
+  background:var(--daira-glass-raised);
+  border-color:var(--daira-glass-rim);
+}
+.daira-response-library__check-row {
+  border-color:var(--daira-glass-rim);
+  background:var(--daira-surface);
+  color:var(--daira-heading);
+  transition:background .2s ease,border-color .2s ease;
+}
+.daira-response-library__check-row:hover {
+  background:var(--daira-surface-hover);
+  border-color:var(--daira-input-border-hover);
+}
+.daira-response-library__check-row:has(input:checked) {
+  background:var(--daira-outline-hover-bg);
+  border-color:var(--daira-input-border-hover);
+}
+.daira-response-library :is(button,input):focus-visible,
+.daira-response-mode:focus-within,
+.daira-response-template:focus-within {
+  outline:2px solid var(--daira-primary);
+  outline-offset:2px;
+}
+.daira-response-library button:disabled {
+  cursor:not-allowed;
+  opacity:.55;
+}
+@media (prefers-reduced-motion:reduce) {
+  .daira-response-library__mode,
+  .daira-response-library__icon-button,
+  .daira-response-mode,
+  .daira-response-template { transition:none; }
+}
+@media (prefers-reduced-transparency:reduce) {
+  .daira-response-library__panel,
+  .daira-response-library__item,
+  .daira-response-library__scope-item,
+  .daira-response-library__preview-branch,
+  .daira-response-template { background:var(--daira-surface);backdrop-filter:none;-webkit-backdrop-filter:none; }
+}
+
+/* Public comment variants are one designed section, not free-floating fields. */
+.daira-comment-replies {
+  border:1px solid var(--daira-glass-rim);
+  background:var(--daira-flow-card-glass);
+  box-shadow:var(--daira-shadow-card),inset 0 1px 0 var(--daira-glass-inner-rim);
+  -webkit-backdrop-filter:blur(9px) saturate(110%);
+  backdrop-filter:blur(9px) saturate(110%);
+}
+.daira-comment-replies__option {
+  border-color:var(--daira-glass-rim);
+  background:var(--daira-glass-raised);
+  color:var(--daira-text);
+}
+.daira-comment-replies__counter {
+  border:1px solid var(--daira-glass-rim);
+  background:var(--daira-surface);
+}
+.daira-comment-replies__textarea {
+  border-color:var(--daira-input-border);
+  background:var(--daira-input-bg);
+  color:var(--daira-heading);
+}
+.daira-comment-replies__textarea::placeholder { color:var(--daira-text-secondary); }
+.daira-comment-replies__textarea:focus-visible {
+  outline:2px solid var(--daira-primary);
+  outline-offset:1px;
+  border-color:var(--daira-input-focus);
+}
+.daira-comment-replies__add {
+  border-color:var(--daira-input-border);
+  background:var(--daira-surface);
+  color:var(--daira-text);
+  transition:border-color .2s ease,background .2s ease;
+}
+.daira-comment-replies__add:hover:not(:disabled) {
+  border-color:var(--daira-input-border-hover);
+  background:var(--daira-outline-hover-bg);
+}
+@media (prefers-reduced-transparency:reduce) {
+  .daira-comment-replies,.daira-comment-replies__option {
+    background:var(--daira-surface);
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+  }
+}
