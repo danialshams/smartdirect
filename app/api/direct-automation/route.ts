@@ -54,7 +54,7 @@ async function save(request:NextRequest,editing:boolean){
   const account=await prisma.instagramAccount.findFirst({where:{id:instagramAccountId,userId:session.user.id,isConnected:true},select:{id:true}});
   if(!account)throw new RuleError("پیج اینستاگرام متصل و متعلق به شما نیست.",403);
   let savedOrigin: string | null | undefined;
-  try { savedOrigin = await validateSavedResponseOrigin(raw.savedResponseId, instagramAccountId, session.user.id); }
+  try { savedOrigin = await validateSavedResponseOrigin(raw.savedResponseId, instagramAccountId, session.user.id, messageType); }
   catch (error) { throw new RuleError(error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست."); }
   const expected=clean(body.expectedUpdatedAt);
   if(editing&&(!id||!expected||!Number.isFinite(Date.parse(expected))))throw new RuleError("صفحه ویرایش را دوباره باز کنید.",409);
