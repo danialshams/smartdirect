@@ -210,7 +210,10 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
       const result = await response.json();
       if (!response.ok || !result?.success || !result.data?.id) throw Error(result?.error || "ذخیره پاسخ ناموفق بود.");
       const saved = result.data as Saved;
-      setItems((current) => [saved, ...current.filter((item) => item.id !== saved.id)]);
+      // The parent save receives this same prepared draft. Set its source before persisting.
+      if (override) override.savedResponseId = saved.id;
+      onUpdate({ savedResponseId: saved.id });
+      setItems((current) => [{ ...saved, usages: original?.usages || [] }, ...current.filter((item) => item.id !== saved.id)]);
       setEditingId(saved.id);
       setReusedOriginal(null);
       setName(saved.title);
