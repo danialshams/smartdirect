@@ -1077,7 +1077,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             {triggerType === "COMMENT_KEYWORD" && (
               <div className="space-y-3">
               <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. پاسخ زیر کامنت — حداقل سه و حداکثر پنج پاسخ متفاوت تنظیم کن؛ برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم در اینستاگرام، بهتر است چند پاسخ متفاوت تنظیم کنی." : "۴. پاسخ زیر کامنت — سه تا پنج متن متفاوت بنویس؛ برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم در اینستاگرام، بهتر است چند پاسخ متفاوت تنظیم کنی."}</AutomationSectionGuide></div>
-              <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+              <div className="rounded-2xl px-1 py-3">
                 <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><strong className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های عمومی به کامنت</strong></div>
                 <CommentReplyVariantsField values={commentReplies} onChange={setCommentReplies} disabled={saving} />
               </div>
