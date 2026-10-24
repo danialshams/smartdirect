@@ -727,29 +727,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         }
       }
 
-      // Persist branching forms in the reusable response library as well as
-      // the automation's own messages. Removing the original automation will
-      // not remove its reusable form template.
-      if (triggerType === "STORY_REPLY_KEYWORD" && currentMessage.messageType === "FORM") {
-        try {
-          const archive = await fetch("/api/saved-responses", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              instagramAccountId: account.id,
-              title: "فرم استوری — " + currentMessage.text.trim().slice(0, 57),
-              messageType: "FORM",
-              text: currentMessage.text.trim(),
-              quickReplies: serializeQuickReplies(currentMessage.quickReplies),
-            }),
-          });
-          if (!archive.ok) console.warn("Saving reusable story form template failed:", archive.status);
-        } catch (archiveError) {
-          console.warn("Saving reusable story form template failed:", archiveError);
-        }
-      }
-
       setCompleted(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "ذخیره پاسخ خودکار ناموفق بود.");
@@ -1047,14 +1024,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             )}
             {(creationMode === "new" || isEditing) && (
             <div className="space-y-5">
-              <section className="daira-flow-glass space-y-2 rounded-2xl p-4 sm:p-5">
+              {triggerType === "COMMENT_KEYWORD" && <section className="daira-flow-glass space-y-2 rounded-2xl p-4 sm:p-5">
                 <label htmlFor="automation-response-name" className="block text-sm font-bold text-[var(--daira-heading)]">نام پاسخ</label>
                 <input id="automation-response-name" value={responseName} onChange={(event) => setResponseName(event.target.value)}
                   maxLength={80} placeholder="مثلاً کفش"
                   className="w-full rounded-xl border border-[var(--daira-input-border)] bg-[var(--daira-surface)] px-3.5 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)]"
                   style={{fontSize:"16px"}} />
                 <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">نامی برای این پاسخ انتخاب کن تا بتوانی بعداً دوباره از آن استفاده کنی.</p>
-              </section>
+              </section>}
             <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? (isEditing ? "۲. شرط فعال‌سازی — روش فعال شدن پاسخ خودکار را ویرایش کن." : "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص.") : (isEditing ? "۲. شرط فعال‌سازی — کلمات کلیدی ریپلای استوری را ویرایش کن." : "۳. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند.")}</AutomationSectionGuide></div>
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
               {triggerType === "COMMENT_KEYWORD" && (
@@ -1281,6 +1258,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   formTemplates={storyFormTemplates}
                   loadingResources={loadingResources}
                   instagramAccountId={account.id}
+                  initialResponseName={responseName}
+                  onResponseNameChange={setResponseName}
                   onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
                   keywordValid={keywordMatchMode === "CONTAINS_ANY" || keywords.length > 0}
                   onContinue={(nextMessage) => {
