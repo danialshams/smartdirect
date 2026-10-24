@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X, Eye, Pencil } from "lucide-react";
+import { BookOpen, Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X, Eye, Pencil } from "lucide-react";
 import ResponseModeSwitcher from "./ResponseModeSwitcher";
 import CompleteAutomationPicker, { type CompleteAutomation } from "./CompleteAutomationPicker";
 import ResponseTemplateDetails from "./ResponseTemplateDetails";
@@ -316,6 +316,57 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     setError("");
   }
 
+  function resetEditableResponse() {
+    if (!initialEditState) return;
+    setResponseName(initialEditState.responseName);
+    setKeyword(initialEditState.keyword);
+    setKeywordDraft("");
+    setKeywordMatchMode(initialEditState.keywordMatchMode);
+    setCommentReplies([...initialEditState.commentReplies]);
+    setLikeStoryReply(initialEditState.likeStoryReply);
+    setRequireFollow(initialEditState.requireFollow);
+    setFollowGateText(initialEditState.followGateText);
+    setFollowGateButtonText(initialEditState.followGateButtonText);
+    setDmMode(initialEditState.dmMode);
+    setLinkButtons(initialEditState.linkButtons.map((entry) => ({ ...entry })));
+    setMessage(initialEditState.message);
+    setExtraMessages([...initialEditState.extraMessages]);
+    setExtraLinks({ ...initialEditState.extraLinks });
+    setSelectedTemplateId("");
+    setPreviewTemplate(null);
+    setError("");
+  }
+
+  function selectReplacementTemplate(template: AutomationTemplate) {
+    const raw = Array.isArray(template.messages) ? template.messages : [];
+    const messages = normalizeMessages(raw);
+    const first = messages[0] ?? createEmptyMessage();
+    const firstLinks = readSavedLinks(raw[0]);
+    const nextExtraLinks: Record<string, LinkButton[]> = {};
+    messages.slice(1).forEach((entry, index) => {
+      nextExtraLinks[entry.id] = readSavedLinks(raw[index + 1]);
+    });
+    setSelectedTemplateId(template.id);
+    setResponseName(template.title?.trim() || initialEditState?.responseName || "پاسخ قبلی");
+    setKeyword(template.keyword || "");
+    setKeywordMatchMode(template.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT");
+    setCommentReplies((() => {
+      const saved = readPublicCommentReplies(template.commentReplyText);
+      return [...saved, ...Array(Math.max(0, 3 - saved.length)).fill("")];
+    })());
+    setLikeStoryReply(Boolean(template.likeStoryReply));
+    setRequireFollow(Boolean(template.requireFollow));
+    setFollowGateText(template.followGateText || "برای دریافت پاسخ ابتدا پیج را دنبال کن.");
+    setFollowGateButtonText(template.followGateButtonText || "بررسی فالو");
+    setDmMode(firstLinks.length ? "TEXT_WITH_LINK" : "TEXT");
+    setLinkButtons(firstLinks.length ? firstLinks : [{ title: "", url: "" }]);
+    setMessage(first);
+    setExtraMessages(messages.slice(1));
+    setExtraLinks(nextExtraLinks);
+    setError("");
+    setEditingView("replace");
+  }
+
   function openMediaDialog() {
     setDraftSelectedMediaIds([...selectedMediaIds]);
     setMediaDialogOpen(true);
@@ -391,7 +442,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   }) : "";
   const currentDmSnapshot = JSON.stringify({ message, extraMessages, dmMode, linkButtons, extraLinks });
   const dmWasEdited = isEditing && currentDmSnapshot !== initialDmSnapshot;
+  const replacementTemplate = editingView === "replace"
+    ? automationTemplates.find((item) => item.id === selectedTemplateId) : null;
   const shouldSendDm = !enteredDm ? false :
+    replacementTemplate ? replacementTemplate.sendDm !== false :
     editAutomation && !dmWasEdited ? editAutomation.sendDm !== false : true;
 
   useEffect(() => {
@@ -450,8 +504,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   async function saveAutomation(finalMessage?: MessageDraft, applyScope?: string[]) {
     if (saving) return;
-    if (isEditing && triggerType === "STORY_REPLY_KEYWORD" && !canSaveStoryEdit) return;
-    if (triggerType === "COMMENT_KEYWORD" && (isEditing || creationMode === "new") && !canSaveComment) {
+    if (isEditing && editingView === "replace" && !selectedTemplateId) {
+      setError("ابتدا پاسخ کامل جایگزین را انتخاب کن.");
+      return;
+    }
+    if (isEditing && triggerType === "STORY_REPLY_KEYWORD" && editingView !== "replace" && !canSaveStoryEdit) return;
+    if (triggerType === "COMMENT_KEYWORD" && (isEditing || creationMode === "new") &&
+      (editingView !== "replace" && !canSaveComment || Boolean(commentFormError))) {
       setError(commentFormError || "برای ذخیره، ابتدا تغییری در پاسخ خودکار ایجاد کنید.");
       return;
     }
@@ -928,6 +987,60 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 {selectedMediaCount > 0 ? "تغییر انتخاب" : "انتخاب محتوا"}
               </button>
             </div>
+          </section>
+        )}
+
+        {isEditing && (
+          <section className="mt-5 space-y-3" aria-label="مدیریت پاسخ فعلی">
+            <div><AutomationSectionGuide>۲. پاسخ فعلی — می‌توانی همین پاسخ را ویرایش کنی یا آن را برای محتوای انتخاب‌شده جایگزین کنی.</AutomationSectionGuide></div>
+            <div className="daira-complete-reply space-y-4 rounded-2xl border p-4 sm:p-5">
+              <div className="flex items-start gap-3">
+                <span className="daira-complete-reply__check flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+                  <ShieldCheck size={20} aria-hidden="true"/>
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-bold text-[var(--daira-heading)]">{editAutomation?.title || "پاسخ فعلی"}</h2>
+                  <p className="mt-1 text-xs leading-6 text-[var(--daira-text-secondary)]">این پاسخ به محتوای انتخاب‌شده متصل است.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" aria-pressed={editingView === "edit"} disabled={saving}
+                  onClick={() => { resetEditableResponse(); setEditingView("edit"); }}
+                  className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-bold " + (editingView === "edit" ? "is-selected" : "")}>
+                  <Pencil size={17} aria-hidden="true"/> ویرایش پاسخ فعلی
+                </button>
+                <button type="button" aria-pressed={editingView === "replace"}
+                  disabled={saving || loadingResources || automationTemplates.length === 0}
+                  onClick={() => { resetEditableResponse(); setEditingView("replace"); }}
+                  className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-bold " + (editingView === "replace" ? "is-selected" : "")}>
+                  <BookOpen size={17} aria-hidden="true"/> جایگزینی پاسخ
+                </button>
+              </div>
+              {loadingResources && <p className="text-xs text-[var(--daira-text-secondary)]">در حال بررسی پاسخ‌های سازگار...</p>}
+              {!loadingResources && automationTemplates.length === 0 &&
+                <p className="text-xs text-[var(--daira-text-secondary)]">هنوز پاسخ کامل دیگری برای جایگزینی وجود ندارد.</p>}
+            </div>
+            {editingView === "replace" && (
+              <div className="space-y-3">
+                <CompleteAutomationPicker
+                  items={automationTemplates}
+                  selected={replacementTemplate || null}
+                  onSelect={selectReplacementTemplate}
+                  onChange={() => { setSelectedTemplateId(""); setPreviewTemplate(null); }}
+                  showcases={showcases}
+                  forms={forms}
+                  kind={triggerType}
+                  disabled={saving}
+                />
+                {replacementTemplate && <button type="button"
+                  onClick={() => { void saveAutomation(); }}
+                  disabled={saving || mediaLoading || !selectedMediaIds.length}
+                  className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold disabled:opacity-50">
+                  {saving ? "در حال جایگزینی..." : "ذخیره پاسخ جایگزین"}
+                </button>}
+                <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">این عملیات تنظیمات پاسخ انتخاب‌شده را برای محتوای فعلی جایگزین می‌کند؛ سایر محل‌های استفاده بدون تأیید صریح تغییر نمی‌کنند.</p>
+              </div>
+            )}
           </section>
         )}
 
