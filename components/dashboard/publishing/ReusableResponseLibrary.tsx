@@ -10,6 +10,8 @@ type Saved = {
   id: string; title: string; updatedAt: string; messageType: MessageDraft["messageType"];
   text: string | null; mediaUrl: string | null; mediaId: string | null;
   showcaseId: string | null; formId: string | null; quickReplies: QuickReplyDraft[] | null;
+  usages?: Array<{ messageId: string; automationId: string; automationTitle: string | null;
+    triggerType: string; mediaIds: string[]; menuTitles: string[]; icebreakerQuestions: string[] }>;
   showcase?: { title: string; items: Array<{ id: string; title: string; description?: string | null; imageUrl?: string | null }> } | null;
   form?: { title: string; fields: Array<{ id: string; label: string }> } | null;
 };
@@ -74,6 +76,20 @@ function ResponsePreview({ value }: { value: Saved }) {
       <p className="text-xs font-bold text-[var(--daira-heading)]">{value.form.title}</p>
       {value.form.fields.map((field) => <p key={field.id} className="daira-flow-glass rounded-lg p-2 text-xs">{field.label}</p>)}
     </div>}
+    <div className="space-y-2 border-t border-[var(--daira-border)] pt-3">
+      <p className="text-xs font-bold text-[var(--daira-heading)]">محل‌های استفاده از این پاسخ</p>
+      {!value.usages?.length ? <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">هنوز اتصال فعالی برای این پاسخ ثبت نشده است.</p>
+        : value.usages.map((usage) => <div key={usage.messageId} className="daira-flow-glass space-y-1 rounded-xl p-3">
+          <p className="text-xs font-bold text-[var(--daira-heading)]">{usage.automationTitle || (
+            usage.menuTitles.length ? "منوی دایرکت" : usage.icebreakerQuestions.length ? "پیام شروع گفتگو" :
+            usage.triggerType === "STORY_REPLY_KEYWORD" ? "پاسخ استوری" :
+            usage.triggerType === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ دایرکت")}</p>
+          {usage.menuTitles.map((title, index) => <p key={index} className="text-xs text-[var(--daira-text-secondary)]">گزینه منو: {title}</p>)}
+          {usage.icebreakerQuestions.map((question, index) => <p key={index} className="text-xs text-[var(--daira-text-secondary)]">شروع گفتگو: {question}</p>)}
+          {usage.mediaIds.length > 0 && <p className="text-xs text-[var(--daira-text-secondary)]">متصل به {new Intl.NumberFormat("fa-IR").format(usage.mediaIds.length)} محتوا</p>}
+        </div>)
+      }
+    </div>
   </div>;
 }
 
@@ -203,7 +219,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
           {filtered.map((item) => <div key={item.id} className="flex items-center gap-2 rounded-xl border border-[var(--daira-glass-rim)] bg-[var(--daira-glass-raised)] p-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-bold text-[var(--daira-heading)]">{displayName(item, prefix)}</p>
-              <p className="mt-1 text-[11px] text-[var(--daira-text-secondary)]">{typeNames[item.messageType]}</p>
+              <p className="mt-1 text-[11px] text-[var(--daira-text-secondary)]">{typeNames[item.messageType]} · {new Intl.NumberFormat("fa-IR").format(item.usages?.length || 0)} استفاده ثبت‌شده</p>
             </div>
             <button type="button" onClick={() => setPreview(item)} aria-label={"مشاهده " + item.title} className="daira-glass-dialog__secondary rounded-lg border p-2"><Eye size={16}/></button>
             <button type="button" onClick={() => loadResponse(item)} aria-label={"استفاده از " + item.title} className="daira-glass-dialog__primary rounded-lg p-2"><Check size={16}/></button>
