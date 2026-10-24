@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { partitionResponseMediaScope } from "../src/lib/automation/response-media-scope";
-import { checkedUsagePlan, checkedUsageMedia } from "../src/lib/automation/saved-response-scope";
+import { checkedUsagePlan, checkedUsageMedia, assertCoherentMixedScope } from "../src/lib/automation/saved-response-scope";
 import { nestedReplyUses, editQuickReplyDestination, parseQuickReplyJson } from "../src/lib/automation/nested-response-usage";
 import { displayReusableAssetTitle } from "../src/lib/automation/reusable-titles";
 import { validatePublicCommentReplies } from "../src/lib/automation/comment-reply-variants";
@@ -82,6 +82,12 @@ assert.throws(() => editQuickReplyDestination(legacyForm, [], "form-root", "appl
 }));
 
 
+assert.equal(assertCoherentMixedScope([["post1", "post2"]], [["post2", "post1"]]), true);
+assert.equal(assertCoherentMixedScope([], [["post1"]]), false);
+assert.equal(assertCoherentMixedScope([["post1"]], []), false);
+assert.throws(() => assertCoherentMixedScope([["post1"]], [["post2"]]));
+assert.throws(() => assertCoherentMixedScope([["a","b"], ["a","b"]], [["a"]]));
+
 const checked = checkedUsagePlan([
   { messageId: "m1", mediaIds: ["post-1", "post-2", "post-3"] },
   { messageId: "m2", mediaIds: [] },
@@ -106,6 +112,12 @@ assert.throws(() => checkedUsagePlan([], [
 
 const scopedRoute = readFileSync("app/api/saved-responses/[id]/apply/route.ts", "utf8");
 assert(scopedRoute.includes("prisma.$transaction"), "Applying reply changes must be atomic.");
+assert(scopedRoute.includes("mixedForks.set(automationId, { id: clone.id, replyMap })"));
+assert(scopedRoute.includes("const mainFork = mixedForks.get(automationId)"),
+  "Nested and primary edits must reuse the same fork for a partially selected automation.");
+assert(scopedRoute.includes("if (!lockedMixed.has(automationId))"),
+  "A mixed non-fork edit must avoid double-locking its automation.");
+
 assert(scopedRoute.includes("updatedAt: expected"), "Template edits require optimistic version checks.");
 assert(scopedRoute.includes("commentAutomationId: clone.id"), "Selected publishing jobs must follow their cloned comment automation.");
 assert(scopedRoute.includes("nextMessageId: reply.nextMessageId ? remap.get(reply.nextMessageId) || null : null"),
