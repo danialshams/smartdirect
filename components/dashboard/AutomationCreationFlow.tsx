@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X, Eye, Pencil } from "lucide-react";
+import ResponseModeSwitcher from "./ResponseModeSwitcher";
 import CommentReplyVariantsField from "./CommentReplyVariantsField";
 import { readPublicCommentReplies, validatePublicCommentReplies, publicCommentReplyKey } from "@/lib/automation/comment-reply-variants";
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
@@ -755,23 +756,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   ];
   const pageStyles = (
     <style jsx global>{`
-      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]),
-      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]) * {
-        color: var(--daira-inverse-text) !important;
-      }
-      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]) {
-        background-color: var(--daira-primary) !important;
-        border-color: var(--daira-primary) !important;
-      }
-      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]):hover:not(:disabled) {
-        background-color: var(--daira-primary-hover) !important;
-        border-color: var(--daira-primary-hover) !important;
-      }
-      .automation-create-flow button:not(.sd-neutral-button):not(.sd-destructive-button):not(.sd-content-card):not([aria-pressed="false"]):disabled {
-        background-color: var(--daira-primary) !important;
-        border-color: var(--daira-primary) !important;
-        opacity: .48;
-      }
+      /* Only explicit submit buttons use the strong primary treatment.
+         Generic button selectors previously painted every reply card, eye
+         icon and active mode solid blue. */
       .sd-success-ring {
         stroke-dasharray: 183;
         stroke-dashoffset: 183;
@@ -938,16 +925,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         {!isEditing && (<>
         <div className="mb-2 mt-6"><AutomationSectionGuide>۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن.</AutomationSectionGuide></div>
         <section aria-label="روش پاسخ" className="space-y-2">
-          <div role="radiogroup" aria-label="روش پاسخ خودکار" className="grid grid-cols-2 gap-2">
-            <label className={"daira-response-mode flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-2xl border p-3 text-[var(--daira-heading)] " + (creationMode === "new" ? "is-selected" : "")}>
-              <input type="radio" name="automation-creation-mode" value="new" checked={creationMode === "new"} onChange={startNewAutomation} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
-              <span className="flex min-h-10 min-w-0 flex-1 items-center justify-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">ساخت پاسخ جدید</strong></span>
-            </label>
-            <label className={"daira-response-mode flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-2xl border p-3 text-[var(--daira-heading)] " + (creationMode === "existing" ? "is-selected" : "")}>
-              <input type="radio" name="automation-creation-mode" value="existing" checked={creationMode === "existing"} onChange={() => { setCreationMode("existing"); setError(""); }} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
-              <span className="flex min-h-10 min-w-0 flex-1 items-center justify-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">استفاده از پاسخ‌های قبلی</strong></span>
-            </label>
-          </div>
+          <ResponseModeSwitcher value={creationMode}
+            onChange={(next) => {
+              if (next === "new") startNewAutomation();
+              else { setCreationMode("existing"); setError(""); }
+            }} disabled={saving} />
         </section>
 
         </>)}
