@@ -29,6 +29,14 @@ const duplicated = JSON.stringify({
 });
 const uses = nestedReplyUses(duplicated);
 assert.equal(uses.length, 3, "Mirrored compatibility arrays cannot double-count a saved reply.");
+const extraLegacyBranch = nestedReplyUses(JSON.stringify({
+  quickReplies: [{ payload: "first", savedResponseId: "a", destinationType: "TEXT" }],
+  destinationQuickReplies: [
+    { payload: "first", savedResponseId: "a", destinationType: "TEXT" },
+    { payload: "second", savedResponseId: "b", destinationType: "TEXT" },
+  ],
+}));
+assert.deepEqual(extraLegacyBranch.map((item) => item.savedResponseId), ["a", "b"]);
 assert.deepEqual(uses.map((item) => item.savedResponseId), ["form-src", "text-src", "media-src"]);
 const textUpdated = editQuickReplyDestination(duplicated, uses[1].path, "text-src", "apply",
   { messageType: "TEXT", text: "پاسخ جدید", mediaUrl: null, mediaId: null,
