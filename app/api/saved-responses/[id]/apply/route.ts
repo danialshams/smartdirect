@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { collectSavedResponseMedia } from "@/lib/automation/saved-response-media";
 import { getStorageProviderForObject } from "@/lib/storage/provider";
 import { checkedUsagePlan, type ResponseUsageSelection } from "@/lib/automation/saved-response-scope";
+import { nestedReplyUses, editQuickReplyDestination } from "@/lib/automation/nested-response-usage";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
@@ -101,7 +102,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       if (!Number.isFinite(Date.parse(string(v.expectedMessageUpdatedAt))) ||
         !Number.isFinite(Date.parse(string(v.expectedAutomationUpdatedAt))))
         throw new ApplyError("نسخه محل استفاده مشخص نیست. دوباره بارگذاری کن.", 409);
-      return { messageId: v.messageId.trim(), mediaIds: v.mediaIds,
+      const quickReplyId = string(v.quickReplyId);
+      const nodePath = v.nodePath;
+      if (quickReplyId && (!Array.isArray(nodePath) || nodePath.length > 16 ||
+        nodePath.some((part: unknown, i: number) => i % 2 === 0
+          ? part !== "quickReplies" && part !== "destinationQuickReplies"
+          : typeof part !== "number" || !Number.isSafeInteger(part) || part < 0)))
+        throw new ApplyError("مسیر گزینه داخلی فرم معتبر نیست.");
+      return { messageId: v.messageId.trim(),
+        ...(quickReplyId ? { quickReplyId, nodePath: nodePath as Array<string | number> } : {}),
+        mediaIds: v.mediaIds,
         expectedMessageUpdatedAt: string(v.expectedMessageUpdatedAt),
         expectedAutomationUpdatedAt: string(v.expectedAutomationUpdatedAt) };
     });
@@ -177,21 +187,71 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       where: { savedResponseId: id, automation: { instagramAccountId: saved.instagramAccountId } },
       include: { automation: true, quickReplies: { orderBy: { createdAt: "asc" } } },
     });
-    if (current.length !== expectedUsages.length ||
+    type NestedLink = {
+      usageId: string; quickReplyId: string; path: Array<string | number>;
+      root: { id: string; updatedAt: Date; replyText: string | null; automationMessageId: string;
+        nextMessageId: string | null; title: string; payload: string;
+        automationMessage: { automation: (typeof current)[number]["automation"] } };
+    };
+    const nested: NestedLink[] = [];
+    const candidates = await prisma.quickReply.findMany({
+      where: { replyText: { contains: "savedResponseId" },
+        automationMessage: { automation: { instagramAccountId: saved.instagramAccountId } } },
+      select: { id: true, updatedAt: true, replyText: true, automationMessageId: true,
+        nextMessageId: true, title: true, payload: true,
+        automationMessage: { select: { automation: true } } },
+    });
+    for (const root of candidates) {
+      for (const use of nestedReplyUses(root.replyText)) if (use.savedResponseId === id) {
+        const usageId = "qr:" + root.id + ":" + (use.path.length ? use.path.join(".") : "root");
+        if (use.messageType !== type)
+          throw new ApplyError("نوع یک مقصد داخلی با قالب ذخیره‌شده متفاوت است.", 409);
+        nested.push({ usageId, quickReplyId: root.id, path: use.path, root });
+      }
+    }
+    const allIds = [...current.map((item) => item.id), ...nested.map((item) => item.usageId)];
+    if (allIds.length !== expectedUsages.length ||
+      new Set(allIds).size !== allIds.length ||
       current.some((item) => {
         const snapshot = expectedUsages.find((expected) => expected.messageId === item.id);
         return !snapshot || item.updatedAt.getTime() !== Date.parse(snapshot.messageUpdatedAt) ||
           item.automation.updatedAt.getTime() !== Date.parse(snapshot.automationUpdatedAt);
+      }) ||
+      nested.some((item) => {
+        const snapshot = expectedUsages.find((expected) => expected.messageId === item.usageId);
+        return !snapshot || item.root.updatedAt.getTime() !== Date.parse(snapshot.messageUpdatedAt) ||
+          item.root.automationMessage.automation.updatedAt.getTime() !== Date.parse(snapshot.automationUpdatedAt);
       }))
       throw new ApplyError("اتصال‌های این پاسخ تغییر کرده‌اند. فهرست را تازه‌سازی کن.", 409);
     if (current.some((item) => item.messageType !== type))
       throw new ApplyError("نوع یکی از پیام‌های متصل با قالب ذخیره‌شده متفاوت است. آن را از صفحه مربوط بررسی کن.", 409);
     const mediaFor = (a: { mediaId: string | null; mediaIds: string | null }) =>
       Array.from(new Set([...(a.mediaId ? [a.mediaId] : []), ...(a.mediaIds || "").split(",").map((i) => i.trim()).filter(Boolean)]));
-    const plan = checkedUsagePlan(
-      current.map((m) => ({ messageId: m.id, mediaIds: mediaFor(m.automation) })),
-      selections,
-    );
+    const directChoices = selections.filter((selection) => !selection.quickReplyId);
+    const plan = directChoices.length
+      ? checkedUsagePlan(
+          current.map((m) => ({ messageId: m.id, mediaIds: mediaFor(m.automation) })),
+          directChoices,
+        )
+      : [];
+    const nestedChoices = selections.filter((selection) => selection.quickReplyId);
+    for (const choice of nestedChoices) {
+      const link = nested.find((item) => item.usageId === choice.messageId);
+      if (!link || choice.quickReplyId !== link.quickReplyId ||
+        JSON.stringify(choice.nodePath || []) !== JSON.stringify(link.path))
+        throw new ApplyError("یکی از شاخه‌های انتخاب‌شده متعلق به این پاسخ نیست.", 409);
+    }
+    const nestedPlan = nestedChoices.length
+      ? checkedUsagePlan(nested.map((item) => ({
+        messageId: item.usageId, mediaIds: mediaFor(item.root.automationMessage.automation),
+      })), nestedChoices)
+      : [];
+    const byNested = new Map(nestedPlan.map((item) => [item.messageId, item]));
+    const nestedGroups = new Map<string, NestedLink[]>();
+    for (const item of nested) {
+      const aId = item.root.automationMessage.automation.id;
+      nestedGroups.set(aId, [...(nestedGroups.get(aId) || []), item]);
+    }
     const byMessage = new Map(plan.map((p) => [p.messageId, p]));
     const bySelection = new Map(selections.map((s) => [s.messageId, s]));
     const groups = new Map<string, typeof current>();
@@ -199,6 +259,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       const list = groups.get(message.automationId) || [];
       list.push(message);
       groups.set(message.automationId, list);
+    }
+    // A single automation can contain both standalone and nested references.
+    // Mixed structural edits are refused rather than risking a partial clone.
+    for (const [automationId, links] of nestedGroups) {
+      if (links.some((item) => byNested.has(item.usageId)) &&
+        groups.get(automationId)?.some((message) => byMessage.has(message.id)))
+        throw new ApplyError("این اتوماسیون هم پاسخ اصلی و هم شاخه فرم را استفاده می‌کند. آن‌ها را جداگانه ویرایش کن.", 409);
+      const active = links.filter((item) => byNested.has(item.usageId));
+      const partitions = active.map((item) => byNested.get(item.usageId)!.selected.join(","));
+      if (new Set(partitions).size > 1)
+        throw new ApplyError("برای شاخه‌های یک اتوماسیون باید یک محدوده محتوایی انتخاب شود.");
     }
     // The same automation cannot receive contradictory media selections.
     for (const group of groups.values()) {
