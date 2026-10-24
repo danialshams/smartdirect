@@ -120,17 +120,34 @@ const responsePreview = src("components/dashboard/ResponseTemplateDetails.tsx");
 assert(!responseLibrary.includes("ذخیره در پاسخ‌های قبلی") &&
   responseLibrary.includes("onRegisterSave?.(saveToLibrary)"),
   "Separate save button must be removed without losing automatic template persistence.");
-assert(responseLibrary.includes("<ResponseModeSwitcher") && commentFlow.includes("<ResponseModeSwitcher") &&
-  modeSwitcher.includes("ساخت پاسخ جدید") && modeSwitcher.includes("استفاده از پاسخ قبلی"),
-  "Live, comment and story should share one icon/size/color response switcher.");
+const completePicker = src("components/dashboard/CompleteAutomationPicker.tsx");
+const liveEditor = src("components/dashboard/LiveAutomationEditor.tsx");
+const storySetup = src("components/dashboard/publishing/PublishingStoryAutomationSetup.tsx");
+assert(completePicker.includes("ResponseTemplateDetails") &&
+  completePicker.includes("daira-response-library__expander") &&
+  completePicker.includes("daira-complete-reply__select") &&
+  completePicker.includes("پاسخ انتخاب شد"),
+  "Complete saved replies need expanding detailed previews, blue select, and selected summary.");
+assert(modeSwitcher.includes("existingAvailable") && modeSwitcher.includes("loading") &&
+  modeSwitcher.includes('disabled={disabled || (key === "existing"'),
+  "Previous-response control must be truly disabled while loading or when no compatible rule exists.");
+assert(commentFlow.includes("<ResponseModeSwitcher") &&
+  liveEditor.includes("<ResponseModeSwitcher") &&
+  liveEditor.includes("<CompleteAutomationPicker") &&
+  commentFlow.includes("<CompleteAutomationPicker"),
+  "Full automation modes must be shared across live, comment and story editors.");
+assert(commentFlow.includes("hideLibrary") && liveEditor.includes("hideLibrary") &&
+  storySetup.includes("!hideLibrary && <ReusableResponseLibrary") &&
+  !commentFlow.includes("<ReusableResponseLibrary"),
+  "Nested message reuse selector must not appear inside whole-automation editors.");
 assert(responseLibrary.includes("daira-response-library__eye") &&
   responseLibrary.includes("daira-response-library__expander") &&
   !responseLibrary.includes("GlassModalPresence open={Boolean(preview)}"),
   "Saved response preview must expand smoothly below the item, never use a popup.");
-assert(commentFlow.includes("daira-response-library__eye") &&
-  commentFlow.includes("daira-response-library__expander") &&
+assert(completePicker.includes("daira-response-library__eye") &&
+  completePicker.includes("daira-response-library__expander") &&
   !commentFlow.includes("GlassModalPresence open={Boolean(previewTemplate)}"),
-  "Existing comment/story reply previews must also expand inline.");
+  "Existing full reply previews must expand in place without modals.");
 assert(!commentFlow.includes(".automation-create-flow button:not("),
   "No broad CSS rule may paint every comment reply button blue.");
 assert(responsePreview.includes("QuickReplyTree") &&
@@ -146,6 +163,29 @@ for (const editor of [commentFlow, legacyComments])
 assert(variantsField.includes('daira-comment-replies__option') &&
   variantsField.includes('daira-comment-replies__textarea'),
   "Comment inputs should have individually legible glass option cards.");
+assert(commentFlow.includes("editingView === \"replace\"") &&
+  commentFlow.includes("editingView === \"edit\"") &&
+  commentFlow.includes("selectReplacementTemplate") &&
+  commentFlow.includes("resetEditableResponse"),
+  "Edit modes must safely preserve current response, switch to edits or replace the full rule.");
+assert(liveEditor.includes("liveRules.length === 0") &&
+  liveEditor.includes("creationMode === \"existing\"") &&
+  liveEditor.includes("رفتن به پاسخ انتخاب‌شده"),
+  "Live reuse must not duplicate overlapping live comment rules.");
+const directEditor = src("components/dashboard/DirectAutomationEditor.tsx");
+const nameField = src("components/dashboard/CompleteResponseNameField.tsx");
+assert(liveEditor.includes("<CompleteResponseNameField") &&
+  directEditor.includes("<CompleteResponseNameField") &&
+  nameField.includes("نام پاسخ") && nameField.includes("daira-response-library__input"),
+  "Complete live and direct editor names must remain writable after nested message library removal.");
+assert(directEditor.includes("completeRules.length>0") &&
+  directEditor.includes("hideLibrary") &&
+  directEditor.includes("<CompleteAutomationPicker"),
+  "Direct automation must use a complete-rule picker, disable empty reuse, and hide nested message selector.");
+for (const token of [".daira-complete-reply", ".daira-complete-reply__select",
+  ".daira-complete-reply__check", ".daira-response-library__mode:disabled"]) {
+  assert(css.includes(token), "Missing semantic glass rule: " + token);
+}
 const responseCss = css.slice(css.indexOf("/* Reusable reply library:"));
 assert(!/#[0-9a-f]{3,8}\\b/i.test(responseCss),
   "The response UI must use canonical Daira palette tokens rather than literal colors.");

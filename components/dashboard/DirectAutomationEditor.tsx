@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lightbulb, X } from "lucide-react";
+import { BookOpen, CheckCircle2, Lightbulb, Pencil, X } from "lucide-react";
+import ResponseModeSwitcher from "./ResponseModeSwitcher";
+import CompleteAutomationPicker from "./CompleteAutomationPicker";
+import CompleteResponseNameField from "./CompleteResponseNameField";
 import { dairaPalette } from "../../lib/design-system/palette";
 import PublishingStoryAutomationSetup, { type StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
@@ -43,6 +46,10 @@ export default function DirectAutomationEditor({id}:{id?:string}){
  const [completed,setCompleted]=useState(false);
  const [error,setError]=useState("");
  const [retry,setRetry]=useState(0);
+ const [completeRules,setCompleteRules]=useState<Automation[]>([]);
+ const [creationMode,setCreationMode]=useState<"new"|"existing">("new");
+ const [selectedRuleId,setSelectedRuleId]=useState("");
+ const [editingView,setEditingView]=useState<"summary"|"edit"|"replace">("summary");
  const add=()=>{const next=wordsFrom(draft);if(!next.length)return;
   setKeywords(current=>Array.from(new Set([...current,...next])).slice(0,10));setDraft("");};
  const effectiveKeywords=Array.from(new Set([...keywords,...wordsFrom(draft)]));
@@ -105,6 +112,9 @@ export default function DirectAutomationEditor({id}:{id?:string}){
      setShowcases(Array.isArray(showcaseData)?showcaseData:Array.isArray(showcaseData?.data)?showcaseData.data:[]);
      setForms(Array.isArray(formData)?formData:Array.isArray(formData?.data)?formData.data:[]);
      setFormTemplates(templates);
+     setCompleteRules((Array.isArray(automationsData?.data) ? automationsData.data as Automation[] : [])
+       .filter((item) => item.triggerType === "DM" && item.id !== existing?.id &&
+         Boolean(item.keyword?.trim()) && normalizeMessages(item.messages).length > 0));
     }
    }catch(e){if(!controller.signal.aborted)setError(e instanceof Error?e.message:"بارگذاری ناموفق بود.");}
    finally{if(!controller.signal.aborted)setLoading(false);}
@@ -112,7 +122,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
   return ()=>controller.abort();
  },[id,retry]);
  async function save(prepared?:MessageDraft){
-  if(saving||!account||(original&&!hasChanges))return;
+  if(saving||!account||(original&&!hasChanges)||(original&&editingView!=="edit")||(!original&&creationMode!=="new"))return;
   if(!responseName.trim()||responseName.trim().length>80){setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه).");return;}
   const entries=effectiveKeywords.slice(0,11);
   if(!entries.length||entries.length>10){setError("بین ۱ تا ۱۰ کلمه کلیدی وارد کنید.");return;}
@@ -135,6 +145,50 @@ export default function DirectAutomationEditor({id}:{id?:string}){
   <p role="alert" className="text-sm" style={{color:dairaPalette.status.error}}>{error||"پیج متصل نیست."}</p>
   <button onClick={()=>setRetry(v=>v+1)} className="rounded-xl px-5 py-3 text-sm text-white" style={{background:dairaPalette.primary.main}}>تلاش دوباره</button></div>;
  return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-3 sm:py-4">
+  {original ? (
+   <section className="daira-complete-reply space-y-4 rounded-2xl border p-4 sm:p-5" aria-label="پاسخ فعلی دایرکت">
+    <div className="flex items-center gap-3">
+     <span className="daira-complete-reply__check flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"><CheckCircle2 size={20}/></span>
+     <div className="min-w-0 flex-1">
+      <h2 className="text-sm font-bold text-[var(--daira-heading)]">{original.title||"پاسخ فعلی دایرکت"}</h2>
+      <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">این پاسخ به کلمات کلیدی فعلی متصل است.</p>
+     </div>
+    </div>
+    <div className="grid grid-cols-2 gap-2">
+     <button type="button" aria-pressed={editingView==="edit"} onClick={()=>{setSelectedRuleId("");setEditingView("edit");}}
+      className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-1.5 py-2 text-[10px] font-bold sm:gap-2 sm:px-2.5 sm:text-xs "+(editingView==="edit"?"is-selected":"")}>
+      <Pencil size={16}/> ویرایش پاسخ فعلی
+     </button>
+     <button type="button" aria-pressed={editingView==="replace"} disabled={!completeRules.length} onClick={()=>setEditingView("replace")}
+      className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-1.5 py-2 text-[10px] font-bold sm:gap-2 sm:px-2.5 sm:text-xs "+(editingView==="replace"?"is-selected":"")}>
+      <BookOpen size={16}/> مشاهده پاسخ دیگر
+     </button>
+    </div>
+    {editingView==="replace"&&<div className="space-y-3">
+     <CompleteAutomationPicker kind="DM" items={completeRules}
+      selected={completeRules.find(x=>x.id===selectedRuleId)||null}
+      onSelect={x=>setSelectedRuleId(x.id)} onChange={()=>setSelectedRuleId("")} showcases={showcases} forms={forms}/>
+     {selectedRuleId&&<button type="button" onClick={()=>router.push("/dashboard/direct-automation/"+encodeURIComponent(selectedRuleId))}
+      className="daira-complete-reply__select min-h-12 w-full rounded-xl px-3 text-sm font-bold">رفتن به پاسخ انتخاب‌شده</button>}
+     <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">برای جلوگیری از فعال‌شدن چند پاسخ با کلمات کلیدی یکسان، پاسخ موجود دوباره ساخته نمی‌شود.</p>
+    </div>}
+   </section>
+  ) : (
+   <section className="space-y-3">
+    <ResponseModeSwitcher value={creationMode} existingAvailable={completeRules.length>0} loading={loading} disabled={saving}
+      onChange={next=>{setCreationMode(next);setSelectedRuleId("");}}/>
+    {creationMode==="existing"&&<div className="space-y-3">
+     <CompleteAutomationPicker kind="COMMENT_KEYWORD" items={completeRules}
+      selected={completeRules.find(x=>x.id===selectedRuleId)||null}
+      onSelect={x=>setSelectedRuleId(x.id)} onChange={()=>setSelectedRuleId("")} showcases={showcases} forms={forms}/>
+     {selectedRuleId&&<button type="button" onClick={()=>router.push("/dashboard/direct-automation/"+encodeURIComponent(selectedRuleId))}
+      className="daira-complete-reply__select min-h-12 w-full rounded-xl px-3 text-sm font-bold">رفتن به پاسخ انتخاب‌شده</button>}
+     <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">پاسخ قبلی دایرکت از قبل فعال است و نیازی به ساخت نسخه تکراری ندارد.</p>
+    </div>}
+   </section>
+  )}
+  {(original ? editingView==="edit" : creationMode==="new")&&(<>
+   <CompleteResponseNameField value={responseName} onChange={setResponseName} disabled={saving}/>
    <section><Guide step={1} title="کلمات کلیدی دایرکت"
      hint="اگر مشتری یکی از این کلمات را مستقیماً در دایرکت بفرستد، پاسخ انتخاب‌شده برای او ارسال می‌شود."/>
     <div className="space-y-3 rounded-2xl border bg-white p-4 sm:p-5" style={{borderColor:dairaPalette.border}}>
@@ -157,7 +211,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
     <div className="rounded-2xl border bg-white p-4 sm:p-5" style={{borderColor:dairaPalette.border}}>
      <PublishingStoryAutomationSetup key={original?.id||account.id} message={message} showcases={showcases} forms={forms}
       formTemplates={formTemplates} loadingResources={false} instagramAccountId={account.id} onUpdate={patch=>setMessage(m=>({...m,...patch}))}
-      keywordValid={keywordValid} storyCreateMode storyEditMode={Boolean(original)}
+      keywordValid={keywordValid} storyCreateMode storyEditMode={Boolean(original)} hideLibrary
       onResponseNameChange={setResponseName}
       onDraftChange={setShowcaseDraftChanged}
       disabled={saving} showFinalSave finalSaveDisabled={saving||!hasChanges} onContinue={save}
@@ -167,5 +221,6 @@ export default function DirectAutomationEditor({id}:{id?:string}){
    </section>
    {error&&<p role="alert" className="rounded-xl border px-4 py-3 text-xs leading-6"
     style={{borderColor:dairaPalette.status.error,background:dairaPalette.background.surface,color:dairaPalette.status.error}}>{error}</p>}
+   </>)}
  </div>;
 }

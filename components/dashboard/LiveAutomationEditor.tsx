@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Lightbulb, Loader2 } from "lucide-react";
+import { BookOpen, CheckCircle2, Lightbulb, Loader2, Pencil } from "lucide-react";
+import ResponseModeSwitcher from "./ResponseModeSwitcher";
+import CompleteAutomationPicker from "./CompleteAutomationPicker";
+import CompleteResponseNameField from "./CompleteResponseNameField";
 import { dairaPalette } from "../../lib/design-system/palette";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle } from "./publishing/PublishingStoryAutomationSetup";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
-import ReusableResponseLibrary from "./publishing/ReusableResponseLibrary";
 
 type Account = { id: string; igUsername: string; isConnected: boolean };
 type Rule = {
@@ -72,6 +74,11 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   const [retry, setRetry] = useState(0);
   const [saved, setSaved] = useState(false);
   const [showcaseDirty, setShowcaseDirty] = useState(false);
+  const [liveRules, setLiveRules] = useState<Rule[]>([]);
+  const [loadingLiveRules, setLoadingLiveRules] = useState(true);
+  const [creationMode, setCreationMode] = useState<"new" | "existing">("new");
+  const [selectedLiveRuleId, setSelectedLiveRuleId] = useState("");
+  const [editingView, setEditingView] = useState<"summary" | "edit" | "replace">("summary");
   const initialSnapshot = useRef("");
   const initialVersion = useRef("");
 
@@ -79,6 +86,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
     const controller = new AbortController();
     setLoading(true);
     setLoadingResources(true);
+    setLoadingLiveRules(true);
     setError("");
     void (async () => {
       try {
@@ -113,6 +121,18 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
           setDraft(nextDraft);
         }
         const query = "?instagramAccountId=" + encodeURIComponent(connected.id);
+        // Complete live rules are separate from individual saved DM messages.
+        try {
+          const available = await fetch("/api/live-automation" + query, {
+            cache: "no-store", credentials: "include", signal: controller.signal,
+          });
+          const rules = await available.json();
+          if (!controller.signal.aborted && available.ok && rules?.success &&
+            Array.isArray(rules.data)) {
+            setLiveRules((rules.data as Rule[]).filter((item) => item.id !== id));
+          }
+        } catch { if (!controller.signal.aborted) setLiveRules([]); }
+        finally { if (!controller.signal.aborted) setLoadingLiveRules(false); }
         const [s, f] = await Promise.all([
           fetch("/api/showcases" + query, { cache: "no-store", credentials: "include", signal: controller.signal }),
           fetch("/api/forms" + query, { cache: "no-store", credentials: "include", signal: controller.signal }),
@@ -140,7 +160,8 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
     draft.initialText.trim().length <= 1000 && (!draft.requireFollow ||
     (Boolean(draft.followGateText.trim()) && Boolean(draft.followGateButtonText.trim()) && draft.followGateButtonText.trim().length <= 20)) &&
     (!draft.followupEnabled || Boolean(draft.followupKeyword.trim()));
-  const canSave = Boolean(account && basicValid && !loadingResources && !saving && (!id || dirty));
+  const canSave = Boolean(account && basicValid && !loadingResources && !saving &&
+    (!id || dirty) && (id ? editingView === "edit" : creationMode === "new"));
   const patch = (value: Partial<Draft>) => { setDraft(current => ({ ...current, ...value })); setSaved(false); };
   const MAX_KEYWORDS = 10;
   const addKeyword = () => {
@@ -156,7 +177,8 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   };
 
   async function save() {
-    if (!canSave || !account) return;
+    if (!canSave || !account || (id && editingView !== "edit") ||
+      (!id && creationMode !== "new")) return;
     setSaving(true);
     setError("");
     let preparedMessage: MessageDraft | null = draft.message;
@@ -204,6 +226,65 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
 
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-3 sm:py-4">
+      {id ? (
+        <section className="space-y-3" aria-label="پاسخ فعلی لایو">
+          <div className="daira-complete-reply space-y-4 rounded-2xl border p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <span className="daira-complete-reply__check flex h-10 w-10 items-center justify-center rounded-xl"><CheckCircle2 size={20}/></span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-[var(--daira-heading)]">{draft.responseName || "پاسخ فعلی لایو"}</p>
+                <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">این پاسخ از قبل برای لایو ثبت شده است.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" aria-pressed={editingView === "edit"} disabled={saving}
+                onClick={() => {setSelectedLiveRuleId("");setEditingView("edit");}}
+                className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-1.5 py-2 text-[10px] font-bold sm:gap-2 sm:px-2.5 sm:text-xs " + (editingView === "edit" ? "is-selected" : "")}>
+                <Pencil size={16}/> ویرایش پاسخ فعلی
+              </button>
+              <button type="button" aria-pressed={editingView === "replace"}
+                disabled={saving || loadingLiveRules || liveRules.length === 0}
+                onClick={() => setEditingView("replace")}
+                className={"daira-response-library__mode flex min-h-[60px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-1.5 py-2 text-[10px] font-bold sm:gap-2 sm:px-2.5 sm:text-xs " + (editingView === "replace" ? "is-selected" : "")}>
+                <BookOpen size={16}/> مشاهده پاسخ‌های دیگر
+              </button>
+            </div>
+            <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">هر قانون لایو مستقل فعال است. برای جلوگیری از تداخل کلمات کلیدی، پاسخ قبلی دوباره ثبت نمی‌شود.</p>
+          </div>
+          {editingView === "replace" && (
+            <div className="space-y-3">
+              <CompleteAutomationPicker kind="LIVE" items={liveRules}
+                selected={liveRules.find((rule) => rule.id === selectedLiveRuleId) || null}
+                onSelect={(rule) => setSelectedLiveRuleId(rule.id)}
+                onChange={() => setSelectedLiveRuleId("")} showcases={showcases} forms={forms}/>
+              {selectedLiveRuleId && <button type="button"
+                onClick={() => router.push("/dashboard/live-automation/" + encodeURIComponent(selectedLiveRuleId))}
+                className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold">رفتن به پاسخ انتخاب‌شده</button>}
+            </div>
+          )}
+        </section>
+      ) : (
+        <section className="space-y-3">
+          <ResponseModeSwitcher value={creationMode} existingAvailable={liveRules.length > 0}
+            loading={loadingLiveRules} disabled={saving}
+            onChange={(next) => {setCreationMode(next);setSelectedLiveRuleId("");}}/>
+          {creationMode === "existing" &&
+            <div className="space-y-3">
+              <CompleteAutomationPicker kind="LIVE" items={liveRules}
+                selected={liveRules.find((rule) => rule.id === selectedLiveRuleId) || null}
+                onSelect={(rule) => setSelectedLiveRuleId(rule.id)}
+                onChange={() => setSelectedLiveRuleId("")} showcases={showcases} forms={forms}/>
+              {selectedLiveRuleId &&
+                <button type="button" onClick={() => router.push("/dashboard/live-automation/" + encodeURIComponent(selectedLiveRuleId))}
+                  className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold">
+                  رفتن به پاسخ انتخاب‌شده
+                </button>}
+              <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">پاسخ لایو قبلی از قبل فعال است؛ برای جلوگیری از ارسال تکراری، به همان پاسخ هدایت می‌شوی.</p>
+            </div>}
+        </section>
+      )}
+      {(id ? editingView === "edit" : creationMode === "new") && (<>
+      <CompleteResponseNameField value={draft.responseName} onChange={(responseName) => patch({ responseName })} disabled={saving}/>
       <section>
         <Guide number={1} title="شرط پاسخ‌دهی به کامنت لایو" hint={anyComment ? "برای هر کامنت متنی در لایو، بدون نیاز به کلمه کلیدی، پاسخ دایرکت ارسال می‌شود." : "وقتی بیننده یکی از عبارت‌های تعیین‌شده را در لایو بنویسد، پاسخ در دایرکت ارسال می‌شود."} />
         <div className="space-y-3 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
@@ -253,16 +334,6 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
       </section>
 
       <section>
-        {account && <ReusableResponseLibrary
-          instagramAccountId={account.id}
-          message={{ ...createEmptyMessage(), text: draft.initialText }}
-          onUpdate={(value) => patch({ initialText: value.text ?? "" })}
-          initialName={draft.responseName}
-          onNameChange={(value) => patch({responseName: value})}
-          onRegisterSave={(handler) => { introSaveRef.current = handler; }}
-          allowedTypes={["TEXT"]}
-          prefix="پاسخ خودکار لایو"
-        />}
         <Guide number={2} title="متن پاسخ در دایرکت کاربر" hint={anyComment ? "با ارسال هر کامنت متنی در لایو، این پاسخ در دایرکت کاربر ارسال می‌شود." : "پس از ارسال کلمه کلیدی مشخص در لایو، این پاسخ در دایرکت کاربر ارسال می‌شود."} />
         <div className="space-y-2 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
           <label htmlFor="live-intro" className="block text-xs font-semibold text-[var(--daira-input-label)]">متن پاسخ در دایرکت کاربر</label>
@@ -301,6 +372,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
                   onContinue={() => undefined}
                   storyCreateMode
                   storyEditMode={Boolean(id)}
+                  hideLibrary
                   onDraftChange={setShowcaseDirty}
                   responseTypeTitle="نوع پاسخ بعد از دریافت پیام"
                   responseTypeDescription=""
@@ -343,6 +415,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
         {saving && <Loader2 size={17} className="animate-spin"/>}
         {saving ? "در حال ذخیره..." : id ? "ذخیره تغییرات" : "ساخت پاسخ خودکار"}
       </button>
+      </>)}
     </div>
   );
 }
