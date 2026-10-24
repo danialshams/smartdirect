@@ -12,6 +12,7 @@ export type CompleteAutomation = {
   triggerType?: string;
   keyword?: string | null;
   keywordMatchMode?: string | null;
+  matchMode?: "EXACT" | "CONTAINS_ANY";
   commentReplyText?: string | null;
   requireFollow?: boolean;
   followGateText?: string | null;
@@ -59,7 +60,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
     return <div className="space-y-3">
       <div className="daira-response-library__preview-branch space-y-2 rounded-xl p-3 text-xs leading-6 text-[var(--daira-text)]">
         <p><strong className="text-[var(--daira-heading)]">روش فعال‌سازی:</strong>{" "}
-          {item.keywordMatchMode === "CONTAINS_ANY" && !item.keyword ? "هر کامنت / ریپلای" : item.keyword || "بدون کلمات کلیدی"}</p>
+          {(item.keywordMatchMode === "CONTAINS_ANY" || item.matchMode === "CONTAINS_ANY") && !item.keyword ? "هر کامنت / ریپلای" : item.keyword || "بدون کلمات کلیدی"}</p>
         {kind === "LIVE" && item.followupEnabled &&
           <p><strong>ادامه گفتگو:</strong> {item.followupKeyword || "تنظیم شده"}</p>}
         {item.requireFollow && <p><strong>شرط فالو:</strong> فعال
