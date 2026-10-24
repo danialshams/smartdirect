@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { prisma } from "../src/lib/prisma";
 import { validateSavedResponseOrigin } from "../src/lib/automation/saved-response-origin";
+import { editQuickReplyDestination, nestedReplyUses } from "../src/lib/automation/nested-response-usage";
 
 async function main() {
 const seed = randomUUID().replace(/-/g, "");
@@ -41,6 +42,27 @@ try {
     where: { savedResponseId: saved.id, automation: { instagramAccountId: account.id } },
   });
   assert.deepEqual(uses.map((value) => value.id), [message.id]);
+  const root = await prisma.quickReply.create({ data: {
+    automationMessageId: message.id, title: "مشاهده کفش",
+    payload: "ci-" + seed,
+    replyText: JSON.stringify({
+      type: "TEXT", text: saved.text, savedResponseId: saved.id,
+      nextMessageId: "legacy-metadata",
+    }),
+  } });
+  const links = nestedReplyUses(root.replyText);
+  assert.equal(links.length, 1);
+  assert.equal(links[0].savedResponseId, saved.id);
+  const edited = editQuickReplyDestination(root.replyText, [], saved.id, "apply",
+    { messageType: "TEXT", text: "به‌روزرسانی‌شده", mediaId: null, mediaUrl: null,
+      showcaseId: null, formId: null, quickReplies: [] });
+  const result = await prisma.quickReply.updateMany({
+    where: { id: root.id, updatedAt: root.updatedAt }, data: { replyText: edited },
+  });
+  assert.equal(result.count, 1);
+  assert.equal(JSON.parse((await prisma.quickReply.findUniqueOrThrow({ where: { id: root.id } })).replyText!).nextMessageId,
+    "legacy-metadata", "Legacy JSON fields must survive scoped changes.");
+
   await prisma.savedAutomationResponse.delete({ where: { id: saved.id } });
   const remains = await prisma.automationMessage.findUniqueOrThrow({ where: { id: message.id } });
   assert.equal(remains.savedResponseId, null, "Deleting a saved template must preserve its active reply.");
