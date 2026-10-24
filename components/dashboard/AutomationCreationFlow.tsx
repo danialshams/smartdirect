@@ -1,6 +1,8 @@
 "use client";
 
 import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X } from "lucide-react";
+import CommentReplyVariantsField from "./CommentReplyVariantsField";
+import { readPublicCommentReplies, validatePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -157,7 +159,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       mediaIds,
       keyword: editAutomation.keyword || "",
       keywordMatchMode: editAutomation.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" as const : "EXACT" as const,
-      commentReply: editAutomation.commentReplyText || "",
+      commentReplies: (() => { const previous = readPublicCommentReplies(editAutomation.commentReplyText); return [...previous, ...Array(Math.max(0, 3 - previous.length)).fill("")]; })(),
       likeStoryReply: Boolean(editAutomation.likeStoryReply),
       isActive: editAutomation.isActive !== false,
       requireFollow: Boolean(editAutomation.requireFollow),
@@ -183,7 +185,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
   const [draftSelectedMediaIds, setDraftSelectedMediaIds] = useState<string[]>([]);
   const [mediaLoading, setMediaLoading] = useState(true);
-  const [commentReply, setCommentReply] = useState(() => initialEditState?.commentReply ?? "");
+  const [commentReplies, setCommentReplies] = useState<string[]>(() => initialEditState?.commentReplies ?? ["", "", ""]);
   const [requireFollow, setRequireFollow] = useState(() => initialEditState?.requireFollow ?? false);
   const [likeStoryReply, setLikeStoryReply] = useState(() => initialEditState?.likeStoryReply ?? false);
   // Preserve an existing automation status; editing no longer exposes an activation switch.
@@ -308,7 +310,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   const keywords = useMemo(() => keyword.split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean), [keyword]);
   const formSnapshot = JSON.stringify({
-    mediaIds: [...selectedMediaIds].sort(), keyword, keywordMatchMode, commentReply,
+    mediaIds: [...selectedMediaIds].sort(), keyword, keywordMatchMode, commentReplies,
     likeStoryReply, isActive, requireFollow, followGateText, followGateButtonText, dmMode,
     linkButtons, message, extraMessages, extraLinks,
   });
@@ -316,7 +318,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     mediaIds: [...initialEditState.mediaIds].sort(),
     keyword: initialEditState.keyword,
     keywordMatchMode: initialEditState.keywordMatchMode,
-    commentReply: initialEditState.commentReply,
+    commentReplies: initialEditState.commentReplies,
     likeStoryReply: initialEditState.likeStoryReply,
     isActive: initialEditState.isActive,
     requireFollow: initialEditState.requireFollow,
@@ -353,10 +355,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     selectedMediaIds.length === 0 ? "حداقل یک پست یا ریلز انتخاب کنید." :
     keywordMatchMode === "EXACT" && keywords.length === 0 ? "حداقل یک کلمه کلیدی وارد کنید." :
     keywords.length > MAX_KEYWORDS ? "حداکثر ده کلمه کلیدی مجاز است." :
-    commentReply.length > 2000 ? "پاسخ زیر کامنت بیش از ۲۰۰۰ کاراکتر است." :
+    commentReplies.length < 3 || commentReplies.length > 5 || commentReplies.some((text) => !text.trim() || text.trim().length > 2000) || new Set(commentReplies.map((text) => text.trim())).size !== commentReplies.length ? "سه تا پنج پاسخ متفاوت زیر کامنت را کامل وارد کنید." :
     enteredDm && !validDm ? "همه پیام‌های دایرکت را کامل وارد کنید." :
     enteredDm && (!mainLinksValid || !extraLinksValid) ? "عنوان و آدرس دکمه‌های لینک را کامل و معتبر وارد کنید." :
-    !commentReply.trim() && !enteredDm ? "حداقل یک پاسخ زیر کامنت یا پیام دایرکت وارد کنید." :
+
     requireFollow && !enteredDm ? "برای فعال کردن شرط فالو، پیام دایرکت لازم است." :
     requireFollow && (!followGateText.trim() || followGateText.length > 640 ||
       !followGateButtonText.trim() || followGateButtonText.trim().length > 20) ?
@@ -535,7 +537,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             mediaIds: targetMediaIds,
             sourceMediaId: editingMediaId || (initialEditState?.mediaIds.length === 1 ? initialEditState.mediaIds[0] : null),
             expectedUpdatedAt: editAutomation.updatedAt,
-            commentReplyText: commentReply.trim(),
+            commentReplyVariants: validatePublicCommentReplies(commentReplies),
             requireFollow,
             followGateText: requireFollow ? followGateText.trim() : null,
             followGateButtonText: requireFollow ? followGateButtonText.trim() : null,
@@ -629,7 +631,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
           keywordMatchMode,
           mediaIds: triggerType === "COMMENT_KEYWORD" ? targetMediaIds : [],
-          commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReply.trim() || null : null,
+          commentReplyVariants: triggerType === "COMMENT_KEYWORD" ? validatePublicCommentReplies(commentReplies) : undefined,
           replyText: null,
           likeComment: false,
           sendDm: triggerType === "COMMENT_KEYWORD" ? enteredDm : true,
@@ -1066,10 +1068,10 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
             {triggerType === "COMMENT_KEYWORD" && (
               <div className="space-y-3">
-              <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. پاسخ زیر کامنت — متن فعلی را ببین و در صورت نیاز ویرایش کن." : "۴. پاسخ زیر کامنت — متنی بنویس که زیر کامنت کاربر نمایش داده شود."}</AutomationSectionGuide></div>
+              <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. پاسخ زیر کامنت — حداقل سه و حداکثر پنج پاسخ متفاوت تنظیم کن؛ برای هر کامنت یکی تصادفی انتخاب می‌شود تا تکرار کاهش یابد." : "۴. پاسخ زیر کامنت — سه تا پنج متن متفاوت بنویس؛ برای هر کامنت یکی تصادفی منتشر می‌شود تا پاسخ‌های یکسان کمتر شوند."}</AutomationSectionGuide></div>
               <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
-                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><label className="block text-sm font-bold text-[var(--daira-heading)]">پاسخ زیر کامنت <span className="text-[var(--daira-primary)]">(اختیاری)</span></label></div>
-                <textarea value={commentReply} onChange={(e) => setCommentReply(e.target.value)} rows={3} maxLength={2000} placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-[11px] placeholder:whitespace-nowrap placeholder:overflow-hidden placeholder:text-ellipsis focus:border-[var(--daira-input-focus)] focus:bg-white focus:ring-2 focus:ring-[color:var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75 }} />
+                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><strong className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های عمومی به کامنت</strong></div>
+                <CommentReplyVariantsField values={commentReplies} onChange={setCommentReplies} disabled={saving} />
               </div>
               </div>
             )}

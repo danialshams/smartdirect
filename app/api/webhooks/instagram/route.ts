@@ -1,3 +1,4 @@
+import { pickPublicCommentReply } from "@/lib/automation/comment-reply-variants";
 import { createHash } from "node:crypto";
 import { verifyInstagramWebhookSignature } from "@/lib/webhook/verify-signature";
 import { after, NextRequest, NextResponse } from "next/server";
@@ -3566,10 +3567,8 @@ async function processCommentEvent(
     // Validate Comment automation output
     // =======================================================
 
-    const hasPublicCommentReply = Boolean(
-      matchedAutomation.commentReplyText &&
-      matchedAutomation.commentReplyText.trim(),
-    );
+    const selectedPublicCommentReply = pickPublicCommentReply(matchedAutomation.commentReplyText);
+    const hasPublicCommentReply = Boolean(selectedPublicCommentReply);
 
     const hasPrivateReply = Boolean(
       matchedAutomation.replyText && matchedAutomation.replyText.trim(),
@@ -3627,7 +3626,7 @@ async function processCommentEvent(
 
         accessToken,
 
-        replyText: matchedAutomation.commentReplyText!.trim(),
+        replyText: selectedPublicCommentReply!,
       });
     } else {
       console.log(
@@ -3740,7 +3739,7 @@ async function processCommentEvent(
               replied: true,
 
               replyText:
-                matchedAutomation.commentReplyText ??
+                selectedPublicCommentReply ??
                 matchedAutomation.replyText ??
                 null,
             },
@@ -3979,7 +3978,7 @@ async function processCommentEvent(
           replied: true,
 
           replyText:
-            matchedAutomation.commentReplyText ??
+            selectedPublicCommentReply ??
             matchedAutomation.replyText ??
             null,
         },

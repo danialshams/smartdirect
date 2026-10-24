@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { storePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
 import { getCachedInstagramMedia, invalidateAutomationCache } from "@/lib/cache/instagram";
 
 function normalizePersianDigits(value: string) {
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
       mediaIds,
       likeComment = false,
       commentReplyText,
+      commentReplyVariants,
       sendDm = false,
       likeIncomingDm = false,
       likeStoryReply = false,
@@ -162,6 +164,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let normalizedCommentReply = typeof commentReplyText === "string" && commentReplyText.trim() ? commentReplyText.trim() : null;
+    if (triggerType === "COMMENT_KEYWORD" && commentReplyVariants !== undefined) {
+      try { normalizedCommentReply = storePublicCommentReplies(commentReplyVariants); }
+      catch (error) { return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "پاسخ‌های کامنت معتبر نیستند." }, { status: 400 }); }
+    }
+
     const automation = await prisma.automation.create({
       data: {
         instagramAccountId,
@@ -171,7 +179,7 @@ export async function POST(request: NextRequest) {
         mediaIds: normalizedMediaIds.join(",") || null,
         mediaId: normalizedMediaId,
         likeComment: triggerType === "COMMENT_KEYWORD" ? Boolean(likeComment) : false,
-        commentReplyText: triggerType === "COMMENT_KEYWORD" && typeof commentReplyText === "string" && commentReplyText.trim() ? commentReplyText.trim() : null,
+        commentReplyText: triggerType === "COMMENT_KEYWORD" ? normalizedCommentReply : null,
         sendDm: Boolean(sendDm),
         likeIncomingDm: triggerType === "DM" ? Boolean(likeIncomingDm) : false,
         likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? Boolean(likeStoryReply) : false,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { storePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
 import { getCachedInstagramMedia, invalidateAutomationCache } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
@@ -157,8 +158,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (requireFollow && (!followGateButtonText || followGateButtonText.length > 20))
       throw new EditError("عنوان دکمه بررسی فالو باید بین ۱ تا ۲۰ کاراکتر باشد.");
     if (followGateText.length > 640) throw new EditError("متن درخواست فالو حداکثر ۶۴۰ کاراکتر است.");
-    const commentReplyText = clean(body.commentReplyText);
-    if (commentReplyText.length > 2000) throw new EditError("متن پاسخ زیر کامنت حداکثر ۲۰۰۰ کاراکتر است.");
+    let commentReplyText = clean(body.commentReplyText);
+    if (body.commentReplyVariants !== undefined) {
+      try { commentReplyText = storePublicCommentReplies(body.commentReplyVariants); }
+      catch (error) { throw new EditError(error instanceof Error ? error.message : "پاسخ‌های کامنت معتبر نیستند."); }
+    } else if (commentReplyText.length > 2000) {
+      throw new EditError("متن پاسخ زیر کامنت حداکثر ۲۰۰۰ کاراکتر است.");
+    }
     if (typeof body.isActive !== "boolean") throw new EditError("وضعیت فعال بودن نامعتبر است.");
     if (typeof body.sendDm !== "boolean") throw new EditError("وضعیت ارسال دایرکت نامعتبر است.");
     if (!Array.isArray(body.messages) || body.messages.length > 20 ||
