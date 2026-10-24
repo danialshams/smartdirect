@@ -370,7 +370,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         const deferred = new Set<string>();
         for (const link of nested) {
           const automationId = link.root.automationMessage.automation.id;
-          if (!mixedGroups.has(automationId)) continue;
+          if (type !== "FORM" ||
+            !(groups.get(automationId) || []).some((entry) => byMessage.has(entry.id))) continue;
           deferred.add(link.quickReplyId);
           const copiedId = mixedForks.get(automationId)?.replyMap.get(link.quickReplyId);
           if (copiedId) deferred.add(copiedId);
@@ -551,7 +552,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             const fresh = await tx.quickReply.findUniqueOrThrow({ where: { id: mappedId } });
             const relevant = links.filter((link) => link.quickReplyId === rootId);
             let baseText = fresh.replyText;
-            if (type === "FORM" && mixedGroups.has(automationId)) {
+            if (type === "FORM") {
               const owner = current.find((msg) => msg.id === relevant[0]?.root.automationMessageId &&
                 byMessage.has(msg.id));
               if (owner) {
@@ -668,7 +669,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           for (const rootId of sourceRoots) {
             const original = originalData.get(rootId);
             if (!original) throw new ApplyError("گزینه فرم دیگر وجود ندارد.", 409);
-            const directOwner = type === "FORM" && mixedGroups.has(automationId)
+            const directOwner = type === "FORM"
               ? current.find((item) => item.id === links.find((link) => link.quickReplyId === rootId)?.root.automationMessageId &&
                 byMessage.has(item.id))
               : undefined;
