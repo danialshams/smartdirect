@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validateSavedResponseOrigin } from "@/lib/automation/saved-response-origin";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 
@@ -31,6 +32,7 @@ type MessageInput = {
   mediaId: string;
   showcaseId: string;
   formId: string;
+  savedResponseId?: string | null;
   quickReplies: QuickReplyInput[];
   updateQuickReplies: boolean;
 };
@@ -99,7 +101,9 @@ function parseMessage(value: unknown): MessageInput {
   const updateQuickReplies = message.updateQuickReplies !== false;
   const quickReplies = messageType === "FORM" && updateQuickReplies
     ? parseQuickReplies(message.quickReplies, 0, new Set<string>()) : [];
-  return { id: clean(message.id), messageType, text, mediaUrl, mediaId, showcaseId, formId, quickReplies, updateQuickReplies };
+  return { id: clean(message.id), messageType, text, mediaUrl, mediaId, showcaseId, formId,
+    savedResponseId: message.savedResponseId === undefined ? undefined : clean(message.savedResponseId) || null,
+    quickReplies, updateQuickReplies };
 }
 
 function collectShowcases(replies: QuickReplyInput[], result: Set<string>) {
@@ -146,6 +150,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (typeof body.isActive !== "boolean" || typeof body.likeStoryReply !== "boolean")
       throw new StoryEditError("وضعیت تنظیمات استوری نامعتبر است.");
     const message = parseMessage(body.message);
+    let origin: string | null | undefined;
+    try { origin = await validateSavedResponseOrigin(message.savedResponseId, current.instagramAccountId, session.user.id); }
+    catch (error) { throw new StoryEditError(error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست."); }
     const originalMessageId = current.messages[0]?.id;
     if (message.id && message.id !== originalMessageId &&
         !message.id.startsWith("message_") && !message.id.startsWith("local_"))
@@ -216,6 +223,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
       const data = {
         messageType: message.messageType,
+        ...(origin !== undefined ? { savedResponseId: origin } : {}),
         text: message.text || null,
         mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(message.messageType) ? message.mediaUrl || null : null,
         mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(message.messageType) ? message.mediaId || null : null,
