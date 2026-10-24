@@ -4,7 +4,7 @@ import GlassModalPresence from "./GlassModalPresence";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Loader2, Pencil, Trash2 } from "lucide-react";
+import { ArrowRight, Loader2, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/dashboard/DashboardUI";
 import CommentReplyVariantsField from "./CommentReplyVariantsField";
 import { readPublicCommentReplies, validatePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
@@ -113,9 +113,18 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
   const isStory = expectedTriggerType === "STORY_REPLY_KEYWORD";
 
 const commentReplyField = !isStory ? (
-  <div className="pt-5">
+  <section aria-label="پاسخ‌های عمومی به کامنت" className="daira-comment-replies mt-5 space-y-4 rounded-2xl p-4 sm:p-5">
+    <div className="flex items-start gap-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]">
+        <MessageCircle size={17} aria-hidden="true" />
+      </span>
+      <div className="min-w-0 flex-1 space-y-1">
+        <h2 className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های عمومی به کامنت</h2>
+        <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">سه تا پنج متن متفاوت وارد کن. یک پاسخ به‌صورت تصادفی زیر هر کامنت ارسال می‌شود.</p>
+      </div>
+    </div>
     <CommentReplyVariantsField values={commentReplies} onChange={(next) => { setCommentReplies(next); setDirty(true); }} disabled={deleting} />
-  </div>
+  </section>
 ) : null;
 
 
