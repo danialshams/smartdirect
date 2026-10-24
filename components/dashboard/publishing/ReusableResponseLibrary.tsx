@@ -372,7 +372,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
                         return { ...current, [usage.messageId]: next };
                       })}/>
                     {(scopeMedia[id]?.thumbnail_url || scopeMedia[id]?.media_url) &&
-                      <img src={scopeMedia[id].thumbnail_url || scopeMedia[id].media_url || ""} alt=""
+                      <img src={scopeMedia[id]?.thumbnail_url || scopeMedia[id]?.media_url || ""} alt=""
                         className="h-12 w-12 shrink-0 rounded-lg object-cover"/>}
                     <span className="min-w-0 flex-1 truncate text-xs text-[var(--daira-heading)]">
                       {id === "__smartdirect_live_comments_v1__" ? "پاسخ لایو" :
