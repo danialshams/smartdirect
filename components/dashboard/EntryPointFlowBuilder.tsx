@@ -612,6 +612,7 @@ export default function EntryPointFlowBuilder({
                                 {
                                     messageType:
                                         message.messageType,
+                                    savedResponseId: message.savedResponseId ?? null,
                                     text:
                                         message.text.trim() ||
                                         null,
