@@ -121,6 +121,10 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
   const [preview, setPreview] = useState<Saved | null>(null);
   const [scopeOpen, setScopeOpen] = useState(false);
   const [scopeSelected, setScopeSelected] = useState<Record<string, string[] | null>>({});
+  const [scopeMedia, setScopeMedia] = useState<Record<string, {
+    caption?: string; media_type?: string; media_product_type?: string;
+    thumbnail_url?: string | null; media_url?: string | null;
+  }>>({});
   const [error, setError] = useState("");
   const filtered = useMemo(() => items.filter((item) => allowedTypes.includes(item.messageType)), [items, allowedTypes.join(",")]);
 
@@ -157,6 +161,27 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     });
     return () => controller.abort();
   }, [instagramAccountId, message.savedResponseId]);
+
+  useEffect(() => {
+    if (!scopeOpen || !instagramAccountId) return;
+    const controller = new AbortController();
+    const query = "?instagramAccountId=" + encodeURIComponent(instagramAccountId);
+    void Promise.allSettled(["/api/instagram/media", "/api/instagram/stories"].map(async (path) => {
+      const response = await fetch(path + query, { cache: "no-store", credentials: "include", signal: controller.signal });
+      const payload = await response.json();
+      return response.ok && payload?.success && Array.isArray(payload.data) ? payload.data as Array<{
+        id: string; caption?: string; media_type?: string; media_product_type?: string;
+        thumbnail_url?: string | null; media_url?: string | null;
+      }> : [];
+    })).then((results) => {
+      if (controller.signal.aborted) return;
+      const previews: typeof scopeMedia = {};
+      for (const result of results) if (result.status === "fulfilled")
+        for (const item of result.value) if (item.id) previews[item.id] = item;
+      setScopeMedia(previews);
+    });
+    return () => controller.abort();
+  }, [scopeOpen, instagramAccountId]);
 
   function loadResponse(item: Saved, edit = false) {
     const applied: Partial<MessageDraft> = {
@@ -346,7 +371,13 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
                         const next = event.target.checked ? [...old, id] : old.filter((item) => item !== id);
                         return { ...current, [usage.messageId]: next };
                       })}/>
-                    <span className="min-w-0 break-all text-xs text-[var(--daira-heading)]">{id === "__smartdirect_live_comments_v1__" ? "پاسخ لایو" : "محتوا " + id}</span>
+                    {(scopeMedia[id]?.thumbnail_url || scopeMedia[id]?.media_url) &&
+                      <img src={scopeMedia[id].thumbnail_url || scopeMedia[id].media_url || ""} alt=""
+                        className="h-12 w-12 shrink-0 rounded-lg object-cover"/>}
+                    <span className="min-w-0 flex-1 truncate text-xs text-[var(--daira-heading)]">
+                      {id === "__smartdirect_live_comments_v1__" ? "پاسخ لایو" :
+                        scopeMedia[id]?.caption?.trim() || (scopeMedia[id]?.media_product_type === "REELS" ? "ریلز" : "محتوا " + id)}
+                    </span>
                   </label>
                 )) : (
                   <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg bg-[var(--daira-surface-hover)] p-2">
@@ -368,7 +399,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
             <button type="button" disabled={saving} onClick={() => setScopeOpen(false)} className="daira-glass-dialog__secondary min-h-11 flex-1 rounded-xl border px-3 text-xs font-bold">انصراف</button>
             <button type="button" disabled={saving || selectedScopes().length === 0} onClick={() => void saveToLibrary(undefined, selectedScopes())}
               className="daira-glass-dialog__primary min-h-11 flex-1 rounded-xl px-3 text-xs font-bold disabled:opacity-50">
-              {saving ? "در حال ذخیره..." : "اعمال برای " + new Intl.NumberFormat("fa-IR").format(selectedScopes().length) + " محل"}
+              {saving ? "در حال ذخیره..." : "اعمال برای " + new Intl.NumberFormat("fa-IR").format(selectedScopes().reduce((total, item) => total + (item.mediaIds.length || 1), 0)) + " مورد"}
             </button>
           </div>
         </div>
