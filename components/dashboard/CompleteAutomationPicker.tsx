@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, CheckCircle2, Eye, Pencil, X } from "lucide-react";
-import { normalizeMessages } from "./automation-form-utils";
+import { createEmptyMessage, normalizeMessages } from "./automation-form-utils";
 import type { FormItem, Showcase } from "./automation-form-utils";
 import ResponseTemplateDetails from "./ResponseTemplateDetails";
 
@@ -46,10 +46,9 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
   const label = (item: T) => item.title?.trim() || "پاسخ بدون نام";
   const renderDetail = (item: T) => {
     const messages = normalizeMessages(item.messages || []);
-    const displayedMessages = kind === "LIVE" && item.initialText
-      ? [{ ...messages[0], messageType: "TEXT" as const, text: item.initialText,
-        mediaUrl: "", showcaseId: "", formId: "", quickReplies: [] }, ...messages].filter(
-        (entry): entry is typeof messages[number] => Boolean(entry && entry.messageType))
+    const displayedMessages = kind === "LIVE"
+      ? [{ ...createEmptyMessage(), text: item.initialText || "" },
+          ...(item.followupEnabled ? messages : [])]
       : messages;
     return <div className="space-y-3">
       <div className="daira-response-library__preview-branch space-y-2 rounded-xl p-3 text-xs leading-6 text-[var(--daira-text)]">
