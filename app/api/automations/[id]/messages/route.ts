@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
+import { validateSavedResponseOrigin } from "@/lib/automation/saved-response-origin";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!automation) return NextResponse.json({ success: false, error: "Automation پیدا نشد" }, { status: 404 });
     const body = await request.json();
     if (!body || typeof body !== "object") return NextResponse.json({ success: false, error: "اطلاعات پیام نامعتبر است" }, { status: 400 });
-    const { messageType = "TEXT", text, mediaUrl, mediaId, showcaseId, formId, order, linkButtonUrl, linkButtonTitle, linkButtons } = body;
+    const { messageType = "TEXT", text, mediaUrl, mediaId, showcaseId, formId, order, linkButtonUrl, linkButtonTitle, linkButtons, savedResponseId } = body;
     if (!isValidMessageType(messageType)) return NextResponse.json({ success: false, error: "نوع پیام نامعتبر است" }, { status: 400 });
     if (messageType === "VIDEO") return NextResponse.json({ success: false, error: "ساخت پاسخ ویدیویی فعلاً غیرفعال است." }, { status: 400 });
     const normalizedText = normalizeOptionalString(text);
@@ -90,9 +91,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       messageOrder = lastMessage ? lastMessage.order + 1 : 0;
     }
 
+    let origin: string | null | undefined;
+    try { origin = await validateSavedResponseOrigin(savedResponseId, automation.instagramAccountId, session.user.id); }
+    catch (error) { return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست." }, { status: 400 }); }
     const message = await prisma.automationMessage.create({
       data: {
         automationId: id,
+        ...(origin !== undefined ? { savedResponseId: origin } : {}),
         messageType,
         text: normalizedText,
         mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(messageType) ? normalizedMediaUrl : null,
