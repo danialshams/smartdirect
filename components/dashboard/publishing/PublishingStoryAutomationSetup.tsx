@@ -360,6 +360,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
     },
     async saveAndContinue() {
       if (!keywordValid || uploading || slideUploadInProgress || formUploadsInFlight > 0 || savingShowcase || formSaving) return false;
+      let preparedMessage: MessageDraft = { ...message, text: message.text.trim() };
       if (responseType === "TEXT") {
         if (!message.text.trim()) return false;
         onUpdate({ text: message.text.trim() });
@@ -367,8 +368,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl && !(storyEditMode && message.mediaId)) return false;
       if (responseType === "SHOWCASE" &&
           (!message.showcaseId || (storyCreateMode && showcaseSource === "existing" && existingShowcaseEdited))) {
-        const ok = await saveShowcase();
-        if (!ok) return false;
+        const newShowcaseId = await saveShowcase();
+        if (!newShowcaseId) return false;
+        preparedMessage = { ...preparedMessage, showcaseId: newShowcaseId };
       }
       if (responseType === "FORM") {
         if (!isValidStoryForm(message.text, message.quickReplies)) return false;
@@ -379,9 +381,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       }
       unsavedDraftsRef.current = {};
       unsavedSlidesRef.current = {};
-      if (saveNamedResponseRef.current && !await saveNamedResponseRef.current(message)) return false;
+      if (saveNamedResponseRef.current && !await saveNamedResponseRef.current(preparedMessage)) return false;
       onSavedChange?.(true);
-      onContinue();
+      onContinue(preparedMessage);
       return true;
     },
     async deleteAndReset() {
