@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { nestedReplyUses } from "@/lib/automation/nested-response-usage";
 import { getStorageProviderForObject } from "@/lib/storage/provider";
 import { collectSavedResponseMedia } from "@/lib/automation/saved-response-media";
 
@@ -71,6 +72,7 @@ export async function GET(request: NextRequest) {
     const usageMap = new Map<string, Array<{
       messageId: string; automationId: string; automationTitle: string | null;
       messageUpdatedAt: string; automationUpdatedAt: string;
+      quickReplyId?: string; nodePath?: Array<string | number>; branchTitle?: string;
       triggerType: string; mediaIds: string[]; menuTitles: string[]; icebreakerQuestions: string[];
     }>>();
     for (const linked of appliedMessages) {
@@ -89,6 +91,49 @@ export async function GET(request: NextRequest) {
         icebreakerQuestions: a.iceBreakers.map((item) => item.question),
       });
       usageMap.set(linked.savedResponseId, previous);
+    }
+    // Find explicit links in legacy QuickReply JSON (including deeper branches).
+    // Malformed historical JSON is skipped, never guessed from matching text.
+    if (sourceIds.length) {
+      const roots = await prisma.quickReply.findMany({
+        where: {
+          replyText: { contains: "savedResponseId" },
+          automationMessage: { automation: { instagramAccountId } },
+        },
+        select: {
+          id: true, title: true, replyText: true, updatedAt: true,
+          automationMessage: { select: {
+            automation: { select: {
+              id: true, title: true, triggerType: true, mediaId: true, mediaIds: true, updatedAt: true,
+              persistentMenuItems: { select: { title: true } },
+              iceBreakers: { select: { question: true } },
+            } },
+          } },
+        },
+      });
+      const known = new Set(sourceIds);
+      for (const root of roots) {
+        const a = root.automationMessage.automation;
+        const mediaIds = Array.from(new Set([
+          ...(a.mediaId ? [a.mediaId] : []),
+          ...(a.mediaIds || "").split(",").map((id) => id.trim()).filter(Boolean),
+        ]));
+        for (const use of nestedReplyUses(root.replyText)) {
+          if (!known.has(use.savedResponseId)) continue;
+          const previous = usageMap.get(use.savedResponseId) || [];
+          previous.push({
+            messageId: "qr:" + root.id + ":" + (use.path.length ? use.path.join(".") : "root"),
+            quickReplyId: root.id, nodePath: use.path, branchTitle: use.label,
+            automationId: a.id, automationTitle: a.title,
+            messageUpdatedAt: root.updatedAt.toISOString(),
+            automationUpdatedAt: a.updatedAt.toISOString(),
+            triggerType: a.triggerType, mediaIds,
+            menuTitles: a.persistentMenuItems.map((entry) => entry.title),
+            icebreakerQuestions: a.iceBreakers.map((entry) => entry.question),
+          });
+          usageMap.set(use.savedResponseId, previous);
+        }
+      }
     }
     const showcaseMap = new Map(showcases.map((item) => [item.id, item]));
     const formMap = new Map(forms.map((item) => [item.id, item]));
