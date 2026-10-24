@@ -119,6 +119,33 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (type === "FORM" && formId && !await prisma.form.findFirst({
       where: { id: formId, userId: session.user.id, instagramAccountId: saved.instagramAccountId }, select: { id: true },
     })) throw new ApplyError("فرم انتخاب‌شده متعلق به این پیج نیست.");
+    // Recursive form destinations also need account and type isolation.
+    const nestedRefs = new Map<string, string>();
+    const nestedShowcases = new Set<string>();
+    const nestedForms = new Set<string>();
+    function collectNested(items: Reply[]) {
+      for (const item of items) {
+        if (item.savedResponseId) nestedRefs.set(item.savedResponseId, item.destinationType);
+        if (item.destinationShowcaseId) nestedShowcases.add(item.destinationShowcaseId);
+        if (item.destinationFormId) nestedForms.add(item.destinationFormId);
+        collectNested(item.destinationQuickReplies);
+      }
+    }
+    collectNested(quickReplies);
+    if (nestedRefs.size) {
+      const found = await prisma.savedAutomationResponse.findMany({
+        where: { id: { in: [...nestedRefs.keys()] }, userId: session.user.id, instagramAccountId: saved.instagramAccountId },
+        select: { id: true, messageType: true },
+      });
+      if (found.length !== nestedRefs.size || found.some((item) => item.messageType !== nestedRefs.get(item.id)))
+        throw new ApplyError("یکی از پاسخ‌های داخل فرم با این پیج یا نوع مقصد سازگار نیست.");
+    }
+    if (nestedShowcases.size && await prisma.showcase.count({
+      where: { id: { in: [...nestedShowcases] }, userId: session.user.id, instagramAccountId: saved.instagramAccountId },
+    }) !== nestedShowcases.size) throw new ApplyError("یکی از ویترین‌های داخل فرم متعلق به این پیج نیست.");
+    if (nestedForms.size && await prisma.form.count({
+      where: { id: { in: [...nestedForms] }, userId: session.user.id, instagramAccountId: saved.instagramAccountId },
+    }) !== nestedForms.size) throw new ApplyError("یکی از فرم‌های داخلی متعلق به این پیج نیست.");
     const refs = collectSavedResponseMedia({ messageType: type, mediaUrl, quickReplies });
     if (refs.missingOriginal) throw new ApplyError("برای پاسخ رسانه‌ای، فایل اصلی را آپلود کن.");
     for (const url of refs.urls) {
@@ -278,6 +305,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           });
           split++;
         } else {
+          const lockedAutomation = await tx.automation.updateMany({
+            where: { id: automationId, updatedAt: a.updatedAt },
+            data: { updatedAt: new Date() },
+          });
+          if (lockedAutomation.count !== 1)
+            throw new ApplyError("این اتوماسیون هم‌زمان تغییر کرده است؛ صفحه را تازه‌سازی کن.", 409);
           // Update selected linked messages in place; unchecked messages remain independent.
           for (const message of selected) {
             await applyToMessage(message.id, message.updatedAt);
@@ -291,7 +324,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         }
       }
       return { changed, split };
-    }, { maxWait: 10000, timeout: 30000 });
+    }, { maxWait: 10000, timeout: 30000, isolationLevel: "Serializable" });
 
     const updatedTemplate = await prisma.savedAutomationResponse.findUniqueOrThrow({ where: { id } });
     try { await invalidateAutomationCache(saved.instagramAccountId); }
@@ -299,7 +332,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ success: true, data: { ...applied, template: updatedTemplate } });
   } catch (error) {
     console.error("PATCH saved response scoped apply error:", error);
-    const status = error instanceof ApplyError ? error.status : 500;
-    return NextResponse.json({ success: false, error: error instanceof ApplyError ? error.message : "اعمال تغییرات پاسخ ناموفق بود." }, { status });
+    const status = error instanceof ApplyError ? error.status :
+      (typeof error === "object" && error !== null && "code" in error && error.code === "P2034" ? 409 : 500);
+    return NextResponse.json({ success: false, error: error instanceof ApplyError ? error.message : status === 409 ? "اطلاعات هم‌زمان تغییر کرده است. صفحه را تازه‌سازی کن." : "اعمال تغییرات پاسخ ناموفق بود." }, { status });
   }
 }
