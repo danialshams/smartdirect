@@ -174,7 +174,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       nextTriggerType === "COMMENT_KEYWORD" ||
       nextTriggerType === "STORY_REPLY_KEYWORD";
 
-    if (isMediaBasedTrigger) {
+    if (isMediaBasedTrigger && (triggerType !== undefined || mediaId !== undefined) && nextMediaId) {
       const duplicate = await prisma.automation.findFirst({
         where: {
           id: { not: id },

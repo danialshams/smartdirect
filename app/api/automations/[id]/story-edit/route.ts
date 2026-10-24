@@ -136,8 +136,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (current.updatedAt.getTime() !== new Date(expected).getTime())
       throw new StoryEditError("این پاسخ در جای دیگری تغییر کرده است. برای جلوگیری از بازنویسی، صفحه را دوباره باز کنید.", 409);
 
-    const mediaId = clean(body.mediaId);
-    if (!mediaId) throw new StoryEditError("یک استوری انتخاب کنید.");
+    const mediaId: string | null = null; // Account-wide story reply automation.
     const keywordMatchMode = body.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT";
     const keywords = keywordsFrom(body.keyword);
     if (keywordMatchMode === "EXACT" && !keywords.length) throw new StoryEditError("حداقل یک کلمه کلیدی وارد کنید.");
@@ -163,7 +162,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         (!originalMessageId || current.messages[0]?.messageType !== "FORM" || (current.messages[0]?._count.quickReplies ?? 0) < 2))
       throw new StoryEditError("گزینه‌های فرم ذخیره‌شده معتبر نیستند. صفحه را دوباره باز کنید.");
 
-    if (mediaId !== current.mediaId) {
+    if (false && mediaId !== current.mediaId) {
       const account = await prisma.instagramAccount.findFirst({
         where: { id: current.instagramAccountId, userId: session.user.id, isConnected: true },
         select: { igUserId: true },
@@ -182,10 +181,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         throw new StoryEditError("استوری جدید متعلق به این اکانت نیست یا دیگر در دسترس نیست.");
     }
 
-    const occupied = await prisma.automation.findFirst({
+    const occupied = mediaId ? await prisma.automation.findFirst({
       where: { instagramAccountId: current.instagramAccountId, triggerType: "STORY_REPLY_KEYWORD", id: { not: id }, mediaId },
       select: { id: true },
-    });
+    }) : null;
     if (occupied) throw new StoryEditError("این استوری به پاسخ خودکار دیگری متصل است.", 409);
 
     const showcaseIds = new Set<string>();
@@ -225,7 +224,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
       const data = {
         messageType: message.messageType,
-        ...(origin !== undefined ? { savedResponseId: origin } : {}),
+        ...(origin !== undefined ? { savedResponseId: null } : {}),
         text: message.text || null,
         mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(message.messageType) ? message.mediaUrl || null : null,
         mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(message.messageType) ? message.mediaId || null : null,
@@ -248,7 +247,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             title: reply.title, payload: reply.payload,
             replyText: JSON.stringify({
               type: reply.destinationType, isExit: reply.isExit,
-              savedResponseId: reply.savedResponseId || null,
+              savedResponseId: null,
               text: reply.destinationText, formId: reply.destinationFormId,
               showcaseId: reply.destinationShowcaseId, mediaUrl: reply.destinationMediaUrl,
               mediaId: reply.destinationMediaId, question: reply.destinationQuestion,

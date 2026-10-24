@@ -134,9 +134,7 @@ export async function POST(request: NextRequest) {
     // Comment/Story automations are unique per media. DM automations are
     // intentionally allowed to coexist because Ice Breakers and Persistent
     // Menu items each need their own hidden DM automation.
-    const isMediaBasedTrigger =
-      triggerType === "COMMENT_KEYWORD" ||
-      triggerType === "STORY_REPLY_KEYWORD";
+    const isMediaBasedTrigger = triggerType === "COMMENT_KEYWORD";
 
     if (isMediaBasedTrigger) {
       const existingAutomations = await prisma.automation.findMany({
