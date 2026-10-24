@@ -136,7 +136,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: "پاسخ خودکار کامنت پیدا نشد." }, { status: 404 });
     const body = await request.json() as JsonRecord;
     if (!body || typeof body !== "object" || Array.isArray(body)) throw new EditError("اطلاعات ویرایش نامعتبر است.");
-    const title = clean(body.title);
+    const title = body.title === undefined ? automation.title || "" : clean(body.title);
     if (title.length > 80) throw new EditError("نام پاسخ حداکثر ۸۰ نویسه است.");
     const sourceMediaId = clean(body.sourceMediaId);
     const expectedUpdatedAt = clean(body.expectedUpdatedAt);
