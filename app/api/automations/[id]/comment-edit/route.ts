@@ -135,6 +135,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: "پاسخ خودکار کامنت پیدا نشد." }, { status: 404 });
     const body = await request.json() as JsonRecord;
     if (!body || typeof body !== "object" || Array.isArray(body)) throw new EditError("اطلاعات ویرایش نامعتبر است.");
+    const title = clean(body.title);
+    if (title.length > 80) throw new EditError("نام پاسخ حداکثر ۸۰ نویسه است.");
     const sourceMediaId = clean(body.sourceMediaId);
     const expectedUpdatedAt = clean(body.expectedUpdatedAt);
     if (!expectedUpdatedAt || !Number.isFinite(Date.parse(expectedUpdatedAt)))
@@ -189,11 +191,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     ]);
     if (sourceMediaId && !oldMediaIds.has(sourceMediaId))
       throw new EditError("این محتوا دیگر به پاسخ انتخاب‌شده متصل نیست.", 409);
-    const splitShared = oldMediaIds.size > 1;
-    if (splitShared && !sourceMediaId)
-      throw new EditError("این پاسخ بین چند محتوا مشترک است؛ ویرایش را از فهرست همان محتوا شروع کنید.", 409);
-    if (splitShared && mediaIds.some((value) => oldMediaIds.has(value) && value !== sourceMediaId))
-      throw new EditError("ویرایش چند محتوای مشترک به‌صورت هم‌زمان مجاز نیست. هر محتوا را جداگانه ویرایش کنید.", 409);
+    // Editing a subset forks only those media; editing the complete set updates in place.
+    const appliedExistingIds = mediaIds.filter((value) => oldMediaIds.has(value));
+    if (!appliedExistingIds.length)
+      throw new EditError("حداقل یکی از محتواهای متصل باید برای ویرایش انتخاب شود.", 400);
+    const splitShared = appliedExistingIds.length < oldMediaIds.size;
     const newMediaIds = mediaIds.filter((value) => !oldMediaIds.has(value));
     if (newMediaIds.length) {
       const account = await prisma.instagramAccount.findFirst({
@@ -229,6 +231,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const savedId = await prisma.$transaction(async (tx) => {
       const updatedData = {
+        title: title || null,
         keyword, keywordMatchMode: mode,
         mediaId: mediaIds.length === 1 ? mediaIds[0] : null,
         mediaIds: mediaIds.join(","),
@@ -243,7 +246,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       if (splitShared) {
         // Split the selected content away from the shared automation. Do not
         // change the shared messages, keywords, or follow settings of siblings.
-        const remaining = [...oldMediaIds].filter((value) => value !== sourceMediaId);
+        const remaining = [...oldMediaIds].filter((value) => !appliedExistingIds.includes(value));
         const detached = await tx.automation.updateMany({
           where: { id, updatedAt: new Date(expectedUpdatedAt) },
           data: {
@@ -347,19 +350,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           },
           data: { commentAutomationId: cloned.id },
         });
-        if (sourceMediaId && !mediaIds.includes(sourceMediaId)) {
-          await tx.instagramPublishJob.updateMany({
-            where: {
-              instagramAccountId: automation.instagramAccountId,
-              instagramMediaId: sourceMediaId,
-              commentAutomationId: id,
-            },
-            data: {
-              commentAutomationId: null, commentTriggerKeywords: null,
-              commentTriggerResponse: null,
-            },
-          });
-        }
         return cloned.id;
       }
 
