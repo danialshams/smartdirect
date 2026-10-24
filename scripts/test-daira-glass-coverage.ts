@@ -115,20 +115,34 @@ for (const className of [
 ]) assert(css.includes("." + className), "Missing unified response glass rule: " + className);
 assert(responseLibrary.includes('className="daira-response-library mb-5 space-y-4"'),
   "Response naming panel requires breathing room before the following editor field.");
-assert(responseLibrary.includes('daira-response-library__icon-button daira-response-library__use')
-  && !responseLibrary.includes('className="daira-glass-dialog__primary rounded-lg p-2"'),
-  "Previously saved answers must not render a blue primary button in every row.");
-assert(responseLibrary.includes("daira-response-library__dialog")
-  && responseLibrary.includes("daira-response-library__scope-item")
-  && responseLibrary.includes("daira-response-library__preview-branch"),
-  "Response preview, scope editor and list need identical neutral contrast and glass treatment.");
-assert(commentFlow.includes('daira-response-mode') && commentFlow.includes('daira-response-template')
-  && !commentFlow.includes('!bg-[var(--daira-outline-hover-bg)]'),
-  "Selected reply templates should not be concealed by !important generic glass backgrounds.");
+const modeSwitcher = src("components/dashboard/ResponseModeSwitcher.tsx");
+const responsePreview = src("components/dashboard/ResponseTemplateDetails.tsx");
+assert(!responseLibrary.includes("ذخیره در پاسخ‌های قبلی") &&
+  responseLibrary.includes("onRegisterSave?.(saveToLibrary)"),
+  "Separate save button must be removed without losing automatic template persistence.");
+assert(responseLibrary.includes("<ResponseModeSwitcher") && commentFlow.includes("<ResponseModeSwitcher") &&
+  modeSwitcher.includes("ساخت پاسخ جدید") && modeSwitcher.includes("استفاده از پاسخ قبلی"),
+  "Live, comment and story should share one icon/size/color response switcher.");
+assert(responseLibrary.includes("daira-response-library__eye") &&
+  responseLibrary.includes("daira-response-library__expander") &&
+  !responseLibrary.includes("GlassModalPresence open={Boolean(preview)}"),
+  "Saved response preview must expand smoothly below the item, never use a popup.");
+assert(commentFlow.includes("daira-response-library__eye") &&
+  commentFlow.includes("daira-response-library__expander") &&
+  !commentFlow.includes("GlassModalPresence open={Boolean(previewTemplate)}"),
+  "Existing comment/story reply previews must also expand inline.");
+assert(!commentFlow.includes(".automation-create-flow button:not("),
+  "No broad CSS rule may paint every comment reply button blue.");
+assert(responsePreview.includes("QuickReplyTree") &&
+  responsePreview.includes("AssetContent") && responsePreview.includes("MediaContent"),
+  "Full saved reply preview needs forms, showcases, branches and media.");
+assert(responseLibrary.includes("daira-response-library__dialog") &&
+  responseLibrary.includes("daira-response-library__scope-item"),
+  "Scoped apply modal must keep its glass design and selection safety.");
 for (const editor of [commentFlow, legacyComments])
   assert(editor.includes('className="daira-comment-replies') &&
-    editor.includes('پاسخ‌های عمومی به کامنت'),
-    "Public comment replies need a titled, visible section on both edit paths.");
+    !editor.includes('<h2 className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های عمومی به کامنت</h2>'),
+    "Comment variant glass section must remain without duplicate title or description.");
 assert(variantsField.includes('daira-comment-replies__option') &&
   variantsField.includes('daira-comment-replies__textarea'),
   "Comment inputs should have individually legible glass option cards.");
