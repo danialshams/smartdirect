@@ -12,6 +12,7 @@ import { createEmptyMessage, normalizeMessages, validateMessages, type MessageDr
 import { dairaPalette } from "../../lib/design-system/palette";
 import ContentSelectionDialog from "./ContentSelectionDialog";
 import GlassModalPresence from "./GlassModalPresence";
+import ReusableResponseLibrary from "./publishing/ReusableResponseLibrary";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
@@ -1117,6 +1118,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     </div>
                   </div>
 
+                  <ReusableResponseLibrary
+                    instagramAccountId={account.id}
+                    message={message}
+                    onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
+                    allowedTypes={["TEXT"]}
+                    prefix="پاسخ خودکار دایرکت"
+                    disabled={saving}
+                  />
                   <div role="radiogroup" aria-label="قالب پیام متنی دایرکت" className={"grid grid-cols-1 gap-2 sm:grid-cols-2 " + (isEditing && message.messageType !== "TEXT" ? "hidden" : "")}>
                     <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (dmMode === "TEXT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white")}>
                       <input type="radio" name="direct-message-mode" value="TEXT" checked={dmMode === "TEXT"} onChange={() => setDmMode("TEXT")} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
