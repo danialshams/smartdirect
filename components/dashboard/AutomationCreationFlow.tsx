@@ -524,6 +524,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     }
     if (applyScope && !applyScope.length) { setError("حداقل یک محتوا را برای ویرایش انتخاب کن."); return; }
     const cleanKeywords = keywords;
+    const autoTitle = (triggerType === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ استوری") + " - " + (keywordMatchMode === "CONTAINS_ANY" ? "همه" : cleanKeywords.join("، ")).slice(0, 60);
     const currentMessage = finalMessage ?? message;
     const targetMediaIds = Array.from(new Set(applyScope
       ? [...applyScope, ...selectedMediaIds.filter((id) => !originalMediaIds.includes(id))]
@@ -554,7 +555,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             credentials: "include",
             body: JSON.stringify({
               expectedUpdatedAt: editAutomation.updatedAt,
-              title: (triggerType === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ استوری") + " - " + (keywordMatchMode === "CONTAINS_ANY" ? "همه" : cleanKeywords.join("، ")).slice(0, 60),
+              title: autoTitle,
               mediaId: targetMediaIds[0],
               keywordMatchMode,
               keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
@@ -630,7 +631,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             mediaIds: targetMediaIds,
             sourceMediaId: editingMediaId || (initialEditState?.mediaIds.length === 1 ? initialEditState.mediaIds[0] : null),
             expectedUpdatedAt: editAutomation.updatedAt,
-            title: (triggerType === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ استوری") + " - " + (keywordMatchMode === "CONTAINS_ANY" ? "همه" : cleanKeywords.join("، ")).slice(0, 60),
+            title: autoTitle,
             commentReplyVariants: validatePublicCommentReplies(commentReplies),
             requireFollow,
             followGateText: requireFollow ? followGateText.trim() : null,
@@ -721,7 +722,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         credentials: "include",
         body: JSON.stringify({
           instagramAccountId: account.id,
-          title: (triggerType === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ استوری") + " - " + (keywordMatchMode === "CONTAINS_ANY" ? "همه" : cleanKeywords.join("، ")).slice(0, 60),
+          title: autoTitle,
           triggerType,
           mediaId: triggerType === "COMMENT_KEYWORD" ? (targetMediaIds.length === 1 ? targetMediaIds[0] : null) : targetMediaIds[0] || null,
           keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
