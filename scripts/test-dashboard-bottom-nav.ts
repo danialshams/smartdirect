@@ -67,7 +67,7 @@ assert(styles.includes(".daira-bottom-nav--liquid .daira-bottom-nav__breadcrumb"
 assert(styles.includes(".daira-bottom-nav--liquid .daira-support-nav-badge"), "Support unread badges must stay legible on glass");
 assert(styles.includes("@supports not ((backdrop-filter:blur(1px))") && styles.includes("@media(prefers-reduced-transparency:reduce)"), "Glass dock must have transparency accessibility and browser fallbacks");
 assert(styles.includes("@media(prefers-reduced-motion:reduce)"), "Reduced-motion support missing");
-assert(shell.includes("!isAutomationCreateFlow"), "Existing automation action dock must remain unobstructed");
+assert(!shell.includes("!isAutomationCreateFlow &&") && styles.includes(".daira-app-main--flow-actions { padding-bottom:calc(128px"), "Navigation must remain mounted on every dashboard route, including automation creation.");
 const overview = readFileSync("components/dashboard/DashboardOverview.tsx", "utf8");
 assert(shell.includes('icon: Headset'), "Support tab must use the headset icon");
 assert(shell.includes('dir="ltr" className="daira-bottom-nav__breadcrumb"'), "Breadcrumb must be left-to-right");

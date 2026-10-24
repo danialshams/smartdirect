@@ -163,28 +163,35 @@ for (const editor of [commentFlow, legacyComments])
 assert(variantsField.includes('daira-comment-replies__option') &&
   variantsField.includes('daira-comment-replies__textarea'),
   "Comment inputs should have individually legible glass option cards.");
-assert(commentFlow.includes("editingView === \"replace\"") &&
-  commentFlow.includes("editingView === \"edit\"") &&
+assert(commentFlow.includes('useState<"edit" | "replace">("edit")') &&
+  commentFlow.includes('استفاده از پاسخ‌های قبلی') &&
   commentFlow.includes("selectReplacementTemplate") &&
-  commentFlow.includes("resetEditableResponse"),
-  "Edit modes must safely preserve current response, switch to edits or replace the full rule.");
-assert(liveEditor.includes("liveRules.length === 0") &&
-  liveEditor.includes("creationMode === \"existing\"") &&
-  liveEditor.includes("رفتن به پاسخ انتخاب‌شده"),
-  "Live reuse must not duplicate overlapping live comment rules.");
+  !commentFlow.includes("ویرایش پاسخ فعلی") &&
+  !commentFlow.includes("مشاهده جزئیات پاسخ فعلی"),
+  "Comment/story editors must expose editable current details by default, with optional full-rule replacement.");
+assert(liveEditor.includes('useState<"edit" | "replace">("edit")') &&
+  liveEditor.includes('creationMode === "existing"') &&
+  liveEditor.includes("مشاهده پاسخ انتخاب‌شده") &&
+  liveEditor.includes("/api/instagram/live-media") &&
+  !liveEditor.includes("<CompleteResponseNameField"),
+  "Live editors must show current active live and direct edits without manual name fields.");
 const directEditor = src("components/dashboard/DirectAutomationEditor.tsx");
-const nameField = src("components/dashboard/CompleteResponseNameField.tsx");
-assert(liveEditor.includes("<CompleteResponseNameField") &&
-  directEditor.includes("<CompleteResponseNameField") &&
-  nameField.includes("نام پاسخ") && nameField.includes("daira-response-library__input"),
-  "Complete live and direct editor names must remain writable after nested message library removal.");
-assert(directEditor.includes("completeRules.length>0") &&
-  directEditor.includes("hideLibrary") &&
-  directEditor.includes("<CompleteAutomationPicker"),
-  "Direct automation must use a complete-rule picker, disable empty reuse, and hide nested message selector.");
-assert((directEditor.match(/<CompleteAutomationPicker kind="DM"/g) || []).length === 2 &&
-  !directEditor.includes('<CompleteAutomationPicker kind="COMMENT_KEYWORD"'),
-  "Saved DM rule previews and labels must never be rendered as comment automations.");
+assert(directEditor.includes("hideLibrary") &&
+  !directEditor.includes("<ResponseModeSwitcher") &&
+  !directEditor.includes("<CompleteAutomationPicker") &&
+  !directEditor.includes("<CompleteResponseNameField") &&
+  !directEditor.includes("ویرایش پاسخ فعلی"),
+  "Direct replies must open their current editable response without reuse or name controls.");
+const menu = src("components/dashboard/PersistentMenuManager.tsx");
+const icebreaker = src("components/dashboard/IceBreakerManager.tsx");
+assert(menu.includes("hideReusableLibrary") && icebreaker.includes("hideReusableLibrary") &&
+  src("components/dashboard/EntryPointFlowBuilder.tsx").includes("hideLibrary={hideReusableLibrary}"),
+  "Menu and icebreaker editors must not display response creation/reuse options.");
+assert(completePicker.includes("کلمات کلیدی:") &&
+  responsePreview.includes("نوع پاسخ — ") &&
+  !responseLibrary.includes("نام پاسخ</label>") &&
+  modeSwitcher.includes("border-[var(--daira-primary)]"),
+  "Existing answers must use type and keywords instead of user-entered names with blue mode outlines.");
 for (const token of [".daira-complete-reply", ".daira-complete-reply__select",
   ".daira-complete-reply__check", ".daira-response-library__mode:disabled"]) {
   assert(css.includes(token), "Missing semantic glass rule: " + token);
