@@ -47,13 +47,13 @@ export default function DirectAutomationEditor({id}:{id?:string}){
   setKeywords(current=>Array.from(new Set([...current,...next])).slice(0,10));setDraft("");};
  const effectiveKeywords=Array.from(new Set([...keywords,...wordsFrom(draft)]));
  const keywordValid=effectiveKeywords.length>0&&effectiveKeywords.length<=10;
- const hasChanges=!original||responseName.trim()!==(original.title||"").trim()||directAutomationHasChanges({
+ const hasChanges=!original||directAutomationHasChanges({
   originalKeywords:wordsFrom(original.keyword||""),
   currentKeywords:effectiveKeywords,
   originalResponseSignature,
   currentMessage:message,
   showcaseDraftChanged,
- });
+ })||responseName.trim()!==(original.title||"").trim();
  useEffect(()=>{
   const controller=new AbortController();setLoading(true);setError("");
   void(async()=>{
