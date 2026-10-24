@@ -64,6 +64,7 @@ function savedMessageData(message: MessageDraft) {
 
 function savedRuleData(rule: ValidatedLiveRule) {
   return {
+    title: rule.title,
     keyword: rule.keyword,
     keywordMatchMode: rule.matchMode,
     replyText: rule.initialText,
@@ -130,7 +131,7 @@ export async function updateLiveReplyRule(input: ValidatedLiveRule, automationId
 }
 
 export function displayLiveReply(rule: {
-  id: string; instagramAccountId: string; keyword: string | null;
+  id: string; instagramAccountId: string; keyword: string | null; title: string | null;
   keywordMatchMode: string; replyText: string | null; commentReplyText: string | null;
   requireFollow: boolean; followGateText: string | null; followGateButtonText: string | null; updatedAt: Date;
   createdAt: Date; messages: unknown[];
@@ -138,6 +139,7 @@ export function displayLiveReply(rule: {
   const config = parseLiveConfig(rule.commentReplyText);
   return {
     id: rule.id, instagramAccountId: rule.instagramAccountId,
+    title: rule.title || "پاسخ لایو",
     keyword: rule.keyword ?? "", matchMode: rule.keywordMatchMode,
     initialText: rule.replyText ?? "", followupKeyword: config.followupKeyword,
     followupEnabled: Boolean(config.followupKeyword),
