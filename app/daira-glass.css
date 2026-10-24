@@ -707,10 +707,7 @@
 
 /* Reusable reply library: glass is the surface, blue only signals an action.
    Scoped styles keep the automation editor and dialog states consistent. */
-.daira-response-library {
-  isolation:isolate;
-  color:var(--daira-text);
-}
+.daira-response-library { color:var(--daira-text); }
 .daira-response-library__panel,
 .daira-response-library__item,
 .daira-response-library__scope-item,
@@ -783,9 +780,9 @@
   color:var(--daira-primary-hover);
 }
 .daira-response-library__use {
-  border-color:var(--daira-input-border-hover);
-  background:var(--daira-outline-hover-bg);
-  color:var(--daira-primary-hover);
+  border-color:var(--daira-input-border);
+  background:var(--daira-surface);
+  color:var(--daira-heading);
 }
 .daira-response-library__dialog .daira-response-library__scope-item,
 .daira-response-library__dialog .daira-response-library__preview-branch {
@@ -803,7 +800,7 @@
   border-color:var(--daira-input-border-hover);
 }
 .daira-response-library__check-row:has(input:checked) {
-  background:var(--daira-outline-hover-bg);
+  background:var(--daira-surface);
   border-color:var(--daira-input-border-hover);
 }
 .daira-response-library :is(button,input):focus-visible,
