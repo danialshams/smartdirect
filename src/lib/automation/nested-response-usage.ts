@@ -88,8 +88,31 @@ export function editQuickReplyDestination(raw: string | null, path: ReplyPath,
     const newPayloads = fresh.map((c) => record(c) ? c.payload : null);
     if (JSON.stringify(oldPayloads) !== JSON.stringify(newPayloads))
       throw new Error("تغییر گزینه‌ها یا شناسه‌های فرم فعال باید از ویرایشگر خود فرم انجام شود.");
-    destination.quickReplies = fresh;
-    destination.destinationQuickReplies = fresh;
+    // Merge into existing option identities; outstanding Meta button payloads
+    // and legacy nextMessageId links must remain valid.
+    const merge = (oldNode: unknown, newNode: unknown, depth: number): ReplyJson => {
+      if (!record(oldNode) || !record(newNode) || depth > 8)
+        throw new Error("گزینه قدیمی این فرم معتبر نیست.");
+      if (oldNode.payload !== newNode.payload)
+        throw new Error("شناسه یکی از گزینه‌های فعال تغییر کرده است.");
+      const oldChildren = Array.isArray(oldNode.quickReplies) ? oldNode.quickReplies :
+        Array.isArray(oldNode.destinationQuickReplies) ? oldNode.destinationQuickReplies : [];
+      const newChildren = Array.isArray(newNode.quickReplies) ? newNode.quickReplies :
+        Array.isArray(newNode.destinationQuickReplies) ? newNode.destinationQuickReplies : [];
+      if (oldChildren.length !== newChildren.length)
+        throw new Error("تعداد گزینه‌های فعال تغییر کرده است.");
+      const combined = { ...oldNode, ...newNode,
+        payload: oldNode.payload, id: oldNode.id, nextMessageId: oldNode.nextMessageId };
+      if (oldChildren.length) {
+        const nested = oldChildren.map((item, index) => merge(item, newChildren[index], depth + 1));
+        combined.quickReplies = nested;
+        combined.destinationQuickReplies = nested;
+      }
+      return combined;
+    };
+    const merged = children.map((item, index) => merge(item, fresh[index], 0));
+    destination.quickReplies = merged;
+    destination.destinationQuickReplies = merged;
   }
   // Older saved destinations can have both arrays. Synchronize corresponding
   // nodes so the editor and executor see the same answer after an update.
