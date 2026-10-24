@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, CheckCircle2, Lightbulb, Pencil, X } from "lucide-react";
 import ResponseModeSwitcher from "./ResponseModeSwitcher";
 import CompleteAutomationPicker from "./CompleteAutomationPicker";
+import CompleteResponseNameField from "./CompleteResponseNameField";
 import { dairaPalette } from "../../lib/design-system/palette";
 import PublishingStoryAutomationSetup, { type StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
@@ -187,6 +188,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
    </section>
   )}
   {(original ? editingView==="edit" : creationMode==="new")&&(<>
+   <CompleteResponseNameField value={responseName} onChange={setResponseName} disabled={saving}/>
    <section><Guide step={1} title="کلمات کلیدی دایرکت"
      hint="اگر مشتری یکی از این کلمات را مستقیماً در دایرکت بفرستد، پاسخ انتخاب‌شده برای او ارسال می‌شود."/>
     <div className="space-y-3 rounded-2xl border bg-white p-4 sm:p-5" style={{borderColor:dairaPalette.border}}>
