@@ -11,15 +11,16 @@ export default function CommentReplyVariantsField({
   disabled?: boolean;
 }) {
   return (
-    <div className="space-y-3" dir="rtl">
+    <fieldset className="min-w-0 space-y-3" dir="rtl">
+      <legend className="sr-only">متن پاسخ‌های عمومی به کامنت</legend>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های زیر کامنت</span>
-        <span className="text-xs font-medium text-[var(--daira-text-secondary)]">
-          {new Intl.NumberFormat("fa-IR").format(values.length)} از {new Intl.NumberFormat("fa-IR").format(MAX_PUBLIC_COMMENT_REPLIES)}
+        <span className="text-xs font-semibold text-[var(--daira-text-secondary)]">متن‌های پاسخ</span>
+        <span className="daira-comment-replies__counter rounded-full px-3 py-1.5 text-xs font-semibold text-[var(--daira-text)]">
+          {new Intl.NumberFormat("fa-IR").format(values.length)} از {new Intl.NumberFormat("fa-IR").format(MAX_PUBLIC_COMMENT_REPLIES)} پاسخ
         </span>
       </div>
       {values.map((text, index) => (
-        <div key={index} className="space-y-2 py-1">
+        <div key={index} className="daira-comment-replies__option space-y-3 rounded-xl border p-3 sm:p-4">
           <div className="flex items-center justify-between gap-2">
             <label htmlFor={`public-comment-variant-${index}`} className="text-xs font-bold text-[var(--daira-heading)]">
               پاسخ {new Intl.NumberFormat("fa-IR").format(index + 1)}
@@ -36,7 +37,7 @@ export default function CommentReplyVariantsField({
             value={text} disabled={disabled}
             onChange={(event) => onChange(values.map((item, i) => i === index ? event.target.value : item))}
             placeholder={`متن پاسخ شماره ${new Intl.NumberFormat("fa-IR").format(index + 1)} را وارد کنید...`}
-            className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-white px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-xs focus:border-[var(--daira-primary)] focus:ring-2 focus:ring-[var(--daira-primary)]/10 disabled:opacity-60"
+            className="daira-comment-replies__textarea block min-h-[96px] w-full resize-y rounded-xl border px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none disabled:opacity-60"
             style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }} />
           {text.trim() && values.some((other, otherIndex) => otherIndex !== index && other.trim() && publicCommentReplyKey(other) === publicCommentReplyKey(text)) && (
             <p role="alert" className="text-xs text-[var(--daira-error-text)]">این پاسخ با پاسخ دیگری یکسان است.</p>
@@ -45,10 +46,10 @@ export default function CommentReplyVariantsField({
       ))}
       {values.length < MAX_PUBLIC_COMMENT_REPLIES && (
         <button type="button" disabled={disabled} onClick={() => onChange([...values, ""])}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--daira-outline)] bg-[var(--daira-outline-hover-bg)] px-4 text-xs font-semibold text-[var(--daira-primary)] disabled:opacity-50">
+          className="daira-comment-replies__add inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-semibold disabled:opacity-50">
           <span>افزودن پاسخ</span><Plus size={16} aria-hidden="true"/>
         </button>
       )}
-    </div>
+    </fieldset>
   );
 }
