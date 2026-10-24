@@ -657,10 +657,17 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   useEffect(() => { if (selectedAccountId && automationEnabled && type === "STORY") void loadResources(selectedAccountId); }, [selectedAccountId, automationEnabled, type]);
   useEffect(()=>{
     if (!automationEnabled||!selectedAccountId){setPreviousRules([]);return;}
-    const controller=new AbortController();setPreviousLoading(true);
+    const controller=new AbortController();setPreviousLoading(true);setPreviousRules([]);
     void fetch("/api/automations?instagramAccountId="+encodeURIComponent(selectedAccountId),{credentials:"include",cache:"no-store",signal:controller.signal})
       .then(async r=>{const v=await r.json();if(!r.ok||!v.success)throw Error(v.error||"دریافت پاسخ‌های قبلی ناموفق بود.");return v;})
-      .then(v=>{if(!controller.signal.aborted)setPreviousRules((Array.isArray(v.data)?v.data:[]).filter((x:CompleteAutomation)=>x.triggerType===(type==="STORY"?"STORY_REPLY_KEYWORD":"COMMENT_KEYWORD") && (type==="STORY" ? normalizeMessages(x.messages).length>0 : readPublicCommentReplies(x.commentReplyText).length>=3)));})
+      .then(v=>{if(!controller.signal.aborted)setPreviousRules((Array.isArray(v.data)?v.data:[]).filter((x:CompleteAutomation)=>x.triggerType===(type==="STORY"?"STORY_REPLY_KEYWORD":"COMMENT_KEYWORD") && (type==="STORY" ? normalizeMessages(x.messages).length>0 : (() => {
+          if (readPublicCommentReplies(x.commentReplyText).length<3) return false;
+          if (x.sendDm===false) return true;
+          const raw=Array.isArray(x.messages)?x.messages as Array<{messageType?:string;linkButtons?:unknown;linkButtonUrl?:unknown;quickReplies?:unknown}>:[];
+          return raw.length===1&&raw[0].messageType==="TEXT"&&!raw[0].linkButtonUrl&&
+            (!Array.isArray(raw[0].linkButtons)||raw[0].linkButtons.length===0)&&
+            (!Array.isArray(raw[0].quickReplies)||raw[0].quickReplies.length===0);
+        })())));})
       .catch(()=>{if(!controller.signal.aborted)setPreviousRules([]);})
       .finally(()=>{if(!controller.signal.aborted)setPreviousLoading(false);});
     return()=>controller.abort();
@@ -668,7 +675,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
   function clearLocalMedia() { for (const c of uploadAbortControllersRef.current.values()) c.abort(); uploadAbortControllersRef.current.clear(); activeUploadItemIdsRef.current.clear(); uploadQueueRef.current = []; setUploadRows([]); setMedia((current) => { revokeLocalMedia(current); return []; }); }
-  function resetAutomation() { setAutomationEnabled(false); setStoryResponseSaved(false); setStoryResponseEditing(false); setStoryResponseDirty(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setPublishingCommentReplies(["", "", ""]); }
+  function resetAutomation() { setReplyMode("new"); setPreviousId(""); setCopyStoryWords(""); setAutomationEnabled(false); setStoryResponseSaved(false); setStoryResponseEditing(false); setStoryResponseDirty(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setPublishingCommentReplies(["", "", ""]); }
   function animateStepChange(action: () => void) {
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
