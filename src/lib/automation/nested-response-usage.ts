@@ -109,7 +109,7 @@ export function editQuickReplyDestination(raw: string | null, path: ReplyPath,
         Array.isArray(newNode.destinationQuickReplies) ? newNode.destinationQuickReplies : [];
       if (oldChildren.length !== newChildren.length)
         throw new Error("تعداد گزینه‌های فعال تغییر کرده است.");
-      const combined = { ...oldNode, ...newNode,
+      const combined: ReplyJson = { ...oldNode, ...newNode,
         payload: oldNode.payload, id: oldNode.id, nextMessageId: oldNode.nextMessageId };
       if (oldChildren.length) {
         const nested = oldChildren.map((item, index) => merge(item, newChildren[index], depth + 1));
