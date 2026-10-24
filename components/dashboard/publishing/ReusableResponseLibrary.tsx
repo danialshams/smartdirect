@@ -17,6 +17,7 @@ type Props = {
   allowedTypes: MessageDraft["messageType"][];
   prefix?: string;
   onNameChange?: (name: string) => void;
+  onRegisterSave?: (save: ((draft: MessageDraft) => Promise<boolean>) | null) => void;
   disabled?: boolean;
 };
 const typeNames: Record<MessageDraft["messageType"], string> = {
@@ -59,7 +60,7 @@ function ResponsePreview({ value }: { value: Saved }) {
   </div>;
 }
 
-export default function ReusableResponseLibrary({ instagramAccountId, message, onUpdate, allowedTypes, prefix = "پاسخ", onNameChange, disabled = false }: Props) {
+export default function ReusableResponseLibrary({ instagramAccountId, message, onUpdate, allowedTypes, prefix = "پاسخ", onNameChange, onRegisterSave, disabled = false }: Props) {
   const [mode, setMode] = useState<"new" | "existing">("new");
   const [items, setItems] = useState<Saved[]>([]);
   const [loading, setLoading] = useState(false);
@@ -96,13 +97,15 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     onNameChange?.(edit ? item.title : "");
     setError("");
   }
-  async function saveToLibrary() {
-    if (saving || disabled) return;
+  async function saveToLibrary(override?: MessageDraft): Promise<boolean> {
+    if (saving || disabled) return false;
+    const draft = override || message;
     const title = name.trim();
-    if (!title || title.length > 80) { setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه)."); return; }
-    if (!allowedTypes.includes(message.messageType)) { setError("این نوع پاسخ در این بخش پشتیبانی نمی‌شود."); return; }
+    if (override && !title) return true;
+    if (!title || title.length > 80) { setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه)."); return false; }
+    if (!allowedTypes.includes(draft.messageType)) { setError("این نوع پاسخ در این بخش پشتیبانی نمی‌شود."); return false; }
     const original = items.find((item) => item.id === editingId);
-    if (editingId && !original) { setError("پاسخ قبلی پیدا نشد. فهرست را تازه‌سازی کن."); return; }
+    if (editingId && !original) { setError("پاسخ قبلی پیدا نشد. فهرست را تازه‌سازی کن."); return false; }
     setSaving(true);
     setError("");
     try {
@@ -111,10 +114,10 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          instagramAccountId, title, messageType: message.messageType,
-          text: message.text || null, mediaUrl: message.mediaUrl || null,
-          mediaId: message.mediaId || null, showcaseId: message.showcaseId || null,
-          formId: message.formId || null, quickReplies: message.quickReplies || [],
+          instagramAccountId, title, messageType: draft.messageType,
+          text: draft.text || null, mediaUrl: draft.mediaUrl || null,
+          mediaId: draft.mediaId || null, showcaseId: draft.showcaseId || null,
+          formId: draft.formId || null, quickReplies: draft.quickReplies || [],
           ...(original ? { expectedUpdatedAt: original.updatedAt } : {}),
         }),
       });
@@ -125,10 +128,18 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
       setEditingId("");
       setName("");
       setError("");
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "ذخیره پاسخ ناموفق بود.");
+      return false;
     } finally { setSaving(false); }
   }
+
+  // The surrounding automation editor can persist a named response as part of its normal save.
+  useEffect(() => {
+    onRegisterSave?.(saveToLibrary);
+    return () => onRegisterSave?.(null);
+  });
 
   return <section dir="rtl" className="space-y-3" aria-label="کتابخانه پاسخ‌ها">
     <div className="grid grid-cols-2 gap-2" role="group" aria-label="روش ساخت پاسخ">
