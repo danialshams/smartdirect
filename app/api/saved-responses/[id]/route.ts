@@ -8,6 +8,22 @@ import { getStorageProviderForObject } from "@/lib/storage/provider";
 
 export const dynamic = "force-dynamic";
 
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return NextResponse.json({ success: false, error: "احراز هویت انجام نشده است." }, { status: 401 });
+    const { id } = await params;
+    const saved = await prisma.savedAutomationResponse.findFirst({
+      where: { id, userId: session.user.id },
+    });
+    if (!saved) return NextResponse.json({ success: false, error: "پاسخ ذخیره‌شده پیدا نشد." }, { status: 404 });
+    return NextResponse.json({ success: true, data: saved });
+  } catch (error) {
+    console.error("GET /api/saved-responses/[id] error:", error);
+    return NextResponse.json({ success: false, error: "دریافت پاسخ ذخیره‌شده ناموفق بود." }, { status: 500 });
+  }
+}
+
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
