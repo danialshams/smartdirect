@@ -12,7 +12,8 @@ type Saved = {
   showcaseId: string | null; formId: string | null; quickReplies: QuickReplyDraft[] | null;
   usages?: Array<{ messageId: string; automationId: string; automationTitle: string | null;
     triggerType: string; mediaIds: string[]; menuTitles: string[]; icebreakerQuestions: string[];
-    messageUpdatedAt: string; automationUpdatedAt: string }>;
+    messageUpdatedAt: string; automationUpdatedAt: string;
+    quickReplyId?: string; nodePath?: Array<string | number>; branchTitle?: string }>;
   showcase?: { title: string; items: Array<{ id: string; title: string; description?: string | null; imageUrl?: string | null }> } | null;
   form?: { title: string; fields: Array<{ id: string; label: string }> } | null;
 };
@@ -96,6 +97,7 @@ function ResponsePreview({ value }: { value: Saved }) {
             usage.menuTitles.length ? "منوی دایرکت" : usage.icebreakerQuestions.length ? "پیام شروع گفتگو" :
             usage.triggerType === "STORY_REPLY_KEYWORD" ? "پاسخ استوری" :
             usage.triggerType === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ دایرکت")}</p>
+          {usage.quickReplyId && <p className="text-xs text-[var(--daira-text-secondary)]">گزینه داخلی فرم: {usage.branchTitle || "پاسخ"}</p>}
           {usage.menuTitles.map((title, index) => <p key={index} className="text-xs text-[var(--daira-text-secondary)]">گزینه منو: {title}</p>)}
           {usage.icebreakerQuestions.map((question, index) => <p key={index} className="text-xs text-[var(--daira-text-secondary)]">شروع گفتگو: {question}</p>)}
           {usage.mediaIds.length > 0 && <p className="text-xs text-[var(--daira-text-secondary)]">متصل به {new Intl.NumberFormat("fa-IR").format(usage.mediaIds.length)} محتوا</p>}
@@ -276,6 +278,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
             selections: approved,
             expectedUsages: (original?.usages || []).map((usage) => ({
               messageId: usage.messageId,
+              ...(usage.quickReplyId ? { quickReplyId: usage.quickReplyId, nodePath: usage.nodePath } : {}),
               messageUpdatedAt: usage.messageUpdatedAt,
               automationUpdatedAt: usage.automationUpdatedAt,
             })),
@@ -367,6 +370,9 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
                 <p className="text-xs font-bold text-[var(--daira-heading)]">{usage.automationTitle ||
                   (usage.menuTitles.length ? "منوی دایرکت" : usage.icebreakerQuestions.length ? "پیام شروع گفتگو" :
                    usage.triggerType === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ دایرکت")}</p>
+                {usage.quickReplyId && <p className="text-xs text-[var(--daira-text-secondary)]">
+                  <span className="font-bold">شاخه فرم</span> — {usage.branchTitle || "پاسخ داخلی"}
+                </p>}
                 {usage.menuTitles.map((label, i) => <p key={i} className="text-xs text-[var(--daira-text-secondary)]">گزینه منو: {label}</p>)}
                 {usage.icebreakerQuestions.map((label, i) => <p key={i} className="text-xs text-[var(--daira-text-secondary)]">شروع گفتگو: {label}</p>)}
                 {usage.mediaIds.length ? usage.mediaIds.map((id) => (
