@@ -103,6 +103,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
   const [retryFile, setRetryFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [assetName, setAssetName] = useState("");
+  const saveNamedResponseRef = useRef<((draft: MessageDraft) => Promise<boolean>) | null>(null);
   const [slides, setSlides] = useState<ShowcaseSlide[]>([createSlide()]);
   useStorageUploadLease([message.mediaUrl, ...slides.map((slide) => slide.imageUrl)]);
   const [savingShowcase, setSavingShowcase] = useState(false);
@@ -354,6 +355,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         if (!showcaseId) return null;
         prepared = { ...prepared, showcaseId };
       }
+      if (saveNamedResponseRef.current && !await saveNamedResponseRef.current(prepared)) return null;
       return prepared;
     },
     async saveAndContinue() {
@@ -377,6 +379,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       }
       unsavedDraftsRef.current = {};
       unsavedSlidesRef.current = {};
+      if (saveNamedResponseRef.current && !await saveNamedResponseRef.current(message)) return false;
       onSavedChange?.(true);
       onContinue();
       return true;
@@ -429,6 +432,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         allowedTypes={textOnly ? ["TEXT"] : (["TEXT", "IMAGE", "AUDIO", "SHOWCASE", ...(hideVideo ? [] : ["VIDEO"]), ...(hideForm ? [] : ["FORM"])] as ResponseType[])}
         prefix="پاسخ خودکار"
         onNameChange={setAssetName}
+        onRegisterSave={(handler) => { saveNamedResponseRef.current = handler; }}
         disabled={Boolean(disabled)}
       />
       {!textOnly && (
@@ -811,6 +815,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 messageToSave = { ...messageToSave, showcaseId };
               }
 
+              if (saveNamedResponseRef.current && !await saveNamedResponseRef.current(messageToSave)) return;
               onUpdate(messageToSave);
               await onContinue(messageToSave);
             } finally {
