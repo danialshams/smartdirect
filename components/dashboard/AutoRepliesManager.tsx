@@ -292,8 +292,26 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
           const isStory = automation.triggerType === "STORY_REPLY_KEYWORD";
           const displayKeyword = normalizedAutomationKeyword || (isAnyCommentAutomation ? "شامل هر کلمه" : "بدون کلمه کلیدی");
-          // One row represents exactly one Instagram media connection. A shared
-          // response can be edited as a whole, but deletion unlinks only this row.
+          // Every story reply rule applies to this account, not to a single story.
+          if (isStory) {
+            nextItems.push({
+              id: automation.id,
+              key: "automation:" + automation.id,
+              mediaId: null,
+              type: "STORY",
+              date: automation.updatedAt || automation.createdAt,
+              sortAt: automation.updatedAt || automation.createdAt,
+              previewUrl: null,
+              previewKind: null,
+              title: "پاسخ خودکار استوری",
+              subtitle: displayKeyword,
+              keyword: displayKeyword,
+              href: "/dashboard/story-automation/" + automation.id,
+              isActive: automation.isActive,
+            });
+            continue;
+          }
+          // Comment replies retain their media-specific configuration.
           for (const displayMediaId of availableAutomationMediaIds) {
             if (publishedMediaIds.has(displayMediaId)) continue;
             if (isStory && !activeStoryIds.has(displayMediaId)) continue;
@@ -418,6 +436,26 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
     return scopedItems.filter((item) => item.keyword.toLocaleLowerCase("fa-IR").includes(query));
   }, [scopedItems, searchQuery]);
 
+  async function toggleStoryRule(item: ReplyItem) {
+    const active = item.isActive !== false;
+    try {
+      const response = await fetch("/api/automations/" + encodeURIComponent(item.id), {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        credentials: "include", body: JSON.stringify({ isActive: !active }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "تغییر وضعیت پاسخ ناموفق بود.");
+      setItems(current => {
+        const next = current.map(entry => entry.id === item.id && entry.title === "پاسخ خودکار استوری"
+          ? { ...entry, isActive: !active } : entry);
+        itemsRef.current = next;
+        return next;
+      });
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "تغییر وضعیت پاسخ ناموفق بود.");
+    }
+  }
+
   function closeDeleteModal() {
     if (deleting || closingDelete) return;
     setClosingDelete(true);
@@ -433,10 +471,12 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
     setDeleteError("");
     try {
       const isPublishedItem = deleteTarget.key.startsWith("publish:");
-      if (!isPublishedItem && !deleteTarget.mediaId) throw new Error("شناسه محتوای موردنظر پیدا نشد.");
+      const isStoryRule = deleteTarget.title === "پاسخ خودکار استوری" && !isPublishedItem;
+      if (!isPublishedItem && !deleteTarget.mediaId && !isStoryRule) throw new Error("شناسه محتوای موردنظر پیدا نشد.");
       const endpoint = isPublishedItem
         ? "/api/instagram/publishing/" + encodeURIComponent(deleteTarget.id) +
           "/automation?triggerType=" + (deleteTarget.title === "پاسخ خودکار استوری" ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD")
+        : isStoryRule ? "/api/automations/" + encodeURIComponent(deleteTarget.id)
         : "/api/automations/" + encodeURIComponent(deleteTarget.id) +
           "/media?mediaId=" + encodeURIComponent(deleteTarget.mediaId || "");
       const response = await fetch(endpoint, { method: "DELETE", cache: "no-store", credentials: "include" });
@@ -530,23 +570,24 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                   </div>
 
                   <div className="flex shrink-0 items-center gap-1.5">
+                    {scope === "stories" && item.title === "پاسخ خودکار استوری" && !item.key.startsWith("publish:") && <label className="inline-flex items-center gap-1 text-[11px] text-[var(--daira-text)]"><input type="checkbox" aria-label="فعال‌سازی پاسخ استوری" checked={item.isActive !== false} onChange={() => void toggleStoryRule(item)} className="accent-blue-600"/>فعال</label>}
                     <Link
                       href={item.href}
-                      className="inline-flex h-8 flex-row items-center justify-center gap-1 rounded-[8px] px-2 text-[11px] font-semibold no-underline transition sm:px-2.5 sm:text-xs"
+                      className="daira-reply-list-edit"
                       style={{ color: dairaPalette.primary.main, border: `1px solid ${dairaPalette.secondary.outline}`, backgroundColor: dairaPalette.background.surface }}
                     >
-                      <Pencil size={14} />
                       <span>ویرایش</span>
+                      <Pencil size={14} />
                     </Link>
                     <button
                       type="button"
                       onClick={() => { setDeleteError(""); setDeleteTarget(item); }}
                       aria-label={`حذف پاسخ این محتوا برای ${item.keyword}`}
-                      className="inline-flex h-8 flex-row items-center justify-center gap-1 rounded-[8px] px-2 text-[11px] font-semibold transition sm:px-2.5 sm:text-xs"
+                      className="daira-reply-list-delete"
                       style={{ color: dairaPalette.status.error, border: `1px solid ${dairaPalette.status.error}55`, backgroundColor: dairaPalette.background.surface }}
                     >
-                      <Trash2 size={14} />
                       <span>حذف</span>
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>

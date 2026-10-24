@@ -125,16 +125,16 @@ export default function DirectAutomationList() {
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <Link href={"/dashboard/direct-automation/" + encodeURIComponent(item.id)}
-                        className="inline-flex h-8 flex-row items-center justify-center gap-1 rounded-[8px] px-2 text-[11px] font-semibold no-underline transition sm:px-2.5 sm:text-xs"
+                        className="daira-reply-list-edit"
                         style={{ color: dairaPalette.primary.main, border: "1px solid " + dairaPalette.secondary.outline, backgroundColor: dairaPalette.background.surface }}>
-                        <Pencil size={14} />
                         <span>ویرایش</span>
+                        <Pencil size={14} />
                       </Link>
                       <button type="button" onClick={() => setTarget(item)} aria-label={"حذف پاسخ " + formatWords(item.keyword)}
-                        className="inline-flex h-8 flex-row items-center justify-center gap-1 rounded-[8px] px-2 text-[11px] font-semibold transition sm:px-2.5 sm:text-xs"
+                        className="daira-reply-list-delete"
                         style={{ color: dairaPalette.status.error, border: "1px solid " + dairaPalette.status.error + "55", backgroundColor: dairaPalette.background.surface }}>
-                        <Trash2 size={14} />
                         <span>حذف</span>
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>

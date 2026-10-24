@@ -59,15 +59,15 @@ export default function ShareMentionManager(){
     return <article key={item.id} className="daira-automation-list-card rounded-2xl border p-4">
      <div className="flex items-start gap-3">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-brand-100)] text-[var(--daira-primary)]">{mention?<AtSign size={21}/>:<Share2 size={21}/>}</div>
-      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><strong className="text-sm text-[var(--daira-heading)]">{title(item.triggerType)}</strong><span className={`rounded-full px-2 py-0.5 text-[10px] ${item.isActive?"bg-green-50 text-green-700":"bg-slate-100 text-slate-500"}`}>{item.isActive?"فعال":"غیرفعال"}</span></div>
+      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><strong className="text-sm text-[var(--daira-heading)]">{title(item.triggerType)}</strong></div>
        <p className="mt-1 text-xs leading-6 text-slate-500">{mention?"پاسخ هنگام منشن‌شدن در استوری دیگران":`متصل به ${count.toLocaleString("fa-IR")} پست یا ریلز`}</p>
        <p className="mt-1 max-w-md truncate text-xs text-slate-500">{item.messages?.[0]?.text||"پاسخ رسانه‌ای یا ویترین"}</p>
       </div>
      </div>
      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t pt-3" style={{borderColor:dairaPalette.border}}>
-      <label className="flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={item.isActive} disabled={busy===item.id} onChange={()=>void change(item,"toggle")} className="accent-blue-600"/>فعال</label>
-      <div className="flex gap-2"><Link href={"/dashboard/share-mention/"+item.id} className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-[var(--daira-outline)] bg-[var(--daira-glass-raised)] px-3 text-xs text-[var(--daira-primary)]" style={{borderColor:dairaPalette.border}}><Pencil size={14}/>ویرایش</Link>
-       <button type="button" disabled={busy===item.id} onClick={()=>setDeleteId(item.id)} className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-red-100 px-3 text-xs text-red-600">{busy===item.id?<LoaderCircle size={14} className="animate-spin"/>:<Trash2 size={14}/>}حذف</button></div>
+      
+      <div className="flex gap-2"><Link href={"/dashboard/share-mention/"+item.id} className="daira-reply-list-edit" style={{borderColor:dairaPalette.border}}>ویرایش <Pencil size={14}/></Link>
+       <button type="button" disabled={busy===item.id} onClick={()=>setDeleteId(item.id)} className="daira-reply-list-delete">حذف {busy===item.id?<LoaderCircle size={14} className="animate-spin"/>:<Trash2 size={14}/>}</button></div>
      </div>
      {deleteId===item.id&&<div className="mt-3 rounded-xl bg-red-50 p-3 text-xs leading-7 text-red-700">این پاسخ حذف شود؟ <div className="mt-2 flex gap-2"><button type="button" disabled={Boolean(busy)} onClick={()=>void change(item,"delete")} className="rounded-lg bg-red-600 px-4 py-2 text-white">حذف پاسخ</button><button type="button" onClick={()=>setDeleteId("")} className="rounded-lg border bg-white px-4 py-2">انصراف</button></div></div>}
     </article>;

@@ -142,12 +142,12 @@ export default function LiveAutomationList() {
               </div>
               <div className="flex gap-2 border-t border-[var(--daira-neutral-bg)] pt-3">
                 <button type="button" onClick={() => router.push("/dashboard/live-automation/" + rule.id)}
-                  className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--daira-outline-hover-bg)] text-xs font-bold text-[var(--daira-primary-hover)] transition hover:bg-[var(--daira-outline-active-bg)]">
-                  <Pencil size={15} /> ویرایش
+                  className="daira-reply-list-edit flex-1">
+                  ویرایش <Pencil size={15} />
                 </button>
                 <button type="button" onClick={() => { setDeleteError(""); setDeleteTarget(rule); }}
-                  className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--daira-error-border)] bg-white text-xs font-bold text-[var(--daira-error-text)] hover:bg-[var(--daira-error-background)]">
-                  <Trash2 size={15} /> حذف
+                  className="daira-reply-list-delete flex-1">
+                  حذف <Trash2 size={15} />
                 </button>
               </div>
             </article>
