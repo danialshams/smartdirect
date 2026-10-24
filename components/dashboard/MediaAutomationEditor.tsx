@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/dashboard/DashboardUI";
+import CommentReplyVariantsField from "./CommentReplyVariantsField";
+import { readPublicCommentReplies, validatePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
 import { toast } from "sonner";
 
 const LoadingState = ({ label }: { label: string }) => (
@@ -45,7 +47,7 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
   const [likeStoryReply, setLikeStoryReply] = useState(false);
   const [requireFollow, setRequireFollow] = useState(false);
   const [followGateText, setFollowGateText] = useState("برای دریافت پاسخ، ابتدا پیج را Follow کنید.");
-  const [commentReplyText, setCommentReplyText] = useState("");
+  const [commentReplies, setCommentReplies] = useState<string[]>(["", "", ""]);
   const [dirty, setDirty] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
@@ -70,7 +72,7 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
           setLikeStoryReply(Boolean(item.likeStoryReply));
           setRequireFollow(Boolean(item.requireFollow));
           setFollowGateText(item.followGateText || "برای دریافت پاسخ، ابتدا پیج را Follow کنید.");
-          setCommentReplyText(item.commentReplyText || "");
+          { const previous = readPublicCommentReplies(item.commentReplyText); setCommentReplies([...previous, ...Array(Math.max(0, 3 - previous.length)).fill("")]); }
           setDirty(false);
         }
       } catch (e) {
@@ -112,8 +114,7 @@ export default function MediaAutomationEditor({ id, expectedTriggerType }: { id:
 
 const commentReplyField = !isStory ? (
   <div className="border-t border-[var(--daira-border)] pt-5">
-    <label htmlFor="edit-publishing-comment-reply" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">متن ارسالی در کامنت</label>
-    <textarea id="edit-publishing-comment-reply" value={commentReplyText} onChange={(event) => { setCommentReplyText(event.target.value); setDirty(true); }} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-xs focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+    <CommentReplyVariantsField values={commentReplies} onChange={(next) => { setCommentReplies(next); setDirty(true); }} disabled={deleting} />
   </div>
 ) : null;
 
@@ -205,13 +206,13 @@ const optionalSettings = (
             onAutomationReady={async (savedAutomationId) => {
               try {
                 if (requireFollow && !followGateText.trim()) throw new Error("متن درخواست فالو را وارد کنید.");
-                if (!isStory && !commentReplyText.trim()) throw new Error("متن ارسالی در کامنت را وارد کنید.");
+                if (!isStory) validatePublicCommentReplies(commentReplies);
                 const response = await fetch(`/api/automations/${encodeURIComponent(savedAutomationId || automation.id)}`, {
                   method: "PATCH",
                   headers: { "Content-Type": "application/json" },
                   credentials: "include",
                   body: JSON.stringify({
-                    ...(isStory ? { likeStoryReply } : { commentReplyText: commentReplyText.trim() }),
+                    ...(isStory ? { likeStoryReply } : { commentReplyVariants: validatePublicCommentReplies(commentReplies) }),
                     requireFollow,
                     followGateText: requireFollow ? followGateText.trim() : null,
                   }),

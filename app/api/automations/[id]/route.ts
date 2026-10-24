@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { storePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
 import { getCachedInstagramMedia, invalidateAutomationCache } from "@/lib/cache/instagram";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 
@@ -143,7 +144,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ success: true, data: automation });
     }
 
-    const { triggerType, keyword, mediaId, likeComment, commentReplyText, sendDm, likeIncomingDm, likeStoryReply, replyText, requireFollow, followGateText, followGateButtonText, isActive } = body;
+    const { triggerType, keyword, mediaId, likeComment, commentReplyText, commentReplyVariants, sendDm, likeIncomingDm, likeStoryReply, replyText, requireFollow, followGateText, followGateButtonText, isActive } = body;
     const nextTriggerType: TriggerType = triggerType !== undefined ? triggerType : existingAutomation.triggerType;
     if (!isValidTriggerType(nextTriggerType)) return NextResponse.json({ success: false, error: "نوع Trigger نامعتبر است" }, { status: 400 });
 
@@ -194,12 +195,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const nextFollowGateButtonText = !supportsFollowGate || !nextRequireFollow ? null : requestedFollowButtonText?.slice(0, 20) || "بررسی فالو";
     if (supportsFollowGate && nextRequireFollow && !nextFollowGateText) return NextResponse.json({ success: false, error: "وقتی Follow Gate فعال است، متن درخواست فالو الزامی است" }, { status: 400 });
 
+    let normalizedCommentReply: string | null | undefined = commentReplyText === undefined ? undefined : normalizeOptionalString(commentReplyText);
+    if (nextTriggerType === "COMMENT_KEYWORD" && commentReplyVariants !== undefined) {
+      try { normalizedCommentReply = storePublicCommentReplies(commentReplyVariants); }
+      catch (error) { return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "پاسخ‌های کامنت معتبر نیستند." }, { status: 400 }); }
+    }
+
     const updateData: Record<string, unknown> = {
       ...(triggerType !== undefined ? { triggerType: nextTriggerType } : {}),
       ...(triggerType !== undefined || keyword !== undefined ? { keyword: nextKeyword } : {}),
       ...(mediaId !== undefined ? { mediaId: nextMediaId } : {}),
       ...(likeComment !== undefined ? { likeComment: nextTriggerType === "COMMENT_KEYWORD" ? Boolean(likeComment) : false } : {}),
-      ...(commentReplyText !== undefined ? { commentReplyText: nextTriggerType === "COMMENT_KEYWORD" ? normalizeOptionalString(commentReplyText) : null } : {}),
+      ...(normalizedCommentReply !== undefined ? { commentReplyText: nextTriggerType === "COMMENT_KEYWORD" ? normalizedCommentReply : null } : {}),
       ...(sendDm !== undefined ? { sendDm: Boolean(sendDm) } : {}),
       ...(likeIncomingDm !== undefined ? { likeIncomingDm: nextTriggerType === "DM" ? Boolean(likeIncomingDm) : false } : {}),
       ...(likeStoryReply !== undefined ? { likeStoryReply: nextTriggerType === "STORY_REPLY_KEYWORD" ? Boolean(likeStoryReply) : false } : {}),

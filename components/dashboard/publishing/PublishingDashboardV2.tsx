@@ -1,5 +1,7 @@
 "use client";
 import { Button, Input } from "@/components/dashboard/DashboardUI";
+import CommentReplyVariantsField from "../CommentReplyVariantsField";
+import { validatePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
 
 import { uploadFileWithProgress } from "./shared-upload";
 import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, CircleSlash2, Clapperboard, Clock3, ChevronDown, ImagePlus, Images, Loader2, Pencil, RotateCcw, Send, Trash2, X } from "lucide-react";
@@ -358,7 +360,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [automationKeywordDraft, setAutomationKeywordDraft] = useState("");
   const [automationKeywords, setAutomationKeywords] = useState<string[]>([]);
   const [directMessageText, setDirectMessageText] = useState("");
-  const [publishingCommentReplyText, setPublishingCommentReplyText] = useState("");
+  const [publishingCommentReplies, setPublishingCommentReplies] = useState<string[]>(["", "", ""]);
   const [showUploadedMediaPreview, setShowUploadedMediaPreview] = useState(false);
   const [taggedUsersByMedia, setTaggedUsersByMedia] = useState<Record<string, string[]>>({});
   const [tagDraftByMedia, setTagDraftByMedia] = useState<Record<string, string>>({});
@@ -1001,7 +1003,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           triggerType: "COMMENT_KEYWORD",
           keyword: normalizedKeywords.join(","),
           mediaId: `pending:${crypto.randomUUID()}`,
-          commentReplyText: publishingCommentReplyText.trim() || null,
+          commentReplyVariants: validatePublicCommentReplies(publishingCommentReplies),
           sendDm: Boolean(directMessageText.trim()),
           requireFollow,
           followGateText: requireFollow ? followGateText.trim() : null,
@@ -1198,7 +1200,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           setAutomationKeywordDraft("");
           setAutomationKeywords([]);
           setDirectMessageText("");
-          setPublishingCommentReplyText("");
+          setPublishingCommentReplies(["", "", ""]);
           setTaggedUsersByMedia({});
           setTagDraftByMedia({});
           setTagInputError("");
@@ -1265,7 +1267,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const canSubmitMedia = uploadedMedia.length >= (type === "CAROUSEL" ? 2 : 1) && !uploading && !media.length;
   const canSubmitAutomation = !automationEnabled || (type === "STORY"
     ? storyResponseSaved && !storyResponseEditing && !storyResponseDirty
-    : automationKeywords.length > 0 && Boolean(publishingCommentReplyText.trim()));
+    : automationKeywords.length > 0 && publishingCommentReplies.length >= 3 && publishingCommentReplies.length <= 5 && publishingCommentReplies.every((text) => text.trim().length > 0 && text.trim().length <= 2000) && new Set(publishingCommentReplies.map((text) => text.trim())).size === publishingCommentReplies.length);
   function changeContentType(nextType: PublishType) {
     if (nextType === type || uploading || reelCoverUploading || publishing) return;
     if (hasDraft && !window.confirm("با تغییر نوع محتوا، رسانه‌های آپلودشده و تنظیمات فعلی حذف می‌شوند. ادامه می‌دهید؟")) return;
@@ -1703,8 +1705,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   </div>
 
                   <div className="border-t border-[var(--daira-border)] pt-5">
-                    <label htmlFor="publishing-comment-reply" className="mb-2 block text-sm font-bold text-[var(--daira-heading)]">متن ارسالی در کامنت</label>
-                    <textarea id="publishing-comment-reply" value={publishingCommentReplyText} onChange={event => setPublishingCommentReplyText(event.target.value)} rows={3} maxLength={2000} inputMode="text" placeholder="پاسخی که زیر کامنت کاربر منتشر می‌شود بنویس..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-xs focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
+                    <CommentReplyVariantsField values={publishingCommentReplies} onChange={setPublishingCommentReplies} disabled={publishing} />
                   </div>
 
                   <div className="border-t border-[var(--daira-border)] pt-5">

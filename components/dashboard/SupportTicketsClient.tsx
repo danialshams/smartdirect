@@ -51,7 +51,7 @@ export default function SupportTicketsClient() {
         <span className="daira-support__header-icon" aria-hidden="true"><Headset size={21} strokeWidth={1.9}/></span>
         <div className="daira-support__header-copy"><h1>پشتیبانی</h1><p>درخواست‌ها و گفتگوهای شما</p></div>
       </div>
-      <Link href="/dashboard/tickets/new" className="daira-support__primary daira-leading-action"><Plus size={19} strokeWidth={2.2} aria-hidden="true"/><span dir="rtl">درخواست جدید</span></Link>
+      <Link href="/dashboard/tickets/new" className="daira-support__primary"><span>درخواست جدید</span><Plus size={19} strokeWidth={2.2} aria-hidden="true"/></Link>
     </header>
     <div role="group" aria-label="فیلتر درخواست‌ها" className="daira-support__filters">
       {filters.map(item => <button key={item.value} type="button" aria-pressed={filter === item.value} onClick={() => setFilter(item.value)} className={"daira-support__filter" + (filter === item.value ? " is-active" : "")}>
