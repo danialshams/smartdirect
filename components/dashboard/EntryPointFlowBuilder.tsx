@@ -274,6 +274,7 @@ export default function EntryPointFlowBuilder({
             if (!automationId) {
                 originalResponseRef.current = null;
                 setMessages([]);
+                setResponseName("");
                 setLoadedAutomationId(null);
                 return;
             }
@@ -298,6 +299,7 @@ export default function EntryPointFlowBuilder({
                         success?: boolean;
                         data?: {
                             messages?: unknown;
+                            title?: string | null;
                             replyText?: string | null;
                         };
                         error?: string;
@@ -314,6 +316,7 @@ export default function EntryPointFlowBuilder({
                     return;
                 }
 
+                setResponseName(result.data?.title?.trim() || "");
                 const loadedMessages = normalizeMessages(result.data?.messages);
                 const originalMessage = loadedMessages[0] ??
                     (result.data?.replyText?.trim()
@@ -926,6 +929,7 @@ export default function EntryPointFlowBuilder({
                         finalSaveDisabled={!dirty || !canSave}
                         onUpdate={updateEntryMessage}
                         onSavedChange={setSuccess}
+                        initialResponseName={responseName}
                         onResponseNameChange={setResponseName}
                         onContinue={(messageOverride) =>
                             saveAutomation(messageOverride)
