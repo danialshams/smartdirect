@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { partitionResponseMediaScope } from "../src/lib/automation/response-media-scope";
 import { checkedUsagePlan, checkedUsageMedia, assertCoherentMixedScope } from "../src/lib/automation/saved-response-scope";
-import { nestedReplyUses, editQuickReplyDestination, parseQuickReplyJson, reconcileActiveQuickReply } from "../src/lib/automation/nested-response-usage";
+import { nestedReplyUses, editQuickReplyDestination, parseQuickReplyJson, reconcileActiveQuickReply, preserveUncheckedNestedReply } from "../src/lib/automation/nested-response-usage";
 import { displayReusableAssetTitle } from "../src/lib/automation/reusable-titles";
 import { validatePublicCommentReplies } from "../src/lib/automation/comment-reply-variants";
 
@@ -141,6 +141,33 @@ assert.equal(assertCoherentMixedScope([["p1"]], [["p1"]]), true);
 assert.throws(() => assertCoherentMixedScope([["p1"]], [["p2"]]));
 
 
+// Unchecking a nested destination must preserve its original response body,
+// even when its parent FORM is being updated at the same time.
+const beforeUnchecked = JSON.stringify({
+  type: "FORM", quickReplies: [{ type: "TEXT", payload: "fixed",
+    savedResponseId: "child-source", text: "متن قبلی", destinationText: "متن قبلی" }],
+  destinationQuickReplies: [{ type: "TEXT", payload: "fixed",
+    savedResponseId: "child-source", text: "متن قبلی", destinationText: "متن قبلی" }],
+});
+const afterParentEdit = JSON.stringify({
+  type: "FORM", quickReplies: [{ type: "TEXT", payload: "fixed",
+    savedResponseId: "child-source", text: "متن جدید فرم", destinationText: "متن جدید فرم" }],
+  destinationQuickReplies: [{ type: "TEXT", payload: "fixed",
+    savedResponseId: "child-source", text: "متن جدید فرم", destinationText: "متن جدید فرم" }],
+});
+const untouched = parseQuickReplyJson(preserveUncheckedNestedReply(
+  beforeUnchecked, afterParentEdit, ["quickReplies", 0], "child-source"))!;
+for (const row of [untouched.quickReplies, untouched.destinationQuickReplies]) {
+  const node = (row as Record<string, unknown>[])[0];
+  assert.equal(node.text, "متن قبلی");
+  assert.equal(node.destinationText, "متن قبلی");
+  assert.equal(node.savedResponseId, null);
+}
+const detachedMirrors = parseQuickReplyJson(editQuickReplyDestination(
+  beforeUnchecked, ["quickReplies", 0], "child-source", "detach"))!;
+assert.equal((detachedMirrors.quickReplies as Record<string, unknown>[])[0].savedResponseId, null);
+assert.equal((detachedMirrors.destinationQuickReplies as Record<string, unknown>[])[0].savedResponseId, null);
+
 const checked = checkedUsagePlan([
   { messageId: "m1", mediaIds: ["post-1", "post-2", "post-3"] },
   { messageId: "m2", mediaIds: [] },
@@ -171,6 +198,8 @@ assert(scopedRoute.includes('type === "FORM" && mixedGroups.has(automationId)') 
   "Mixed FORM updates must compose the parent and nested edits on one original Quick Reply snapshot.");
 assert(scopedRoute.includes("baseText = reconcileActiveQuickReply(fresh.replyText, encodeReply(quickReplies[index]))"),
   "Partial mixed FORM updates must reconcile the cloned root before editing nested replies.");
+assert(scopedRoute.includes("preserveUncheckedNestedReply(originalData.get(rootId)?.replyText"),
+  "Unselected nested form branches must keep their old content after parent edits.");
 assert(scopedRoute.includes("const copiedId = mixedForks.get(automationId)?.replyMap.get(link.quickReplyId)"),
   "Nested Quick Reply rows on a new selected-media fork must be deferred until composition.");
 
