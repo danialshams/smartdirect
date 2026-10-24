@@ -85,6 +85,7 @@ model InstagramInsightSnapshot {
 
 model Automation {
   id                  String                @id @default(cuid())
+  title               String?               @db.VarChar(80)
   instagramAccountId  String
   keyword             String?
   keywordMatchMode    String                @default("EXACT")
