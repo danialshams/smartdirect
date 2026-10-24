@@ -16,6 +16,17 @@ export function readPublicCommentReplies(value: string | null | undefined): stri
   } catch { return []; }
 }
 
+// Compare what readers perceive, without changing the actual text sent to Instagram.
+export function publicCommentReplyKey(value: string): string {
+  return value.normalize("NFKC")
+    .replace(/[يى]/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(/[\u200c\u200d\u200e\u200f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLocaleLowerCase("fa-IR");
+}
+
 export function validatePublicCommentReplies(value: unknown): string[] {
   if (!Array.isArray(value) || value.length < MIN_PUBLIC_COMMENT_REPLIES || value.length > MAX_PUBLIC_COMMENT_REPLIES) {
     throw new Error("برای پاسخ زیر کامنت، حداقل ۳ و حداکثر ۵ پاسخ متفاوت وارد کنید.");
@@ -24,7 +35,7 @@ export function validatePublicCommentReplies(value: unknown): string[] {
   if (texts.some((text) => !text || text.length > MAX_PUBLIC_COMMENT_REPLY_LENGTH)) {
     throw new Error("همه پاسخ‌های زیر کامنت باید تکمیل شوند و هرکدام حداکثر ۲۰۰۰ کاراکتر باشند.");
   }
-  if (new Set(texts).size !== texts.length) {
+  if (new Set(texts.map(publicCommentReplyKey)).size !== texts.length) {
     throw new Error("متن پاسخ‌های زیر کامنت باید متفاوت باشد.");
   }
   return texts;
