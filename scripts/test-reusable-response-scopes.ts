@@ -108,6 +108,36 @@ assert.equal(merged.quickReplies[0].destinationText, "درود");
 assert.throws(() => reconcileActiveQuickReply(activeForm, JSON.stringify({
   type: "FORM", quickReplies: [],
 })));
+// A main FORM reply can be updated together with a nested reuse only when the
+// content scope is complete; changes compose without dropping the old payload.
+const originalFormRow = JSON.stringify({
+  type: "FORM", question: "سؤال اولیه", payload: "keep-choice", savedResponseId: "common-form",
+  quickReplies: [
+    { type: "TEXT", title: "بله", payload: "yes", savedResponseId: "common-form",
+      text: "متن قبلی", destinationText: "متن قبلی", nextMessageId: "step-3" },
+  ],
+});
+const incomingFormRow = JSON.stringify({
+  type: "FORM", question: "سؤال اصلاح‌شده", payload: "changed-payload",
+  quickReplies: [
+    { type: "TEXT", title: "بله", payload: "different", savedResponseId: "common-form",
+      text: "متن مرحله اصلی", destinationText: "متن مرحله اصلی", nextMessageId: null },
+  ],
+});
+const composedMain = reconcileActiveQuickReply(originalFormRow, incomingFormRow);
+const composedNested = editQuickReplyDestination(composedMain, ["quickReplies", 0],
+  "common-form", "apply", { messageType: "TEXT", text: "متن مقصد مشترک",
+    mediaUrl: null, mediaId: null, showcaseId: null, formId: null, quickReplies: [] });
+const finalForm = parseQuickReplyJson(composedNested)!;
+assert.equal(finalForm.question, "سؤال اصلاح‌شده");
+assert.equal(finalForm.payload, "keep-choice");
+const finalButton = (finalForm.quickReplies as Record<string, unknown>[])[0];
+assert.equal(finalButton.payload, "yes");
+assert.equal(finalButton.nextMessageId, "step-3");
+assert.equal(finalButton.text, "متن مقصد مشترک");
+assert.equal(finalButton.savedResponseId, "common-form");
+assert.equal(assertCoherentMixedScope([[]], [[]]), true);
+
 const checked = checkedUsagePlan([
   { messageId: "m1", mediaIds: ["post-1", "post-2", "post-3"] },
   { messageId: "m2", mediaIds: [] },
@@ -133,6 +163,9 @@ assert.throws(() => checkedUsagePlan([], [
 const scopedRoute = readFileSync("app/api/saved-responses/[id]/apply/route.ts", "utf8");
 assert(scopedRoute.includes("prisma.$transaction"), "Applying reply changes must be atomic.");
 assert(scopedRoute.includes("mixedForks.set(automationId, { id: clone.id, replyMap })"));
+assert(scopedRoute.includes('type === "FORM" && mixedGroups.has(automationId)') &&
+  scopedRoute.includes("draftText = reconcileActiveQuickReply(original.replyText, encodeReply(quickReplies[index]))"),
+  "Mixed FORM updates must compose the parent and nested edits on one original Quick Reply snapshot.");
 assert(scopedRoute.includes("const mainFork = mixedForks.get(automationId)"),
   "Nested and primary edits must reuse the same fork for a partially selected automation.");
 assert(scopedRoute.includes("if (!lockedMixed.has(automationId))"),
