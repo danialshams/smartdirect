@@ -1079,7 +1079,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           </div>
         )}
             {(creationMode === "new" && !isEditing || isEditing && editingView === "edit") && (
-            <div className="space-y-5">
+            <div className="mt-5 space-y-5">
               {triggerType === "COMMENT_KEYWORD" && <section className="daira-flow-glass space-y-2 rounded-2xl p-4 sm:p-5">
                 <label htmlFor="automation-response-name" className="block text-sm font-bold text-[var(--daira-heading)]">نام پاسخ</label>
                 <input id="automation-response-name" value={responseName} onChange={(event) => setResponseName(event.target.value)}
