@@ -137,6 +137,9 @@ assert.equal(finalButton.nextMessageId, "step-3");
 assert.equal(finalButton.text, "متن مقصد مشترک");
 assert.equal(finalButton.savedResponseId, "common-form");
 assert.equal(assertCoherentMixedScope([[]], [[]]), true);
+assert.equal(assertCoherentMixedScope([["p1"]], [["p1"]]), true);
+assert.throws(() => assertCoherentMixedScope([["p1"]], [["p2"]]));
+
 
 const checked = checkedUsagePlan([
   { messageId: "m1", mediaIds: ["post-1", "post-2", "post-3"] },
@@ -166,6 +169,11 @@ assert(scopedRoute.includes("mixedForks.set(automationId, { id: clone.id, replyM
 assert(scopedRoute.includes('type === "FORM" && mixedGroups.has(automationId)') &&
   scopedRoute.includes("draftText = reconcileActiveQuickReply(original.replyText, encodeReply(quickReplies[index]))"),
   "Mixed FORM updates must compose the parent and nested edits on one original Quick Reply snapshot.");
+assert(scopedRoute.includes("baseText = reconcileActiveQuickReply(fresh.replyText, encodeReply(quickReplies[index]))"),
+  "Partial mixed FORM updates must reconcile the cloned root before editing nested replies.");
+assert(scopedRoute.includes("const copiedId = mixedForks.get(automationId)?.replyMap.get(link.quickReplyId)"),
+  "Nested Quick Reply rows on a new selected-media fork must be deferred until composition.");
+
 assert(scopedRoute.includes("const mainFork = mixedForks.get(automationId)"),
   "Nested and primary edits must reuse the same fork for a partially selected automation.");
 assert(scopedRoute.includes("if (!lockedMixed.has(automationId))"),
