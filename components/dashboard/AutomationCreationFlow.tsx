@@ -939,11 +939,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         <div className="mb-2 mt-6"><AutomationSectionGuide>۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن.</AutomationSectionGuide></div>
         <section aria-label="روش پاسخ" className="space-y-2">
           <div role="radiogroup" aria-label="روش پاسخ خودکار" className="grid grid-cols-2 gap-2">
-            <label className={"daira-flow-glass flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "new" ? "border-[var(--daira-primary)] !bg-[var(--daira-outline-hover-bg)]" : "hover:border-[var(--daira-outline)]")}>
+            <label className={"daira-response-mode flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-2xl border p-3 text-[var(--daira-heading)] " + (creationMode === "new" ? "is-selected" : "")}>
               <input type="radio" name="automation-creation-mode" value="new" checked={creationMode === "new"} onChange={startNewAutomation} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
               <span className="flex min-h-10 min-w-0 flex-1 items-center justify-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">ساخت پاسخ جدید</strong></span>
             </label>
-            <label className={"daira-flow-glass flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "existing" ? "border-[var(--daira-primary)] !bg-[var(--daira-outline-hover-bg)]" : "hover:border-[var(--daira-outline)]")}>
+            <label className={"daira-response-mode flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-2xl border p-3 text-[var(--daira-heading)] " + (creationMode === "existing" ? "is-selected" : "")}>
               <input type="radio" name="automation-creation-mode" value="existing" checked={creationMode === "existing"} onChange={() => { setCreationMode("existing"); setError(""); }} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
               <span className="flex min-h-10 min-w-0 flex-1 items-center justify-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">استفاده از پاسخ‌های قبلی</strong></span>
             </label>
@@ -956,11 +956,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           <div className="space-y-3">
             <div className="mb-2 mt-6"><AutomationSectionGuide>۳. پاسخ قبلی — پاسخ موردنظرت را انتخاب کن؛ سپس دکمه زیر فهرست را بزن.</AutomationSectionGuide></div>
             <section
-                className="daira-flow-glass rounded-2xl p-3"
+                className="daira-response-library__panel rounded-2xl border p-4 sm:p-5"
               >
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <div />
-                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs" style={{ background: dairaPalette.secondary.hoverBackground, color: dairaPalette.text.body }}><strong className="font-extrabold" style={{ color: dairaPalette.primary.main }}>{new Intl.NumberFormat("fa-IR").format(automationTemplates.length)}</strong><span style={{ color: dairaPalette.primary.main }}>پاسخ</span></span>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های ذخیره‌شده</h3>
+                  <span className="daira-response-library__count inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-[var(--daira-text-secondary)]"><strong className="font-extrabold text-[var(--daira-heading)]">{new Intl.NumberFormat("fa-IR").format(automationTemplates.length)}</strong> پاسخ</span>
                 </div>
                 {loadingResources ? (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="در حال دریافت پاسخ‌های قبلی">
@@ -982,11 +982,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     return (
                       <div
                         key={template.id}
-                        className="daira-flow-glass flex min-h-[72px] items-start gap-2 rounded-xl border p-2.5 text-right transition focus-within:ring-2 focus-within:ring-[color:var(--daira-primary)]/20"
-                        style={{
-                          borderColor: selected ? dairaPalette.primary.main : dairaPalette.border,
-                          background: selected ? dairaPalette.secondary.hoverBackground : dairaPalette.background.surface,
-                        }}
+                        className={"daira-response-template flex min-h-[76px] items-start gap-3 rounded-xl border p-3 text-right transition " + (selected ? "is-selected" : "")}
                       >
                         <button type="button" onClick={() => setPreviewTemplate(template)} className="flex min-w-0 flex-1 flex-col gap-1 text-right">
                           <strong className="block text-xs font-bold leading-5" style={{ color: dairaPalette.text.heading }}>
@@ -1080,10 +1076,16 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             {triggerType === "COMMENT_KEYWORD" && (
               <div className="space-y-3">
               <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. پاسخ زیر کامنت — حداقل سه و حداکثر پنج پاسخ متفاوت تنظیم کن؛ برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم در اینستاگرام، بهتر است چند پاسخ متفاوت تنظیم کنی." : "۴. پاسخ زیر کامنت — سه تا پنج متن متفاوت بنویس؛ برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم در اینستاگرام، بهتر است چند پاسخ متفاوت تنظیم کنی."}</AutomationSectionGuide></div>
-              <div className="rounded-2xl px-1 py-3">
-                <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><strong className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های عمومی به کامنت</strong></div>
+              <section aria-label="پاسخ‌های عمومی به کامنت" className="daira-comment-replies space-y-4 rounded-2xl p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={17} strokeWidth={2.1} aria-hidden="true" /></span>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <h2 className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های عمومی به کامنت</h2>
+                    <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">سه تا پنج متن متفاوت وارد کن. یکی از این متن‌ها برای هر کامنت به‌صورت تصادفی انتخاب می‌شود.</p>
+                  </div>
+                </div>
                 <CommentReplyVariantsField values={commentReplies} onChange={setCommentReplies} disabled={saving} />
-              </div>
+              </section>
               </div>
             )}
 

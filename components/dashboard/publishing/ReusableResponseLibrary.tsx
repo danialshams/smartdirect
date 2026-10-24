@@ -60,7 +60,7 @@ function BranchPreview({ replies, depth = 0 }: { replies: QuickReplyDraft[]; dep
   if (depth > 4) return null;
   return <div className="space-y-2">
     {replies.map((reply, index) => <div key={reply.id || index}
-      className="daira-flow-glass space-y-2 rounded-xl p-3">
+      className="daira-response-library__preview-branch space-y-2 rounded-xl p-3">
       <p className="text-xs font-bold text-[var(--daira-heading)]">{reply.title}</p>
       <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">{reply.destinationType === "FORM" ? reply.destinationQuestion : reply.destinationType === "TEXT" ? reply.destinationText : typeNames[reply.destinationType as MessageDraft["messageType"]] || "پاسخ"}</p>
       {reply.destinationType === "FORM" && <BranchPreview replies={reply.destinationQuickReplies || []} depth={depth + 1}/>}
@@ -77,7 +77,7 @@ function ResponsePreview({ value }: { value: Saved }) {
     {value.messageType === "FORM" && Array.isArray(value.quickReplies) && <BranchPreview replies={value.quickReplies}/>}
     {value.messageType === "SHOWCASE" && value.showcase && <div className="space-y-3">
       <p className="text-xs font-bold text-[var(--daira-heading)]">{value.showcase.title}</p>
-      {value.showcase.items.map((item) => <div key={item.id} className="daira-flow-glass flex items-center gap-3 rounded-xl p-3">
+      {value.showcase.items.map((item) => <div key={item.id} className="daira-response-library__preview-branch flex items-center gap-3 rounded-xl p-3">
         {item.imageUrl && <img src={item.imageUrl} alt="" className="h-20 w-20 rounded-lg object-cover"/>}
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-[var(--daira-heading)]">{item.title}</p>
@@ -87,12 +87,12 @@ function ResponsePreview({ value }: { value: Saved }) {
     </div>}
     {value.messageType === "FORM" && value.form && <div className="space-y-2">
       <p className="text-xs font-bold text-[var(--daira-heading)]">{value.form.title}</p>
-      {value.form.fields.map((field) => <p key={field.id} className="daira-flow-glass rounded-lg p-2 text-xs">{field.label}</p>)}
+      {value.form.fields.map((field) => <p key={field.id} className="daira-response-library__preview-branch rounded-lg p-2 text-xs text-[var(--daira-text)]">{field.label}</p>)}
     </div>}
     <div className="space-y-2 border-t border-[var(--daira-border)] pt-3">
       <p className="text-xs font-bold text-[var(--daira-heading)]">محل‌های استفاده از این پاسخ</p>
       {!value.usages?.length ? <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">هنوز اتصال فعالی برای این پاسخ ثبت نشده است.</p>
-        : value.usages.map((usage) => <div key={usage.messageId} className="daira-flow-glass space-y-1 rounded-xl p-3">
+        : value.usages.map((usage) => <div key={usage.messageId} className="daira-response-library__preview-branch space-y-1 rounded-xl p-3">
           <p className="text-xs font-bold text-[var(--daira-heading)]">{usage.automationTitle || (
             usage.menuTitles.length ? "منوی دایرکت" : usage.icebreakerQuestions.length ? "پیام شروع گفتگو" :
             usage.triggerType === "STORY_REPLY_KEYWORD" ? "پاسخ استوری" :
@@ -321,19 +321,19 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     return () => onRegisterSave?.(null);
   });
 
-  return <section dir="rtl" className="space-y-3" aria-label="کتابخانه پاسخ‌ها">
-    <div className="grid grid-cols-2 gap-2" role="group" aria-label="روش ساخت پاسخ">
+  return <section dir="rtl" className="daira-response-library mb-5 space-y-4" aria-label="کتابخانه پاسخ‌ها">
+    <div className="grid grid-cols-2 gap-3" role="group" aria-label="روش ساخت پاسخ">
       {([{ value: "new", label: "ساخت پاسخ جدید", Icon: Plus }, { value: "existing", label: "استفاده از پاسخ قبلی", Icon: BookOpen }] as const).map(({ value, label, Icon }) =>
         <button type="button" key={value} aria-pressed={mode === value} onClick={() => { setMode(value); setError(""); }}
-          className={"daira-flow-glass flex min-h-14 items-center justify-center gap-2 rounded-xl p-3 text-xs font-bold " + (mode === value ? "!border-[var(--daira-primary)] !bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]" : "text-[var(--daira-heading)]")}>
-          <span>{label}</span><Icon size={16}/>
+          className={"daira-response-library__mode flex min-h-[68px] items-center justify-center gap-2.5 rounded-2xl border px-3 py-3 text-xs font-bold " + (mode === value ? "is-selected" : "")}>
+          <span className="min-w-0 text-center leading-5">{label}</span><span className="daira-response-library__mode-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"><Icon size={17} aria-hidden="true"/></span>
         </button>)}
     </div>
-    {mode === "new" ? <div className="daira-flow-glass space-y-3 rounded-xl p-3">
+    {mode === "new" ? <div className="daira-response-library__panel space-y-4 rounded-2xl border p-4 sm:p-5">
       <label htmlFor={nameFieldId} className="block text-xs font-bold text-[var(--daira-heading)]">{message.messageType === "FORM" ? "نام فرم" : message.messageType === "SHOWCASE" ? "نام ویترین" : "نام پاسخ"}</label>
       <input id={nameFieldId} type="text" value={name} maxLength={80} onChange={(event) => { setName(event.target.value); onNameChange?.(event.target.value); }}
         placeholder="مثلاً کفش" disabled={disabled || saving}
-        className="w-full rounded-xl border border-[var(--daira-input-border)] bg-[var(--daira-surface)] px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)]" style={{fontSize:"16px"}}/>
+        className="daira-response-library__input block min-h-12 w-full rounded-xl border px-3.5 py-3 text-base text-[var(--daira-heading)] outline-none" style={{fontSize:"16px"}}/>
       <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">{message.messageType === "FORM" ? "نامی برای فرم" : message.messageType === "SHOWCASE" ? "نامی برای ویترین" : "نامی برای پاسخ"} انتخاب کن تا بعداً بتوانی دوباره از آن استفاده کنی.</p>
       <button type="button" onClick={() => void saveToLibrary()} disabled={saving || disabled || !name.trim()}
         className="daira-glass-dialog__primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold disabled:opacity-50">
@@ -341,24 +341,28 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
       </button>
       {editingId && <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">ویرایش کتابخانه فقط قالب ذخیره‌شده را تغییر می‌دهد؛ تنظیمات پاسخ‌های فعال به صورت خودکار بازنویسی نمی‌شوند.</p>}
       {editingId && <button type="button" onClick={() => {setEditingId("");setName("");}} className="ml-2 text-xs text-[var(--daira-text-secondary)]">انصراف از ویرایش پاسخ ذخیره‌شده</button>}
-    </div> : <div className="daira-flow-glass space-y-2 rounded-xl p-3">
+    </div> : <div className="daira-response-library__panel space-y-3 rounded-2xl border p-4 sm:p-5">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های ذخیره‌شده</h3>
+        <span className="daira-response-library__count rounded-full px-2.5 py-1 text-[11px] font-semibold text-[var(--daira-text-secondary)]">{new Intl.NumberFormat("fa-IR").format(filtered.length)} پاسخ</span>
+      </div>
       {loading ? <div role="status" className="daira-skeleton__bar h-14 w-full rounded-xl"/> : filtered.length === 0 ?
         <p className="py-4 text-center text-xs text-[var(--daira-text-secondary)]">پاسخ سازگاری ذخیره نشده است.</p> :
-        <div className="max-h-72 space-y-2 overflow-y-auto">
-          {filtered.map((item) => <div key={item.id} className="flex items-center gap-2 rounded-xl border border-[var(--daira-glass-rim)] bg-[var(--daira-glass-raised)] p-3">
+        <div className="max-h-72 space-y-2.5 overflow-y-auto py-1">
+          {filtered.map((item) => <div key={item.id} className="daira-response-library__item flex min-h-[76px] items-center gap-2 rounded-xl border p-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-bold text-[var(--daira-heading)]">{displayName(item, prefix)}</p>
               <p className="mt-1 text-[11px] text-[var(--daira-text-secondary)]">{typeNames[item.messageType]} · {new Intl.NumberFormat("fa-IR").format(item.usages?.length || 0)} استفاده ثبت‌شده</p>
             </div>
-            <button type="button" onClick={() => setPreview(item)} aria-label={"مشاهده " + item.title} className="daira-glass-dialog__secondary rounded-lg border p-2"><Eye size={16}/></button>
-            <button type="button" onClick={() => loadResponse(item)} aria-label={"استفاده از " + item.title} className="daira-glass-dialog__primary rounded-lg p-2"><Check size={16}/></button>
+            <button type="button" onClick={() => setPreview(item)} aria-label={"مشاهده " + item.title} className="daira-response-library__icon-button flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"><Eye size={17}/></button>
+            <button type="button" onClick={() => loadResponse(item)} aria-label={"استفاده از " + item.title} className="daira-response-library__icon-button daira-response-library__use flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"><Check size={17}/></button>
           </div>)}
         </div>}
     </div>}
     {error && <p role="alert" className="text-xs leading-6 text-[var(--daira-error-text)]">{error}</p>}
     <GlassModalPresence open={scopeOpen} onEscape={() => { if (!saving) setScopeOpen(false); }}>
       <div dir="rtl" className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setScopeOpen(false); }}>
-        <div role="dialog" aria-modal="true" aria-labelledby="saved-scope-title" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]">
+        <div role="dialog" aria-modal="true" aria-labelledby="saved-scope-title" className="daira-glass-dialog daira-response-library__dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]">
           <div className="daira-glass-dialog__header flex items-center justify-between border-b p-4">
             <h3 id="saved-scope-title" className="text-sm font-extrabold text-[var(--daira-heading)]">اعمال ویرایش پاسخ مشترک</h3>
             <button type="button" aria-label="بستن" disabled={saving} onClick={() => setScopeOpen(false)} className="daira-glass-dialog__close rounded-lg p-2"><X size={18}/></button>
@@ -368,7 +372,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
           </p>
           <div className="space-y-3 overflow-y-auto p-4">
             {(items.find((item) => item.id === editingId)?.usages || []).map((usage) => (
-              <div key={usage.messageId} className="daira-flow-glass space-y-2 rounded-xl p-3">
+              <div key={usage.messageId} className="daira-response-library__scope-item space-y-2 rounded-xl border p-3">
                 <p className="text-xs font-bold text-[var(--daira-heading)]">{usage.automationTitle ||
                   (usage.menuTitles.length ? "منوی دایرکت" : usage.icebreakerQuestions.length ? "پیام شروع گفتگو" :
                    usage.triggerType === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ دایرکت")}</p>
@@ -378,7 +382,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
                 {usage.menuTitles.map((label, i) => <p key={i} className="text-xs text-[var(--daira-text-secondary)]">گزینه منو: {label}</p>)}
                 {usage.icebreakerQuestions.map((label, i) => <p key={i} className="text-xs text-[var(--daira-text-secondary)]">شروع گفتگو: {label}</p>)}
                 {usage.mediaIds.length ? usage.mediaIds.map((id) => (
-                  <label key={id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg bg-[var(--daira-surface-hover)] p-2">
+                  <label key={id} className="daira-response-library__check-row flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border p-2.5">
                     <input type="checkbox" disabled={saving} className="h-5 w-5 accent-[var(--daira-primary)]"
                       checked={scopeSelected[usage.messageId]?.includes(id) ?? false}
                       onChange={(event) => setScopeSelected((current) => {
@@ -422,7 +426,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     </GlassModalPresence>
     <GlassModalPresence open={Boolean(preview)} onEscape={() => setPreview(null)}>
       <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreview(null); }}>
-        <div role="dialog" aria-modal="true" aria-label="مشاهده پاسخ ذخیره‌شده" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]" dir="rtl">
+        <div role="dialog" aria-modal="true" aria-label="مشاهده پاسخ ذخیره‌شده" className="daira-glass-dialog daira-response-library__dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]" dir="rtl">
           <div className="daira-glass-dialog__header flex items-center justify-between border-b p-4">
             <h3 className="text-sm font-extrabold text-[var(--daira-heading)]">{preview ? displayName(preview, prefix) : ""}</h3>
             <button type="button" onClick={() => setPreview(null)} className="daira-glass-dialog__close rounded-lg p-2" aria-label="بستن"><X size={18}/></button>

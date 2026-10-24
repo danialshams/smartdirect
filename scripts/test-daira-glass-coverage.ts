@@ -100,4 +100,40 @@ assert(src("components/dashboard/SmartRemindersList.tsx").includes('<Plus size={
 assert(css.includes(".daira-insights-calendar-dialog") && css.includes(".daira-publishing-queue-item"),
   "Page-level glass surfaces must be defined centrally");
 
+// Response picker visuals must follow the same named palette in every editor.
+const responseLibrary = src("components/dashboard/publishing/ReusableResponseLibrary.tsx");
+const commentFlow = src("components/dashboard/AutomationCreationFlow.tsx");
+const legacyComments = src("components/dashboard/MediaAutomationEditor.tsx");
+const variantsField = src("components/dashboard/CommentReplyVariantsField.tsx");
+for (const className of [
+  "daira-response-library__panel", "daira-response-library__mode",
+  "daira-response-library__item", "daira-response-library__scope-item",
+  "daira-response-library__check-row", "daira-response-library__input",
+  "daira-response-template", "daira-response-mode",
+  "daira-comment-replies", "daira-comment-replies__option",
+  "daira-comment-replies__textarea",
+]) assert(css.includes("." + className), "Missing unified response glass rule: " + className);
+assert(responseLibrary.includes('className="daira-response-library mb-5 space-y-4"'),
+  "Response naming panel requires breathing room before the following editor field.");
+assert(responseLibrary.includes('daira-response-library__icon-button daira-response-library__use')
+  && !responseLibrary.includes('className="daira-glass-dialog__primary rounded-lg p-2"'),
+  "Previously saved answers must not render a blue primary button in every row.");
+assert(responseLibrary.includes("daira-response-library__dialog")
+  && responseLibrary.includes("daira-response-library__scope-item")
+  && responseLibrary.includes("daira-response-library__preview-branch"),
+  "Response preview, scope editor and list need identical neutral contrast and glass treatment.");
+assert(commentFlow.includes('daira-response-mode') && commentFlow.includes('daira-response-template')
+  && !commentFlow.includes('!bg-[var(--daira-outline-hover-bg)]'),
+  "Selected reply templates should not be concealed by !important generic glass backgrounds.");
+for (const editor of [commentFlow, legacyComments])
+  assert(editor.includes('className="daira-comment-replies') &&
+    editor.includes('پاسخ‌های عمومی به کامنت'),
+    "Public comment replies need a titled, visible section on both edit paths.");
+assert(variantsField.includes('daira-comment-replies__option') &&
+  variantsField.includes('daira-comment-replies__textarea'),
+  "Comment inputs should have individually legible glass option cards.");
+const responseCss = css.slice(css.indexOf("/* Reusable reply library:"));
+assert(!/#[0-9a-f]{3,8}\\b/i.test(responseCss),
+  "The response UI must use canonical Daira palette tokens rather than literal colors.");
+
 console.log("DAIRA_GLASS_COVERAGE_OK");
