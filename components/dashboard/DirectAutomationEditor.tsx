@@ -113,7 +113,12 @@ export default function DirectAutomationEditor({id}:{id?:string}){
   })();
   return ()=>controller.abort();
  },[id,retry]);
- async function save(prepared?:MessageDraft){
+  function cloneIndependentMessage(source:MessageDraft):MessageDraft{
+    const cloneBranches=(replies:MessageDraft["quickReplies"]):MessageDraft["quickReplies"]=>
+      replies.map(reply=>({...reply,id:"local_"+crypto.randomUUID(),payload:"copy_"+crypto.randomUUID(),savedResponseId:null,destinationQuickReplies:cloneBranches(reply.destinationQuickReplies)}));
+    return {...source,id:"local_"+crypto.randomUUID(),savedResponseId:null,quickReplies:cloneBranches(source.quickReplies)};
+  }
+  async function save(prepared?:MessageDraft){
   if(saving||!account||(original&&!hasChanges))return;
    if(!original&&replyMode==="existing"&&!selectedPrevious){setError("ابتدا یک پاسخ قبلی انتخاب کن.");return;}
   const entries=effectiveKeywords.slice(0,11);
@@ -124,7 +129,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({id:original?.id,expectedUpdatedAt:original?.updatedAt,
      instagramAccountId:account.id,title:("پاسخ دایرکت - "+entries.join("، ")).slice(0,80),keyword:entries.join(","),message:!original&&replyMode==="existing"
-       ? {...(normalizeMessages(previousRules.find(rule=>rule.id===selectedPrevious)?.messages)[0]||createEmptyMessage()),savedResponseId:null}
+       ? cloneIndependentMessage(normalizeMessages(previousRules.find(rule=>rule.id===selectedPrevious)?.messages)[0]||createEmptyMessage())
        : {...(prepared||message),savedResponseId:null}})});
    const body=await response.json();
    if(!response.ok||!body.success)throw new Error(body.error||"ذخیره پاسخ خودکار ناموفق بود.");

@@ -211,6 +211,8 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
       setSaving(true);setError("");
       try {
         const copied=normalizeMessages(previous.messages)[0]||createEmptyMessage();
+        const cloneReplies=(items:MessageDraft["quickReplies"]):MessageDraft["quickReplies"]=>
+          items.map(item=>({...item,id:"local_"+crypto.randomUUID(),payload:"copy_"+crypto.randomUUID(),savedResponseId:null,destinationQuickReplies:cloneReplies(item.destinationQuickReplies)}));
         const response=await fetch("/api/live-automation",{method:"POST",credentials:"include",
           headers:{"Content-Type":"application/json"},
           body:JSON.stringify({
@@ -220,7 +222,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
             followupEnabled:previous.followupEnabled,followupKeyword:previous.followupKeyword,
             requireFollow:previous.requireFollow,followGateText:previous.followGateText,
             followGateButtonText:previous.followGateButtonText,
-            message:previous.followupEnabled?{...copied,savedResponseId:null}:null,
+            message:previous.followupEnabled?{...copied,id:"local_"+crypto.randomUUID(),savedResponseId:null,quickReplies:cloneReplies(copied.quickReplies)}:null,
           }),
         });
         const result=await response.json();
