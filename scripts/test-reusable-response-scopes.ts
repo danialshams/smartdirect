@@ -34,6 +34,7 @@ assert(editRoute.includes("partitionResponseMediaScope(oldMediaIds, mediaIds)"))
 assert(editRoute.includes("const remaining = scope.untouchedIds;"));
 const pick = readFileSync("components/dashboard/AutomationCreationFlow.tsx", "utf8");
 assert(pick.includes("editScopeIds") && pick.includes("GlassModalPresence open={editScopeOpen}"));
+assert(pick.includes("mediaIds: targetIds"), "Reusing a story reply must pass its selected story to the API.");
 const api = readFileSync("app/api/automations/[id]/route.ts", "utf8");
 assert(api.includes("...previousIds, ...targetIds"), "Reusing a response must preserve existing media links.");
 const menu = readFileSync("components/dashboard/EntryPointFlowBuilder.tsx","utf8");
