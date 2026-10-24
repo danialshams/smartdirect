@@ -13,7 +13,7 @@ const types:Type[] = ["TEXT","IMAGE","VIDEO","AUDIO","SHOWCASE","FORM"];
 const clean=(v:unknown)=>typeof v==="string"?v.trim():"";
 const obj=(v:unknown):Row=>v&&typeof v==="object"&&!Array.isArray(v)?v as Row:{};
 class RuleError extends Error { constructor(message:string,readonly status=400){super(message);} }
-type Reply = {title:string;payload:string;destinationType:Type;destinationText:string;destinationQuestion:string;destinationShowcaseId:string;destinationMediaUrl:string;destinationMediaId:string;destinationFormId:string;destinationQuickReplies:Reply[];isExit:boolean};
+type Reply = {title:string;payload:string;savedResponseId:string|null;destinationType:Type;destinationText:string;destinationQuestion:string;destinationShowcaseId:string;destinationMediaUrl:string;destinationMediaId:string;destinationFormId:string;destinationQuickReplies:Reply[];isExit:boolean};
 function parseReplies(raw:unknown,depth=0,seen=new Set<string>()):Reply[]{
  if(!Array.isArray(raw)||raw.length<2||raw.length>13||depth>3)throw new RuleError("هر سؤال فرم باید بین ۲ تا ۱۳ گزینه و حداکثر چهار سطح داشته باشد.");
  return raw.map(v=>{
@@ -27,7 +27,7 @@ function parseReplies(raw:unknown,depth=0,seen=new Set<string>()):Reply[]{
   if(destinationType==="FORM"&&!destinationQuestion)throw new RuleError("سؤال بعدی را وارد کنید.");
   if(destinationType==="SHOWCASE"&&!destinationShowcaseId)throw new RuleError("ویترین مقصد را انتخاب کنید.");
   if(["IMAGE","VIDEO","AUDIO"].includes(destinationType)&&!destinationMediaUrl&&!destinationMediaId)throw new RuleError("فایل مقصد گزینه را انتخاب کنید.");
-  return {title,payload,destinationType,destinationText,destinationQuestion,destinationShowcaseId,destinationMediaUrl,destinationMediaId,
+  return {title,payload,savedResponseId:clean(o.savedResponseId)||null,destinationType,destinationText,destinationQuestion,destinationShowcaseId,destinationMediaUrl,destinationMediaId,
     destinationFormId:clean(o.destinationFormId),isExit:o.isExit===true,
     destinationQuickReplies:destinationType==="FORM"?parseReplies(o.destinationQuickReplies,depth+1,seen):[]};
  });
@@ -88,7 +88,7 @@ async function save(request:NextRequest,editing:boolean){
    const retained:string[]=[];
    for(const reply of replies){
     const data={title:reply.title,payload:reply.payload,replyText:JSON.stringify({
-      isExit:reply.isExit,destinationType:reply.destinationType,destinationText:reply.destinationText,
+      isExit:reply.isExit,savedResponseId:reply.savedResponseId,destinationType:reply.destinationType,destinationText:reply.destinationText,
       destinationQuestion:reply.destinationQuestion,destinationShowcaseId:reply.destinationShowcaseId,
       destinationMediaUrl:reply.destinationMediaUrl,destinationMediaId:reply.destinationMediaId,
       destinationFormId:reply.destinationFormId,destinationQuickReplies:reply.destinationQuickReplies})};
