@@ -898,3 +898,53 @@
     -webkit-backdrop-filter:none;backdrop-filter:none;
   }
 }
+
+/* Canonical reply modes: dark readable labels, white/neutral glass and a
+   restrained border/icon selection cue, identical in live/comment/story. */
+.daira-response-library__mode {
+  border-color:var(--daira-glass-rim)!important;
+  background:var(--daira-glass-raised)!important;
+  color:var(--daira-heading)!important;
+}
+.daira-response-library__mode.is-selected {
+  border-color:var(--daira-input-border-hover)!important;
+  background:var(--daira-glass-raised)!important;
+  box-shadow:inset 0 1px 0 var(--daira-glass-rim),0 0 0 1px var(--daira-input-border-hover);
+}
+.daira-response-library__mode-icon,
+.daira-response-library__mode.is-selected .daira-response-library__mode-icon {
+  background:var(--daira-neutral-bg);
+  color:var(--daira-text);
+}
+.daira-response-library__mode.is-selected .daira-response-library__mode-icon {
+  color:var(--daira-primary-hover);
+}
+/* In-place details preserve their dimensions while expanding/collapsing. */
+.daira-response-library__expander {
+  grid-template-rows:0fr;
+  opacity:0;
+  transition:grid-template-rows var(--daira-modal-motion-duration) var(--daira-modal-motion-ease),opacity var(--daira-modal-motion-duration) ease;
+}
+.daira-response-library__expander.is-expanded {
+  grid-template-rows:1fr;
+  opacity:1;
+}
+.daira-response-library__eye {
+  border-color:var(--daira-input-border-hover);
+  background:var(--daira-outline-hover-bg);
+  color:var(--daira-primary-hover);
+  transition:background .2s ease,color .2s ease;
+}
+.daira-response-library__eye:hover,.daira-response-library__eye[aria-expanded="true"] {
+  background:var(--daira-brand-100);
+  color:var(--daira-brand-700);
+}
+.daira-response-library__action {
+  border-color:var(--daira-input-border);
+  background:var(--daira-surface);
+  color:var(--daira-heading);
+}
+.daira-response-library__action:hover {background:var(--daira-surface-hover);}
+@media(prefers-reduced-motion:reduce) {
+  .daira-response-library__expander {transition:none;}
+}
