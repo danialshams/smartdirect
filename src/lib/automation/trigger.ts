@@ -72,10 +72,14 @@ export function matchesAutomationTrigger({
     return false;
   }
 
-  const selectedMediaIds = configuredMediaIds ? configuredMediaIds.split(",").filter(Boolean) : [];
-  if (selectedMediaIds.length > 0 && (!incomingMediaId || !selectedMediaIds.includes(incomingMediaId))) return false;
-  if (selectedMediaIds.length === 0 && automationMediaId && automationMediaId !== incomingMediaId) return false;
-  if (selectedMediaIds.length === 0 && automationMediaId && !incomingMediaId) return false;
+  // Story replies are account-wide, including older rules that still have a
+  // historical mediaId. Only comment automations remain bound to media.
+  if (triggerType === "COMMENT_KEYWORD") {
+    const selectedMediaIds = configuredMediaIds ? configuredMediaIds.split(",").filter(Boolean) : [];
+    if (selectedMediaIds.length > 0 && (!incomingMediaId || !selectedMediaIds.includes(incomingMediaId))) return false;
+    if (selectedMediaIds.length === 0 && automationMediaId && automationMediaId !== incomingMediaId) return false;
+    if (selectedMediaIds.length === 0 && automationMediaId && !incomingMediaId) return false;
+  }
 
   return true;
 }
