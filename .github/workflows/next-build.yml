@@ -98,6 +98,9 @@ jobs:
       - name: Test comment reply variants and RTL support actions
         run: npx tsx scripts/test-comment-reply-variants.ts
 
+      - name: Verify reusable reply scope, naming and regression coverage
+        run: npx tsx scripts/test-reusable-response-scopes.ts
+
       - name: Build application
         env:
           NODE_ENV: production
@@ -120,6 +123,13 @@ jobs:
           # declaration; do not rewrite applied production migration history.
           npx prisma db push
           npx tsx scripts/test-durable-webhook-migration.ts
+
+      - name: Test saved response provenance and multi-account isolation in PostgreSQL
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          NODE_ENV: test
+        run: npx tsx scripts/test-saved-response-origin.ts
 
       - name: Test durable webhook recovery against PostgreSQL and Redis
         env:

@@ -42,7 +42,60 @@ export async function GET(request: NextRequest) {
       where: { userId: session.user.id, instagramAccountId },
       orderBy: { updatedAt: "desc" },
     });
-    return NextResponse.json({ success: true, data });
+    // Embed owned asset previews without changing the reusable template record.
+    const showcaseIds = data.map((item) => item.showcaseId).filter((id): id is string => Boolean(id));
+    const formIds = data.map((item) => item.formId).filter((id): id is string => Boolean(id));
+    const [showcases, forms] = await Promise.all([
+      showcaseIds.length ? prisma.showcase.findMany({
+        where: { id: { in: showcaseIds }, userId: session.user.id, instagramAccountId },
+        include: { items: { where: { isActive: true }, orderBy: { order: "asc" } } },
+      }) : Promise.resolve([]),
+      formIds.length ? prisma.form.findMany({
+        where: { id: { in: formIds }, userId: session.user.id, instagramAccountId },
+        include: { fields: { orderBy: { order: "asc" } } },
+      }) : Promise.resolve([]),
+    ]);
+    // Only explicit provenance counts as reuse; equal-looking text is not a link.
+    const sourceIds = data.map((item) => item.id);
+    const appliedMessages = sourceIds.length ? await prisma.automationMessage.findMany({
+      where: { savedResponseId: { in: sourceIds }, automation: { instagramAccountId } },
+      select: {
+        id: true, savedResponseId: true,
+        automation: { select: {
+          id: true, title: true, triggerType: true, mediaId: true, mediaIds: true,
+          persistentMenuItems: { select: { id: true, title: true } },
+          iceBreakers: { select: { id: true, question: true } },
+        } },
+      },
+    }) : [];
+    const usageMap = new Map<string, Array<{
+      messageId: string; automationId: string; automationTitle: string | null;
+      triggerType: string; mediaIds: string[]; menuTitles: string[]; icebreakerQuestions: string[];
+    }>>();
+    for (const linked of appliedMessages) {
+      if (!linked.savedResponseId) continue;
+      const a = linked.automation;
+      const mediaIds = Array.from(new Set([
+        ...(a.mediaId ? [a.mediaId] : []),
+        ...(a.mediaIds || "").split(",").map((id) => id.trim()).filter(Boolean),
+      ]));
+      const previous = usageMap.get(linked.savedResponseId) || [];
+      previous.push({
+        messageId: linked.id, automationId: a.id, automationTitle: a.title,
+        triggerType: a.triggerType, mediaIds,
+        menuTitles: a.persistentMenuItems.map((item) => item.title),
+        icebreakerQuestions: a.iceBreakers.map((item) => item.question),
+      });
+      usageMap.set(linked.savedResponseId, previous);
+    }
+    const showcaseMap = new Map(showcases.map((item) => [item.id, item]));
+    const formMap = new Map(forms.map((item) => [item.id, item]));
+    return NextResponse.json({ success: true, data: data.map((item) => ({
+      ...item,
+      usages: usageMap.get(item.id) || [],
+      showcase: item.showcaseId ? showcaseMap.get(item.showcaseId) || null : null,
+      form: item.formId ? formMap.get(item.formId) || null : null,
+    })) });
   } catch (error) {
     console.error("GET /api/saved-responses error:", error);
     return NextResponse.json({ success: false, error: "دریافت پاسخ‌های ذخیره‌شده ناموفق بود." }, { status: 500 });

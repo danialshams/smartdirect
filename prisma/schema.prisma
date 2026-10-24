@@ -85,6 +85,7 @@ model InstagramInsightSnapshot {
 
 model Automation {
   id                  String                @id @default(cuid())
+  title               String?               @db.VarChar(80)
   instagramAccountId  String
   keyword             String?
   keywordMatchMode    String                @default("EXACT")
@@ -125,6 +126,7 @@ model AutomationMessage {
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   formId               String?
+  savedResponseId       String?
   mediaId              String?
   mediaUrl             String?
   linkButtonUrl        String?
@@ -133,6 +135,7 @@ model AutomationMessage {
   messageType          AutomationMessageType @default(TEXT)
   showcaseId           String?
   automation           Automation            @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  savedResponse         SavedAutomationResponse? @relation("AppliedReusableResponse", fields: [savedResponseId], references: [id], onDelete: SetNull)
   form                 Form?                 @relation(fields: [formId], references: [id])
   showcase             Showcase?             @relation(fields: [showcaseId], references: [id])
   quickReplies         QuickReply[]
@@ -140,6 +143,7 @@ model AutomationMessage {
 
   @@index([automationId])
   @@index([automationId, order])
+  @@index([savedResponseId])
   @@index([showcaseId])
   @@index([formId])
 }
@@ -327,6 +331,7 @@ model SavedAutomationResponse {
   updatedAt           DateTime         @updatedAt
   user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   instagramAccount    InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  appliedMessages     AutomationMessage[] @relation("AppliedReusableResponse")
 
   @@index([userId, instagramAccountId, createdAt])
   @@index([instagramAccountId, messageType])

@@ -18,6 +18,13 @@ function destinationShowcases(replies: QuickReplyDraft[], ids: Set<string>) {
 
 export async function verifyLiveResponseOwnership(input: ValidatedLiveRule, accountId: string, userId: string) {
   if (!input.message) return;
+  if (input.message.savedResponseId) {
+    const template = await prisma.savedAutomationResponse.findFirst({
+      where: { id: input.message.savedResponseId, userId, instagramAccountId: accountId },
+      select: { id: true },
+    });
+    if (!template) throw new LiveReplyValidationError("پاسخ ذخیره‌شده به این پیج تعلق ندارد.");
+  }
   const ids = new Set<string>();
   if (input.message.messageType === "SHOWCASE") ids.add(input.message.showcaseId);
   destinationShowcases(input.message.quickReplies, ids);
@@ -54,6 +61,7 @@ function savedMessageData(message: MessageDraft) {
   const media = ["IMAGE", "VIDEO", "AUDIO"].includes(message.messageType);
   return {
     messageType: message.messageType,
+    savedResponseId: message.savedResponseId || null,
     text: message.text || null,
     mediaUrl: media ? message.mediaUrl || null : null,
     mediaId: media ? message.mediaId || null : null,
@@ -64,6 +72,7 @@ function savedMessageData(message: MessageDraft) {
 
 function savedRuleData(rule: ValidatedLiveRule) {
   return {
+    title: rule.title,
     keyword: rule.keyword,
     keywordMatchMode: rule.matchMode,
     replyText: rule.initialText,
@@ -130,7 +139,7 @@ export async function updateLiveReplyRule(input: ValidatedLiveRule, automationId
 }
 
 export function displayLiveReply(rule: {
-  id: string; instagramAccountId: string; keyword: string | null;
+  id: string; instagramAccountId: string; keyword: string | null; title: string | null;
   keywordMatchMode: string; replyText: string | null; commentReplyText: string | null;
   requireFollow: boolean; followGateText: string | null; followGateButtonText: string | null; updatedAt: Date;
   createdAt: Date; messages: unknown[];
@@ -138,6 +147,7 @@ export function displayLiveReply(rule: {
   const config = parseLiveConfig(rule.commentReplyText);
   return {
     id: rule.id, instagramAccountId: rule.instagramAccountId,
+    title: rule.title || "پاسخ لایو",
     keyword: rule.keyword ?? "", matchMode: rule.keywordMatchMode,
     initialText: rule.replyText ?? "", followupKeyword: config.followupKeyword,
     followupEnabled: Boolean(config.followupKeyword),

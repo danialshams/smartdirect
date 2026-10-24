@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validateSavedResponseOrigin } from "@/lib/automation/saved-response-origin";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 
@@ -14,6 +15,7 @@ type QuickReplyInput = {
   title: string;
   payload: string;
   destinationType: MessageType;
+  savedResponseId?: string | null;
   destinationText: string;
   destinationFormId: string;
   destinationShowcaseId: string;
@@ -31,6 +33,7 @@ type MessageInput = {
   mediaId: string;
   showcaseId: string;
   formId: string;
+  savedResponseId?: string | null;
   quickReplies: QuickReplyInput[];
   updateQuickReplies: boolean;
 };
@@ -74,6 +77,7 @@ function parseQuickReplies(value: unknown, depth: number, payloads: Set<string>)
     const children = destinationType === "FORM" ? parseQuickReplies(node.destinationQuickReplies, depth + 1, payloads) : [];
     return {
       id: clean(node.id), title, payload, destinationType, destinationText,
+      savedResponseId: clean(node.savedResponseId) || null,
       destinationFormId: clean(node.destinationFormId), destinationShowcaseId,
       destinationMediaUrl, destinationMediaId, destinationQuestion, destinationQuickReplies: children,
       isExit: node.isExit === true,
@@ -99,7 +103,9 @@ function parseMessage(value: unknown): MessageInput {
   const updateQuickReplies = message.updateQuickReplies !== false;
   const quickReplies = messageType === "FORM" && updateQuickReplies
     ? parseQuickReplies(message.quickReplies, 0, new Set<string>()) : [];
-  return { id: clean(message.id), messageType, text, mediaUrl, mediaId, showcaseId, formId, quickReplies, updateQuickReplies };
+  return { id: clean(message.id), messageType, text, mediaUrl, mediaId, showcaseId, formId,
+    savedResponseId: message.savedResponseId === undefined ? undefined : clean(message.savedResponseId) || null,
+    quickReplies, updateQuickReplies };
 }
 
 function collectShowcases(replies: QuickReplyInput[], result: Set<string>) {
@@ -123,6 +129,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const raw = await request.json();
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new StoryEditError("اطلاعات ویرایش نامعتبر است.");
     const body = raw as JsonRecord;
+    const title = body.title === undefined ? current.title || "" : clean(body.title);
+    if (title.length > 80) throw new StoryEditError("نام پاسخ حداکثر ۸۰ نویسه است.");
     const expected = clean(body.expectedUpdatedAt);
     if (!expected || !Number.isFinite(Date.parse(expected))) throw new StoryEditError("صفحه را مجدداً باز کنید.", 409);
     if (current.updatedAt.getTime() !== new Date(expected).getTime())
@@ -144,6 +152,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (typeof body.isActive !== "boolean" || typeof body.likeStoryReply !== "boolean")
       throw new StoryEditError("وضعیت تنظیمات استوری نامعتبر است.");
     const message = parseMessage(body.message);
+    let origin: string | null | undefined;
+    try { origin = await validateSavedResponseOrigin(message.savedResponseId, current.instagramAccountId, session.user.id, message.messageType); }
+    catch (error) { throw new StoryEditError(error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست."); }
     const originalMessageId = current.messages[0]?.id;
     if (message.id && message.id !== originalMessageId &&
         !message.id.startsWith("message_") && !message.id.startsWith("local_"))
@@ -199,6 +210,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       const updated = await tx.automation.updateMany({
         where: { id, updatedAt: new Date(expected) },
         data: {
+          title: title || null,
           mediaId, keyword: keywordMatchMode === "CONTAINS_ANY" ? null : keywords.join(","),
           keywordMatchMode, requireFollow,
           followGateText: requireFollow ? followGateText : null,
@@ -213,6 +225,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
       const data = {
         messageType: message.messageType,
+        ...(origin !== undefined ? { savedResponseId: origin } : {}),
         text: message.text || null,
         mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(message.messageType) ? message.mediaUrl || null : null,
         mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(message.messageType) ? message.mediaId || null : null,
@@ -235,6 +248,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             title: reply.title, payload: reply.payload,
             replyText: JSON.stringify({
               type: reply.destinationType, isExit: reply.isExit,
+              savedResponseId: reply.savedResponseId || null,
               text: reply.destinationText, formId: reply.destinationFormId,
               showcaseId: reply.destinationShowcaseId, mediaUrl: reply.destinationMediaUrl,
               mediaId: reply.destinationMediaId, question: reply.destinationQuestion,

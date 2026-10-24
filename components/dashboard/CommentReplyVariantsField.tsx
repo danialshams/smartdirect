@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { MAX_PUBLIC_COMMENT_REPLIES, MIN_PUBLIC_COMMENT_REPLIES } from "@/lib/automation/comment-reply-variants";
+import { MAX_PUBLIC_COMMENT_REPLIES, MIN_PUBLIC_COMMENT_REPLIES, publicCommentReplyKey } from "@/lib/automation/comment-reply-variants";
 
 export default function CommentReplyVariantsField({
   values, onChange, disabled = false,
@@ -18,12 +18,9 @@ export default function CommentReplyVariantsField({
           {new Intl.NumberFormat("fa-IR").format(values.length)} از {new Intl.NumberFormat("fa-IR").format(MAX_PUBLIC_COMMENT_REPLIES)}
         </span>
       </div>
-      <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">
-        حداقل ۳ و حداکثر ۵ پاسخ متفاوت بنویسید. برای هر کامنت، یکی از آن‌ها به‌صورت تصادفی انتخاب می‌شود تا پاسخ‌ها تکراری نباشند؛ رعایت محدودیت‌های متا همچنان ضروری است.
-      </p>
       {values.map((text, index) => (
-        <div key={index} className="rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3">
-          <div className="mb-2 flex items-center justify-between gap-2">
+        <div key={index} className="space-y-2 py-1">
+          <div className="flex items-center justify-between gap-2">
             <label htmlFor={`public-comment-variant-${index}`} className="text-xs font-bold text-[var(--daira-heading)]">
               پاسخ {new Intl.NumberFormat("fa-IR").format(index + 1)}
             </label>
@@ -41,6 +38,9 @@ export default function CommentReplyVariantsField({
             placeholder={`متن پاسخ شماره ${new Intl.NumberFormat("fa-IR").format(index + 1)} را وارد کنید...`}
             className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-white px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none placeholder:text-xs focus:border-[var(--daira-primary)] focus:ring-2 focus:ring-[var(--daira-primary)]/10 disabled:opacity-60"
             style={{ fontSize: "16px", WebkitTextSizeAdjust: "100%" }} />
+          {text.trim() && values.some((other, otherIndex) => otherIndex !== index && other.trim() && publicCommentReplyKey(other) === publicCommentReplyKey(text)) && (
+            <p role="alert" className="text-xs text-[var(--daira-error-text)]">این پاسخ با پاسخ دیگری یکسان است.</p>
+          )}
         </div>
       ))}
       {values.length < MAX_PUBLIC_COMMENT_REPLIES && (

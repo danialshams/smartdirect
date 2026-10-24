@@ -194,6 +194,7 @@ export async function POST(
 
     const nextMessageId = null;
     const destinationType = ["TEXT", "FORM", "SHOWCASE", "IMAGE", "VIDEO", "AUDIO"].includes(body.destinationType) ? body.destinationType : null;
+    const savedResponseId = normalizeString(body.savedResponseId) || null;
     const destinationText = normalizeString(body.destinationText) || null;
     const destinationFormId = normalizeString(body.destinationFormId) || null;
     const destinationShowcaseId = normalizeString(body.destinationShowcaseId) || null;
@@ -352,6 +353,14 @@ export async function POST(
       );
     }
 
+    if (savedResponseId) {
+      const account = await prisma.automation.findUnique({ where: { id }, select: { instagramAccountId: true } });
+      const saved = account ? await prisma.savedAutomationResponse.findFirst({
+        where: { id: savedResponseId, instagramAccountId: account.instagramAccountId, userId: session.user.id },
+        select: { id: true },
+      }) : null;
+      if (!saved) return NextResponse.json({ success: false, error: "پاسخ ذخیره‌شده به این پیج تعلق ندارد." }, { status: 400 });
+    }
     const quickReply = await prisma.quickReply.create({
       data: {
         automationMessageId: messageId,
@@ -361,6 +370,7 @@ export async function POST(
         payload,
 
         replyText: JSON.stringify({
+          savedResponseId,
           type: destinationType,
           isExit,
           text: destinationText,

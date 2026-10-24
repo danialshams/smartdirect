@@ -42,6 +42,7 @@ export type QuickReplyDestinationType = "TEXT" | "FORM" | "SHOWCASE" | "IMAGE" |
 
 export type QuickReplyDraft = {
     id: string;
+    savedResponseId?: string | null;
     isExit?: boolean;
     title: string;
     payload: string;
@@ -58,6 +59,7 @@ export type QuickReplyDraft = {
 
 export type MessageDraft = {
     id: string;
+    savedResponseId?: string | null;
     messageType: MessageType;
     text: string;
     mediaUrl: string;
@@ -190,6 +192,7 @@ function normalizeQuickReplyDraft(rawQuickReply: unknown): QuickReplyDraft | nul
     return {
         id: typeof qr.id === "string" ? qr.id : createLocalId("quick_reply"),
         isExit: storedDestination.isExit === true,
+        savedResponseId: readString("savedResponseId") || null,
         title: typeof qr.title === "string" ? qr.title : "",
         payload: typeof qr.payload === "string" ? qr.payload : createLocalId("payload"),
         nextMessageId: typeof qr.nextMessageId === "string" ? qr.nextMessageId : null,
@@ -244,6 +247,7 @@ export function normalizeMessages(value: unknown): MessageDraft[] {
                         ? item.id
                         : createLocalId("message"),
                 messageType,
+                savedResponseId: typeof item.savedResponseId === "string" ? item.savedResponseId : null,
                 text: typeof item.text === "string" ? item.text : "",
                 mediaUrl:
                     typeof item.mediaUrl === "string"

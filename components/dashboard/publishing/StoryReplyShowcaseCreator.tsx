@@ -29,6 +29,7 @@ export default function StoryReplyShowcaseCreator({ instagramAccountId, onUpload
   const [retryFiles, setRetryFiles] = useState<Record<string, File | null>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [name, setName] = useState("");
   const [created, setCreated] = useState<{ id: string; title: string } | null>(null);
   const saveLockRef = useRef(false);
 
@@ -36,7 +37,7 @@ export default function StoryReplyShowcaseCreator({ instagramAccountId, onUpload
 
   const uploadBusy = Object.values(uploading).some(Boolean);
   const completed = slides.filter((slide) => slide.imageUrl.trim() && slide.title.trim() && slide.description.trim()).length;
-  const ready = Boolean(instagramAccountId) && slides.length > 0 && completed === slides.length && !uploadBusy && !saving;
+  const ready = Boolean(instagramAccountId) && slides.length > 0 && completed === slides.length && !uploadBusy && !saving && Boolean(name.trim());
 
   function patchSlide(id: string, patch: Partial<StoryShowcaseSlide>) {
     setSlides((current) => current.map((slide) => slide.id === id ? { ...slide, ...patch } : slide));
@@ -74,7 +75,7 @@ export default function StoryReplyShowcaseCreator({ instagramAccountId, onUpload
     setError("");
     let createdId: string | null = null;
     try {
-      const title = `ویترین پاسخ فرم - ${new Date().toLocaleDateString("fa-IR")}`;
+      const title = name.trim();
       const response = await fetch("/api/showcases", {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -134,6 +135,11 @@ export default function StoryReplyShowcaseCreator({ instagramAccountId, onUpload
 
   return (
     <div dir="rtl" className="space-y-3 pt-1">
+      <div className="space-y-2">
+        <label htmlFor="nested-showcase-name" className="block text-xs font-bold text-[var(--daira-heading)]">نام ویترین</label>
+        <input id="nested-showcase-name" value={name} maxLength={80} onChange={(event) => setName(event.target.value)} placeholder="مثلاً کفش" className="w-full rounded-xl border border-[var(--daira-input-border)] bg-[var(--daira-surface)] px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)]" style={{fontSize:"16px"}}/>
+        <p className="text-xs text-[var(--daira-text-secondary)]">نامی برای این ویترین انتخاب کن تا بعداً دوباره از آن استفاده کنی.</p>
+      </div>
       <StoryShowcaseSlidesEditor
         slides={slides}
         completed={completed}

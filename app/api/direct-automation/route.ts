@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validateSavedResponseOrigin } from "@/lib/automation/saved-response-origin";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 import { splitAutomationKeywords } from "@/lib/automation/trigger";
 
@@ -12,7 +13,7 @@ const types:Type[] = ["TEXT","IMAGE","VIDEO","AUDIO","SHOWCASE","FORM"];
 const clean=(v:unknown)=>typeof v==="string"?v.trim():"";
 const obj=(v:unknown):Row=>v&&typeof v==="object"&&!Array.isArray(v)?v as Row:{};
 class RuleError extends Error { constructor(message:string,readonly status=400){super(message);} }
-type Reply = {title:string;payload:string;destinationType:Type;destinationText:string;destinationQuestion:string;destinationShowcaseId:string;destinationMediaUrl:string;destinationMediaId:string;destinationFormId:string;destinationQuickReplies:Reply[];isExit:boolean};
+type Reply = {title:string;payload:string;savedResponseId:string|null;destinationType:Type;destinationText:string;destinationQuestion:string;destinationShowcaseId:string;destinationMediaUrl:string;destinationMediaId:string;destinationFormId:string;destinationQuickReplies:Reply[];isExit:boolean};
 function parseReplies(raw:unknown,depth=0,seen=new Set<string>()):Reply[]{
  if(!Array.isArray(raw)||raw.length<2||raw.length>13||depth>3)throw new RuleError("هر سؤال فرم باید بین ۲ تا ۱۳ گزینه و حداکثر چهار سطح داشته باشد.");
  return raw.map(v=>{
@@ -26,7 +27,7 @@ function parseReplies(raw:unknown,depth=0,seen=new Set<string>()):Reply[]{
   if(destinationType==="FORM"&&!destinationQuestion)throw new RuleError("سؤال بعدی را وارد کنید.");
   if(destinationType==="SHOWCASE"&&!destinationShowcaseId)throw new RuleError("ویترین مقصد را انتخاب کنید.");
   if(["IMAGE","VIDEO","AUDIO"].includes(destinationType)&&!destinationMediaUrl&&!destinationMediaId)throw new RuleError("فایل مقصد گزینه را انتخاب کنید.");
-  return {title,payload,destinationType,destinationText,destinationQuestion,destinationShowcaseId,destinationMediaUrl,destinationMediaId,
+  return {title,payload,savedResponseId:clean(o.savedResponseId)||null,destinationType,destinationText,destinationQuestion,destinationShowcaseId,destinationMediaUrl,destinationMediaId,
     destinationFormId:clean(o.destinationFormId),isExit:o.isExit===true,
     destinationQuickReplies:destinationType==="FORM"?parseReplies(o.destinationQuickReplies,depth+1,seen):[]};
  });
@@ -37,6 +38,8 @@ async function save(request:NextRequest,editing:boolean){
   const session=await getServerSession(authOptions);
   if(!session?.user?.id)return NextResponse.json({success:false,error:"احراز هویت انجام نشده است."},{status:401});
   const body=obj(await request.json()),instagramAccountId=clean(body.instagramAccountId),id=clean(body.id);
+  const title=clean(body.title);
+  if (!title||title.length>80) throw new RuleError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه).");
   const words=Array.from(new Set(splitAutomationKeywords(clean(body.keyword))));
   if(!instagramAccountId)throw new RuleError("پیج اینستاگرام را انتخاب کنید.");
   if(!words.length||words.length>10||words.some(w=>w.length>100))throw new RuleError("بین ۱ تا ۱۰ کلمه کلیدی، هرکدام حداکثر ۱۰۰ کاراکتر، وارد کنید.");
@@ -50,6 +53,9 @@ async function save(request:NextRequest,editing:boolean){
   const replies=messageType==="FORM"?parseReplies(raw.quickReplies):[];
   const account=await prisma.instagramAccount.findFirst({where:{id:instagramAccountId,userId:session.user.id,isConnected:true},select:{id:true}});
   if(!account)throw new RuleError("پیج اینستاگرام متصل و متعلق به شما نیست.",403);
+  let savedOrigin: string | null | undefined;
+  try { savedOrigin = await validateSavedResponseOrigin(raw.savedResponseId, instagramAccountId, session.user.id, messageType); }
+  catch (error) { throw new RuleError(error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست."); }
   const expected=clean(body.expectedUpdatedAt);
   if(editing&&(!id||!expected||!Number.isFinite(Date.parse(expected))))throw new RuleError("صفحه ویرایش را دوباره باز کنید.",409);
   const showcaseIds=new Set<string>();
@@ -67,10 +73,10 @@ async function save(request:NextRequest,editing:boolean){
    const names=new Set(words);
    if(peers.some(p=>splitAutomationKeywords(p.keyword||"").some(w=>names.has(w))))throw new RuleError("یکی از کلمات کلیدی قبلاً برای پاسخ دیگری ثبت شده است.",409);
    const automation=current
-    ?await tx.automation.update({where:{id:current.id},data:{keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}})
-    :await tx.automation.create({data:{instagramAccountId,triggerType:"DM",keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}});
+    ?await tx.automation.update({where:{id:current.id},data:{title,keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}})
+    :await tx.automation.create({data:{instagramAccountId,title,triggerType:"DM",keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}});
    const existing=await tx.automationMessage.findMany({where:{automationId:automation.id},orderBy:{order:"asc"},select:{id:true}});
-   const fields={messageType,order:0,text:text||null,
+   const fields={messageType,order:0,text:text||null,...(savedOrigin !== undefined ? { savedResponseId: savedOrigin } : {}),
     mediaUrl:["IMAGE","VIDEO","AUDIO"].includes(messageType)?mediaUrl||null:null,
     mediaId:["IMAGE","VIDEO","AUDIO"].includes(messageType)?mediaId||null:null,
     showcaseId:messageType==="SHOWCASE"?showcaseId:null,
@@ -82,7 +88,7 @@ async function save(request:NextRequest,editing:boolean){
    const retained:string[]=[];
    for(const reply of replies){
     const data={title:reply.title,payload:reply.payload,replyText:JSON.stringify({
-      isExit:reply.isExit,destinationType:reply.destinationType,destinationText:reply.destinationText,
+      isExit:reply.isExit,savedResponseId:reply.savedResponseId,destinationType:reply.destinationType,destinationText:reply.destinationText,
       destinationQuestion:reply.destinationQuestion,destinationShowcaseId:reply.destinationShowcaseId,
       destinationMediaUrl:reply.destinationMediaUrl,destinationMediaId:reply.destinationMediaId,
       destinationFormId:reply.destinationFormId,destinationQuickReplies:reply.destinationQuickReplies})};
