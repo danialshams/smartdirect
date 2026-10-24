@@ -11,7 +11,7 @@ import DirectAutomationSuccess from "./DirectAutomationSuccess";
 import { directAutomationHasChanges, responseFingerprint } from "./automation-response-compare";
 
 type Account = {id:string;igUsername:string;isConnected:boolean};
-type Automation = {id:string;triggerType:string;instagramAccountId:string;keyword:string|null;updatedAt:string;messages:unknown};
+type Automation = {id:string;title?:string|null;triggerType:string;instagramAccountId:string;keyword:string|null;updatedAt:string;messages:unknown};
 function wordsFrom(raw:string){
  return Array.from(new Set(raw.split(/[\n,،;؛]+/).map(x=>x.trim().toLocaleLowerCase("fa-IR")).filter(Boolean)));
 }
