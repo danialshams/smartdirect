@@ -275,13 +275,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           selectedMain.map((m) => byMessage.get(m.id)!.selected), partitions,
         )) {
           if (type === "FORM") {
-            const uses = groups.get(automationId) || [];
-            const originals = mediaFor(uses[0].automation);
-            const complete = selectedMain.length === uses.length &&
-              selectedNested.length === links.length &&
-              [...partitions[0]].sort().join(",") === [...originals].sort().join(",");
-            if (!complete)
-              throw new ApplyError("برای ویرایش هم‌زمان فرم اصلی و شاخه‌های آن، تمام استفاده‌های همین اتوماسیون و همه محتواهایش را انتخاب کن. برای ویرایش جزئی از صفحه همان اتوماسیون استفاده کن.", 409);
+            const selectedScope = selectedMain[0] && byMessage.get(selectedMain[0].id);
+            if (!selectedScope || [...selectedScope.selected].sort().join(",") !==
+              [...partitions[0]].sort().join(","))
+              throw new ApplyError("برای فرم اصلی و شاخه‌های آن محدوده محتوایی یکسان انتخاب کن.", 409);
           }
           mixedGroups.add(automationId);
         }
@@ -370,11 +367,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           throw new ApplyError("تغییر تعداد گزینه‌های فرم فعال باید از ویرایشگر همان فرم انجام شود.", 409);
         // In a combined edit, the nested pass must reconcile this row ONCE
         // against its original version before applying its nested template.
-        const deferred = mixedGroups.has(
-          current.find((item) => item.id === messageId)?.automationId || "",
-        ) ? new Set(nested
-          .filter((item) => item.root.automationMessageId === messageId)
-          .map((item) => item.quickReplyId)) : new Set<string>();
+        const deferred = new Set<string>();
+        for (const link of nested) {
+          const automationId = link.root.automationMessage.automation.id;
+          if (!mixedGroups.has(automationId)) continue;
+          deferred.add(link.quickReplyId);
+          const copiedId = mixedForks.get(automationId)?.replyMap.get(link.quickReplyId);
+          if (copiedId) deferred.add(copiedId);
+        }
         for (const [index, reply] of quickReplies.entries()) {
           const previous = old[index];
           if (previous && deferred.has(previous.id)) continue;
@@ -550,7 +550,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
               throw new ApplyError("اتصال فرم در نسخه جدید ناقص است.", 409);
             const fresh = await tx.quickReply.findUniqueOrThrow({ where: { id: mappedId } });
             const relevant = links.filter((link) => link.quickReplyId === rootId);
-            const forkText = mutate(rootId, fresh.replyText, relevant, true);
+            let baseText = fresh.replyText;
+            if (type === "FORM" && mixedGroups.has(automationId)) {
+              const owner = current.find((msg) => msg.id === relevant[0]?.root.automationMessageId &&
+                byMessage.has(msg.id));
+              if (owner) {
+                const rows = await tx.quickReply.findMany({
+                  where: { automationMessageId: owner.id }, orderBy: { createdAt: "asc" },
+                  select: { id: true },
+                });
+                const index = rows.findIndex((row) => row.id === rootId);
+                if (index < 0 || !quickReplies[index])
+                  throw new ApplyError("گزینه فرم اصلی در نسخه جدید یافت نشد.", 409);
+                try { baseText = reconcileActiveQuickReply(fresh.replyText, encodeReply(quickReplies[index])); }
+                catch (error) { throw new ApplyError(error instanceof Error ? error.message : "ترکیب فرم اصلی و شاخه آن ناموفق بود.", 409); }
+              }
+            }
+            const forkText = mutate(rootId, baseText, relevant, true);
             const newCount = await tx.quickReply.updateMany({
               where: { id: mappedId, updatedAt: fresh.updatedAt }, data: { replyText: forkText },
             });
