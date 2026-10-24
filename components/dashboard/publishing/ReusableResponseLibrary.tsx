@@ -272,7 +272,14 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
           mediaId: draft.mediaId || null, showcaseId: draft.showcaseId || null,
           formId: draft.formId || null, quickReplies: draft.quickReplies || [],
           ...(manualEdit || approved ? { expectedUpdatedAt: original?.updatedAt } : {}),
-          ...(approved ? { selections: approved } : {}),
+          ...(approved ? {
+            selections: approved,
+            expectedUsages: (original?.usages || []).map((usage) => ({
+              messageId: usage.messageId,
+              messageUpdatedAt: usage.messageUpdatedAt,
+              automationUpdatedAt: usage.automationUpdatedAt,
+            })),
+          } : {}),
         }),
       });
       const result = await response.json();
