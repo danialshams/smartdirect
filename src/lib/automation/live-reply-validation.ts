@@ -98,7 +98,7 @@ export function validateLiveReplyInput(input: unknown): ValidatedLiveRule {
     if (type === "SHOWCASE" && !showcaseId)
       throw new LiveReplyValidationError("ویترین پاسخ مرحله دوم را انتخاب کن.");
     message = {
-      id: asString(raw.id), messageType: type, text, mediaUrl, mediaId,
+      id: asString(raw.id), messageType: type, savedResponseId: asString(raw.savedResponseId) || null, text, mediaUrl, mediaId,
       showcaseId, formId, quickReplies: type === "FORM" ? parseOptions(raw.quickReplies, 0, new Set()) : [],
     };
   }
