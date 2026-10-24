@@ -1,7 +1,10 @@
 "use client";
 import { Button, Input } from "@/components/dashboard/DashboardUI";
 import CommentReplyVariantsField from "../CommentReplyVariantsField";
-import { validatePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
+import ResponseModeSwitcher from "../ResponseModeSwitcher";
+import CompleteAutomationPicker, { type CompleteAutomation } from "../CompleteAutomationPicker";
+import { normalizeMessages } from "../automation-form-utils";
+import { validatePublicCommentReplies, readPublicCommentReplies } from "@/lib/automation/comment-reply-variants";
 
 import { uploadFileWithProgress } from "./shared-upload";
 import { ArrowLeft, ArrowRight, CalendarClock, Camera, CheckCircle2, CircleSlash2, Clapperboard, Clock3, ChevronDown, ImagePlus, Images, Loader2, Pencil, RotateCcw, Send, Trash2, X } from "lucide-react";
@@ -382,6 +385,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [reelCoverUploading, setReelCoverUploading] = useState(false);
   useStorageUploadLease([...uploadedMedia.map((item) => item.publicUrl), ...(reelOptions.coverUrl ? [reelOptions.coverUrl] : [])]);
   const [automationEnabled, setAutomationEnabled] = useState(false);
+  const [replyMode,setReplyMode]=useState<"new"|"existing">("new");
+  const [previousRules,setPreviousRules]=useState<CompleteAutomation[]>([]);
+  const [previousLoading,setPreviousLoading]=useState(false);
+  const [previousId,setPreviousId]=useState("");
+  const [copyStoryWords,setCopyStoryWords]=useState("");
   const [keywords, setKeywords] = useState("");
   const [messages, setMessages] = useState<MessageDraft[]>([createEmptyMessage()]);
   const [showcases, setShowcases] = useState<Showcase[]>([]);
@@ -647,6 +655,16 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   }, [jobs, router]);
 
   useEffect(() => { if (selectedAccountId && automationEnabled && type === "STORY") void loadResources(selectedAccountId); }, [selectedAccountId, automationEnabled, type]);
+  useEffect(()=>{
+    if (!automationEnabled||!selectedAccountId){setPreviousRules([]);return;}
+    const controller=new AbortController();setPreviousLoading(true);
+    void fetch("/api/automations?instagramAccountId="+encodeURIComponent(selectedAccountId),{credentials:"include",cache:"no-store",signal:controller.signal})
+      .then(async r=>{const v=await r.json();if(!r.ok||!v.success)throw Error(v.error||"دریافت پاسخ‌های قبلی ناموفق بود.");return v;})
+      .then(v=>{if(!controller.signal.aborted)setPreviousRules((Array.isArray(v.data)?v.data:[]).filter((x:CompleteAutomation)=>x.triggerType===(type==="STORY"?"STORY_REPLY_KEYWORD":"COMMENT_KEYWORD")));})
+      .catch(()=>{if(!controller.signal.aborted)setPreviousRules([]);})
+      .finally(()=>{if(!controller.signal.aborted)setPreviousLoading(false);});
+    return()=>controller.abort();
+  },[automationEnabled,selectedAccountId,type]);
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
   function clearLocalMedia() { for (const c of uploadAbortControllersRef.current.values()) c.abort(); uploadAbortControllersRef.current.clear(); activeUploadItemIdsRef.current.clear(); uploadQueueRef.current = []; setUploadRows([]); setMedia((current) => { revokeLocalMedia(current); return []; }); }
@@ -994,14 +1012,26 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   function removeQuickReply(messageIndex: number, quickReplyId: string) { setMessages((current) => current.map((message, index) => index === messageIndex ? { ...message, quickReplies: message.quickReplies.filter((qr) => qr.id !== quickReplyId) } : message)); }
 
+  function cloneMessage(source:MessageDraft):MessageDraft{
+    const cloneReplies=(xs:MessageDraft["quickReplies"]):MessageDraft["quickReplies"]=>
+      xs.map(x=>({...x,id:"local_"+crypto.randomUUID(),payload:"copy_"+crypto.randomUUID(),savedResponseId:null,destinationQuickReplies:cloneReplies(x.destinationQuickReplies)}));
+    return {...source,id:"local_"+crypto.randomUUID(),savedResponseId:null,quickReplies:cloneReplies(source.quickReplies)};
+  }
   async function createAutomation(): Promise<string> {
     if (!selectedAccountId) throw new Error("اکانت فعال Instagram پیدا نشد.");
+    const source=replyMode==="existing"?previousRules.find(x=>x.id===previousId):null;
+    if(replyMode==="existing"&&!source)throw new Error("یک پاسخ قبلی انتخاب کن.");
 
     // Publishing automations use the compact stage-6 setup for POST/REEL/CAROUSEL.
     if (type !== "STORY") {
-      const normalizedKeywords = automationKeywords.map((keyword) => keyword.trim()).filter(Boolean);
+      const normalizedKeywords=source?(source.keyword||"").split(/[,،;؛\n]+/).map(x=>x.trim()).filter(Boolean):automationKeywords.map(x=>x.trim()).filter(Boolean);
+      const replyVariants=source?readPublicCommentReplies(source.commentReplyText):publishingCommentReplies;
+      const copiedText=source&&source.sendDm!==false?(normalizeMessages(source.messages)[0]?.text||""):"";
+      const replyText=source?copiedText:directMessageText;
+      const follower=source?Boolean(source.requireFollow):requireFollow;
+      const followCopy=source?(source.followGateText||""):followGateText;
       if (!normalizedKeywords.length) throw new Error("حداقل یک کلمه کلیدی اضافه کن.");
-      if (requireFollow && !followGateText.trim()) throw new Error("متن درخواست فالو را وارد کن.");
+      if (follower && !followCopy.trim()) throw new Error("متن درخواست فالو را وارد کن.");
 
       const automationResponse = await fetch("/api/automations", {
         method: "POST",
@@ -1011,10 +1041,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           triggerType: "COMMENT_KEYWORD",
           keyword: normalizedKeywords.join(","),
           mediaId: `pending:${crypto.randomUUID()}`,
-          commentReplyVariants: validatePublicCommentReplies(publishingCommentReplies),
-          sendDm: Boolean(directMessageText.trim()),
-          requireFollow,
-          followGateText: requireFollow ? followGateText.trim() : null,
+          commentReplyVariants: validatePublicCommentReplies(replyVariants),
+          sendDm: Boolean(replyText.trim()),
+          requireFollow: follower,
+          followGateText: follower ? followCopy.trim() : null,
           isActive: true,
         }),
       });
@@ -1024,12 +1054,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       }
 
       const automationId = automationResult.data.id as string;
-      if (directMessageText.trim()) {
+      if (replyText.trim()) {
         try {
           const messageResponse = await fetch(`/api/automations/${automationId}/messages`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messageType: "TEXT", text: directMessageText.trim(), order: 0 }),
+            body: JSON.stringify({ messageType: "TEXT", text: replyText.trim(), savedResponseId:null, order: 0 }),
           });
           const messageResult = await messageResponse.json();
           if (!messageResponse.ok || !messageResult.success) {
@@ -1042,21 +1072,24 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       }
       return automationId;
     }
-    if (!keywords.trim()) throw new Error(type === "STORY" ? "حداقل یک کلمه برای Reply استوری وارد کنید." : "حداقل یک کلمه برای کامنت وارد کنید.");
-    validateMessages(messages);
-    if (requireFollow && !followGateText.trim()) throw new Error("متن Follow Gate را وارد کنید.");
+    const storyKeywords=source?copyStoryWords.trim():keywords.trim();
+    const effectiveMessages=source?normalizeMessages(source.messages).map(cloneMessage):messages;
+    if (!storyKeywords) throw new Error("حداقل یک کلمه کلیدی ریپلای استوری وارد کن.");
+    validateMessages(effectiveMessages);
+    const follow=source?Boolean(source.requireFollow):requireFollow;
+    const followText=source?(source.followGateText||""):followGateText;
+    if (follow&&!followText.trim())throw new Error("متن درخواست فالو را وارد کن.");
 
-    const pendingMediaId = `pending:${crypto.randomUUID()}`;
     const automationPayload = {
       instagramAccountId: selectedAccountId,
       triggerType,
-      keyword: keywords,
-      mediaId: pendingMediaId,
+      keyword: storyKeywords,
+      mediaId: null,
       commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReplyText.trim() || null : null,
       sendDm: true,
-      likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? likeStoryReply : false,
-      requireFollow: (triggerType === "COMMENT_KEYWORD" || triggerType === "STORY_REPLY_KEYWORD") ? requireFollow : false,
-      followGateText: requireFollow ? followGateText.trim() : null,
+      likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? (source?Boolean(source.likeStoryReply):likeStoryReply) : false,
+      requireFollow: follow,
+      followGateText: follow ? followText.trim() : null,
       isActive: true,
     };
 
@@ -1067,14 +1100,14 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
     try {
       const serverMessageIds = new Map<string, string>();
-      for (let index = 0; index < messages.length; index += 1) {
-        const message = messages[index];
-        const response = await fetch(`/api/automations/${automationId}/messages`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageType: message.messageType, text: message.text.trim() || null, mediaUrl: message.mediaUrl.trim() || null, mediaId: message.mediaId.trim() || null, showcaseId: message.showcaseId || null, formId: message.formId || null, order: index }) });
+      for (let index = 0; index < effectiveMessages.length; index += 1) {
+        const message = effectiveMessages[index];
+        const response = await fetch(`/api/automations/${automationId}/messages`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageType: message.messageType, text: message.text.trim() || null, mediaUrl: message.mediaUrl.trim() || null, mediaId: message.mediaId.trim() || null, showcaseId: message.showcaseId || null, formId: message.formId || null, savedResponseId:null, order: index }) });
         const result = await response.json();
         if (!response.ok || !result.success) throw new Error(result.error || `ساخت پیام ${index + 1} ناموفق بود.`);
         serverMessageIds.set(message.id, result.data.id);
       }
-      for (const message of messages) {
+      for (const message of effectiveMessages) {
         const serverMessageId = serverMessageIds.get(message.id);
         if (!serverMessageId) throw new Error("شناسه پیام Automation پیدا نشد.");
         for (const quickReply of message.quickReplies) {
@@ -1270,9 +1303,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const canUpload = type === "CAROUSEL" ? uploadedMedia.length + media.length < 10 : uploadedMedia.length + media.length < 1;
   const hasDraft = uploadedMedia.length > 0 || media.length > 0 || Boolean(caption.trim()) || automationEnabled || (type === "REEL" && JSON.stringify(reelOptions) !== JSON.stringify(DEFAULT_REEL_OPTIONS));
   const canSubmitMedia = uploadedMedia.length >= (type === "CAROUSEL" ? 2 : 1) && !uploading && !media.length;
-  const canSubmitAutomation = !automationEnabled || (type === "STORY"
-    ? storyResponseSaved && !storyResponseEditing && !storyResponseDirty
-    : automationKeywords.length > 0 && publishingCommentReplies.length >= 3 && publishingCommentReplies.length <= 5 && publishingCommentReplies.every((text) => text.trim().length > 0 && text.trim().length <= 2000) && new Set(publishingCommentReplies.map((text) => text.trim())).size === publishingCommentReplies.length);
+  const canSubmitAutomation = !automationEnabled || (replyMode==="existing"
+    ? Boolean(previousId && (type!=="STORY" || copyStoryWords.trim()))
+    : type === "STORY"
+      ? storyResponseSaved && !storyResponseEditing && !storyResponseDirty
+      : automationKeywords.length > 0 && publishingCommentReplies.length >= 3 && publishingCommentReplies.length <= 5 && publishingCommentReplies.every(text=>text.trim().length>0&&text.trim().length<=2000) && new Set(publishingCommentReplies.map(text=>text.trim())).size===publishingCommentReplies.length);
   function changeContentType(nextType: PublishType) {
     if (nextType === type || uploading || reelCoverUploading || publishing) return;
     if (hasDraft && !window.confirm("با تغییر نوع محتوا، رسانه‌های آپلودشده و تنظیمات فعلی حذف می‌شوند. ادامه می‌دهید؟")) return;
@@ -1530,7 +1565,22 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <input type="checkbox" role="switch" checked={automationEnabled} disabled={publishing} onChange={e=>handleAutomationChoice(e.target.checked)} className="daira-form-switch shrink-0 -scale-x-100"/>
                 </label>
               </div>
-              {automationEnabled && (type==="STORY" ? <div className="mx-auto w-full max-w-2xl">
+              {automationEnabled && <div className="mx-auto w-full max-w-2xl space-y-3">
+                <ResponseModeSwitcher value={replyMode} existingAvailable={previousRules.length>0}
+                  loading={previousLoading} disabled={publishing} onChange={v=>{setReplyMode(v);setPreviousId("");setCopyStoryWords("");}}/>
+                {replyMode==="existing" && <div className="space-y-3">
+                  <CompleteAutomationPicker items={previousRules} selected={previousRules.find(x=>x.id===previousId)||null}
+                    onSelect={item=>setPreviousId(item.id)} onChange={()=>setPreviousId("")}
+                    kind={type==="STORY"?"STORY_REPLY_KEYWORD":"COMMENT_KEYWORD"} showcases={showcases} forms={forms} disabled={publishing}/>
+                  {type==="STORY" && <div className="rounded-xl border border-[var(--daira-outline)] bg-[var(--daira-glass-raised)] p-3">
+                    <label className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">کلمات کلیدی این پاسخ جدید</label>
+                    <input value={copyStoryWords} onChange={e=>setCopyStoryWords(e.target.value)} placeholder="مثلاً سفارش، موجودی" className="w-full rounded-lg border border-[var(--daira-outline)] bg-white p-3 text-base outline-none"/>
+                    <p className="mt-2 text-xs text-[var(--daira-text-secondary)]">متن پاسخ قبلی کپی می‌شود و قابل‌ویرایش نیست. برای جلوگیری از تداخل، کلمات کلیدی جدید وارد کن.</p>
+                  </div>}
+                  <p className="text-xs text-[var(--daira-text-secondary)]">انتخاب پاسخ قبلی، هنگام انتشار یک نسخه مستقل می‌سازد.</p>
+                </div>}
+              </div>}
+              {automationEnabled && replyMode==="new" && (type==="STORY" ? <div className="mx-auto w-full max-w-2xl">
                 
 
                 <section className="space-y-5 rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-sm sm:p-6">
@@ -1684,10 +1734,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   {storyResponseSaved && !storyResponseEditing && (
                     <div className="flex items-center justify-center gap-2 border-t border-[var(--daira-border)] pt-4">
                       <Button type="button" onClick={handleEditStoryResponse} className="min-h-10 flex-1 rounded-xl border border-[var(--daira-brand-300)] bg-[var(--daira-outline-hover-bg)] px-4 text-sm font-bold text-[var(--daira-primary)] hover:bg-[var(--daira-outline-active-bg)]">
-                        <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Pencil size={15} /><span dir="rtl">ویرایش</span></span>
+                        <span dir="rtl" className="inline-flex items-center justify-center gap-1.5"><span>ویرایش</span><Pencil size={15} /></span>
                       </Button>
                       <Button type="button" variant="destructive" onClick={() => void handleDeleteStoryResponse()} className="min-h-10 flex-1 !rounded-xl !border !border-[var(--daira-error-border)] !bg-[var(--daira-error-background)] !px-4 !text-sm !font-bold !text-[var(--daira-error-text)] hover:!bg-[var(--daira-error-background)]">
-                        <span dir="ltr" className="inline-flex items-center justify-center gap-1.5"><Trash2 size={15} /><span dir="rtl">حذف</span></span>
+                        <span dir="rtl" className="inline-flex items-center justify-center gap-1.5"><span>حذف</span><Trash2 size={15} /></span>
                       </Button>
                     </div>
                   )}
@@ -1710,7 +1760,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   </div>
 
                   <div className="border-t border-[var(--daira-border)] pt-5">
-                    <CommentReplyVariantsField values={publishingCommentReplies} onChange={setPublishingCommentReplies} disabled={publishing} />
+                    <p className="daira-guide-glass mb-3 rounded-xl border p-3 text-xs leading-6 text-[var(--daira-text)]">برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم، حداقل ۳ پاسخ متفاوت بنویس. حداکثر ۵ پاسخ ثبت می‌شود و یکی به‌صورت تصادفی انتخاب خواهد شد.</p>
+                      <CommentReplyVariantsField values={publishingCommentReplies} onChange={setPublishingCommentReplies} disabled={publishing} />
                   </div>
 
                   <div className="border-t border-[var(--daira-border)] pt-5">
