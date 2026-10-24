@@ -37,6 +37,8 @@ async function save(request:NextRequest,editing:boolean){
   const session=await getServerSession(authOptions);
   if(!session?.user?.id)return NextResponse.json({success:false,error:"احراز هویت انجام نشده است."},{status:401});
   const body=obj(await request.json()),instagramAccountId=clean(body.instagramAccountId),id=clean(body.id);
+  const title=clean(body.title);
+  if (!title||title.length>80) throw new RuleError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه).");
   const words=Array.from(new Set(splitAutomationKeywords(clean(body.keyword))));
   if(!instagramAccountId)throw new RuleError("پیج اینستاگرام را انتخاب کنید.");
   if(!words.length||words.length>10||words.some(w=>w.length>100))throw new RuleError("بین ۱ تا ۱۰ کلمه کلیدی، هرکدام حداکثر ۱۰۰ کاراکتر، وارد کنید.");
@@ -67,8 +69,8 @@ async function save(request:NextRequest,editing:boolean){
    const names=new Set(words);
    if(peers.some(p=>splitAutomationKeywords(p.keyword||"").some(w=>names.has(w))))throw new RuleError("یکی از کلمات کلیدی قبلاً برای پاسخ دیگری ثبت شده است.",409);
    const automation=current
-    ?await tx.automation.update({where:{id:current.id},data:{keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}})
-    :await tx.automation.create({data:{instagramAccountId,triggerType:"DM",keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}});
+    ?await tx.automation.update({where:{id:current.id},data:{title,keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}})
+    :await tx.automation.create({data:{instagramAccountId,title,triggerType:"DM",keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}});
    const existing=await tx.automationMessage.findMany({where:{automationId:automation.id},orderBy:{order:"asc"},select:{id:true}});
    const fields={messageType,order:0,text:text||null,
     mediaUrl:["IMAGE","VIDEO","AUDIO"].includes(messageType)?mediaUrl||null:null,
