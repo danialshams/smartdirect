@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { collectSavedResponseMedia } from "@/lib/automation/saved-response-media";
 import { getStorageProviderForObject } from "@/lib/storage/provider";
 import { checkedUsagePlan, assertCoherentMixedScope, type ResponseUsageSelection } from "@/lib/automation/saved-response-scope";
-import { nestedReplyUses, editQuickReplyDestination } from "@/lib/automation/nested-response-usage";
+import { nestedReplyUses, editQuickReplyDestination, reconcileActiveQuickReply } from "@/lib/automation/nested-response-usage";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
@@ -346,17 +346,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         if (result.count !== 1) throw new ApplyError("یک پیام هم‌زمان تغییر کرده است.", 409);
         if (type !== "FORM") return;
         const old = await tx.quickReply.findMany({ where: { automationMessageId: messageId }, orderBy: { createdAt: "asc" } });
-        if (old.some((reply) => reply.nextMessageId))
-          throw new ApplyError("این فرم به مرحله‌های جداگانه متصل است؛ برای حفظ مسیر گفتگو آن را از صفحه اتوماسیون ویرایش کن.", 409);
-        if (old.length > quickReplies.length)
-          throw new ApplyError("حذف گزینه‌های فرم مشترک باید از صفحه همان اتوماسیون انجام شود تا تاریخچه گفتگو حفظ شود.", 409);
+        // Preserve existing Instagram button payloads and all nextMessageId
+        // links. A template can revise copy/content but not reshape buttons
+        // that may already exist in users' conversations.
+        if (old.length > 0 && old.length !== quickReplies.length)
+          throw new ApplyError("تغییر تعداد گزینه‌های فرم فعال باید از ویرایشگر همان فرم انجام شود.", 409);
         for (const [index, reply] of quickReplies.entries()) {
           const previous = old[index];
-          if (previous) await tx.quickReply.update({
-            where: { id: previous.id },
-            data: { title: reply.title, replyText: encodeReply(reply) },
-          });
-          else await tx.quickReply.create({
+          if (previous) {
+            let merged: string;
+            try {
+              merged = reconcileActiveQuickReply(previous.replyText, encodeReply(reply));
+            } catch (error) {
+              throw new ApplyError(error instanceof Error ? error.message : "گزینه فرم قابل ویرایش نیست.", 409);
+            }
+            const result = await tx.quickReply.updateMany({
+              where: { id: previous.id, updatedAt: previous.updatedAt },
+              data: { title: reply.title, replyText: merged },
+            });
+            if (result.count !== 1) throw new ApplyError("گزینه فرم هم‌زمان تغییر کرده است.", 409);
+          } else await tx.quickReply.create({
             data: { automationMessageId: messageId, title: reply.title, payload: reply.payload, replyText: encodeReply(reply) },
           });
         }
