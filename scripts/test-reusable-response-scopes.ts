@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { partitionResponseMediaScope } from "../src/lib/automation/response-media-scope";
 import { checkedUsagePlan, checkedUsageMedia, assertCoherentMixedScope } from "../src/lib/automation/saved-response-scope";
-import { nestedReplyUses, editQuickReplyDestination, parseQuickReplyJson } from "../src/lib/automation/nested-response-usage";
+import { nestedReplyUses, editQuickReplyDestination, parseQuickReplyJson, reconcileActiveQuickReply } from "../src/lib/automation/nested-response-usage";
 import { displayReusableAssetTitle } from "../src/lib/automation/reusable-titles";
 import { validatePublicCommentReplies } from "../src/lib/automation/comment-reply-variants";
 
@@ -88,6 +88,26 @@ assert.equal(assertCoherentMixedScope([["post1"]], []), false);
 assert.throws(() => assertCoherentMixedScope([["post1"]], [["post2"]]));
 assert.throws(() => assertCoherentMixedScope([["a","b"], ["a","b"]], [["a"]]));
 
+const activeForm = JSON.stringify({
+  type: "FORM", question: "قدیمی", nextMessageId: "original-next",
+  quickReplies: [{ id: "old-button", payload: "old-payload", title: "بلی",
+    destinationType: "TEXT", destinationText: "سلام", nextMessageId: "old-stage" }],
+});
+const editedForm = reconcileActiveQuickReply(activeForm, JSON.stringify({
+  type: "FORM", question: "سؤال جدید", nextMessageId: "unwanted-change",
+  quickReplies: [{ id: "new-button", payload: "new-payload", title: "تأیید",
+    destinationType: "TEXT", destinationText: "درود", nextMessageId: null }],
+}));
+const merged = JSON.parse(editedForm);
+assert.equal(merged.question, "سؤال جدید");
+assert.equal(merged.nextMessageId, "original-next");
+assert.equal(merged.quickReplies[0].payload, "old-payload");
+assert.equal(merged.quickReplies[0].id, "old-button");
+assert.equal(merged.quickReplies[0].nextMessageId, "old-stage");
+assert.equal(merged.quickReplies[0].destinationText, "درود");
+assert.throws(() => reconcileActiveQuickReply(activeForm, JSON.stringify({
+  type: "FORM", quickReplies: [],
+})));
 const checked = checkedUsagePlan([
   { messageId: "m1", mediaIds: ["post-1", "post-2", "post-3"] },
   { messageId: "m2", mediaIds: [] },
