@@ -452,6 +452,7 @@ export default function PersistentMenuManager({
                     accountId={account.id}
                     automationId={editor.automationId}
                     modernResponseFlow
+                    hideReusableLibrary
                     hideVideo
                     canSave={draftReady && !saving}
                     dirty={canSaveChanges}

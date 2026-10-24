@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Eye, X } from "lucide-react";
 import ResponseModeSwitcher from "../ResponseModeSwitcher";
 import ResponseTemplateDetails from "../ResponseTemplateDetails";
@@ -47,9 +47,7 @@ function usageEditUrl(usage: NonNullable<Saved["usages"]>[number]): string {
   return "/dashboard/direct-automation/" + encodeURIComponent(usage.automationId);
 }
 function displayName(saved: Saved, prefix: string) {
-  const title = saved.title.trim()
-    .replace(/^(?:فرم|ویترین|پاسخ خودکار کامنت|پاسخ خودکار استوری|پاسخ خودکار دایرکت)\s*[-—–]?\s*/u, "");
-  return (saved.messageType === "FORM" ? "فرم" : saved.messageType === "SHOWCASE" ? "ویترین" : prefix) + " " + title;
+  return prefix + " - نوع پاسخ: " + typeNames[saved.messageType];
 }
 function cloneTree(replies: QuickReplyDraft[]): QuickReplyDraft[] {
   return replies.map((item) => ({
@@ -96,7 +94,6 @@ function ResponsePreview({ value }: { value: Saved }) {
 
 export default function ReusableResponseLibrary({ instagramAccountId, message, onUpdate, allowedTypes, prefix = "پاسخ", initialName = "", onNameChange, onRegisterSave, disabled = false }: Props) {
   const [mode, setMode] = useState<"new" | "existing">("new");
-  const nameFieldId = useId();
   const [items, setItems] = useState<Saved[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -222,9 +219,8 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
     // Primary form saves mark the parent disabled while assembling the payload.
     if (saving || (disabled && !override)) return false;
     const draft = override || message;
-    const title = name.trim();
+    const title = (editingId ? name.trim() : "") || (prefix + " - " + typeNames[draft.messageType] + " - " + (draft.text || draft.quickReplies?.[0]?.title || "پاسخ آماده")).slice(0,80);
     if (!editingId && reusedOriginal && responseFingerprint(draft) === reusedOriginal.fingerprint && title === items.find((item) => item.id === reusedOriginal.id)?.title) return true;
-    if (!title || title.length > 80) { setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه)."); return false; }
     if (!allowedTypes.includes(draft.messageType)) { setError("این نوع پاسخ در این بخش پشتیبانی نمی‌شود."); return false; }
     const original = items.find((item) => item.id === editingId);
     if (!override && !approved && original?.usages?.length) {
@@ -307,15 +303,8 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
 
   return <section dir="rtl" className="daira-response-library mb-5 space-y-4" aria-label="کتابخانه پاسخ‌ها">
     <ResponseModeSwitcher value={mode} onChange={(next) => { setMode(next); setError(""); }} disabled={disabled || saving} />
-    {mode === "new" ? <div className="daira-response-library__panel space-y-4 rounded-2xl border p-4 sm:p-5">
-      <label htmlFor={nameFieldId} className="block text-xs font-bold text-[var(--daira-heading)]">{message.messageType === "FORM" ? "نام فرم" : message.messageType === "SHOWCASE" ? "نام ویترین" : "نام پاسخ"}</label>
-      <input id={nameFieldId} type="text" value={name} maxLength={80} onChange={(event) => { setName(event.target.value); onNameChange?.(event.target.value); }}
-        placeholder="مثلاً کفش" disabled={disabled || saving}
-        className="daira-response-library__input block min-h-12 w-full rounded-xl border px-3.5 py-3 text-base text-[var(--daira-heading)] outline-none" style={{fontSize:"16px"}}/>
-      <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">{message.messageType === "FORM" ? "نامی برای فرم" : message.messageType === "SHOWCASE" ? "نامی برای ویترین" : "نامی برای پاسخ"} انتخاب کن تا بعداً بتوانی دوباره از آن استفاده کنی.</p>
-      <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">این پاسخ با دکمه اصلی ذخیره یا ایجاد پاسخ، به‌صورت خودکار در پاسخ‌های قبلی ثبت می‌شود.</p>
-      {editingId && <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">ویرایش کتابخانه فقط قالب ذخیره‌شده را تغییر می‌دهد؛ تنظیمات پاسخ‌های فعال به صورت خودکار بازنویسی نمی‌شوند.</p>}
-      {editingId && <button type="button" onClick={() => {setEditingId("");setName("");}} className="ml-2 text-xs text-[var(--daira-text-secondary)]">انصراف از ویرایش پاسخ ذخیره‌شده</button>}
+    {mode === "new" ? <div className="daira-response-library__panel rounded-2xl border p-4 text-xs leading-6 text-[var(--daira-text-secondary)]">
+      نوع پاسخ و محتوای آن به‌صورت خودکار ذخیره می‌شوند.
     </div> : <div className="daira-response-library__panel space-y-3 rounded-2xl border p-4 sm:p-5">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های ذخیره‌شده</h3>
@@ -337,7 +326,7 @@ export default function ReusableResponseLibrary({ instagramAccountId, message, o
                   onClick={() => setPreview((current) => current?.id === item.id ? null : item)}
                   aria-label={(expanded ? "بستن پیش‌نمایش " : "مشاهده ") + item.title}
                   className="daira-response-library__eye flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
-                  <Eye size={18} aria-hidden="true"/>
+                  {expanded ? <X size={18} aria-hidden="true"/> : <Eye size={18} aria-hidden="true"/>}
                 </button>
               </div>
               <div id={"response-detail-" + item.id} aria-hidden={!expanded} inert={!expanded}
