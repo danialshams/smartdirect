@@ -23,16 +23,24 @@ export function nestedReplyUses(raw: string | null): NestedReplyUse[] {
       : typeof node.destinationType === "string" ? node.destinationType : "";
     const id = typeof node.savedResponseId === "string" ? node.savedResponseId.trim() : "";
     if (id && kinds.has(type)) out.push({ savedResponseId: id, path, label, messageType: type });
-    // Executor traverses quickReplies first. Treat duplicated compatibility arrays
-    // as one logical branch instead of double-counting a saved reply.
-    const key = Array.isArray(node.quickReplies) ? "quickReplies" : "destinationQuickReplies";
-    const children = node[key];
-    if (!Array.isArray(children)) return;
-    children.forEach((child, index) => {
-      if (record(child)) visit(child, [...path, key, index],
-        typeof child.title === "string" && child.title.trim() ? child.title.trim() : label,
-        depth + 1);
-    });
+    // The runtime searches quickReplies before destinationQuickReplies, but
+    // older records may have extra distinct branches in the second array.
+    const primary = Array.isArray(node.quickReplies) ? node.quickReplies : [];
+    const secondary = Array.isArray(node.destinationQuickReplies) ? node.destinationQuickReplies : [];
+    const firstPayloads = new Set(primary.filter(record)
+      .map((child) => typeof child.payload === "string" ? child.payload : "")
+      .filter(Boolean));
+    for (const [key, children] of [["quickReplies", primary],
+      ["destinationQuickReplies", secondary]] as const) {
+      children.forEach((child, index) => {
+        if (!record(child)) return;
+        if (key === "destinationQuickReplies" && typeof child.payload === "string" &&
+            firstPayloads.has(child.payload)) return;
+        visit(child, [...path, key, index],
+          typeof child.title === "string" && child.title.trim() ? child.title.trim() : label,
+          depth + 1);
+      });
+    }
   };
   visit(root, [], "گزینه پاسخ", 0);
   return out;
