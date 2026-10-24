@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { nestedReplyUses } from "@/lib/automation/nested-response-usage";
 import { getStorageProviderForObject } from "@/lib/storage/provider";
 import { collectSavedResponseMedia } from "@/lib/automation/saved-response-media";
 
@@ -42,7 +43,106 @@ export async function GET(request: NextRequest) {
       where: { userId: session.user.id, instagramAccountId },
       orderBy: { updatedAt: "desc" },
     });
-    return NextResponse.json({ success: true, data });
+    // Embed owned asset previews without changing the reusable template record.
+    const showcaseIds = data.map((item) => item.showcaseId).filter((id): id is string => Boolean(id));
+    const formIds = data.map((item) => item.formId).filter((id): id is string => Boolean(id));
+    const [showcases, forms] = await Promise.all([
+      showcaseIds.length ? prisma.showcase.findMany({
+        where: { id: { in: showcaseIds }, userId: session.user.id, instagramAccountId },
+        include: { items: { where: { isActive: true }, orderBy: { order: "asc" } } },
+      }) : Promise.resolve([]),
+      formIds.length ? prisma.form.findMany({
+        where: { id: { in: formIds }, userId: session.user.id, instagramAccountId },
+        include: { fields: { orderBy: { order: "asc" } } },
+      }) : Promise.resolve([]),
+    ]);
+    // Only explicit provenance counts as reuse; equal-looking text is not a link.
+    const sourceIds = data.map((item) => item.id);
+    const appliedMessages = sourceIds.length ? await prisma.automationMessage.findMany({
+      where: { savedResponseId: { in: sourceIds }, automation: { instagramAccountId } },
+      select: {
+        id: true, savedResponseId: true, updatedAt: true,
+        automation: { select: {
+          id: true, title: true, triggerType: true, mediaId: true, mediaIds: true, updatedAt: true,
+          persistentMenuItems: { select: { id: true, title: true } },
+          iceBreakers: { select: { id: true, question: true } },
+        } },
+      },
+    }) : [];
+    const usageMap = new Map<string, Array<{
+      messageId: string; automationId: string; automationTitle: string | null;
+      messageUpdatedAt: string; automationUpdatedAt: string;
+      quickReplyId?: string; nodePath?: Array<string | number>; branchTitle?: string;
+      triggerType: string; mediaIds: string[]; menuTitles: string[]; icebreakerQuestions: string[];
+    }>>();
+    for (const linked of appliedMessages) {
+      if (!linked.savedResponseId) continue;
+      const a = linked.automation;
+      const mediaIds = Array.from(new Set([
+        ...(a.mediaId ? [a.mediaId] : []),
+        ...(a.mediaIds || "").split(",").map((id) => id.trim()).filter(Boolean),
+      ]));
+      const previous = usageMap.get(linked.savedResponseId) || [];
+      previous.push({
+        messageId: linked.id, automationId: a.id, automationTitle: a.title,
+        messageUpdatedAt: linked.updatedAt.toISOString(), automationUpdatedAt: a.updatedAt.toISOString(),
+        triggerType: a.triggerType, mediaIds,
+        menuTitles: a.persistentMenuItems.map((item) => item.title),
+        icebreakerQuestions: a.iceBreakers.map((item) => item.question),
+      });
+      usageMap.set(linked.savedResponseId, previous);
+    }
+    // Find explicit links in legacy QuickReply JSON (including deeper branches).
+    // Malformed historical JSON is skipped, never guessed from matching text.
+    if (sourceIds.length) {
+      const roots = await prisma.quickReply.findMany({
+        where: {
+          replyText: { contains: "savedResponseId" },
+          automationMessage: { automation: { instagramAccountId } },
+        },
+        select: {
+          id: true, title: true, replyText: true, updatedAt: true,
+          automationMessage: { select: {
+            automation: { select: {
+              id: true, title: true, triggerType: true, mediaId: true, mediaIds: true, updatedAt: true,
+              persistentMenuItems: { select: { title: true } },
+              iceBreakers: { select: { question: true } },
+            } },
+          } },
+        },
+      });
+      const known = new Set(sourceIds);
+      for (const root of roots) {
+        const a = root.automationMessage.automation;
+        const mediaIds = Array.from(new Set([
+          ...(a.mediaId ? [a.mediaId] : []),
+          ...(a.mediaIds || "").split(",").map((id) => id.trim()).filter(Boolean),
+        ]));
+        for (const use of nestedReplyUses(root.replyText)) {
+          if (!known.has(use.savedResponseId)) continue;
+          const previous = usageMap.get(use.savedResponseId) || [];
+          previous.push({
+            messageId: "qr:" + root.id + ":" + (use.path.length ? use.path.join(".") : "root"),
+            quickReplyId: root.id, nodePath: use.path, branchTitle: use.label,
+            automationId: a.id, automationTitle: a.title,
+            messageUpdatedAt: root.updatedAt.toISOString(),
+            automationUpdatedAt: a.updatedAt.toISOString(),
+            triggerType: a.triggerType, mediaIds,
+            menuTitles: a.persistentMenuItems.map((entry) => entry.title),
+            icebreakerQuestions: a.iceBreakers.map((entry) => entry.question),
+          });
+          usageMap.set(use.savedResponseId, previous);
+        }
+      }
+    }
+    const showcaseMap = new Map(showcases.map((item) => [item.id, item]));
+    const formMap = new Map(forms.map((item) => [item.id, item]));
+    return NextResponse.json({ success: true, data: data.map((item) => ({
+      ...item,
+      usages: usageMap.get(item.id) || [],
+      showcase: item.showcaseId ? showcaseMap.get(item.showcaseId) || null : null,
+      form: item.formId ? formMap.get(item.formId) || null : null,
+    })) });
   } catch (error) {
     console.error("GET /api/saved-responses error:", error);
     return NextResponse.json({ success: false, error: "دریافت پاسخ‌های ذخیره‌شده ناموفق بود." }, { status: 500 });

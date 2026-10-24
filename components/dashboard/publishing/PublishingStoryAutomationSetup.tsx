@@ -9,6 +9,8 @@ import { requestStorageCleanupByPublicUrl, useStorageUploadLease } from "./useSt
 import { createEmptyQuickReply } from "../automation-form-utils";
 import StoryReplyFormEditor from "./StoryReplyFormEditor";
 import StoryShowcaseSlidesEditor from "./StoryShowcaseSlidesEditor";
+import ReusableResponseLibrary from "./ReusableResponseLibrary";
+import { displayReusableAssetTitle } from "@/lib/automation/reusable-titles";
 import { uploadFileWithProgress } from "./shared-upload";
 
 export type PublishingStoryAutomationSetupHandle = { saveAndContinue: () => Promise<boolean>; deleteAndReset: () => Promise<boolean>; prepareExternalSave: () => Promise<MessageDraft | null> };
@@ -22,6 +24,8 @@ type Props = {
   instagramAccountId: string;
   onUpdate: (patch: Partial<MessageDraft>) => void;
   onSavedChange?: (saved: boolean) => void;
+  onResponseNameChange?: (name: string) => void;
+  initialResponseName?: string;
   keywordValid: boolean;
   onContinue: (message?: MessageDraft) => void | Promise<unknown>;
   disabled?: boolean;
@@ -95,11 +99,13 @@ function createSlide(): ShowcaseSlide {
   return { id: `slide_${crypto.randomUUID()}`, title: "", description: "", imageUrl: "", previewUrl: "", price: "", originalPrice: "", linkUrl: "", buttonText: "", isActive: true };
 }
 
-const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, keywordValid, onContinue, disabled, hideVideo = true, hideForm = false, textOnly = false, storyCreateMode = false, storyEditMode = false, onDraftChange, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
+const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetupHandle, Props>(function PublishingStoryAutomationSetup({ message, showcases, forms, formTemplates = [], loadingResources, instagramAccountId, onUpdate, onSavedChange, onResponseNameChange, initialResponseName, keywordValid, onContinue, disabled, hideVideo = true, hideForm = false, textOnly = false, storyCreateMode = false, storyEditMode = false, onDraftChange, extraSettings, finalActions, responseTypeTitle = "نوع پاسخ خودکار", responseTypeDescription = "نوع پاسخی را که می‌خواهید برای این محتوا ارسال شود انتخاب کنید.", textPlaceholder = "متنی که به‌عنوان پاسخ پیام شروع گفتگو برای کاربر ارسال می‌شود...", showFinalSave = false, finalSaveLabel = "ساخت پیام شروع گفتگو", usePublishingSaveLabel = false, finalSaveLoadingLabel = "در حال ساخت پیام شروع گفتگو...", finalSaveDisabled = false }: Props, ref) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [retryFile, setRetryFile] = useState<File | null>(null);
   const [error, setError] = useState("");
+  const [assetName, setAssetName] = useState("");
+  const saveNamedResponseRef = useRef<((draft: MessageDraft) => Promise<boolean>) | null>(null);
   const [slides, setSlides] = useState<ShowcaseSlide[]>([createSlide()]);
   useStorageUploadLease([message.mediaUrl, ...slides.map((slide) => slide.imageUrl)]);
   const [savingShowcase, setSavingShowcase] = useState(false);
@@ -261,6 +267,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       return savedShowcaseCopyRef.current.id;
     if (saveShowcaseLockRef.current || savingShowcase || slideUploadInProgress) return null;
     saveShowcaseLockRef.current = true;
+    if (!assetName.trim() && !message.showcaseId) { setError("برای ویترین یک نام انتخاب کن."); saveShowcaseLockRef.current = false; return null; }
     if (!hasValidSlide) {
       setError("برای ساخت ویترین، حداقل یک اسلاید کامل با تصویر، تیتر و توضیحات بسازید.");
       saveShowcaseLockRef.current = false;
@@ -281,9 +288,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           instagramAccountId,
-          title: existingShowcaseEdited && selectedShowcase
-            ? `کپی ویرایش‌شدهٔ ${selectedShowcase.title}`
-            : `ویترین ${new Date().toLocaleDateString("fa-IR")}`,
+          title: assetName.trim() || (existingShowcaseEdited && selectedShowcase ? selectedShowcase.title : "ویترین بدون نام"),
           description: existingShowcaseEdited ? selectedShowcase?.description || null : null,
           isActive: true,
         }),
@@ -352,10 +357,12 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
         if (!showcaseId) return null;
         prepared = { ...prepared, showcaseId };
       }
+      if (saveNamedResponseRef.current && !await saveNamedResponseRef.current(prepared)) return null;
       return prepared;
     },
     async saveAndContinue() {
       if (!keywordValid || uploading || slideUploadInProgress || formUploadsInFlight > 0 || savingShowcase || formSaving) return false;
+      let preparedMessage: MessageDraft = { ...message, text: message.text.trim() };
       if (responseType === "TEXT") {
         if (!message.text.trim()) return false;
         onUpdate({ text: message.text.trim() });
@@ -363,8 +370,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       if (["IMAGE", "VIDEO", "AUDIO"].includes(responseType) && !message.mediaUrl && !(storyEditMode && message.mediaId)) return false;
       if (responseType === "SHOWCASE" &&
           (!message.showcaseId || (storyCreateMode && showcaseSource === "existing" && existingShowcaseEdited))) {
-        const ok = await saveShowcase();
-        if (!ok) return false;
+        const newShowcaseId = await saveShowcase();
+        if (!newShowcaseId) return false;
+        preparedMessage = { ...preparedMessage, showcaseId: newShowcaseId };
       }
       if (responseType === "FORM") {
         if (!isValidStoryForm(message.text, message.quickReplies)) return false;
@@ -375,8 +383,9 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
       }
       unsavedDraftsRef.current = {};
       unsavedSlidesRef.current = {};
+      if (saveNamedResponseRef.current && !await saveNamedResponseRef.current(preparedMessage)) return false;
       onSavedChange?.(true);
-      onContinue();
+      onContinue(preparedMessage);
       return true;
     },
     async deleteAndReset() {
@@ -420,6 +429,17 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
 
   return (
     <div className={["space-y-5", disabled ? "pointer-events-none opacity-60" : ""].join(" ")}>
+      <ReusableResponseLibrary
+        instagramAccountId={instagramAccountId}
+        message={message}
+        onUpdate={onUpdate}
+        allowedTypes={textOnly ? ["TEXT"] : (["TEXT", "IMAGE", "AUDIO", "SHOWCASE", ...(hideVideo ? [] : ["VIDEO"]), ...(hideForm ? [] : ["FORM"])] as ResponseType[])}
+        prefix="پاسخ خودکار"
+        initialName={initialResponseName}
+        onNameChange={(value) => { setAssetName(value); onResponseNameChange?.(value); }}
+        onRegisterSave={(handler) => { saveNamedResponseRef.current = handler; }}
+        disabled={Boolean(disabled)}
+      />
       {!textOnly && (
         <>
           <div>
@@ -560,7 +580,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                   }}
                   className="w-full min-w-0 rounded-xl border border-[var(--daira-outline)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
                   <option value="">یک ویترین انتخاب کن</option>
-                  {showcases.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                  {showcases.map((item) => <option key={item.id} value={item.id}>{displayReusableAssetTitle("SHOWCASE", item.title)}</option>)}
                 </select>
                 {!loadingResources && showcases.length === 0 && <p className="text-xs text-[var(--daira-text-secondary)]">هنوز ویترینی نداری.</p>}
                 {existingShowcaseEdited && <p className="text-xs text-[var(--daira-text-secondary)]">تغییرات در یک نسخهٔ جدید ذخیره می‌شوند.</p>}
@@ -736,7 +756,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                       }}
                       className="w-full min-w-0 rounded-xl border border-[var(--daira-outline)] bg-white px-3 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)]">
                       <option value="">یک فرم قبلی را انتخاب کن</option>
-                      {formTemplates.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                      {formTemplates.map((item) => <option key={item.id} value={item.id}>{displayReusableAssetTitle("FORM", item.title)}</option>)}
                     </select>
                     {!loadingResources && formTemplates.length === 0 && <p className="text-xs text-[var(--daira-text-secondary)]">هنوز فرم ذخیره‌شده‌ای نداری.</p>}
                     {selectedFormTemplateId && <p className="text-xs text-[var(--daira-text-secondary)]">فرم قبلی بدون تغییر می‌ماند.</p>}
@@ -800,6 +820,7 @@ const PublishingStoryAutomationSetup = forwardRef<PublishingStoryAutomationSetup
                 messageToSave = { ...messageToSave, showcaseId };
               }
 
+              if (saveNamedResponseRef.current && !await saveNamedResponseRef.current(messageToSave)) return;
               onUpdate(messageToSave);
               await onContinue(messageToSave);
             } finally {
@@ -894,7 +915,7 @@ function FormOptionEditor({ reply, index, showcases, forms, loadingResources, hi
     <input value={reply.title} maxLength={20} onChange={(e)=>onChange({title:e.target.value})} placeholder="نام گزینه را وارد کن..." className="w-full rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{fontSize:"16px",WebkitTextSizeAdjust:"100%"}} />
     <div><label className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">کاربر هدایت شود به:</label><Select value={destinationType ?? ""} onChange={(e)=>selectDestination((e.target.value||null) as QuickReplyDraft["destinationType"])} className="!w-full [&_.MuiSelect-select]:!py-3.5 [&_.MuiSelect-select]:!text-base [&_.MuiNativeSelect-icon]:!top-1/2 [&_.MuiNativeSelect-icon]:!-translate-y-1/2"><option value="">انتخاب مقصد</option><option value="TEXT">متن</option><option value="AUDIO">وویس</option><option value="IMAGE">عکس</option>{!hideVideo && <option value="VIDEO">فیلم</option>}<option value="SHOWCASE">ویترین</option>{!hideForm && <option value="FORM">فرم جدید</option>}</Select></div>
     {destinationType==="TEXT" && <textarea value={reply.destinationText} onChange={(e)=>onChange({destinationText:e.target.value})} rows={4} maxLength={2000} placeholder="متن پاسخ این گزینه..." className="w-full resize-y rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 !text-base leading-7 text-[var(--daira-heading)] outline-none focus:border-[var(--daira-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{fontSize:"16px",lineHeight:1.75,WebkitTextSizeAdjust:"100%"}} />}
-    {destinationType==="SHOWCASE" && <Select value={reply.destinationShowcaseId} disabled={loadingResources} onChange={(e)=>onChange({destinationShowcaseId:e.target.value})} className="w-full rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 text-sm outline-none"><option value="">{loadingResources?"در حال دریافت ویترین‌ها...":"ویترین را انتخاب کن"}</option>{showcases.map((s)=><option key={s.id} value={s.id}>{s.title}</option>)}</Select>}
+    {destinationType==="SHOWCASE" && <Select value={reply.destinationShowcaseId} disabled={loadingResources} onChange={(e)=>onChange({destinationShowcaseId:e.target.value})} className="w-full rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-3.5 py-3 text-sm outline-none"><option value="">{loadingResources?"در حال دریافت ویترین‌ها...":"ویترین را انتخاب کن"}</option>{showcases.map((s)=><option key={s.id} value={s.id}>{displayReusableAssetTitle("SHOWCASE", s.title)}</option>)}</Select>}
     {destinationType==="FORM" && !hideForm && <FormBranchEditor title="فرم مقصد" question={reply.destinationQuestion} replies={reply.destinationQuickReplies} showcases={showcases} forms={forms} loadingResources={loadingResources} onChange={(patch)=>onChange({...(patch.question!==undefined?{destinationQuestion:patch.question}:{}),...(patch.replies!==undefined?{destinationQuickReplies:patch.replies}:{})})} onUploadMedia={onUploadMedia} level={1} hideVideo={hideVideo} hideForm={hideForm} />}
     {FORM_MEDIA_TYPES.includes(destinationType as typeof FORM_MEDIA_TYPES[number]) && (
       <>

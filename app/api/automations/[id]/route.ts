@@ -129,11 +129,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (conflict) {
         return NextResponse.json({ success: false, error: "یکی از محتواهای انتخابی از قبل به پاسخ خودکار دیگری متصل است" }, { status: 409 });
       }
+      const previousIds = Array.from(new Set([
+        ...(existingAutomation.mediaId ? [existingAutomation.mediaId] : []),
+        ...(existingAutomation.mediaIds || "").split(",").map((value) => value.trim()).filter(Boolean),
+      ]));
+      const allIds = trigger === "COMMENT_KEYWORD"
+        ? Array.from(new Set([...previousIds, ...targetIds]))
+        : targetIds;
+      if (allIds.length > 50) return NextResponse.json({ success: false, error: "حداکثر پنجاه محتوا مجاز است." }, { status: 400 });
       const automation = await prisma.automation.update({
         where: { id },
         data: {
-          mediaId: trigger === "STORY_REPLY_KEYWORD" ? targetIds[0] : (targetIds.length === 1 ? targetIds[0] : null),
-          mediaIds: trigger === "COMMENT_KEYWORD" ? targetIds.join(",") : null,
+          mediaId: trigger === "STORY_REPLY_KEYWORD" ? targetIds[0] : (allIds.length === 1 ? allIds[0] : null),
+          mediaIds: trigger === "COMMENT_KEYWORD" ? allIds.join(",") : null,
           // Reusing a saved response is a new activity and should update its list position/date.
           updatedAt: new Date(),
         },
@@ -144,7 +152,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ success: true, data: automation });
     }
 
-    const { triggerType, keyword, mediaId, likeComment, commentReplyText, commentReplyVariants, sendDm, likeIncomingDm, likeStoryReply, replyText, requireFollow, followGateText, followGateButtonText, isActive } = body;
+    const { title, triggerType, keyword, mediaId, likeComment, commentReplyText, commentReplyVariants, sendDm, likeIncomingDm, likeStoryReply, replyText, requireFollow, followGateText, followGateButtonText, isActive } = body;
     const nextTriggerType: TriggerType = triggerType !== undefined ? triggerType : existingAutomation.triggerType;
     if (!isValidTriggerType(nextTriggerType)) return NextResponse.json({ success: false, error: "نوع Trigger نامعتبر است" }, { status: 400 });
 
@@ -201,7 +209,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       catch (error) { return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "پاسخ‌های کامنت معتبر نیستند." }, { status: 400 }); }
     }
 
+    if (title !== undefined && (typeof title !== "string" || title.trim().length > 80)) return NextResponse.json({ success: false, error: "نام پاسخ حداکثر ۸۰ نویسه است." }, { status: 400 });
     const updateData: Record<string, unknown> = {
+      ...(title !== undefined ? { title: title.trim() || null } : {}),
       ...(triggerType !== undefined ? { triggerType: nextTriggerType } : {}),
       ...(triggerType !== undefined || keyword !== undefined ? { keyword: nextKeyword } : {}),
       ...(mediaId !== undefined ? { mediaId: nextMediaId } : {}),

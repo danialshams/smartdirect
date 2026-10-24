@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 
     const {
       instagramAccountId,
+      title,
       triggerType = "COMMENT_KEYWORD",
       keyword,
       keywordMatchMode = "EXACT",
@@ -170,9 +171,12 @@ export async function POST(request: NextRequest) {
       catch (error) { return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "پاسخ‌های کامنت معتبر نیستند." }, { status: 400 }); }
     }
 
+    if (title !== undefined && (typeof title !== "string" || title.trim().length > 80)) return NextResponse.json({ success: false, error: "نام پاسخ حداکثر ۸۰ نویسه است." }, { status: 400 });
+
     const automation = await prisma.automation.create({
       data: {
         instagramAccountId,
+        title: typeof title === "string" ? title.trim() || null : null,
         triggerType,
         keyword: normalizedKeyword,
         keywordMatchMode: normalizedKeywordMatchMode,

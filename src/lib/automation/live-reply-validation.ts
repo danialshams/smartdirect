@@ -10,7 +10,7 @@ export class LiveReplyValidationError extends Error {
 }
 
 export type ValidatedLiveRule = {
-  keyword: string; matchMode: "EXACT" | "CONTAINS_ANY"; initialText: string;
+  keyword: string; matchMode: "EXACT" | "CONTAINS_ANY"; initialText: string; title: string;
   followupKeyword: string; message: MessageDraft | null;
   requireFollow: boolean; followGateText: string; followGateButtonText: string;
 };
@@ -41,6 +41,7 @@ function parseOption(raw: unknown, level: number, seen: Set<string>): QuickReply
   const children = destinationType === "FORM" ? parseOptions(data.destinationQuickReplies, level + 1, seen) : [];
   return {
     id: asString(data.id), isExit: data.isExit === true, title, payload, destinationType,
+    savedResponseId: asString(data.savedResponseId) || null,
     nextMessageId: null, destinationText, destinationFormId: asString(data.destinationFormId),
     destinationShowcaseId, destinationMediaUrl, destinationMediaId, destinationQuestion,
     destinationQuickReplies: children,
@@ -57,6 +58,8 @@ export function validateLiveReplyInput(input: unknown): ValidatedLiveRule {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new LiveReplyValidationError("درخواست نامعتبر است.");
   const data = input as Record<string, unknown>;
   const matchMode = data.matchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT";
+  const title = asString(data.title) || "پاسخ لایو";
+  if (title.length > 80) throw new LiveReplyValidationError("نام پاسخ حداکثر ۸۰ نویسه است.");
   // An empty keyword is a catch-all ONLY for the live comment mode.
   // Old CONTAINS_ANY rules with keywords remain substring matches.
   const keyword = [...new Set(splitAutomationKeywords(asString(data.keyword)))].join(",");
@@ -96,11 +99,11 @@ export function validateLiveReplyInput(input: unknown): ValidatedLiveRule {
     if (type === "SHOWCASE" && !showcaseId)
       throw new LiveReplyValidationError("ویترین پاسخ مرحله دوم را انتخاب کن.");
     message = {
-      id: asString(raw.id), messageType: type, text, mediaUrl, mediaId,
+      id: asString(raw.id), messageType: type, savedResponseId: asString(raw.savedResponseId) || null, text, mediaUrl, mediaId,
       showcaseId, formId, quickReplies: type === "FORM" ? parseOptions(raw.quickReplies, 0, new Set()) : [],
     };
   }
-  return { keyword, matchMode, initialText, followupKeyword: hasFollowup ? followupKeyword : "",
+  return { title, keyword, matchMode, initialText, followupKeyword: hasFollowup ? followupKeyword : "",
     message, requireFollow, followGateText: requireFollow ? followGateText : "",
     followGateButtonText: requireFollow ? followGateButtonText : "" };
 }
@@ -111,6 +114,7 @@ export function serializeLiveQuickReply(item: QuickReplyDraft) {
     payload: item.payload,
     replyText: JSON.stringify({
       type: item.destinationType, isExit: item.isExit === true, text: item.destinationText,
+      savedResponseId: item.savedResponseId || null,
       formId: item.destinationFormId, showcaseId: item.destinationShowcaseId,
       mediaUrl: item.destinationMediaUrl, mediaId: item.destinationMediaId,
       question: item.destinationQuestion, destinationQuestion: item.destinationQuestion,

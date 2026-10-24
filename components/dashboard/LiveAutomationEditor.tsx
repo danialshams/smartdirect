@@ -7,26 +7,28 @@ import { dairaPalette } from "../../lib/design-system/palette";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle } from "./publishing/PublishingStoryAutomationSetup";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
+import ReusableResponseLibrary from "./publishing/ReusableResponseLibrary";
 
 type Account = { id: string; igUsername: string; isConnected: boolean };
 type Rule = {
-  id: string; instagramAccountId: string; keyword: string; matchMode: "EXACT" | "CONTAINS_ANY";
+  id: string; instagramAccountId: string; title?: string; keyword: string; matchMode: "EXACT" | "CONTAINS_ANY";
   initialText: string; followupEnabled: boolean; followupKeyword: string;
   requireFollow: boolean; followGateText: string; followGateButtonText: string; updatedAt: string; messages: unknown[];
 };
 type Draft = {
-  keyword: string; matchMode: "EXACT" | "CONTAINS_ANY"; initialText: string;
+  responseName: string; keyword: string; matchMode: "EXACT" | "CONTAINS_ANY"; initialText: string;
   followupEnabled: boolean; followupKeyword: string; requireFollow: boolean;
   followGateText: string; followGateButtonText: string; message: MessageDraft;
 };
 const emptyDraft = (): Draft => ({
-  keyword: "", matchMode: "EXACT", initialText: "", followupEnabled: false,
+  responseName: "", keyword: "", matchMode: "EXACT", initialText: "", followupEnabled: false,
   followupKeyword: "ارسال کن", requireFollow: false,
   followGateText: "برای دریافت پاسخ ابتدا پیج را فالو کن.",
   followGateButtonText: "بررسی فالو", message: createEmptyMessage(),
 });
 function snapshot(draft: Draft) {
   return JSON.stringify({
+    responseName: draft.responseName.trim(),
     keyword: draft.matchMode === "CONTAINS_ANY" && !draft.keyword.trim() ? "" : draft.keyword.split(/[,،;؛\n]+/).map(s => s.trim()).filter(Boolean).join(","),
     matchMode: draft.matchMode, initialText: draft.initialText,
     followupEnabled: draft.followupEnabled,
@@ -57,6 +59,7 @@ function Guide({ number, title, hint }: { number: number; title: string; hint?: 
 export default function LiveAutomationEditor({ id }: { id?: string }) {
   const router = useRouter();
   const responseEditorRef = useRef<PublishingStoryAutomationSetupHandle>(null);
+  const introSaveRef = useRef<((draft: MessageDraft) => Promise<boolean>) | null>(null);
   const [account, setAccount] = useState<Account | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [keywordDraft, setKeywordDraft] = useState("");
@@ -95,7 +98,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
           : accounts.find(a => a.isConnected);
         if (!connected) throw new Error("ابتدا یک پیج اینستاگرام متصل کن.");
         const nextDraft: Draft = rule ? {
-          keyword: rule.keyword.replace(/,/g, "، "), matchMode: rule.matchMode,
+          responseName: rule.title || "", keyword: rule.keyword.replace(/,/g, "، "), matchMode: rule.matchMode,
           initialText: rule.initialText, followupEnabled: rule.followupEnabled,
           followupKeyword: rule.followupKeyword || "ارسال کن",
           requireFollow: rule.requireFollow, followGateText: rule.followGateText || "برای دریافت پاسخ ابتدا پیج را فالو کن.",
@@ -132,7 +135,8 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   const keywords = useMemo(() => draft.keyword.split(/[,،;؛\n]+/).map(s => s.trim()).filter(Boolean), [draft.keyword]);
   const anyComment = draft.matchMode === "CONTAINS_ANY" && !draft.keyword.trim();
   const legacySubstring = draft.matchMode === "CONTAINS_ANY" && Boolean(draft.keyword.trim());
-  const basicValid = (anyComment || (keywords.length > 0 && keywords.length <= 10)) && draft.initialText.trim().length > 0 &&
+  const basicValid = Boolean(draft.responseName.trim()) && draft.responseName.trim().length <= 80 &&
+    (anyComment || (keywords.length > 0 && keywords.length <= 10)) && draft.initialText.trim().length > 0 &&
     draft.initialText.trim().length <= 1000 && (!draft.requireFollow ||
     (Boolean(draft.followGateText.trim()) && Boolean(draft.followGateButtonText.trim()) && draft.followGateButtonText.trim().length <= 20)) &&
     (!draft.followupEnabled || Boolean(draft.followupKeyword.trim()));
@@ -163,8 +167,13 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
         return;
       }
     }
+    if (introSaveRef.current && !await introSaveRef.current({ ...createEmptyMessage(), text: draft.initialText.trim() })) {
+      setSaving(false);
+      return;
+    }
     const payload = {
       instagramAccountId: account.id,
+      title: draft.responseName.trim(),
       keyword: draft.keyword, matchMode: draft.matchMode, initialText: draft.initialText,
       followupEnabled: draft.followupEnabled, followupKeyword: draft.followupKeyword,
       requireFollow: draft.requireFollow, followGateText: draft.followGateText,
@@ -244,6 +253,16 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
       </section>
 
       <section>
+        {account && <ReusableResponseLibrary
+          instagramAccountId={account.id}
+          message={{ ...createEmptyMessage(), text: draft.initialText }}
+          onUpdate={(value) => patch({ initialText: value.text ?? "" })}
+          initialName={draft.responseName}
+          onNameChange={(value) => patch({responseName: value})}
+          onRegisterSave={(handler) => { introSaveRef.current = handler; }}
+          allowedTypes={["TEXT"]}
+          prefix="پاسخ خودکار لایو"
+        />}
         <Guide number={2} title="متن پاسخ در دایرکت کاربر" hint={anyComment ? "با ارسال هر کامنت متنی در لایو، این پاسخ در دایرکت کاربر ارسال می‌شود." : "پس از ارسال کلمه کلیدی مشخص در لایو، این پاسخ در دایرکت کاربر ارسال می‌شود."} />
         <div className="space-y-2 rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
           <label htmlFor="live-intro" className="block text-xs font-semibold text-[var(--daira-input-label)]">متن پاسخ در دایرکت کاربر</label>

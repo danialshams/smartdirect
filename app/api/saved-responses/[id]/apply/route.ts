@@ -1,0 +1,716 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { collectSavedResponseMedia } from "@/lib/automation/saved-response-media";
+import { getStorageProviderForObject } from "@/lib/storage/provider";
+import { checkedUsagePlan, assertCoherentMixedScope, type ResponseUsageSelection } from "@/lib/automation/saved-response-scope";
+import { nestedReplyUses, editQuickReplyDestination, reconcileActiveQuickReply, preserveUncheckedNestedReply } from "@/lib/automation/nested-response-usage";
+import { invalidateAutomationCache } from "@/lib/cache/instagram";
+
+export const dynamic = "force-dynamic";
+type JsonRecord = Record<string, unknown>;
+const string = (v: unknown) => typeof v === "string" ? v.trim() : "";
+const messageTypes = ["TEXT", "IMAGE", "VIDEO", "AUDIO", "SHOWCASE", "FORM"] as const;
+type Type = (typeof messageTypes)[number];
+class ApplyError extends Error { constructor(message: string, readonly status = 400) { super(message); } }
+type Reply = { title: string; payload: string; destinationType: Type; destinationText: string;
+  destinationShowcaseId: string; destinationFormId: string; destinationMediaUrl: string;
+  destinationMediaId: string; destinationQuestion: string; destinationQuickReplies: Reply[];
+  savedResponseId: string | null; isExit: boolean };
+
+function parseReplies(raw: unknown, depth = 0, seen = new Set<string>()): Reply[] {
+  if (!Array.isArray(raw) || raw.length > 13 || depth > 3) throw new ApplyError("ساختار فرم معتبر نیست.");
+  return raw.map((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) throw new ApplyError("یکی از پاسخ‌های فرم معتبر نیست.");
+    const o = item as JsonRecord;
+    const destinationType = string(o.destinationType) as Type;
+    const title = string(o.title), payload = string(o.payload);
+    if (!title || title.length > 20 || !payload || seen.has(payload) || !messageTypes.includes(destinationType))
+      throw new ApplyError("عنوان، مقصد یا شناسه یکی از پاسخ‌های فرم معتبر نیست.");
+    seen.add(payload);
+    const destinationText = string(o.destinationText);
+    const destinationQuestion = string(o.destinationQuestion);
+    const destinationShowcaseId = string(o.destinationShowcaseId);
+    const destinationFormId = string(o.destinationFormId);
+    const destinationMediaUrl = string(o.destinationMediaUrl);
+    const destinationMediaId = string(o.destinationMediaId);
+    if (destinationType === "TEXT" && !destinationText) throw new ApplyError("متن گزینه فرم را وارد کن.");
+    if (destinationType === "FORM" && !destinationQuestion) throw new ApplyError("سؤال بعدی فرم ناقص است.");
+    if (destinationType === "SHOWCASE" && !destinationShowcaseId) throw new ApplyError("ویترین گزینه فرم مشخص نیست.");
+    if (["IMAGE", "VIDEO", "AUDIO"].includes(destinationType) && !destinationMediaUrl && !destinationMediaId)
+      throw new ApplyError("فایل گزینه فرم مشخص نیست.");
+    return {
+      title, payload, destinationType, destinationText, destinationQuestion,
+      destinationShowcaseId, destinationFormId, destinationMediaUrl, destinationMediaId,
+      savedResponseId: string(o.savedResponseId) || null, isExit: o.isExit === true,
+      destinationQuickReplies: destinationType === "FORM" ? parseReplies(o.destinationQuickReplies, depth + 1, seen) : [],
+    };
+  });
+}
+
+function encodeReply(reply: Reply) {
+  return JSON.stringify({
+    type: reply.destinationType, destinationType: reply.destinationType,
+    isExit: reply.isExit, text: reply.destinationText, destinationText: reply.destinationText,
+    question: reply.destinationQuestion, destinationQuestion: reply.destinationQuestion,
+    showcaseId: reply.destinationShowcaseId, destinationShowcaseId: reply.destinationShowcaseId,
+    formId: reply.destinationFormId, destinationFormId: reply.destinationFormId,
+    mediaUrl: reply.destinationMediaUrl, destinationMediaUrl: reply.destinationMediaUrl,
+    mediaId: reply.destinationMediaId, destinationMediaId: reply.destinationMediaId,
+    savedResponseId: reply.savedResponseId, quickReplies: reply.destinationQuickReplies,
+    destinationQuickReplies: reply.destinationQuickReplies,
+  });
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return NextResponse.json({ success: false, error: "احراز هویت انجام نشده است." }, { status: 401 });
+    const { id } = await params;
+    const raw: unknown = await request.json();
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new ApplyError("درخواست معتبر نیست.");
+    const body = raw as JsonRecord;
+    const expected = new Date(string(body.expectedUpdatedAt));
+    if (!Number.isFinite(expected.getTime())) throw new ApplyError("نسخه پاسخ مشخص نیست.", 409);
+    const title = string(body.title);
+    const type = string(body.messageType) as Type;
+    if (!title || title.length > 80 || !messageTypes.includes(type)) throw new ApplyError("نام یا نوع پاسخ نامعتبر است.");
+    const text = string(body.text) || null;
+    const mediaUrl = string(body.mediaUrl) || null;
+    const mediaId = string(body.mediaId) || null;
+    const showcaseId = string(body.showcaseId) || null;
+    const formId = string(body.formId) || null;
+    const quickReplies = type === "FORM" ? parseReplies(body.quickReplies) : [];
+    if ((type === "TEXT" || type === "FORM") && (!text || text.length > 2000))
+      throw new ApplyError("متن پاسخ باید بین ۱ تا ۲۰۰۰ نویسه باشد.");
+    if (type === "FORM" && (quickReplies.length < 2 || quickReplies.length > 13))
+      throw new ApplyError("فرم حداقل دو گزینه لازم دارد.");
+    if (["IMAGE", "VIDEO", "AUDIO"].includes(type) && !mediaUrl && !mediaId)
+      throw new ApplyError("فایل پاسخ انتخاب نشده است.");
+    if (type === "SHOWCASE" && !showcaseId) throw new ApplyError("ویترین را انتخاب کن.");
+
+    const selectionsRaw = body.selections;
+    if (!Array.isArray(selectionsRaw) || selectionsRaw.length > 100 || !selectionsRaw.length)
+      throw new ApplyError("حداقل یک محل استفاده را انتخاب کن.");
+    const selections: ResponseUsageSelection[] = selectionsRaw.map((x) => {
+      if (!x || typeof x !== "object" || Array.isArray(x)) throw new ApplyError("انتخاب محل استفاده نامعتبر است.");
+      const v = x as JsonRecord;
+      if (typeof v.messageId !== "string" || !v.messageId.trim() || !Array.isArray(v.mediaIds) ||
+        v.mediaIds.some((m: unknown) => typeof m !== "string"))
+        throw new ApplyError("شناسه یا محتوای انتخاب‌شده معتبر نیست.");
+      if (!Number.isFinite(Date.parse(string(v.expectedMessageUpdatedAt))) ||
+        !Number.isFinite(Date.parse(string(v.expectedAutomationUpdatedAt))))
+        throw new ApplyError("نسخه محل استفاده مشخص نیست. دوباره بارگذاری کن.", 409);
+      const quickReplyId = string(v.quickReplyId);
+      const nodePath = v.nodePath;
+      if (quickReplyId && (!Array.isArray(nodePath) || nodePath.length > 16 ||
+        nodePath.some((part: unknown, i: number) => i % 2 === 0
+          ? part !== "quickReplies" && part !== "destinationQuickReplies"
+          : typeof part !== "number" || !Number.isSafeInteger(part) || part < 0)))
+        throw new ApplyError("مسیر گزینه داخلی فرم معتبر نیست.");
+      return { messageId: v.messageId.trim(),
+        ...(quickReplyId ? { quickReplyId, nodePath: nodePath as Array<string | number> } : {}),
+        mediaIds: v.mediaIds,
+        expectedMessageUpdatedAt: string(v.expectedMessageUpdatedAt),
+        expectedAutomationUpdatedAt: string(v.expectedAutomationUpdatedAt) };
+    });
+
+    const expectedUsagesRaw = body.expectedUsages;
+    if (!Array.isArray(expectedUsagesRaw) || expectedUsagesRaw.length > 100)
+      throw new ApplyError("اطلاعات محل‌های استفاده ناقص است. فهرست را تازه‌سازی کن.", 409);
+    const expectedUsages = expectedUsagesRaw.map((raw) => {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new ApplyError("اطلاعات محل استفاده معتبر نیست.", 409);
+      const item = raw as JsonRecord;
+      if (!string(item.messageId) || !Number.isFinite(Date.parse(string(item.messageUpdatedAt))) ||
+        !Number.isFinite(Date.parse(string(item.automationUpdatedAt))))
+        throw new ApplyError("نسخه محل استفاده معتبر نیست.", 409);
+      return {
+        messageId: string(item.messageId), messageUpdatedAt: string(item.messageUpdatedAt),
+        automationUpdatedAt: string(item.automationUpdatedAt),
+      };
+    });
+    if (new Set(expectedUsages.map((item) => item.messageId)).size !== expectedUsages.length)
+      throw new ApplyError("اطلاعات محل‌های استفاده تکراری است.", 409);
+    const saved = await prisma.savedAutomationResponse.findFirst({
+      where: { id, userId: session.user.id },
+    });
+    if (!saved) throw new ApplyError("پاسخ ذخیره‌شده پیدا نشد.", 404);
+    if (saved.updatedAt.getTime() !== expected.getTime()) throw new ApplyError("پاسخ تغییر کرده است؛ صفحه را تازه‌سازی کن.", 409);
+    if (saved.messageType !== type) throw new ApplyError("نوع پاسخ مشترک قابل تغییر نیست؛ یک پاسخ جدید بساز.");
+
+    if (type === "SHOWCASE" && !await prisma.showcase.findFirst({
+      where: { id: showcaseId || "", userId: session.user.id, instagramAccountId: saved.instagramAccountId }, select: { id: true },
+    })) throw new ApplyError("ویترین انتخاب‌شده متعلق به این پیج نیست.");
+    if (type === "FORM" && formId && !await prisma.form.findFirst({
+      where: { id: formId, userId: session.user.id, instagramAccountId: saved.instagramAccountId }, select: { id: true },
+    })) throw new ApplyError("فرم انتخاب‌شده متعلق به این پیج نیست.");
+    // Recursive form destinations also need account and type isolation.
+    const nestedRefs = new Map<string, string>();
+    const nestedShowcases = new Set<string>();
+    const nestedForms = new Set<string>();
+    function collectNested(items: Reply[]) {
+      for (const item of items) {
+        if (item.savedResponseId) nestedRefs.set(item.savedResponseId, item.destinationType);
+        if (item.destinationShowcaseId) nestedShowcases.add(item.destinationShowcaseId);
+        if (item.destinationFormId) nestedForms.add(item.destinationFormId);
+        collectNested(item.destinationQuickReplies);
+      }
+    }
+    collectNested(quickReplies);
+    if (nestedRefs.size) {
+      const found = await prisma.savedAutomationResponse.findMany({
+        where: { id: { in: [...nestedRefs.keys()] }, userId: session.user.id, instagramAccountId: saved.instagramAccountId },
+        select: { id: true, messageType: true },
+      });
+      if (found.length !== nestedRefs.size || found.some((item) => item.messageType !== nestedRefs.get(item.id)))
+        throw new ApplyError("یکی از پاسخ‌های داخل فرم با این پیج یا نوع مقصد سازگار نیست.");
+    }
+    if (nestedShowcases.size && await prisma.showcase.count({
+      where: { id: { in: [...nestedShowcases] }, userId: session.user.id, instagramAccountId: saved.instagramAccountId },
+    }) !== nestedShowcases.size) throw new ApplyError("یکی از ویترین‌های داخل فرم متعلق به این پیج نیست.");
+    if (nestedForms.size && await prisma.form.count({
+      where: { id: { in: [...nestedForms] }, userId: session.user.id, instagramAccountId: saved.instagramAccountId },
+    }) !== nestedForms.size) throw new ApplyError("یکی از فرم‌های داخلی متعلق به این پیج نیست.");
+    const refs = collectSavedResponseMedia({ messageType: type, mediaUrl, quickReplies });
+    if (refs.missingOriginal) throw new ApplyError("برای پاسخ رسانه‌ای، فایل اصلی را آپلود کن.");
+    for (const url of refs.urls) {
+      const object = await prisma.instagramStorageObject.findFirst({
+        where: { userId: session.user.id, publicUrl: url, deletedAt: null },
+        select: { storageKey: true, publicUrl: true },
+      });
+      if (!object || !await getStorageProviderForObject(object.storageKey, object.publicUrl).exists(object.storageKey))
+        throw new ApplyError("فایل اصلی این پاسخ در فضای ذخیره‌سازی وجود ندارد.");
+    }
+
+    const current = await prisma.automationMessage.findMany({
+      where: { savedResponseId: id, automation: { instagramAccountId: saved.instagramAccountId } },
+      include: { automation: true, quickReplies: { orderBy: { createdAt: "asc" } } },
+    });
+    type NestedLink = {
+      usageId: string; quickReplyId: string; path: Array<string | number>;
+      root: { id: string; updatedAt: Date; replyText: string | null; automationMessageId: string;
+        nextMessageId: string | null; title: string; payload: string;
+        automationMessage: { automation: (typeof current)[number]["automation"] } };
+    };
+    const nested: NestedLink[] = [];
+    const candidates = await prisma.quickReply.findMany({
+      where: { replyText: { contains: "savedResponseId" },
+        automationMessage: { automation: { instagramAccountId: saved.instagramAccountId } } },
+      select: { id: true, updatedAt: true, replyText: true, automationMessageId: true,
+        nextMessageId: true, title: true, payload: true,
+        automationMessage: { select: { automation: true } } },
+    });
+    for (const root of candidates) {
+      for (const use of nestedReplyUses(root.replyText)) if (use.savedResponseId === id) {
+        const usageId = "qr:" + root.id + ":" + (use.path.length ? use.path.join(".") : "root");
+        if (use.messageType !== type)
+          throw new ApplyError("نوع یک مقصد داخلی با قالب ذخیره‌شده متفاوت است.", 409);
+        nested.push({ usageId, quickReplyId: root.id, path: use.path, root });
+      }
+    }
+    const allIds = [...current.map((item) => item.id), ...nested.map((item) => item.usageId)];
+    if (allIds.length !== expectedUsages.length ||
+      new Set(allIds).size !== allIds.length ||
+      current.some((item) => {
+        const snapshot = expectedUsages.find((expected) => expected.messageId === item.id);
+        return !snapshot || item.updatedAt.getTime() !== Date.parse(snapshot.messageUpdatedAt) ||
+          item.automation.updatedAt.getTime() !== Date.parse(snapshot.automationUpdatedAt);
+      }) ||
+      nested.some((item) => {
+        const snapshot = expectedUsages.find((expected) => expected.messageId === item.usageId);
+        return !snapshot || item.root.updatedAt.getTime() !== Date.parse(snapshot.messageUpdatedAt) ||
+          item.root.automationMessage.automation.updatedAt.getTime() !== Date.parse(snapshot.automationUpdatedAt);
+      }))
+      throw new ApplyError("اتصال‌های این پاسخ تغییر کرده‌اند. فهرست را تازه‌سازی کن.", 409);
+    if (current.some((item) => item.messageType !== type))
+      throw new ApplyError("نوع یکی از پیام‌های متصل با قالب ذخیره‌شده متفاوت است. آن را از صفحه مربوط بررسی کن.", 409);
+    const mediaFor = (a: { mediaId: string | null; mediaIds: string | null }) =>
+      Array.from(new Set([...(a.mediaId ? [a.mediaId] : []), ...(a.mediaIds || "").split(",").map((i) => i.trim()).filter(Boolean)]));
+    const directChoices = selections.filter((selection) => !selection.quickReplyId);
+    const plan = directChoices.length
+      ? checkedUsagePlan(
+          current.map((m) => ({ messageId: m.id, mediaIds: mediaFor(m.automation) })),
+          directChoices,
+        )
+      : [];
+    const nestedChoices = selections.filter((selection) => selection.quickReplyId);
+    for (const choice of nestedChoices) {
+      const link = nested.find((item) => item.usageId === choice.messageId);
+      if (!link || choice.quickReplyId !== link.quickReplyId ||
+        JSON.stringify(choice.nodePath || []) !== JSON.stringify(link.path))
+        throw new ApplyError("یکی از شاخه‌های انتخاب‌شده متعلق به این پاسخ نیست.", 409);
+    }
+    const nestedPlan = nestedChoices.length
+      ? checkedUsagePlan(nested.map((item) => ({
+        messageId: item.usageId, mediaIds: mediaFor(item.root.automationMessage.automation),
+      })), nestedChoices)
+      : [];
+    const byNested = new Map(nestedPlan.map((item) => [item.messageId, item]));
+    const nestedGroups = new Map<string, NestedLink[]>();
+    for (const item of nested) {
+      const aId = item.root.automationMessage.automation.id;
+      nestedGroups.set(aId, [...(nestedGroups.get(aId) || []), item]);
+    }
+    const byMessage = new Map(plan.map((p) => [p.messageId, p]));
+    const bySelection = new Map(selections.map((s) => [s.messageId, s]));
+    const groups = new Map<string, typeof current>();
+    for (const message of current) {
+      const list = groups.get(message.automationId) || [];
+      list.push(message);
+      groups.set(message.automationId, list);
+    }
+    // When the same saved reply is used as an automation message AND inside a
+    // nested form, all checked references must share a single selected media
+    // subset. The editing transaction will fork the automation only once.
+    const mixedGroups = new Set<string>();
+    for (const [automationId, links] of nestedGroups) {
+      const selectedNested = links.filter((item) => byNested.has(item.usageId));
+      const selectedMain = (groups.get(automationId) || []).filter((m) => byMessage.has(m.id));
+      const partitions = selectedNested.map((item) => byNested.get(item.usageId)!.selected);
+      if (new Set(partitions.map((ids) => [...ids].sort().join(","))).size > 1)
+        throw new ApplyError("برای شاخه‌های یک اتوماسیون باید یک محدوده محتوایی انتخاب شود.");
+      try {
+        if (assertCoherentMixedScope(
+          selectedMain.map((m) => byMessage.get(m.id)!.selected), partitions,
+        )) {
+          if (type === "FORM") {
+            const selectedScope = selectedMain[0] && byMessage.get(selectedMain[0].id);
+            if (!selectedScope || [...selectedScope.selected].sort().join(",") !==
+              [...partitions[0]].sort().join(","))
+              throw new ApplyError("برای فرم اصلی و شاخه‌های آن محدوده محتوایی یکسان انتخاب کن.", 409);
+          }
+          mixedGroups.add(automationId);
+        }
+      } catch (error) {
+        if (error instanceof ApplyError) throw error;
+        throw new ApplyError(error instanceof Error ? error.message : "محدوده ویرایش سازگار نیست.", 409);
+      }
+    }
+    // The same automation cannot receive contradictory media selections.
+    for (const group of groups.values()) {
+      const chosen = group.filter((m) => byMessage.has(m.id));
+      if (chosen.length < 2) continue;
+      const scopes = chosen.map((m) => byMessage.get(m.id)!.selected.join(","));
+      if (new Set(scopes).size > 1) throw new ApplyError("محتواهای یک اتوماسیون باید برای تمام پیام‌های مشترک یکسان انتخاب شوند.");
+    }
+
+    const applied = await prisma.$transaction(async (tx) => {
+      const locked = await tx.savedAutomationResponse.updateMany({
+        where: { id, userId: session.user.id, updatedAt: expected },
+        data: { title, text, mediaUrl, mediaId,
+          showcaseId: type === "SHOWCASE" ? showcaseId : null,
+          formId: type === "FORM" ? formId : null, quickReplies },
+      });
+      if (locked.count !== 1) throw new ApplyError("پاسخ هم‌زمان تغییر کرده است.", 409);
+
+      const refreshed = await tx.automationMessage.findMany({
+        where: { savedResponseId: id, automation: { instagramAccountId: saved.instagramAccountId } },
+        select: { id: true, updatedAt: true, automation: { select: { updatedAt: true } } },
+      });
+      const directSnapshot = expectedUsages.filter((usage) => !usage.messageId.startsWith("qr:"));
+      if (refreshed.length !== directSnapshot.length ||
+        refreshed.some((item) => {
+          const expectedUsage = expectedUsages.find((usage) => usage.messageId === item.id);
+          return !expectedUsage || item.updatedAt.getTime() !== Date.parse(expectedUsage.messageUpdatedAt) ||
+            item.automation.updatedAt.getTime() !== Date.parse(expectedUsage.automationUpdatedAt);
+        }))
+        throw new ApplyError("اتصال‌ها هم‌زمان تغییر کرده‌اند. دوباره بارگذاری کن.", 409);
+
+      // All nested usages are held in QuickReply.replyText; compare their row
+      // versions again inside the same serializable transaction.
+      const touchedRootIds = Array.from(new Set(nested.map((item) => item.quickReplyId)));
+      // Re-scan the full set inside the serializable transaction; a new
+      // QuickReply linked after the modal was opened must not be overlooked.
+      const refreshedRoots = await tx.quickReply.findMany({
+        where: { replyText: { contains: "savedResponseId" },
+          automationMessage: { automation: { instagramAccountId: saved.instagramAccountId } } },
+        select: { id: true, updatedAt: true, replyText: true,
+          automationMessage: { select: { automation: { select: { updatedAt: true } } } } },
+      });
+      const actualUses = refreshedRoots.flatMap((root) =>
+        nestedReplyUses(root.replyText)
+          .filter((use) => use.savedResponseId === id)
+          .map((use) => root.id + ":" + JSON.stringify(use.path)));
+      const expectedNestedKeys = nested.map((item) => item.quickReplyId + ":" + JSON.stringify(item.path));
+      if (actualUses.length !== expectedNestedKeys.length ||
+        actualUses.some((key) => !expectedNestedKeys.includes(key)) ||
+        touchedRootIds.some((rootId) => !refreshedRoots.some((root) => root.id === rootId)) ||
+        nested.some((item) => {
+          const check = refreshedRoots.find((row) => row.id === item.quickReplyId);
+          return !check || check.updatedAt.getTime() !== item.root.updatedAt.getTime() ||
+            check.automationMessage.automation.updatedAt.getTime() !==
+              item.root.automationMessage.automation.updatedAt.getTime() ||
+            !nestedReplyUses(check.replyText).some((usage) =>
+              usage.savedResponseId === id && JSON.stringify(usage.path) === JSON.stringify(item.path));
+        }))
+        throw new ApplyError("یکی از شاخه‌های فرم هم‌زمان تغییر کرده است. دوباره بارگذاری کن.", 409);
+
+      async function applyToMessage(messageId: string, previousUpdatedAt: Date) {
+        const data = {
+          text, mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(type) ? mediaUrl : null,
+          mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(type) ? mediaId : null,
+          showcaseId: type === "SHOWCASE" ? showcaseId : null,
+          formId: type === "FORM" ? formId : null,
+        };
+        const result = await tx.automationMessage.updateMany({
+          where: { id: messageId, savedResponseId: id, updatedAt: previousUpdatedAt },
+          data,
+        });
+        if (result.count !== 1) throw new ApplyError("یک پیام هم‌زمان تغییر کرده است.", 409);
+        if (type !== "FORM") return;
+        const old = await tx.quickReply.findMany({ where: { automationMessageId: messageId }, orderBy: { createdAt: "asc" } });
+        // Preserve existing Instagram button payloads and all nextMessageId
+        // links. A template can revise copy/content but not reshape buttons
+        // that may already exist in users' conversations.
+        if (old.length > 0 && old.length !== quickReplies.length)
+          throw new ApplyError("تغییر تعداد گزینه‌های فرم فعال باید از ویرایشگر همان فرم انجام شود.", 409);
+        // In a combined edit, the nested pass must reconcile this row ONCE
+        // against its original version before applying its nested template.
+        const deferred = new Set<string>();
+        for (const link of nested) {
+          const automationId = link.root.automationMessage.automation.id;
+          if (type !== "FORM" ||
+            !(groups.get(automationId) || []).some((entry) => byMessage.has(entry.id))) continue;
+          deferred.add(link.quickReplyId);
+          const copiedId = mixedForks.get(automationId)?.replyMap.get(link.quickReplyId);
+          if (copiedId) deferred.add(copiedId);
+        }
+        for (const [index, reply] of quickReplies.entries()) {
+          const previous = old[index];
+          if (previous && deferred.has(previous.id)) continue;
+          if (previous) {
+            let merged: string;
+            try {
+              merged = reconcileActiveQuickReply(previous.replyText, encodeReply(reply));
+            } catch (error) {
+              throw new ApplyError(error instanceof Error ? error.message : "گزینه فرم قابل ویرایش نیست.", 409);
+            }
+            const result = await tx.quickReply.updateMany({
+              where: { id: previous.id, updatedAt: previous.updatedAt },
+              data: { title: reply.title, replyText: merged },
+            });
+            if (result.count !== 1) throw new ApplyError("گزینه فرم هم‌زمان تغییر کرده است.", 409);
+          } else await tx.quickReply.create({
+            data: { automationMessageId: messageId, title: reply.title, payload: reply.payload, replyText: encodeReply(reply) },
+          });
+        }
+      }
+
+      const mixedForks = new Map<string, { id: string; replyMap: Map<string, string> }>();
+      const lockedMixed = new Set<string>();
+      let changed = 0, split = 0;
+      for (const [automationId, messages] of groups) {
+        const a = messages[0].automation;
+        const selected = messages.filter((m) => byMessage.has(m.id));
+        if (!selected.length) {
+          await tx.automationMessage.updateMany({
+            where: { automationId, savedResponseId: id }, data: { savedResponseId: null },
+          });
+          continue;
+        }
+        for (const message of selected) {
+          const snapshot = bySelection.get(message.id)!;
+          if (message.updatedAt.getTime() !== new Date(snapshot.expectedMessageUpdatedAt).getTime() ||
+            a.updatedAt.getTime() !== new Date(snapshot.expectedAutomationUpdatedAt).getTime())
+            throw new ApplyError("اطلاعات یکی از محل‌های استفاده تغییر کرده است. دوباره بارگذاری کن.", 409);
+        }
+        const scope = byMessage.get(selected[0].id)!;
+        const fullMedia = mediaFor(a);
+        if (scope.split) {
+          if (a.triggerType !== "COMMENT_KEYWORD" || fullMedia.length < 2 ||
+            fullMedia.includes("__smartdirect_live_comments_v1__"))
+            throw new ApplyError("جداسازی محتوا برای این نوع اتوماسیون پشتیبانی نمی‌شود.");
+          const lockedAutomation = await tx.automation.updateMany({
+            where: { id: automationId, updatedAt: a.updatedAt },
+            data: { mediaId: scope.remaining.length === 1 ? scope.remaining[0] : null, mediaIds: scope.remaining.join(",") },
+          });
+          if (lockedAutomation.count !== 1) throw new ApplyError("ارتباط محتواها هم‌زمان تغییر کرده است.", 409);
+          const clone = await tx.automation.create({
+            data: {
+              instagramAccountId: a.instagramAccountId, triggerType: a.triggerType,
+              title: a.title, keyword: a.keyword, keywordMatchMode: a.keywordMatchMode,
+              mediaId: scope.selected.length === 1 ? scope.selected[0] : null,
+              mediaIds: scope.selected.join(","), commentReplyText: a.commentReplyText,
+              replyText: a.replyText, isActive: a.isActive, likeComment: a.likeComment,
+              likeIncomingDm: a.likeIncomingDm, likeStoryReply: a.likeStoryReply,
+              sendDm: a.sendDm, requireFollow: a.requireFollow, followGateText: a.followGateText,
+              followGateButtonText: a.followGateButtonText,
+            }, select: { id: true },
+          });
+          const originalMessages = await tx.automationMessage.findMany({
+            where: { automationId }, orderBy: { order: "asc" }, include: { quickReplies: true },
+          });
+          const remap = new Map<string, string>();
+          for (const old of originalMessages) {
+            const fresh = await tx.automationMessage.create({
+              data: {
+                automationId: clone.id, order: old.order, messageType: old.messageType,
+                text: old.text, mediaId: old.mediaId, mediaUrl: old.mediaUrl,
+                showcaseId: old.showcaseId, formId: old.formId,
+                linkButtonUrl: old.linkButtonUrl, linkButtonTitle: old.linkButtonTitle,
+                linkButtons: old.linkButtons === null ? undefined : old.linkButtons as NonNullable<typeof old.linkButtons>,
+                savedResponseId: byMessage.has(old.id) ? id : (old.savedResponseId === id ? null : old.savedResponseId),
+              }, select: { id: true },
+            });
+            remap.set(old.id, fresh.id);
+          }
+          const replyMap = new Map<string, string>();
+          for (const old of originalMessages) {
+            const destination = remap.get(old.id)!;
+            for (const reply of old.quickReplies) {
+              if (reply.nextMessageId && !remap.has(reply.nextMessageId))
+                throw new ApplyError("این گزینه به مرحله‌ای خارج از اتوماسیون متصل است.", 409);
+              const created = await tx.quickReply.create({
+                data: {
+                  automationMessageId: destination, title: reply.title, payload: reply.payload,
+                  replyText: reply.replyText,
+                  nextMessageId: reply.nextMessageId ? remap.get(reply.nextMessageId)! : null,
+                },
+                select: { id: true },
+              });
+              replyMap.set(reply.id, created.id);
+            }
+          }
+          mixedForks.set(automationId, { id: clone.id, replyMap });
+          for (const message of selected) {
+            const targetId = remap.get(message.id);
+            if (!targetId) throw new ApplyError("پیام انتخاب‌شده دیگر در اتوماسیون وجود ندارد.", 409);
+            const fresh = await tx.automationMessage.findUniqueOrThrow({ where: { id: targetId } });
+            await applyToMessage(targetId, fresh.updatedAt);
+            changed++;
+          }
+          // Formerly linked media keep their old response data and are now independent.
+          await tx.automationMessage.updateMany({
+            where: { automationId, savedResponseId: id }, data: { savedResponseId: null },
+          });
+          await tx.instagramPublishJob.updateMany({
+            where: { instagramAccountId: a.instagramAccountId, instagramMediaId: { in: scope.selected },
+              commentAutomationId: automationId },
+            data: { commentAutomationId: clone.id },
+          });
+          split++;
+        } else {
+          const lockedAutomation = await tx.automation.updateMany({
+            where: { id: automationId, updatedAt: a.updatedAt },
+            data: { updatedAt: new Date() },
+          });
+          if (lockedAutomation.count !== 1)
+            throw new ApplyError("این اتوماسیون هم‌زمان تغییر کرده است؛ صفحه را تازه‌سازی کن.", 409);
+          lockedMixed.add(automationId);
+          // Update selected linked messages in place; unchecked messages remain independent.
+          for (const message of selected) {
+            await applyToMessage(message.id, message.updatedAt);
+            changed++;
+          }
+          await tx.automationMessage.updateMany({
+            where: { automationId, savedResponseId: id,
+              id: { notIn: selected.map((m) => m.id) } },
+            data: { savedResponseId: null },
+          });
+        }
+      }
+      // Apply nested uses after standalone message edits. Payloads, root row IDs,
+      // step links and all unknown legacy JSON metadata are preserved.
+      const replacement = { messageType: type, text, mediaUrl, mediaId, showcaseId, formId, quickReplies };
+      let nestedChanged = 0;
+      for (const [automationId, links] of nestedGroups) {
+        const automation = links[0].root.automationMessage.automation;
+        const selected = links.filter((item) => byNested.has(item.usageId));
+        const selection = selected.length ? byNested.get(selected[0].usageId)! : null;
+        const sourceRoots = Array.from(new Set(links.map((item) => item.quickReplyId)));
+        const allOriginal = await tx.quickReply.findMany({
+          where: { id: { in: sourceRoots } },
+          select: { id: true, updatedAt: true, replyText: true },
+        });
+        const originalData = new Map(allOriginal.map((item) => [item.id, item]));
+        const mutate = (rootId: string, value: string | null, targets: NestedLink[],
+          applySelected: boolean, composedParentForm = false): string => {
+          let result = value;
+          for (const link of targets) {
+            const checked = applySelected && byNested.has(link.usageId);
+            try {
+              result = !checked && composedParentForm
+                ? preserveUncheckedNestedReply(originalData.get(rootId)?.replyText || null,
+                    result, link.path, id)
+                : editQuickReplyDestination(result, link.path, id,
+                    checked ? "apply" : "detach", checked ? replacement : undefined);
+            } catch (error) {
+              throw new ApplyError(error instanceof Error ? error.message : "ویرایش مقصد فرم ناموفق بود.", 409);
+            }
+          }
+          if (!result) throw new ApplyError("اطلاعات گزینه فرم از بین رفته است.", 409);
+          return result;
+        };
+        const partial = Boolean(selection?.split);
+        // The main-message pass already forked this automation. Reuse precisely
+        // that fork for nested destinations and never create a second clone.
+        const mainFork = mixedForks.get(automationId);
+        if (mainFork) {
+          for (const rootId of sourceRoots) {
+            const original = originalData.get(rootId);
+            const mappedId = mainFork.replyMap.get(rootId);
+            if (!original || !mappedId)
+              throw new ApplyError("اتصال فرم در نسخه جدید ناقص است.", 409);
+            const fresh = await tx.quickReply.findUniqueOrThrow({ where: { id: mappedId } });
+            const relevant = links.filter((link) => link.quickReplyId === rootId);
+            let baseText = fresh.replyText;
+            if (type === "FORM") {
+              const owner = current.find((msg) => msg.id === relevant[0]?.root.automationMessageId &&
+                byMessage.has(msg.id));
+              if (owner) {
+                const rows = await tx.quickReply.findMany({
+                  where: { automationMessageId: owner.id }, orderBy: { createdAt: "asc" },
+                  select: { id: true },
+                });
+                const index = rows.findIndex((row) => row.id === rootId);
+                if (index < 0 || !quickReplies[index])
+                  throw new ApplyError("گزینه فرم اصلی در نسخه جدید یافت نشد.", 409);
+                try { baseText = reconcileActiveQuickReply(fresh.replyText, encodeReply(quickReplies[index])); }
+                catch (error) { throw new ApplyError(error instanceof Error ? error.message : "ترکیب فرم اصلی و شاخه آن ناموفق بود.", 409); }
+              }
+            }
+            const forkText = mutate(rootId, baseText, relevant, true,
+              type === "FORM" && Boolean(current.find((msg) =>
+                msg.id === relevant[0]?.root.automationMessageId && byMessage.has(msg.id))));
+            const newCount = await tx.quickReply.updateMany({
+              where: { id: mappedId, updatedAt: fresh.updatedAt }, data: { replyText: forkText },
+            });
+            if (newCount.count !== 1) throw new ApplyError("فرم نسخه جدید هم‌زمان تغییر کرده است.", 409);
+            const untouched = mutate(rootId, original.replyText, relevant, false);
+            const oldCount = await tx.quickReply.updateMany({
+              where: { id: rootId, updatedAt: original.updatedAt }, data: { replyText: untouched },
+            });
+            if (oldCount.count !== 1) throw new ApplyError("فرم اصلی هم‌زمان تغییر کرده است.", 409);
+          }
+          nestedChanged += selected.length;
+          continue;
+        }
+        if (partial) {
+          const fullMedia = mediaFor(automation);
+          if (automation.triggerType !== "COMMENT_KEYWORD" || fullMedia.length < 2 ||
+            fullMedia.includes("__smartdirect_live_comments_v1__"))
+            throw new ApplyError("تقسیم محتواهای این نوع پاسخ پشتیبانی نمی‌شود.", 409);
+          if (automation.updatedAt.getTime() !== links[0].root.automationMessage.automation.updatedAt.getTime())
+            throw new ApplyError("پاسخ در حال ویرایش است.", 409);
+          const shrink = await tx.automation.updateMany({
+            where: { id: automationId, updatedAt: automation.updatedAt },
+            data: { mediaId: selection!.remaining.length === 1 ? selection!.remaining[0] : null,
+              mediaIds: selection!.remaining.join(",") },
+          });
+          if (shrink.count !== 1) throw new ApplyError("محتواهای مشترک هم‌زمان تغییر کرده‌اند.", 409);
+          const fork = await tx.automation.create({
+            data: {
+              instagramAccountId: automation.instagramAccountId, triggerType: automation.triggerType,
+              title: automation.title, keyword: automation.keyword,
+              keywordMatchMode: automation.keywordMatchMode,
+              mediaId: selection!.selected.length === 1 ? selection!.selected[0] : null,
+              mediaIds: selection!.selected.join(","), commentReplyText: automation.commentReplyText,
+              replyText: automation.replyText, isActive: automation.isActive,
+              likeComment: automation.likeComment, likeIncomingDm: automation.likeIncomingDm,
+              likeStoryReply: automation.likeStoryReply, sendDm: automation.sendDm,
+              requireFollow: automation.requireFollow, followGateText: automation.followGateText,
+              followGateButtonText: automation.followGateButtonText,
+            }, select: { id: true },
+          });
+          const originalMessages = await tx.automationMessage.findMany({
+            where: { automationId }, orderBy: { order: "asc" }, include: { quickReplies: true },
+          });
+          const messageMap = new Map<string, string>();
+          for (const old of originalMessages) {
+            const created = await tx.automationMessage.create({
+              data: {
+                automationId: fork.id, order: old.order, messageType: old.messageType,
+                text: old.text, mediaId: old.mediaId, mediaUrl: old.mediaUrl,
+                showcaseId: old.showcaseId, formId: old.formId,
+                linkButtonUrl: old.linkButtonUrl, linkButtonTitle: old.linkButtonTitle,
+                linkButtons: old.linkButtons === null ? undefined : old.linkButtons as NonNullable<typeof old.linkButtons>,
+                savedResponseId: old.savedResponseId === id ? null : old.savedResponseId,
+              }, select: { id: true },
+            });
+            messageMap.set(old.id, created.id);
+          }
+          for (const old of originalMessages) {
+            for (const reply of old.quickReplies) {
+              if (reply.nextMessageId && !messageMap.has(reply.nextMessageId))
+                throw new ApplyError("این فرم دارای اتصال مرحله‌ای خارج از اتوماسیون است و باید جداگانه ویرایش شود.", 409);
+              const uses = links.filter((link) => link.quickReplyId === reply.id);
+              const inFork = uses.length ? mutate(reply.id, reply.replyText, uses, true) : reply.replyText;
+              await tx.quickReply.create({
+                data: {
+                  automationMessageId: messageMap.get(old.id)!, title: reply.title,
+                  payload: reply.payload, replyText: inFork,
+                  nextMessageId: reply.nextMessageId ? messageMap.get(reply.nextMessageId)! : null,
+                },
+              });
+            }
+          }
+          for (const rootId of sourceRoots) {
+            const original = originalData.get(rootId);
+            if (!original) throw new ApplyError("گزینه فرم دیگر وجود ندارد.", 409);
+            const withoutSource = mutate(rootId, original.replyText,
+              links.filter((link) => link.quickReplyId === rootId), false);
+            const changedRoot = await tx.quickReply.updateMany({
+              where: { id: rootId, updatedAt: original.updatedAt }, data: { replyText: withoutSource },
+            });
+            if (changedRoot.count !== 1) throw new ApplyError("گزینه فرم هم‌زمان تغییر کرده است.", 409);
+          }
+          await tx.instagramPublishJob.updateMany({
+            where: { instagramAccountId: automation.instagramAccountId,
+              instagramMediaId: { in: selection!.selected }, commentAutomationId: automationId },
+            data: { commentAutomationId: fork.id },
+          });
+          nestedChanged += selected.length;
+          split++;
+        } else {
+          if (!lockedMixed.has(automationId)) {
+            const touched = await tx.automation.updateMany({
+              where: { id: automationId, updatedAt: automation.updatedAt },
+              data: { updatedAt: new Date() },
+            });
+            if (touched.count !== 1)
+              throw new ApplyError("اتصال‌های فرم هم‌زمان تغییر کرده‌اند.", 409);
+          }
+          for (const rootId of sourceRoots) {
+            const original = originalData.get(rootId);
+            if (!original) throw new ApplyError("گزینه فرم دیگر وجود ندارد.", 409);
+            const directOwner = type === "FORM"
+              ? current.find((item) => item.id === links.find((link) => link.quickReplyId === rootId)?.root.automationMessageId &&
+                byMessage.has(item.id))
+              : undefined;
+            let draftText = original.replyText;
+            if (directOwner) {
+              const topLevel = await tx.quickReply.findMany({
+                where: { automationMessageId: directOwner.id }, orderBy: { createdAt: "asc" },
+                select: { id: true },
+              });
+              const index = topLevel.findIndex((item) => item.id === rootId);
+              if (index < 0 || !quickReplies[index])
+                throw new ApplyError("گزینه فرم اصلی دیگر قابل تطبیق نیست.", 409);
+              try { draftText = reconcileActiveQuickReply(original.replyText, encodeReply(quickReplies[index])); }
+              catch (error) { throw new ApplyError(error instanceof Error ? error.message : "فرم اصلی قابل تطبیق نیست.", 409); }
+            }
+            const updatedText = mutate(rootId, draftText,
+              links.filter((link) => link.quickReplyId === rootId), true, Boolean(directOwner));
+            const changedRoot = await tx.quickReply.updateMany({
+              where: { id: rootId, updatedAt: original.updatedAt }, data: { replyText: updatedText },
+            });
+            if (changedRoot.count !== 1) throw new ApplyError("گزینه فرم هم‌زمان تغییر کرده است.", 409);
+          }
+          nestedChanged += selected.length;
+        }
+      }
+      return { changed, nestedChanged, split };
+    }, { maxWait: 10000, timeout: 30000, isolationLevel: "Serializable" });
+
+    const updatedTemplate = await prisma.savedAutomationResponse.findUniqueOrThrow({ where: { id } });
+    try { await invalidateAutomationCache(saved.instagramAccountId); }
+    catch (error) { console.warn("Reusable response cache invalidation failed:", error); }
+    return NextResponse.json({ success: true, data: { ...applied, template: updatedTemplate } });
+  } catch (error) {
+    console.error("PATCH saved response scoped apply error:", error);
+    const status = error instanceof ApplyError ? error.status :
+      (typeof error === "object" && error !== null && "code" in error && error.code === "P2034" ? 409 : 500);
+    return NextResponse.json({ success: false, error: error instanceof ApplyError ? error.message : status === 409 ? "اطلاعات هم‌زمان تغییر کرده است. صفحه را تازه‌سازی کن." : "اعمال تغییرات پاسخ ناموفق بود." }, { status });
+  }
+}

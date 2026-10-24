@@ -1,8 +1,8 @@
 "use client";
 
-import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X } from "lucide-react";
+import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X, Eye, Pencil } from "lucide-react";
 import CommentReplyVariantsField from "./CommentReplyVariantsField";
-import { readPublicCommentReplies, validatePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
+import { readPublicCommentReplies, validatePublicCommentReplies, publicCommentReplyKey } from "@/lib/automation/comment-reply-variants";
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -11,6 +11,8 @@ import type { StoryFormTemplate } from "./publishing/PublishingStoryAutomationSe
 import { createEmptyMessage, normalizeMessages, validateMessages, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
 import ContentSelectionDialog from "./ContentSelectionDialog";
+import GlassModalPresence from "./GlassModalPresence";
+import ReusableResponseLibrary from "./publishing/ReusableResponseLibrary";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
@@ -25,6 +27,7 @@ export type EditableCommentAutomation = {
   mediaId: string | null;
   mediaIds?: string | null;
   keyword: string | null;
+  title?: string | null;
   keywordMatchMode?: string | null;
   commentReplyText?: string | null;
   likeStoryReply?: boolean;
@@ -52,7 +55,7 @@ function readSavedLinks(raw: unknown): LinkButton[] {
   }
   return [];
 }
-type AutomationTemplate = { id: string; triggerType: string; keyword?: string | null; keywordMatchMode?: string | null; commentReplyText?: string | null; requireFollow?: boolean; followGateText?: string | null; followGateButtonText?: string | null; isActive?: boolean; mediaId?: string | null; messages?: unknown; };
+type AutomationTemplate = { id: string; title?: string | null; triggerType: string; keyword?: string | null; keywordMatchMode?: string | null; commentReplyText?: string | null; requireFollow?: boolean; followGateText?: string | null; followGateButtonText?: string | null; isActive?: boolean; mediaId?: string | null; messages?: unknown; };
 
 type Props = {
   account: Account;
@@ -123,6 +126,7 @@ function serializeQuickReplies(replies: QuickReplyDraft[]): unknown[] {
     title: reply.title.trim(),
     payload: reply.payload,
     destinationType: reply.destinationType,
+    savedResponseId: reply.savedResponseId || null,
     destinationText: reply.destinationText.trim(),
     destinationFormId: reply.destinationFormId,
     destinationShowcaseId: reply.destinationShowcaseId,
@@ -157,6 +161,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     });
     return {
       mediaIds,
+      responseName: editAutomation.title || "",
       keyword: editAutomation.keyword || "",
       keywordMatchMode: editAutomation.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" as const : "EXACT" as const,
       commentReplies: (() => { const previous = readPublicCommentReplies(editAutomation.commentReplyText); return [...previous, ...Array(Math.max(0, 3 - previous.length)).fill("")]; })(),
@@ -175,11 +180,17 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [extraMessages, setExtraMessages] = useState<MessageDraft[]>(() => initialEditState?.extraMessages ?? []);
   const [extraLinks, setExtraLinks] = useState<Record<string, LinkButton[]>>(() => initialEditState?.extraLinks ?? {});
   const [keyword, setKeyword] = useState(() => initialEditState?.keyword ?? "");
+  const [responseName, setResponseName] = useState(() => initialEditState?.responseName ?? "");
   const [keywordDraft, setKeywordDraft] = useState("");
   const [keywordMatchMode, setKeywordMatchMode] = useState<"EXACT" | "CONTAINS_ANY">(() => initialEditState?.keywordMatchMode ?? "EXACT");
   const MAX_KEYWORDS = 10;
   const MAX_LINK_BUTTONS = 3;
   const [linkButtons, setLinkButtons] = useState<LinkButton[]>(() => initialEditState?.linkButtons ?? [{ title: "", url: "" }]);
+  const [linkedMediaItems, setLinkedMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null}>>([]);
+  const [previewTemplate, setPreviewTemplate] = useState<AutomationTemplate | null>(null);
+  const [editScopeOpen, setEditScopeOpen] = useState(false);
+  const [editScopeIds, setEditScopeIds] = useState<string[]>([]);
+  const originalMediaIds = useMemo(() => editAutomation ? Array.from(new Set([...(editAutomation.mediaId ? [editAutomation.mediaId] : []), ...(editAutomation.mediaIds || "").split(",").map((id) => id.trim()).filter(Boolean)])) : [], [editAutomation]);
   const [mediaItems, setMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null; timestamp?:string}>>([]);
   const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(() => initialEditState?.mediaIds ?? (mediaId ? [mediaId] : []));
   const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
@@ -310,12 +321,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   const keywords = useMemo(() => keyword.split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean), [keyword]);
   const formSnapshot = JSON.stringify({
-    mediaIds: [...selectedMediaIds].sort(), keyword, keywordMatchMode, commentReplies,
+    mediaIds: [...selectedMediaIds].sort(), responseName, keyword, keywordMatchMode, commentReplies,
     likeStoryReply, isActive, requireFollow, followGateText, followGateButtonText, dmMode,
     linkButtons, message, extraMessages, extraLinks,
   });
   const originalSnapshot = initialEditState ? JSON.stringify({
     mediaIds: [...initialEditState.mediaIds].sort(),
+    responseName: initialEditState.responseName,
     keyword: initialEditState.keyword,
     keywordMatchMode: initialEditState.keywordMatchMode,
     commentReplies: initialEditState.commentReplies,
@@ -355,7 +367,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     selectedMediaIds.length === 0 ? "حداقل یک پست یا ریلز انتخاب کنید." :
     keywordMatchMode === "EXACT" && keywords.length === 0 ? "حداقل یک کلمه کلیدی وارد کنید." :
     keywords.length > MAX_KEYWORDS ? "حداکثر ده کلمه کلیدی مجاز است." :
-    commentReplies.length < 3 || commentReplies.length > 5 || commentReplies.some((text) => !text.trim() || text.trim().length > 2000) || new Set(commentReplies.map((text) => text.trim())).size !== commentReplies.length ? "سه تا پنج پاسخ متفاوت زیر کامنت را کامل وارد کنید." :
+    commentReplies.length < 3 || commentReplies.length > 5 || commentReplies.some((text) => !text.trim() || text.trim().length > 2000) || new Set(commentReplies.map(publicCommentReplyKey)).size !== commentReplies.length ? "سه تا پنج پاسخ متفاوت زیر کامنت را کامل وارد کنید." :
     enteredDm && !validDm ? "همه پیام‌های دایرکت را کامل وارد کنید." :
     enteredDm && (!mainLinksValid || !extraLinksValid) ? "عنوان و آدرس دکمه‌های لینک را کامل و معتبر وارد کنید." :
 
@@ -409,6 +421,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 caption: "استوری اینستاگرام",
               }));
         const availableIds = new Set<string>(availableMedia.map((item: { id: string }) => item.id));
+        setLinkedMediaItems(mediaResult.data);
         setMediaItems(sortNewestFirst(availableMedia));
         if (!isEditing) {
           setSelectedMediaIds((current) => current.filter((id) => availableIds.has(id)));
@@ -427,16 +440,25 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     setKeywordDraft("");
   }
 
-  async function saveAutomation(finalMessage?: MessageDraft) {
+  async function saveAutomation(finalMessage?: MessageDraft, applyScope?: string[]) {
     if (saving) return;
     if (isEditing && triggerType === "STORY_REPLY_KEYWORD" && !canSaveStoryEdit) return;
-    if (triggerType === "COMMENT_KEYWORD" && !canSaveComment) {
+    if (triggerType === "COMMENT_KEYWORD" && (isEditing || creationMode === "new") && !canSaveComment) {
       setError(commentFormError || "برای ذخیره، ابتدا تغییری در پاسخ خودکار ایجاد کنید.");
       return;
     }
+    if ((isEditing || creationMode === "new") && (!responseName.trim() || responseName.trim().length > 80)) { setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه)."); return; }
+    if (isEditing && triggerType === "COMMENT_KEYWORD" && originalMediaIds.length > 1 && !applyScope) {
+      setEditScopeIds([...originalMediaIds]);
+      setEditScopeOpen(true);
+      return;
+    }
+    if (applyScope && !applyScope.length) { setError("حداقل یک محتوا را برای ویرایش انتخاب کن."); return; }
     const cleanKeywords = keywords;
     const currentMessage = finalMessage ?? message;
-    const targetMediaIds = Array.from(new Set(selectedMediaIds.filter(Boolean)));
+    const targetMediaIds = Array.from(new Set(applyScope
+      ? [...applyScope, ...selectedMediaIds.filter((id) => !originalMediaIds.includes(id))]
+      : selectedMediaIds.filter(Boolean)));
     const normalizedLinkButtons = linkButtons.map((button) => ({ ...button, url: normalizeExternalLink(button.url) }));
 
     if (isEditing && editAutomation) {
@@ -463,6 +485,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             credentials: "include",
             body: JSON.stringify({
               expectedUpdatedAt: editAutomation.updatedAt,
+              title: responseName.trim(),
               mediaId: targetMediaIds[0],
               keywordMatchMode,
               keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
@@ -537,6 +560,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             mediaIds: targetMediaIds,
             sourceMediaId: editingMediaId || (initialEditState?.mediaIds.length === 1 ? initialEditState.mediaIds[0] : null),
             expectedUpdatedAt: editAutomation.updatedAt,
+            title: responseName.trim(),
             commentReplyVariants: validatePublicCommentReplies(commentReplies),
             requireFollow,
             followGateText: requireFollow ? followGateText.trim() : null,
@@ -574,7 +598,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             linkMediaOnly: true,
             triggerType,
             mediaId: triggerType === "COMMENT_KEYWORD" ? (targetIds.length === 1 ? targetIds[0] : null) : targetIds[0],
-            mediaIds: triggerType === "COMMENT_KEYWORD" ? targetIds : [],
+            mediaIds: targetIds,
           }),
         });
         const result = await response.json();
@@ -626,6 +650,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         credentials: "include",
         body: JSON.stringify({
           instagramAccountId: account.id,
+          title: responseName.trim(),
           triggerType,
           mediaId: triggerType === "COMMENT_KEYWORD" ? (targetMediaIds.length === 1 ? targetMediaIds[0] : null) : targetMediaIds[0] || null,
           keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
@@ -664,6 +689,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           credentials: "include",
           body: JSON.stringify({
             messageType: entry.messageType,
+            savedResponseId: entry.savedResponseId ?? null,
             text: entry.text.trim() || null,
             mediaUrl: entry.mediaUrl.trim() || null,
             mediaId: entry.mediaId.trim() || null,
@@ -686,6 +712,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               title: reply.title.trim(),
               payload: reply.payload,
               destinationType: reply.destinationType,
+              savedResponseId: reply.savedResponseId ?? null,
               destinationText: reply.destinationText.trim(),
               destinationFormId: reply.destinationFormId,
               destinationShowcaseId: reply.destinationShowcaseId,
@@ -700,29 +727,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           const qrResult = await qrResponse.json();
           if (!qrResponse.ok || !qrResult.success)
             throw new Error(qrResult.error || qrResult.message || "ذخیره گزینه‌های پاسخ ناموفق بود.");
-        }
-      }
-
-      // Persist branching forms in the reusable response library as well as
-      // the automation's own messages. Removing the original automation will
-      // not remove its reusable form template.
-      if (triggerType === "STORY_REPLY_KEYWORD" && currentMessage.messageType === "FORM") {
-        try {
-          const archive = await fetch("/api/saved-responses", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              instagramAccountId: account.id,
-              title: "فرم استوری — " + currentMessage.text.trim().slice(0, 57),
-              messageType: "FORM",
-              text: currentMessage.text.trim(),
-              quickReplies: serializeQuickReplies(currentMessage.quickReplies),
-            }),
-          });
-          if (!archive.ok) console.warn("Saving reusable story form template failed:", archive.status);
-        } catch (archiveError) {
-          console.warn("Saving reusable story form template failed:", archiveError);
         }
       }
 
@@ -935,11 +939,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         <div className="mb-2 mt-6"><AutomationSectionGuide>۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن.</AutomationSectionGuide></div>
         <section aria-label="روش پاسخ" className="space-y-2">
           <div role="radiogroup" aria-label="روش پاسخ خودکار" className="grid grid-cols-2 gap-2">
-            <label className={"flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "new" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
+            <label className={"daira-flow-glass flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "new" ? "border-[var(--daira-primary)] !bg-[var(--daira-outline-hover-bg)]" : "hover:border-[var(--daira-outline)]")}>
               <input type="radio" name="automation-creation-mode" value="new" checked={creationMode === "new"} onChange={startNewAutomation} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
               <span className="flex min-h-10 min-w-0 flex-1 items-center justify-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">ساخت پاسخ جدید</strong></span>
             </label>
-            <label className={"flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "existing" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
+            <label className={"daira-flow-glass flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "existing" ? "border-[var(--daira-primary)] !bg-[var(--daira-outline-hover-bg)]" : "hover:border-[var(--daira-outline)]")}>
               <input type="radio" name="automation-creation-mode" value="existing" checked={creationMode === "existing"} onChange={() => { setCreationMode("existing"); setError(""); }} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
               <span className="flex min-h-10 min-w-0 flex-1 items-center justify-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">استفاده از پاسخ‌های قبلی</strong></span>
             </label>
@@ -952,8 +956,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           <div className="space-y-3">
             <div className="mb-2 mt-6"><AutomationSectionGuide>۳. پاسخ قبلی — پاسخ موردنظرت را انتخاب کن؛ سپس دکمه زیر فهرست را بزن.</AutomationSectionGuide></div>
             <section
-                className="rounded-2xl border p-3"
-                style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
+                className="daira-flow-glass rounded-2xl p-3"
               >
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div />
@@ -977,21 +980,21 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     const preview = previewMessages[0]?.messageType === "SHOWCASE" ? "ویترین" : previewMessages[0]?.messageType === "FORM" ? "فرم" : previewMessages[0]?.messageType === "IMAGE" ? "تصویر" : previewMessages[0]?.messageType === "VIDEO" ? "ویدیو" : previewMessages[0]?.messageType === "AUDIO" ? "پیام صوتی" : "";
                     const selected = selectedTemplateId === template.id;
                     return (
-                      <label
+                      <div
                         key={template.id}
-                        className="flex min-h-[72px] cursor-pointer items-start gap-2 rounded-xl border p-2.5 text-right transition focus-within:ring-2 focus-within:ring-[color:var(--daira-primary)]/20"
+                        className="daira-flow-glass flex min-h-[72px] items-start gap-2 rounded-xl border p-2.5 text-right transition focus-within:ring-2 focus-within:ring-[color:var(--daira-primary)]/20"
                         style={{
                           borderColor: selected ? dairaPalette.primary.main : dairaPalette.border,
                           background: selected ? dairaPalette.secondary.hoverBackground : dairaPalette.background.surface,
-                          boxShadow: selected ? `0 2px 8px ${dairaPalette.primary.main}20` : undefined,
                         }}
                       >
-                        <span className="flex min-w-0 flex-1 flex-col gap-1">
+                        <button type="button" onClick={() => setPreviewTemplate(template)} className="flex min-w-0 flex-1 flex-col gap-1 text-right">
                           <strong className="block text-xs font-bold leading-5" style={{ color: dairaPalette.text.heading }}>
-                            {(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}
+                            {(template.title?.trim() ? (triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت - " : "پاسخ خودکار استوری - ") + template.title.trim() : "پاسخ بدون نام")}
                           </strong>
                           {preview && <span className="block text-[10px] leading-4" style={{ color: dairaPalette.text.body }}>{preview}</span>}
-                        </span>
+                        </button>
+                        <button type="button" onClick={() => setPreviewTemplate(template)} aria-label="مشاهده پاسخ کامل" className="daira-glass-dialog__secondary self-center rounded-lg border p-2"><Eye size={17}/></button>
                         <input
                           type="radio"
                           name="existing-automation-template"
@@ -1001,7 +1004,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                           className="mt-0 h-4 w-4 shrink-0 self-center accent-[var(--daira-primary)]"
                           aria-label={`انتخاب پاسخ ${(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}`}
                         />
-                      </label>
+                      </div>
                     );
                   })}
                   </div>
@@ -1024,6 +1027,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             )}
             {(creationMode === "new" || isEditing) && (
             <div className="space-y-5">
+              {triggerType === "COMMENT_KEYWORD" && <section className="daira-flow-glass space-y-2 rounded-2xl p-4 sm:p-5">
+                <label htmlFor="automation-response-name" className="block text-sm font-bold text-[var(--daira-heading)]">نام پاسخ</label>
+                <input id="automation-response-name" value={responseName} onChange={(event) => setResponseName(event.target.value)}
+                  maxLength={80} placeholder="مثلاً کفش"
+                  className="w-full rounded-xl border border-[var(--daira-input-border)] bg-[var(--daira-surface)] px-3.5 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)]"
+                  style={{fontSize:"16px"}} />
+                <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">نامی برای این پاسخ انتخاب کن تا بتوانی بعداً دوباره از آن استفاده کنی.</p>
+              </section>}
             <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? (isEditing ? "۲. شرط فعال‌سازی — روش فعال شدن پاسخ خودکار را ویرایش کن." : "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص.") : (isEditing ? "۲. شرط فعال‌سازی — کلمات کلیدی ریپلای استوری را ویرایش کن." : "۳. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند.")}</AutomationSectionGuide></div>
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
               {triggerType === "COMMENT_KEYWORD" && (
@@ -1068,8 +1079,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
             {triggerType === "COMMENT_KEYWORD" && (
               <div className="space-y-3">
-              <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. پاسخ زیر کامنت — حداقل سه و حداکثر پنج پاسخ متفاوت تنظیم کن؛ برای هر کامنت یکی تصادفی انتخاب می‌شود تا تکرار کاهش یابد." : "۴. پاسخ زیر کامنت — سه تا پنج متن متفاوت بنویس؛ برای هر کامنت یکی تصادفی منتشر می‌شود تا پاسخ‌های یکسان کمتر شوند."}</AutomationSectionGuide></div>
-              <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
+              <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. پاسخ زیر کامنت — حداقل سه و حداکثر پنج پاسخ متفاوت تنظیم کن؛ برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم در اینستاگرام، بهتر است چند پاسخ متفاوت تنظیم کنی." : "۴. پاسخ زیر کامنت — سه تا پنج متن متفاوت بنویس؛ برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم در اینستاگرام، بهتر است چند پاسخ متفاوت تنظیم کنی."}</AutomationSectionGuide></div>
+              <div className="rounded-2xl px-1 py-3">
                 <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><strong className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های عمومی به کامنت</strong></div>
                 <CommentReplyVariantsField values={commentReplies} onChange={setCommentReplies} disabled={saving} />
               </div>
@@ -1087,6 +1098,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                     </div>
                   </div>
 
+                  <ReusableResponseLibrary
+                    instagramAccountId={account.id}
+                    message={message}
+                    onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
+                    allowedTypes={["TEXT"]}
+                    prefix="پاسخ خودکار دایرکت"
+                    disabled={saving}
+                  />
                   <div role="radiogroup" aria-label="قالب پیام متنی دایرکت" className={"grid grid-cols-1 gap-2 sm:grid-cols-2 " + (isEditing && message.messageType !== "TEXT" ? "hidden" : "")}>
                     <label className={"flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition " + (dmMode === "TEXT" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white")}>
                       <input type="radio" name="direct-message-mode" value="TEXT" checked={dmMode === "TEXT"} onChange={() => setDmMode("TEXT")} className="mt-1 h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
@@ -1242,6 +1261,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   formTemplates={storyFormTemplates}
                   loadingResources={loadingResources}
                   instagramAccountId={account.id}
+                  initialResponseName={responseName}
+                  onResponseNameChange={setResponseName}
                   onUpdate={(patch) => setMessage((current) => ({ ...current, ...patch }))}
                   keywordValid={keywordMatchMode === "CONTAINS_ANY" || keywords.length > 0}
                   onContinue={(nextMessage) => {
@@ -1327,6 +1348,63 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           {error && <div role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-6 text-[var(--daira-error-text)]">{error}</div>}
 
 
+        <GlassModalPresence open={Boolean(previewTemplate)} onEscape={() => setPreviewTemplate(null)}>
+          <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreviewTemplate(null); }}>
+            <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="previous-automation-title" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]">
+              <div className="daira-glass-dialog__header flex items-center justify-between border-b p-4">
+                <h2 id="previous-automation-title" className="text-sm font-extrabold text-[var(--daira-heading)]">{previewTemplate?.title?.trim() || "پاسخ بدون نام"}</h2>
+                <button type="button" aria-label="بستن" onClick={() => setPreviewTemplate(null)} className="daira-glass-dialog__close rounded-lg p-2"><X size={18}/></button>
+              </div>
+              <div className="space-y-3 overflow-y-auto p-4 text-sm leading-7 text-[var(--daira-heading)]">
+                <p className="text-xs text-[var(--daira-text-secondary)]">کلمات کلیدی: {previewTemplate?.keyword || "تمام کامنت‌ها"}</p>
+                {previewTemplate?.commentReplyText && readPublicCommentReplies(previewTemplate.commentReplyText).map((reply, i) =>
+                  <div key={i} className="daira-flow-glass rounded-xl p-3"><span className="mb-1 block text-xs font-bold">پاسخ زیر کامنت {new Intl.NumberFormat("fa-IR").format(i+1)}</span><p className="whitespace-pre-wrap">{reply}</p></div>
+                )}
+                {previewTemplate && normalizeMessages(previewTemplate.messages).map((entry, i) =>
+                  <div key={entry.id || i} className="daira-flow-glass space-y-2 rounded-xl p-3">
+                    <p className="text-xs font-bold text-[var(--daira-text-secondary)]">پیام {new Intl.NumberFormat("fa-IR").format(i+1)} — {entry.messageType}</p>
+                    {entry.text && <p className="whitespace-pre-wrap break-words">{entry.text}</p>}
+                    {entry.mediaUrl && entry.messageType === "IMAGE" && <img src={entry.mediaUrl} alt="" className="max-h-60 w-full rounded-xl object-contain"/>}
+                    {entry.mediaUrl && entry.messageType === "AUDIO" && <audio src={entry.mediaUrl} controls className="w-full"/>}
+                    {entry.mediaUrl && entry.messageType === "VIDEO" && <video src={entry.mediaUrl} controls className="w-full"/>}
+                    {entry.quickReplies.map((reply) => <div key={reply.id} className="rounded-lg bg-[var(--daira-surface-hover)] p-2 text-xs"><strong>{reply.title}</strong> — {reply.destinationText || reply.destinationQuestion || reply.destinationType}</div>)}
+                  </div>
+                )}
+              </div>
+              <div className="daira-glass-dialog__footer flex gap-2 border-t p-4">
+                <button type="button" disabled={!previewTemplate} onClick={() => { if (previewTemplate) router.push((triggerType === "COMMENT_KEYWORD" ? "/dashboard/comment-automation/" : "/dashboard/story-automation/") + encodeURIComponent(previewTemplate.id)); }} className="daira-glass-dialog__secondary flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold"><span>ویرایش پاسخ</span><Pencil size={15}/></button>
+                <button type="button" disabled={!previewTemplate} onClick={() => { if (previewTemplate) applyAutomationTemplate(previewTemplate); setPreviewTemplate(null); }} className="daira-glass-dialog__primary min-h-11 flex-1 rounded-xl px-3 text-xs font-bold">استفاده از پاسخ</button>
+              </div>
+            </div>
+          </div>
+        </GlassModalPresence>
+        <GlassModalPresence open={editScopeOpen} onEscape={() => setEditScopeOpen(false)}>
+          <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditScopeOpen(false); }}>
+            <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="edit-response-scope-title" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]">
+              <div className="daira-glass-dialog__header flex items-center justify-between border-b p-4">
+                <h2 id="edit-response-scope-title" className="text-sm font-extrabold text-[var(--daira-heading)]">اعمال تغییرات پاسخ</h2>
+                <button type="button" aria-label="بستن" onClick={() => setEditScopeOpen(false)} className="daira-glass-dialog__close rounded-lg p-2"><X size={18}/></button>
+              </div>
+              <p className="px-4 pt-4 text-xs leading-6 text-[var(--daira-text-secondary)]">این پاسخ به چند محتوا متصل است. تیک محتوایی را که نباید تغییر کند بردار.</p>
+              <div className="space-y-2 overflow-y-auto p-4">
+                {originalMediaIds.map((id) => {
+                  const media = linkedMediaItems.find((item) => item.id === id);
+                  return <label key={id} className="daira-flow-glass flex min-h-16 cursor-pointer items-center gap-3 rounded-xl p-3">
+                    <input type="checkbox" checked={editScopeIds.includes(id)} onChange={(event) => setEditScopeIds((current) => event.target.checked ? [...current,id] : current.filter((item) => item !== id))} className="h-5 w-5 accent-[var(--daira-primary)]"/>
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--daira-surface-hover)]">
+                      {media?.thumbnail_url || media?.media_url ? <img alt="" src={media.thumbnail_url || media.media_url || ""} className="h-full w-full object-cover"/> : <Camera size={18} className="text-[var(--daira-text-secondary)]"/>}
+                    </div>
+                    <span className="min-w-0 flex-1 truncate text-xs font-bold text-[var(--daira-heading)]">{media?.caption?.trim() || (media?.media_product_type === "REELS" ? "ریلز" : "محتوای متصل")}</span>
+                  </label>;
+                })}
+              </div>
+              <div className="daira-glass-dialog__footer flex gap-2 border-t p-4">
+                <button type="button" onClick={() => setEditScopeOpen(false)} className="daira-glass-dialog__secondary min-h-11 flex-1 rounded-xl border px-3 text-xs font-bold">انصراف</button>
+                <button type="button" disabled={!editScopeIds.length || saving} onClick={() => { setEditScopeOpen(false); void saveAutomation(undefined, editScopeIds); }} className="daira-glass-dialog__primary min-h-11 flex-1 rounded-xl px-3 text-xs font-bold disabled:opacity-50">اعمال برای {new Intl.NumberFormat("fa-IR").format(editScopeIds.length)} محتوا</button>
+              </div>
+            </div>
+          </div>
+        </GlassModalPresence>
         {mediaDialogOpen && (
           <ContentSelectionDialog
             items={mediaItems}
