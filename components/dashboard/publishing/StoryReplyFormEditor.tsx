@@ -185,6 +185,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
                 instagramAccountId={instagramAccountId}
                 message={{
                   id: reply.id,
+                  savedResponseId: reply.savedResponseId || null,
                   messageType: reply.destinationType,
                   text: reply.destinationType === "FORM" ? reply.destinationQuestion : reply.destinationText,
                   mediaUrl: reply.destinationMediaUrl,
@@ -196,6 +197,7 @@ function StoryAnswer({ reply, index, level, instagramAccountId, showcases, loadi
                 allowedTypes={[reply.destinationType]}
                 prefix="پاسخ"
                 onUpdate={(patch) => onChange({
+                  ...(patch.savedResponseId !== undefined ? { savedResponseId: patch.savedResponseId } : {}),
                   ...(patch.messageType !== undefined ? { destinationType: patch.messageType } : {}),
                   ...(patch.text !== undefined ? (reply.destinationType === "FORM"
                     ? { destinationQuestion: patch.text } : { destinationText: patch.text }) : {}),
