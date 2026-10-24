@@ -442,11 +442,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   async function saveAutomation(finalMessage?: MessageDraft, applyScope?: string[]) {
     if (saving) return;
     if (isEditing && triggerType === "STORY_REPLY_KEYWORD" && !canSaveStoryEdit) return;
-    if (triggerType === "COMMENT_KEYWORD" && !canSaveComment) {
+    if (triggerType === "COMMENT_KEYWORD" && (isEditing || creationMode === "new") && !canSaveComment) {
       setError(commentFormError || "برای ذخیره، ابتدا تغییری در پاسخ خودکار ایجاد کنید.");
       return;
     }
-    if (!responseName.trim() || responseName.trim().length > 80) { setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه)."); return; }
+    if ((isEditing || creationMode === "new") && (!responseName.trim() || responseName.trim().length > 80)) { setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه)."); return; }
     if (isEditing && triggerType === "COMMENT_KEYWORD" && originalMediaIds.length > 1 && !applyScope) {
       setEditScopeIds([...originalMediaIds]);
       setEditScopeOpen(true);
