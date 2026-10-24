@@ -11,6 +11,7 @@ import type { StoryFormTemplate } from "./publishing/PublishingStoryAutomationSe
 import { createEmptyMessage, normalizeMessages, validateMessages, type MessageDraft, type QuickReplyDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import { dairaPalette } from "../../lib/design-system/palette";
 import ContentSelectionDialog from "./ContentSelectionDialog";
+import GlassModalPresence from "./GlassModalPresence";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
@@ -25,6 +26,7 @@ export type EditableCommentAutomation = {
   mediaId: string | null;
   mediaIds?: string | null;
   keyword: string | null;
+  title?: string | null;
   keywordMatchMode?: string | null;
   commentReplyText?: string | null;
   likeStoryReply?: boolean;
@@ -52,7 +54,7 @@ function readSavedLinks(raw: unknown): LinkButton[] {
   }
   return [];
 }
-type AutomationTemplate = { id: string; triggerType: string; keyword?: string | null; keywordMatchMode?: string | null; commentReplyText?: string | null; requireFollow?: boolean; followGateText?: string | null; followGateButtonText?: string | null; isActive?: boolean; mediaId?: string | null; messages?: unknown; };
+type AutomationTemplate = { id: string; title?: string | null; triggerType: string; keyword?: string | null; keywordMatchMode?: string | null; commentReplyText?: string | null; requireFollow?: boolean; followGateText?: string | null; followGateButtonText?: string | null; isActive?: boolean; mediaId?: string | null; messages?: unknown; };
 
 type Props = {
   account: Account;
@@ -157,6 +159,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     });
     return {
       mediaIds,
+      responseName: editAutomation.title || "",
       keyword: editAutomation.keyword || "",
       keywordMatchMode: editAutomation.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" as const : "EXACT" as const,
       commentReplies: (() => { const previous = readPublicCommentReplies(editAutomation.commentReplyText); return [...previous, ...Array(Math.max(0, 3 - previous.length)).fill("")]; })(),
@@ -175,11 +178,16 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [extraMessages, setExtraMessages] = useState<MessageDraft[]>(() => initialEditState?.extraMessages ?? []);
   const [extraLinks, setExtraLinks] = useState<Record<string, LinkButton[]>>(() => initialEditState?.extraLinks ?? {});
   const [keyword, setKeyword] = useState(() => initialEditState?.keyword ?? "");
+  const [responseName, setResponseName] = useState(() => initialEditState?.responseName ?? "");
   const [keywordDraft, setKeywordDraft] = useState("");
   const [keywordMatchMode, setKeywordMatchMode] = useState<"EXACT" | "CONTAINS_ANY">(() => initialEditState?.keywordMatchMode ?? "EXACT");
   const MAX_KEYWORDS = 10;
   const MAX_LINK_BUTTONS = 3;
   const [linkButtons, setLinkButtons] = useState<LinkButton[]>(() => initialEditState?.linkButtons ?? [{ title: "", url: "" }]);
+  const [linkedMediaItems, setLinkedMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null}>>([]);
+  const [editScopeOpen, setEditScopeOpen] = useState(false);
+  const [editScopeIds, setEditScopeIds] = useState<string[]>([]);
+  const originalMediaIds = useMemo(() => editAutomation ? Array.from(new Set([...(editAutomation.mediaId ? [editAutomation.mediaId] : []), ...(editAutomation.mediaIds || "").split(",").map((id) => id.trim()).filter(Boolean)])) : [], [editAutomation]);
   const [mediaItems, setMediaItems] = useState<Array<{id:string; caption?:string; media_type?:string; media_product_type?:string; thumbnail_url?:string|null; media_url?:string|null; timestamp?:string}>>([]);
   const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(() => initialEditState?.mediaIds ?? (mediaId ? [mediaId] : []));
   const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
@@ -310,12 +318,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   const keywords = useMemo(() => keyword.split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean), [keyword]);
   const formSnapshot = JSON.stringify({
-    mediaIds: [...selectedMediaIds].sort(), keyword, keywordMatchMode, commentReplies,
+    mediaIds: [...selectedMediaIds].sort(), responseName, keyword, keywordMatchMode, commentReplies,
     likeStoryReply, isActive, requireFollow, followGateText, followGateButtonText, dmMode,
     linkButtons, message, extraMessages, extraLinks,
   });
   const originalSnapshot = initialEditState ? JSON.stringify({
     mediaIds: [...initialEditState.mediaIds].sort(),
+    responseName: initialEditState.responseName,
     keyword: initialEditState.keyword,
     keywordMatchMode: initialEditState.keywordMatchMode,
     commentReplies: initialEditState.commentReplies,
@@ -409,6 +418,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 caption: "استوری اینستاگرام",
               }));
         const availableIds = new Set<string>(availableMedia.map((item: { id: string }) => item.id));
+        setLinkedMediaItems(mediaResult.data);
         setMediaItems(sortNewestFirst(availableMedia));
         if (!isEditing) {
           setSelectedMediaIds((current) => current.filter((id) => availableIds.has(id)));
@@ -427,16 +437,25 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     setKeywordDraft("");
   }
 
-  async function saveAutomation(finalMessage?: MessageDraft) {
+  async function saveAutomation(finalMessage?: MessageDraft, applyScope?: string[]) {
     if (saving) return;
     if (isEditing && triggerType === "STORY_REPLY_KEYWORD" && !canSaveStoryEdit) return;
     if (triggerType === "COMMENT_KEYWORD" && !canSaveComment) {
       setError(commentFormError || "برای ذخیره، ابتدا تغییری در پاسخ خودکار ایجاد کنید.");
       return;
     }
+    if (!responseName.trim() || responseName.trim().length > 80) { setError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه)."); return; }
+    if (isEditing && triggerType === "COMMENT_KEYWORD" && originalMediaIds.length > 1 && !applyScope) {
+      setEditScopeIds([...originalMediaIds]);
+      setEditScopeOpen(true);
+      return;
+    }
+    if (applyScope && !applyScope.length) { setError("حداقل یک محتوا را برای ویرایش انتخاب کن."); return; }
     const cleanKeywords = keywords;
     const currentMessage = finalMessage ?? message;
-    const targetMediaIds = Array.from(new Set(selectedMediaIds.filter(Boolean)));
+    const targetMediaIds = Array.from(new Set(applyScope
+      ? [...applyScope, ...selectedMediaIds.filter((id) => !originalMediaIds.includes(id))]
+      : selectedMediaIds.filter(Boolean)));
     const normalizedLinkButtons = linkButtons.map((button) => ({ ...button, url: normalizeExternalLink(button.url) }));
 
     if (isEditing && editAutomation) {
@@ -463,6 +482,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             credentials: "include",
             body: JSON.stringify({
               expectedUpdatedAt: editAutomation.updatedAt,
+              title: responseName.trim(),
               mediaId: targetMediaIds[0],
               keywordMatchMode,
               keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
@@ -537,6 +557,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             mediaIds: targetMediaIds,
             sourceMediaId: editingMediaId || (initialEditState?.mediaIds.length === 1 ? initialEditState.mediaIds[0] : null),
             expectedUpdatedAt: editAutomation.updatedAt,
+            title: responseName.trim(),
             commentReplyVariants: validatePublicCommentReplies(commentReplies),
             requireFollow,
             followGateText: requireFollow ? followGateText.trim() : null,
@@ -626,6 +647,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         credentials: "include",
         body: JSON.stringify({
           instagramAccountId: account.id,
+          title: responseName.trim(),
           triggerType,
           mediaId: triggerType === "COMMENT_KEYWORD" ? (targetMediaIds.length === 1 ? targetMediaIds[0] : null) : targetMediaIds[0] || null,
           keyword: keywordMatchMode === "CONTAINS_ANY" ? null : cleanKeywords.join(","),
@@ -935,11 +957,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         <div className="mb-2 mt-6"><AutomationSectionGuide>۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن.</AutomationSectionGuide></div>
         <section aria-label="روش پاسخ" className="space-y-2">
           <div role="radiogroup" aria-label="روش پاسخ خودکار" className="grid grid-cols-2 gap-2">
-            <label className={"flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "new" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
+            <label className={"daira-flow-glass flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "new" ? "border-[var(--daira-primary)] !bg-[var(--daira-outline-hover-bg)]" : "hover:border-[var(--daira-outline)]")}>
               <input type="radio" name="automation-creation-mode" value="new" checked={creationMode === "new"} onChange={startNewAutomation} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
               <span className="flex min-h-10 min-w-0 flex-1 items-center justify-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">ساخت پاسخ جدید</strong></span>
             </label>
-            <label className={"flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "existing" ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-white hover:border-[var(--daira-outline)]")}>
+            <label className={"daira-flow-glass flex min-h-[68px] cursor-pointer items-center gap-2.5 rounded-xl border p-3 transition " + (creationMode === "existing" ? "border-[var(--daira-primary)] !bg-[var(--daira-outline-hover-bg)]" : "hover:border-[var(--daira-outline)]")}>
               <input type="radio" name="automation-creation-mode" value="existing" checked={creationMode === "existing"} onChange={() => { setCreationMode("existing"); setError(""); }} className="h-4 w-4 shrink-0 accent-[var(--daira-primary)]" />
               <span className="flex min-h-10 min-w-0 flex-1 items-center justify-center"><strong className="text-center text-xs leading-5 text-[var(--daira-heading)]">استفاده از پاسخ‌های قبلی</strong></span>
             </label>
@@ -952,8 +974,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           <div className="space-y-3">
             <div className="mb-2 mt-6"><AutomationSectionGuide>۳. پاسخ قبلی — پاسخ موردنظرت را انتخاب کن؛ سپس دکمه زیر فهرست را بزن.</AutomationSectionGuide></div>
             <section
-                className="rounded-2xl border p-3"
-                style={{ borderColor: dairaPalette.border, background: dairaPalette.background.surface }}
+                className="daira-flow-glass rounded-2xl p-3"
               >
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div />
@@ -988,7 +1009,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                       >
                         <span className="flex min-w-0 flex-1 flex-col gap-1">
                           <strong className="block text-xs font-bold leading-5" style={{ color: dairaPalette.text.heading }}>
-                            {(template.keyword || "").split(/[,،;؛\n]+/).filter(Boolean).slice(0, 3).join("، ") || "بدون کلمه کلیدی"}
+                            {(template.title?.trim() ? (triggerType === "COMMENT_KEYWORD" ? "پاسخ خودکار کامنت - " : "پاسخ خودکار استوری - ") + template.title.trim() : "پاسخ بدون نام")}
                           </strong>
                           {preview && <span className="block text-[10px] leading-4" style={{ color: dairaPalette.text.body }}>{preview}</span>}
                         </span>
@@ -1024,6 +1045,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             )}
             {(creationMode === "new" || isEditing) && (
             <div className="space-y-5">
+              <section className="daira-flow-glass space-y-2 rounded-2xl p-4 sm:p-5">
+                <label htmlFor="automation-response-name" className="block text-sm font-bold text-[var(--daira-heading)]">نام پاسخ</label>
+                <input id="automation-response-name" value={responseName} onChange={(event) => setResponseName(event.target.value)}
+                  maxLength={80} placeholder="مثلاً کفش"
+                  className="w-full rounded-xl border border-[var(--daira-input-border)] bg-[var(--daira-surface)] px-3.5 py-3 text-base text-[var(--daira-heading)] outline-none focus:border-[var(--daira-input-focus)]"
+                  style={{fontSize:"16px"}} />
+                <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">نامی برای این پاسخ انتخاب کن تا بتوانی بعداً دوباره از آن استفاده کنی.</p>
+              </section>
             <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? (isEditing ? "۲. شرط فعال‌سازی — روش فعال شدن پاسخ خودکار را ویرایش کن." : "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص.") : (isEditing ? "۲. شرط فعال‌سازی — کلمات کلیدی ریپلای استوری را ویرایش کن." : "۳. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند.")}</AutomationSectionGuide></div>
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
               {triggerType === "COMMENT_KEYWORD" && (
