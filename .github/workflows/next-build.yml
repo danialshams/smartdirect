@@ -98,6 +98,9 @@ jobs:
       - name: Test comment reply variants and RTL support actions
         run: npx tsx scripts/test-comment-reply-variants.ts
 
+      - name: Verify reusable reply scope, naming and regression coverage
+        run: npx tsx scripts/test-reusable-response-scopes.ts
+
       - name: Build application
         env:
           NODE_ENV: production
