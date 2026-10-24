@@ -3,6 +3,8 @@
  */
 export type ResponseUsageSelection = {
   messageId: string;
+  quickReplyId?: string;
+  nodePath?: Array<string | number>;
   mediaIds: string[];
   expectedMessageUpdatedAt: string;
   expectedAutomationUpdatedAt: string;
