@@ -164,24 +164,23 @@ assert(variantsField.includes('daira-comment-replies__option') &&
   variantsField.includes('daira-comment-replies__textarea'),
   "Comment inputs should have individually legible glass option cards.");
 assert(commentFlow.includes('useState<"edit" | "replace">("edit")') &&
-  commentFlow.includes('استفاده از پاسخ‌های قبلی') &&
-  commentFlow.includes("selectReplacementTemplate") &&
   !commentFlow.includes("ویرایش پاسخ فعلی") &&
-  !commentFlow.includes("مشاهده جزئیات پاسخ فعلی"),
-  "Comment/story editors must expose editable current details by default, with optional full-rule replacement.");
-assert(liveEditor.includes('useState<"edit" | "replace">("edit")') &&
-  liveEditor.includes('creationMode === "existing"') &&
-  liveEditor.includes("مشاهده پاسخ انتخاب‌شده") &&
+  !commentFlow.includes("مشاهده جزئیات پاسخ فعلی") &&
+  commentFlow.includes('savedResponseId: null'),
+  "Comment/story edits must use independent reply content and show the current editor directly.");
+assert(liveEditor.includes('creationMode==="existing"') &&
+  liveEditor.includes("ثبت پاسخ مستقل") &&
   liveEditor.includes("/api/instagram/live-media") &&
+  !liveEditor.includes("مشاهده پاسخ انتخاب‌شده") &&
   !liveEditor.includes("<CompleteResponseNameField"),
-  "Live editors must show current active live and direct edits without manual name fields.");
+  "Live responses must be independent and editable only in their own edit pages.");
 const directEditor = src("components/dashboard/DirectAutomationEditor.tsx");
 assert(directEditor.includes("hideLibrary") &&
-  !directEditor.includes("<ResponseModeSwitcher") &&
-  !directEditor.includes("<CompleteAutomationPicker") &&
+  directEditor.includes("!original && <section") &&
+  directEditor.includes("ثبت پاسخ مستقل") &&
   !directEditor.includes("<CompleteResponseNameField") &&
   !directEditor.includes("ویرایش پاسخ فعلی"),
-  "Direct replies must open their current editable response without reuse or name controls.");
+  "Direct edit pages stay simple and previous DM replies can be copied on create.");
 const menu = src("components/dashboard/PersistentMenuManager.tsx");
 const icebreaker = src("components/dashboard/IceBreakerManager.tsx");
 assert(menu.includes("hideReusableLibrary") && icebreaker.includes("hideReusableLibrary") &&
@@ -190,7 +189,8 @@ assert(menu.includes("hideReusableLibrary") && icebreaker.includes("hideReusable
 assert(completePicker.includes("کلمات کلیدی:") &&
   responsePreview.includes("نوع پاسخ — ") &&
   !responseLibrary.includes("نام پاسخ</label>") &&
-  modeSwitcher.includes("border-[var(--daira-primary)]"),
+  css.includes(".daira-response-library__mode.is-selected") &&
+  !modeSwitcher.includes('border border-[var(--daira-primary)]'),
   "Existing answers must use type and keywords instead of user-entered names with blue mode outlines.");
 for (const token of [".daira-complete-reply", ".daira-complete-reply__select",
   ".daira-complete-reply__check", ".daira-response-library__mode:disabled"]) {
