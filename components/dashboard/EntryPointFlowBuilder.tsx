@@ -137,6 +137,7 @@ export default function EntryPointFlowBuilder({
         useState<MessageDraft[]>([]);
     const [responseName, setResponseName] = useState("");
     const originalResponseRef = useRef<string | null>(null);
+    const originalNameRef = useRef("");
     const [showcaseDraftChanged, setShowcaseDraftChanged] = useState(false);
     const [keywordDraft, setKeywordDraft] = useState("");
 
@@ -273,6 +274,7 @@ export default function EntryPointFlowBuilder({
         async function loadAutomation() {
             if (!automationId) {
                 originalResponseRef.current = null;
+                originalNameRef.current = "";
                 setMessages([]);
                 setResponseName("");
                 setLoadedAutomationId(null);
@@ -316,7 +318,8 @@ export default function EntryPointFlowBuilder({
                     return;
                 }
 
-                setResponseName(result.data?.title?.trim() || "");
+                originalNameRef.current = result.data?.title?.trim() || "";
+                setResponseName(originalNameRef.current);
                 const loadedMessages = normalizeMessages(result.data?.messages);
                 const originalMessage = loadedMessages[0] ??
                     (result.data?.replyText?.trim()
@@ -821,9 +824,10 @@ export default function EntryPointFlowBuilder({
         if (!onResponseDirtyChange || !automationId ||
             loadedAutomationId !== automationId || originalResponseRef.current === null) return;
         const changed = responseFingerprint(messages[0] ?? createEmptyMessage()) !== originalResponseRef.current
+            || responseName.trim() !== originalNameRef.current
             || showcaseDraftChanged;
         onResponseDirtyChange(changed);
-    }, [automationId, loadedAutomationId, messages, showcaseDraftChanged, onResponseDirtyChange]);
+    }, [automationId, loadedAutomationId, messages, responseName, showcaseDraftChanged, onResponseDirtyChange]);
 
     const currentMessage = messages[0] ?? createEmptyMessage();
     const keywordItems = keyword.split(/[\\n,،;؛]+/).map((item) => item.trim()).filter(Boolean).filter((item, index, list) => list.findIndex((value) => value.toLocaleLowerCase() === item.toLocaleLowerCase()) === index);
@@ -930,7 +934,7 @@ export default function EntryPointFlowBuilder({
                         onUpdate={updateEntryMessage}
                         onSavedChange={setSuccess}
                         initialResponseName={responseName}
-                        onResponseNameChange={setResponseName}
+                        onResponseNameChange={(value) => { setResponseName(value); onDirtyChange?.(true); }}
                         onContinue={(messageOverride) =>
                             saveAutomation(messageOverride)
                         }
