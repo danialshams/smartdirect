@@ -961,8 +961,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           <section aria-label="محتواهای انتخاب‌شده" className="daira-content-select-panel rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="daira-keyword-field flex items-center gap-2">
-                <strong className="text-sm font-bold text-[var(--daira-heading)]">{triggerType === "STORY_REPLY_KEYWORD" ? "استوری انتخاب‌شده" : "محتواهای انتخاب‌شده"}</strong>
-                <span className="rounded-full bg-[var(--daira-surface-hover)] px-2.5 py-1 text-xs font-bold text-[var(--daira-text)]" aria-live="polite">{new Intl.NumberFormat("fa-IR").format(selectedMediaCount)} {triggerType === "STORY_REPLY_KEYWORD" ? "استوری" : "محتوا"}</span>
+                <strong className="text-sm font-bold text-[var(--daira-heading)]">محتواهای انتخاب‌شده</strong>
+                <span className="rounded-full bg-[var(--daira-surface-hover)] px-2.5 py-1 text-xs font-bold text-[var(--daira-text)]" aria-live="polite">{new Intl.NumberFormat("fa-IR").format(selectedMediaCount)} محتوا</span>
               </div>
               <button type="button" onClick={openMediaDialog} aria-haspopup="dialog" aria-expanded={mediaDialogOpen} className="daira-content-select-button inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-white">
                 <ImageIcon size={16} aria-hidden="true" /> افزودن یا تغییر محتوا
@@ -985,14 +985,14 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         <X size={16} strokeWidth={2.5} aria-hidden="true" />
                       </button>
                       <p className="truncate px-2 py-2 text-center text-[11px] font-semibold text-[var(--daira-text)]">
-                        {triggerType === "STORY_REPLY_KEYWORD" ? "استوری" : item?.media_product_type === "REELS" ? "ریلز" : item?.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : item ? "پست" : "محتوای قبلی"}
+                        {item?.media_product_type === "REELS" ? "ریلز" : item?.media_type === "CAROUSEL_ALBUM" ? "پست اسلایدی" : item ? "پست" : "محتوای قبلی"}
                       </p>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <p className="rounded-xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 py-6 text-center text-xs leading-6 text-[var(--daira-text)]">{triggerType === "STORY_REPLY_KEYWORD" ? "برای ذخیره، یک استوری انتخاب کن." : "هنوز محتوایی انتخاب نشده است. برای ذخیره حداقل یک محتوا انتخاب کنید."}</p>
+              <p className="rounded-xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 py-6 text-center text-xs leading-6 text-[var(--daira-text)]">هنوز محتوایی انتخاب نشده است. برای ذخیره حداقل یک محتوا انتخاب کنید.</p>
             )}
             {!mediaLoading && unknownMediaIds.length > 0 && (
               <p className="mt-3 text-xs leading-6 text-[var(--daira-text)]">پیش‌نمایش {new Intl.NumberFormat("fa-IR").format(unknownMediaIds.length)} محتوای قدیمی فعلاً در دسترس نیست؛ اتصال آن‌ها حفظ شده است.</p>
@@ -1448,7 +1448,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             items={mediaItems}
             selectedIds={draftSelectedMediaIds}
             loading={mediaLoading}
-            mode={triggerType === "STORY_REPLY_KEYWORD" ? "story" : "feed"}
+            mode="feed"
             onToggle={(id) => setDraftSelectedMediaIds((current) =>
               triggerType === "COMMENT_KEYWORD"
                 ? (current.includes(id) ? current.filter((value) => value !== id) : [...current, id])
