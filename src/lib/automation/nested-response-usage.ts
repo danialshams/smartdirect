@@ -132,7 +132,8 @@ export function editQuickReplyDestination(raw: string | null, path: ReplyPath,
       if (!counterpart || !destination.payload || counterpart.payload !== destination.payload) continue;
       for (const key of ["savedResponseId", "text", "destinationText", "question", "destinationQuestion",
         "mediaUrl", "destinationMediaUrl", "mediaId", "destinationMediaId",
-        "showcaseId", "destinationShowcaseId", "formId", "destinationFormId"])
+        "showcaseId", "destinationShowcaseId", "formId", "destinationFormId",
+        "quickReplies", "destinationQuickReplies"])
         if (key in destination) counterpart[key] = destination[key];
     }
   }
