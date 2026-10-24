@@ -50,7 +50,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
     setVisited((current) => current.includes(id) ? current : [...current, id]);
     setExpandedId((current) => current === id ? null : id);
   };
-  const label = (item: T) => `${item.keyword?.trim() ? "کلمات کلیدی: " + item.keyword : "فعال‌سازی برای همه"} - ${item.keyword?.trim() ? "کلمات کلیدی: " + item.keyword : "تمام پیام‌ها"}`;
+  const label = (item: T) => `${kind === "LIVE" ? "پاسخ لایو" : kind === "COMMENT_KEYWORD" ? "پاسخ کامنت" : kind === "STORY_REPLY_KEYWORD" ? "پاسخ استوری" : "پاسخ دایرکت"} - ${item.keyword?.trim() ? "کلمات کلیدی: " + item.keyword : "فعال‌سازی برای همه"}`;
   const renderDetail = (item: T) => {
     const messages = normalizeMessages(item.messages || []);
     const displayedMessages = kind === "LIVE"
@@ -134,10 +134,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
             <div className="min-h-0">
               <div className="space-y-3 border-t border-[var(--daira-glass-rim)] p-3">
                 {visited.includes(item.id) && renderDetail(item)}
-                {false && onEdit && <button type="button" onClick={() => onEdit(item)}
-                  className="daira-response-library__action flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold">
-                  <Pencil size={15}/> ویرایش پاسخ اصلی
-                </button>}
+                
               </div>
             </div>
           </div>

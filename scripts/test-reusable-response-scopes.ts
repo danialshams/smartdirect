@@ -280,7 +280,7 @@ const savedResponsesApi = readFileSync("app/api/saved-responses/route.ts", "utf8
 assert(savedResponsesApi.includes("where: { savedResponseId: { in: sourceIds }, automation: { instagramAccountId } }"),
   "Usage lookup must be restricted to the selected Instagram account.");
 const nestedForm = readFileSync("components/dashboard/publishing/StoryReplyFormEditor.tsx","utf8");
-assert(nestedForm.includes("ReusableResponseLibrary") && nestedForm.includes("allowedTypes={[reply.destinationType]}"),
-  "Nested form destinations must filter saved responses by compatible type.");
+assert(!nestedForm.includes("<ReusableResponseLibrary") && nestedForm.includes('reply.destinationType === "TEXT"'),
+  "Nested branches must edit their own independent content without a shared response picker.");
 assert(library.includes('mode !== "existing"'), "Nested reply lists must fetch lazily, not on every mount.");
 console.log("REUSABLE_RESPONSES_SCOPED_EDIT_AND_NAME_TESTS_OK");
