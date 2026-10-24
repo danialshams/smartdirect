@@ -339,7 +339,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   function selectReplacementTemplate(template: AutomationTemplate) {
     const raw = Array.isArray(template.messages) ? template.messages : [];
-    const messages = normalizeMessages(raw);
+    const sourceMessages = normalizeMessages(raw);
+    const messages = template.triggerType === "COMMENT_KEYWORD" && template.sendDm === false
+      ? [] : sourceMessages;
     const first = messages[0] ?? createEmptyMessage();
     const firstLinks = readSavedLinks(raw[0]);
     const nextExtraLinks: Record<string, LinkButton[]> = {};
