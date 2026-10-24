@@ -226,7 +226,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (mediaIds.some((value) => occupied.has(value)))
       throw new EditError("یکی از محتواهای انتخابی به پاسخ دیگری متصل است.", 409);
     for (const item of messages) {
-      try { await validateSavedResponseOrigin(item.savedResponseId, automation.instagramAccountId, session.user.id); }
+      try { await validateSavedResponseOrigin(item.savedResponseId, automation.instagramAccountId, session.user.id, item.messageType); }
       catch (error) { throw new EditError(error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست."); }
       if (item.messageType === "SHOWCASE") {
         const showcase = await prisma.showcase.findFirst({ where: { id: item.showcaseId, instagramAccountId: automation.instagramAccountId, userId: session.user.id }, select: { id: true } });
