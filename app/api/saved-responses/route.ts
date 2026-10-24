@@ -42,7 +42,26 @@ export async function GET(request: NextRequest) {
       where: { userId: session.user.id, instagramAccountId },
       orderBy: { updatedAt: "desc" },
     });
-    return NextResponse.json({ success: true, data });
+    // Embed owned asset previews without changing the reusable template record.
+    const showcaseIds = data.map((item) => item.showcaseId).filter((id): id is string => Boolean(id));
+    const formIds = data.map((item) => item.formId).filter((id): id is string => Boolean(id));
+    const [showcases, forms] = await Promise.all([
+      showcaseIds.length ? prisma.showcase.findMany({
+        where: { id: { in: showcaseIds }, userId: session.user.id, instagramAccountId },
+        include: { items: { where: { isActive: true }, orderBy: { order: "asc" } } },
+      }) : Promise.resolve([]),
+      formIds.length ? prisma.form.findMany({
+        where: { id: { in: formIds }, userId: session.user.id, instagramAccountId },
+        include: { fields: { orderBy: { order: "asc" } } },
+      }) : Promise.resolve([]),
+    ]);
+    const showcaseMap = new Map(showcases.map((item) => [item.id, item]));
+    const formMap = new Map(forms.map((item) => [item.id, item]));
+    return NextResponse.json({ success: true, data: data.map((item) => ({
+      ...item,
+      showcase: item.showcaseId ? showcaseMap.get(item.showcaseId) || null : null,
+      form: item.formId ? formMap.get(item.formId) || null : null,
+    })) });
   } catch (error) {
     console.error("GET /api/saved-responses error:", error);
     return NextResponse.json({ success: false, error: "دریافت پاسخ‌های ذخیره‌شده ناموفق بود." }, { status: 500 });
