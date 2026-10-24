@@ -193,9 +193,9 @@ assert.throws(() => checkedUsagePlan([], [
 const scopedRoute = readFileSync("app/api/saved-responses/[id]/apply/route.ts", "utf8");
 assert(scopedRoute.includes("prisma.$transaction"), "Applying reply changes must be atomic.");
 assert(scopedRoute.includes("mixedForks.set(automationId, { id: clone.id, replyMap })"));
-assert(scopedRoute.includes('type === "FORM" && mixedGroups.has(automationId)') &&
+assert(scopedRoute.includes('const directOwner = type === "FORM"') &&
   scopedRoute.includes("draftText = reconcileActiveQuickReply(original.replyText, encodeReply(quickReplies[index]))"),
-  "Mixed FORM updates must compose the parent and nested edits on one original Quick Reply snapshot.");
+  "FORM parent and nested edits must be composed on one original Quick Reply snapshot.");
 assert(scopedRoute.includes("baseText = reconcileActiveQuickReply(fresh.replyText, encodeReply(quickReplies[index]))"),
   "Partial mixed FORM updates must reconcile the cloned root before editing nested replies.");
 assert(scopedRoute.includes("preserveUncheckedNestedReply(originalData.get(rootId)?.replyText"),
