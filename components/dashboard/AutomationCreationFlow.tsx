@@ -2,7 +2,7 @@
 
 import { Camera, Image as ImageIcon, Lightbulb, MessageCircle, Send, ShieldCheck, Trash2, X } from "lucide-react";
 import CommentReplyVariantsField from "./CommentReplyVariantsField";
-import { readPublicCommentReplies, validatePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
+import { readPublicCommentReplies, validatePublicCommentReplies, publicCommentReplyKey } from "@/lib/automation/comment-reply-variants";
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -355,7 +355,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     selectedMediaIds.length === 0 ? "حداقل یک پست یا ریلز انتخاب کنید." :
     keywordMatchMode === "EXACT" && keywords.length === 0 ? "حداقل یک کلمه کلیدی وارد کنید." :
     keywords.length > MAX_KEYWORDS ? "حداکثر ده کلمه کلیدی مجاز است." :
-    commentReplies.length < 3 || commentReplies.length > 5 || commentReplies.some((text) => !text.trim() || text.trim().length > 2000) || new Set(commentReplies.map((text) => text.trim())).size !== commentReplies.length ? "سه تا پنج پاسخ متفاوت زیر کامنت را کامل وارد کنید." :
+    commentReplies.length < 3 || commentReplies.length > 5 || commentReplies.some((text) => !text.trim() || text.trim().length > 2000) || new Set(commentReplies.map(publicCommentReplyKey)).size !== commentReplies.length ? "سه تا پنج پاسخ متفاوت زیر کامنت را کامل وارد کنید." :
     enteredDm && !validDm ? "همه پیام‌های دایرکت را کامل وارد کنید." :
     enteredDm && (!mainLinksValid || !extraLinksValid) ? "عنوان و آدرس دکمه‌های لینک را کامل و معتبر وارد کنید." :
 
@@ -1068,7 +1068,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
             {triggerType === "COMMENT_KEYWORD" && (
               <div className="space-y-3">
-              <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. پاسخ زیر کامنت — حداقل سه و حداکثر پنج پاسخ متفاوت تنظیم کن؛ برای هر کامنت یکی تصادفی انتخاب می‌شود تا تکرار کاهش یابد." : "۴. پاسخ زیر کامنت — سه تا پنج متن متفاوت بنویس؛ برای هر کامنت یکی تصادفی منتشر می‌شود تا پاسخ‌های یکسان کمتر شوند."}</AutomationSectionGuide></div>
+              <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۳. پاسخ زیر کامنت — حداقل سه و حداکثر پنج پاسخ متفاوت تنظیم کن؛ برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم در اینستاگرام، بهتر است چند پاسخ متفاوت تنظیم کنی." : "۴. پاسخ زیر کامنت — سه تا پنج متن متفاوت بنویس؛ برای کاهش تکرار پاسخ‌ها و احتمال شناسایی رفتار اسپم در اینستاگرام، بهتر است چند پاسخ متفاوت تنظیم کنی."}</AutomationSectionGuide></div>
               <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                 <div className="mb-3 flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><MessageCircle size={15} strokeWidth={2.1} aria-hidden="true" /></span><strong className="text-sm font-bold text-[var(--daira-heading)]">پاسخ‌های عمومی به کامنت</strong></div>
                 <CommentReplyVariantsField values={commentReplies} onChange={setCommentReplies} disabled={saving} />
