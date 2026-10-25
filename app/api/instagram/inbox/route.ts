@@ -866,18 +866,38 @@ export async function POST(request: NextRequest) {
       return jsonError("گفتگو پیدا نشد.", 404);
     }
 
-    const lastInbound = await prisma.conversationMessage.findFirst({
-      where: {
-        conversationId: conversation.id,
-        direction: "INBOUND",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      select: {
-        createdAt: true,
-      },
-    });
+    // Reopening a fully read conversation must not trigger an unnecessary
+    // Meta sender_action request or access-token refresh. The conversation
+    // ownership check above still applies to every call.
+    if (action === "mark_seen") {
+      const unreadInbound = await prisma.conversationMessage.findFirst({
+        where: {
+          conversationId: conversation.id,
+          direction: "INBOUND",
+          readAt: null,
+        },
+        select: { id: true },
+      });
+      if (!unreadInbound) {
+        return NextResponse.json({ success: true, markedSeen: true });
+      }
+    }
+
+    // The messaging window matters for outgoing messages, not read receipts.
+    const lastInbound = action === "mark_seen"
+      ? null
+      : await prisma.conversationMessage.findFirst({
+          where: {
+            conversationId: conversation.id,
+            direction: "INBOUND",
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            createdAt: true,
+          },
+        });
 
     const messagingWindow = getInstagramMessagingWindow(
       lastInbound?.createdAt ?? null,
