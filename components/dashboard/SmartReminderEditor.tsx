@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardAccountSelection } from "./DashboardAccountContext";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -21,6 +22,8 @@ function Guide({ number, title, hint }: { number: number; title: string; hint: s
 const presets = [15, 30, 60, 120, 360, 720] as const;
 
 export default function SmartReminderEditor({ id }: { id?: string }) {
+  const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
+  const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
   const router = useRouter();
   const [account, setAccount] = useState<Account | null>(null);
   const [automations, setAutomations] = useState<Automation[]>([]);
@@ -37,14 +40,12 @@ export default function SmartReminderEditor({ id }: { id?: string }) {
   const patch = (fields: Partial<Draft>) => setDraft(d => ({ ...d, ...fields }));
 
   useEffect(() => {
+    if (!dashboardReady) return;
     const controller = new AbortController();
     setLoading(true); setError("");
     void (async () => {
       try {
-        const accountsResponse = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include", signal: controller.signal });
-        const accounts = await accountsResponse.json();
-        if (!accountsResponse.ok || !accounts.success) throw new Error(accounts.error || "دریافت پیج ناموفق بود.");
-        const connected = (Array.isArray(accounts.accounts) ? accounts.accounts : []).find((a: Account) => a.isConnected);
+        const connected=activeDashboardAccount;
         if (!connected) throw new Error("ابتدا یک پیج اینستاگرام متصل کن.");
         const response = await fetch("/api/smart-reminders?instagramAccountId=" + encodeURIComponent(connected.id), {
           cache: "no-store", credentials: "include", signal: controller.signal,
@@ -69,7 +70,7 @@ export default function SmartReminderEditor({ id }: { id?: string }) {
       finally { if (!controller.signal.aborted) setLoading(false); }
     })();
     return () => controller.abort();
-  }, [id, retry]);
+  }, [id, retry,dashboardReady,activeDashboardAccount?.id]);
 
   async function save() {
     if (!eligible || !account) return;

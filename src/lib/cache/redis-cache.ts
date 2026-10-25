@@ -2,6 +2,10 @@ import { createQueueRedis } from "@/lib/queue/core";
 
 const DEFAULT_TTL_SECONDS = 300;
 
+// Coalesce concurrent misses inside one server instance so simultaneous
+// dashboard requests do not all call Meta/DB for the same tenant-scoped key.
+const pendingLoads = new Map<string, Promise<unknown>>();
+
 function normalizeTtl(ttlSeconds?: number) {
   const envTtl = Number(process.env.REDIS_CACHE_DEFAULT_TTL_SECONDS);
   const value = ttlSeconds ?? (Number.isFinite(envTtl) && envTtl > 0 ? envTtl : DEFAULT_TTL_SECONDS);
@@ -83,7 +87,18 @@ export async function getOrSetCachedJson<T>(
   const cached = await getCachedJson<T>(key);
   if (cached !== null) return cached;
 
-  const value = await factory();
-  await setCachedJson(key, value, ttlSeconds);
-  return value;
+  const pending = pendingLoads.get(key);
+  if (pending) return pending as Promise<T>;
+
+  const load = (async () => {
+    const value = await factory();
+    await setCachedJson(key, value, ttlSeconds);
+    return value;
+  })();
+  pendingLoads.set(key, load);
+  try {
+    return await load;
+  } finally {
+    if (pendingLoads.get(key) === load) pendingLoads.delete(key);
+  }
 }

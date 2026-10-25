@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardAccountSelection } from "./DashboardAccountContext";
 
 import { useEffect, useState } from "react";
 import { Lightbulb, X } from "lucide-react";
@@ -25,6 +26,8 @@ function Guide({step,title,hint}:{step:number;title:string;hint:string}){
  </div>;
 }
 export default function DirectAutomationEditor({id}:{id?:string}){
+  const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
+  const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
  const [account,setAccount]=useState<Account|null>(null);
  const [original,setOriginal]=useState<Automation|null>(null);
  const [keywords,setKeywords]=useState<string[]>([]);
@@ -52,13 +55,11 @@ export default function DirectAutomationEditor({id}:{id?:string}){
   showcaseDraftChanged,
  });
  useEffect(()=>{
+  if(!dashboardReady)return;
   const controller=new AbortController();setLoading(true);setError("");
   void(async()=>{
    try{
-    const response=await fetch("/api/instagram/accounts",{cache:"no-store",credentials:"include",signal:controller.signal});
-    const body=await response.json();
-    if(!response.ok||!body.success)throw new Error(body.error||"دریافت پیج اینستاگرام ناموفق بود.");
-    const active=(Array.isArray(body.accounts)?body.accounts:[]).find((x:Account)=>x.isConnected) as Account|undefined;
+    const active=activeDashboardAccount;
     if(!active)throw new Error("ابتدا یک پیج اینستاگرام متصل کنید.");
     let existing:Automation|null=null;
     if(id){
@@ -106,7 +107,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
    finally{if(!controller.signal.aborted)setLoading(false);}
   })();
   return ()=>controller.abort();
- },[id,retry]);
+ },[id,retry,dashboardReady,activeDashboardAccount?.id]);
   async function save(prepared?:MessageDraft){
   if(saving||!account||(original&&!hasChanges))return;
   const entries=effectiveKeywords.slice(0,11);

@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardAccountSelection } from "./DashboardAccountContext";
 
 import GlassModalPresence from "./GlassModalPresence";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -16,6 +17,8 @@ type Account = { id: string; igUsername: string; isConnected: boolean };
 type Subscription = { subscribed: boolean; fields: string[]; error?: string };
 
 export default function LiveAutomationList() {
+  const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
+  const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
   const router = useRouter();
   const [account, setAccount] = useState<Account | null>(null);
   const [rules, setRules] = useState<LiveRule[]>([]);
@@ -48,15 +51,13 @@ export default function LiveAutomationList() {
   }, []);
 
   useEffect(() => {
+    if (!dashboardReady) return;
     const controller = new AbortController();
     setLoading(true);
     setError("");
     void (async () => {
       try {
-        const accountsResponse = await fetch("/api/instagram/accounts", { credentials: "include", cache: "no-store", signal: controller.signal });
-        const accountsResult = await accountsResponse.json();
-        if (!accountsResponse.ok || !accountsResult.success) throw new Error(accountsResult.error || "دریافت پیج‌های اینستاگرام ناموفق بود.");
-        const connected = ((accountsResult.accounts || []) as Account[]).find(item => item.isConnected);
+        const connected=activeDashboardAccount;
         if (!connected) throw new Error("ابتدا یک پیج اینستاگرام متصل کن.");
         const [listResponse, subscriptionResponse] = await Promise.all([
           fetch("/api/live-automation?instagramAccountId=" + encodeURIComponent(connected.id), { credentials: "include", cache: "no-store", signal: controller.signal }),
@@ -75,7 +76,7 @@ export default function LiveAutomationList() {
       } finally { if (!controller.signal.aborted) setLoading(false); }
     })();
     return () => controller.abort();
-  }, [refresh]);
+  }, [refresh,dashboardReady,activeDashboardAccount?.id]);
 
   useEffect(() => {
     if (loading || !account || !subscription || subscription.subscribed || subscription.error || subscriptionBusy || autoSubscriptionAttempted.current === account.id) return;

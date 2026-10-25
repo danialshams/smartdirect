@@ -4,13 +4,23 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 const STORAGE_KEY = "daira:active-instagram-account";
 
+export type DashboardAccountInfo = {
+  id: string;
+  igUsername: string;
+  igUserId: string;
+  isConnected: boolean;
+  createdAt: Date;
+};
+
 type DashboardAccountValue = {
+  accounts: DashboardAccountInfo[];
   accountId: string | null;
   isReady: boolean;
   selectAccount: (id: string) => void;
 };
 
 const DashboardAccountContext = createContext<DashboardAccountValue>({
+  accounts: [],
   accountId: null,
   isReady: false,
   selectAccount: () => {},
@@ -19,10 +29,12 @@ const DashboardAccountContext = createContext<DashboardAccountValue>({
 export function DashboardAccountProvider({
   accountId,
   accountIds,
+  accounts = [],
   children,
 }: {
   accountId: string | null;
   accountIds?: string[];
+  accounts?: DashboardAccountInfo[];
   children: ReactNode;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(accountId);
@@ -53,8 +65,8 @@ export function DashboardAccountProvider({
   }, [allowedIds]);
 
   const value = useMemo(
-    () => ({ accountId: selectedId && allowedIds.includes(selectedId) ? selectedId : accountId, isReady, selectAccount }),
-    [selectedId, accountId, isReady, selectAccount, allowedIds],
+    () => ({ accountId: selectedId && allowedIds.includes(selectedId) ? selectedId : accountId, isReady, selectAccount, accounts }),
+    [selectedId, accountId, isReady, selectAccount, allowedIds, accounts],
   );
 
   return <DashboardAccountContext.Provider value={value}>{children}</DashboardAccountContext.Provider>;
@@ -66,4 +78,9 @@ export function useDashboardAccountId() {
 
 export function useDashboardAccountSelection() {
   return useContext(DashboardAccountContext);
+}
+
+/** Accounts are already authenticated and loaded by the server dashboard layout. */
+export function useDashboardAccounts() {
+  return useContext(DashboardAccountContext).accounts;
 }

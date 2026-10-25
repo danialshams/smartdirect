@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardAccountSelection } from "./DashboardAccountContext";
 
 import GlassModalPresence from "./GlassModalPresence";
 import { useEffect, useMemo, useState } from "react";
@@ -15,6 +16,8 @@ const formatWords = (value: string | null) => (value || "").split(/[,،;؛\n]+/)
 const formatDate = (value: string) => value ? new Date(value).toLocaleString("fa-IR-u-ca-persian", { dateStyle: "medium", timeStyle: "short" }) : "";
 const typeLabels: Record<string, string> = { TEXT: "متن", IMAGE: "عکس", VIDEO: "ویدیو", AUDIO: "وویس", SHOWCASE: "ویترین", FORM: "فرم" };
 export default function DirectAutomationList() {
+  const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
+  const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
   const router = useRouter();
   const [rules, setRules] = useState<Rule[]>([]);
   const [search, setSearch] = useState("");
@@ -25,16 +28,14 @@ export default function DirectAutomationList() {
   const [target, setTarget] = useState<Rule | null>(null);
 
   useEffect(() => {
+    if (!dashboardReady) return;
     const controller = new AbortController();
     setLoading(true); setError("");
     void (async () => {
       try {
-        const response = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include", signal: controller.signal });
-        const data = await response.json();
-        if (!response.ok || !data.success) throw new Error(data.error || "دریافت پیج ناموفق بود.");
-        const account = (Array.isArray(data.accounts) ? data.accounts : []).find((item: Account) => item.isConnected);
+        const account=activeDashboardAccount;
         if (!account) throw new Error("پیج اینستاگرام متصل نیست.");
-        const listResponse = await fetch("/api/automations?instagramAccountId=" + encodeURIComponent(account.id),
+        const listResponse = await fetch("/api/automations?view=list&instagramAccountId=" + encodeURIComponent(account.id),
           { cache: "no-store", credentials: "include", signal: controller.signal });
         const list = await listResponse.json();
         if (!listResponse.ok || !list.success) throw new Error(list.error || "دریافت پاسخ‌ها ناموفق بود.");
@@ -50,7 +51,7 @@ export default function DirectAutomationList() {
       }
     })();
     return () => controller.abort();
-  }, [refresh]);
+  }, [refresh,dashboardReady,activeDashboardAccount?.id]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("fa-IR");

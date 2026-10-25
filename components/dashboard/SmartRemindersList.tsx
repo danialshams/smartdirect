@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardAccountSelection } from "./DashboardAccountContext";
 
 import GlassModalPresence from "./GlassModalPresence";
 import { useEffect, useMemo, useState } from "react";
@@ -21,6 +22,8 @@ function duration(minutes: number) {
   return new Intl.NumberFormat("fa-IR").format(hours) + " ساعت" + (rest ? " و " + new Intl.NumberFormat("fa-IR").format(rest) + " دقیقه" : "");
 }
 export default function SmartRemindersList() {
+  const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
+  const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
   const router = useRouter();
   const [account, setAccount] = useState<Account | null>(null);
   const [rules, setRules] = useState<Rule[]>([]);
@@ -33,15 +36,13 @@ export default function SmartRemindersList() {
   const [actionError, setActionError] = useState("");
 
   useEffect(() => {
+    if (!dashboardReady) return;
     const controller = new AbortController();
     setLoading(true);
     setError("");
     void (async () => {
       try {
-        const accountsResponse = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include", signal: controller.signal });
-        const accounts = await accountsResponse.json();
-        if (!accountsResponse.ok || !accounts.success) throw new Error(accounts.error || "دریافت پیج‌های اینستاگرام ناموفق بود.");
-        const connected = (Array.isArray(accounts.accounts) ? accounts.accounts : []).find((a: Account) => a.isConnected);
+        const connected=activeDashboardAccount;
         if (!connected) throw new Error("ابتدا یک پیج اینستاگرام متصل کن.");
         const response = await fetch("/api/smart-reminders?instagramAccountId=" + encodeURIComponent(connected.id), { cache: "no-store", credentials: "include", signal: controller.signal });
         const data = await response.json();
@@ -52,7 +53,7 @@ export default function SmartRemindersList() {
       } finally { if (!controller.signal.aborted) setLoading(false); }
     })();
     return () => controller.abort();
-  }, [refresh]);
+  }, [refresh,dashboardReady,activeDashboardAccount?.id]);
 
   const filtered = useMemo(() => rules.filter(r =>
     [r.text, smartReminderOptionName(r.automation)].some(text => text.toLocaleLowerCase("fa").includes(search.trim().toLocaleLowerCase("fa"))),

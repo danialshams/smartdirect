@@ -633,7 +633,9 @@ export async function GET(request: NextRequest) {
     const visibleConversations = conversations.slice(0, 50);
     const conversationIds = visibleConversations.map((item) => item.id);
 
-    const unread = await prisma.conversationMessage.groupBy({
+    // Independent DB/Redis reads share the same critical path to the inbox.
+    const [unread, lastInboundRows, handoffMap] = await Promise.all([
+      prisma.conversationMessage.groupBy({
       by: ["conversationId"],
       where: {
         conversationId: {
@@ -645,14 +647,9 @@ export async function GET(request: NextRequest) {
       _count: {
         _all: true,
       },
-    });
-
-    const unreadMap = new Map(
-      unread.map((item) => [item.conversationId, item._count._all]),
-    );
-
-    const lastInboundRows = conversationIds.length
-      ? await prisma.conversationMessage.findMany({
+    }),
+      conversationIds.length
+        ? prisma.conversationMessage.findMany({
           where: {
             conversationId: {
               in: conversationIds,
@@ -668,56 +665,22 @@ export async function GET(request: NextRequest) {
             createdAt: true,
           },
         })
-      : [];
+      : [],
+      getHandoffStates(conversationIds),
+    ]);
+
+    const unreadMap = new Map(
+      unread.map((item) => [item.conversationId, item._count._all]),
+    );
 
     const lastInboundMap = new Map(
       lastInboundRows.map((item) => [item.conversationId, item.createdAt]),
     );
 
-    const handoffMap = await getHandoffStates(
-      conversations.map((item) => item.id),
-    );
-
-    const freshConversations = await prisma.conversation.findMany({
-      where: {
-        id: {
-          in: visibleConversations.map((item) => item.id),
-        },
-      },
-      orderBy: [
-        {
-          lastMessageAt: "desc",
-        },
-        {
-          updatedAt: "desc",
-        },
-      ],
-      include: {
-        messages: {
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 1,
-          select: {
-            id: true,
-            direction: true,
-            messageType: true,
-            text: true,
-            mediaUrl: true,
-            mediaId: true,
-            igMessageId: true,
-            readAt: true,
-            seenAt: true,
-            createdAt: true,
-          },
-        },
-        _count: {
-          select: {
-            messages: true,
-          },
-        },
-      },
-    });
+    // The initial list already contains the latest message and count.
+    // Re-querying all 50 conversations duplicates the most expensive query
+    // and delays every inbox navigation without changing the response shape.
+    const freshConversations = visibleConversations;
 
     return NextResponse.json({
       success: true,

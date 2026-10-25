@@ -80,6 +80,9 @@ jobs:
       - name: Verify the single canonical Daira color palette
         run: npm run theme:check
 
+      - name: Verify dashboard performance and atomic save invariants
+        run: npx tsx scripts/test-dashboard-performance.ts
+
       - name: Test complete Daira design system
         run: npx tsx scripts/test-daira-design-system.ts
 
@@ -123,6 +126,13 @@ jobs:
           # declaration; do not rewrite applied production migration history.
           npx prisma db push
           npx tsx scripts/test-durable-webhook-migration.ts
+
+      - name: Test atomic automation response creation and cross-account media references
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          NODE_ENV: test
+        run: npx tsx scripts/test-batch-automation-save.ts
 
       - name: Test saved response provenance and multi-account isolation in PostgreSQL
         env:

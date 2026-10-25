@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardAccountSelection } from "./DashboardAccountContext";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -58,6 +59,8 @@ function Guide({ number, title, hint }: { number: number; title: string; hint?: 
 }
 
 export default function LiveAutomationEditor({ id }: { id?: string }) {
+  const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
+  const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
   const router = useRouter();
   const responseEditorRef = useRef<PublishingStoryAutomationSetupHandle>(null);
   const introSaveRef = useRef<((draft: MessageDraft) => Promise<boolean>) | null>(null);
@@ -82,6 +85,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   const initialVersion = useRef("");
 
   useEffect(() => {
+    if (!dashboardReady) return;
     const controller = new AbortController();
     setLoading(true);
     setLoadingResources(true);
@@ -89,9 +93,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
     setError("");
     void (async () => {
       try {
-        const accountsResponse = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include", signal: controller.signal });
-        const accountsResult = await accountsResponse.json();
-        if (!accountsResponse.ok || !accountsResult.success) throw new Error(accountsResult.error || "دریافت اکانت اینستاگرام ناموفق بود.");
+
         let rule: Rule | null = null;
         if (id) {
           const response = await fetch("/api/live-automation/" + encodeURIComponent(id), { cache: "no-store", credentials: "include", signal: controller.signal });
@@ -99,10 +101,9 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
           if (!response.ok || !result.success) throw new Error(result.error || "پاسخ لایو پیدا نشد.");
           rule = result.data as Rule;
         }
-        const accounts = (accountsResult.accounts || []) as Account[];
         const connected = rule
-          ? accounts.find(a => a.id === rule?.instagramAccountId && a.isConnected)
-          : accounts.find(a => a.isConnected);
+          ? dashboardAccounts.find(a => a.id === rule?.instagramAccountId && a.id === dashboardAccountId && a.isConnected)
+          : activeDashboardAccount;
         if (!connected) throw new Error("ابتدا یک پیج اینستاگرام متصل کن.");
         const nextDraft: Draft = rule ? {
           responseName: rule.title || "", keyword: rule.keyword.replace(/,/g, "، "), matchMode: rule.matchMode,
@@ -148,7 +149,7 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
       }
     })();
     return () => controller.abort();
-  }, [id, retry]);
+  }, [id, retry, dashboardReady, dashboardAccountId, activeDashboardAccount?.id]);
 
   const dirty = useMemo(() => snapshot(draft) !== initialSnapshot.current || showcaseDirty, [draft, showcaseDirty]);
   const keywords = useMemo(() => draft.keyword.split(/[,،;؛\n]+/).map(s => s.trim()).filter(Boolean), [draft.keyword]);

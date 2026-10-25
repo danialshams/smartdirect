@@ -35,8 +35,10 @@ assert.ok(!menu.includes('window.scrollTo({ top: document.body.scrollHeight'),
   "Saving must not forcibly scroll the page");
 assert.ok(menu.includes('setDeleteTarget(item)') && menu.includes('role="dialog" aria-modal="true"'),
   "Menu deletion should require accessible confirmation");
-assert.ok(menu.includes('if (!response.ok || !result.success)') && menu.includes('await loadItems(true)'),
-  "The list should refresh only following successful backend synchronization");
+assert.ok(menu.includes('if (!response.ok || !result.success)') &&
+  menu.includes('setItems(normalizeMenu(Array.isArray(result.data?.items) ? result.data.items : []))') &&
+  route.includes('data: menu,'),
+  "After successful Meta synchronization, update immediately from the canonical backend response without a redundant GET");
 assert.ok(route.includes('await setInstagramPersistentMenu(') && route.includes('await deleteInstagramPersistentMenu('),
   "Menu synchronization to Instagram must be preserved");
 

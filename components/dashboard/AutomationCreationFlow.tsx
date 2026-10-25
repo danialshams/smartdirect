@@ -715,10 +715,44 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
     setSaving(true);
     setError("");
-    let createdAutomationId: string | null = null;
-    let activationRequested = false;
     try {
       const preparedPrimary = { ...currentMessage };
+      const messagesToCreate = triggerType === "COMMENT_KEYWORD"
+        ? (enteredDm ? [preparedPrimary, ...extraMessages] : [])
+        : [preparedPrimary];
+      const batchMessages = messagesToCreate.map((entry, index) => {
+        const links = triggerType === "COMMENT_KEYWORD" && entry.messageType === "TEXT"
+          ? index === 0
+            ? dmMode === "TEXT_WITH_LINK" ? normalizedLinkButtons : []
+            : extraLinks[entry.id] || []
+          : [];
+        return {
+          messageType: entry.messageType,
+          text: entry.text.trim() || null,
+          mediaUrl: entry.mediaUrl.trim() || null,
+          mediaId: entry.mediaId.trim() || null,
+          showcaseId: entry.showcaseId || null,
+          formId: entry.formId || null,
+          linkButtons: links.map(button => ({
+            title: button.title.trim(), url: normalizeExternalLink(button.url),
+          })),
+          quickReplies: entry.quickReplies.map(reply => ({
+            title: reply.title.trim(),
+            payload: reply.payload,
+            isExit: Boolean(reply.isExit),
+            destinationType: reply.destinationType,
+            destinationText: reply.destinationText.trim(),
+            destinationFormId: reply.destinationFormId,
+            destinationShowcaseId: reply.destinationShowcaseId,
+            destinationMediaUrl: reply.destinationMediaUrl,
+            destinationMediaId: reply.destinationMediaId,
+            destinationQuestion: reply.destinationQuestion.trim(),
+            destinationQuickReplies: serializeQuickReplies(reply.destinationQuickReplies),
+          })),
+        };
+      });
+      // All messages and nested reply buttons are inserted atomically by one
+      // server request. Story activation replaces the old rule only afterwards.
       const response = await fetch("/api/automations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -737,105 +771,19 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           sendDm: triggerType === "COMMENT_KEYWORD" ? enteredDm : true,
           likeIncomingDm: false,
           likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" && likeStoryReply,
-          requireFollow: requireFollow,
+          requireFollow,
           followGateText: requireFollow ? followGateText.trim() : null,
           followGateButtonText: requireFollow ? followGateButtonText.trim() : null,
           isActive: true,
+          messages: batchMessages,
+          activateAfterCreate: triggerType === "STORY_REPLY_KEYWORD",
         }),
       });
       const result = await response.json();
-      if (!response.ok || !result.success || !result.data?.id) {
+      if (!response.ok || !result.success || !result.data?.id)
         throw new Error(result.error || result.message || "ذخیره پاسخ خودکار ناموفق بود.");
-      }
-
-      const automationId = result.data.id as string;
-      createdAutomationId = automationId;
-      const messagesToCreate = triggerType === "COMMENT_KEYWORD"
-        ? (enteredDm ? [preparedPrimary, ...extraMessages] : [])
-        : [currentMessage];
-      for (const [index, entry] of messagesToCreate.entries()) {
-        const entryLinks = triggerType === "COMMENT_KEYWORD" && entry.messageType === "TEXT"
-          ? (index === 0
-            ? dmMode === "TEXT_WITH_LINK" ? normalizedLinkButtons : []
-            : extraLinks[entry.id] || [])
-          : [];
-        const messageResponse = await fetch("/api/automations/" + automationId + "/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            messageType: entry.messageType,
-            savedResponseId: null,
-            text: entry.text.trim() || null,
-            mediaUrl: entry.mediaUrl.trim() || null,
-            mediaId: entry.mediaId.trim() || null,
-            showcaseId: entry.showcaseId || null,
-            formId: entry.formId || null,
-            order: index,
-            linkButtons: entryLinks.map((button) => ({ title: button.title.trim(), url: normalizeExternalLink(button.url) })),
-          }),
-        });
-        const messageResult = await messageResponse.json();
-        if (!messageResponse.ok || !messageResult.success || !messageResult.data?.id)
-          throw new Error(messageResult.error || messageResult.message || "ذخیره پیام پاسخ ناموفق بود.");
-        const serverMessageId = messageResult.data.id as string;
-        for (const reply of entry.quickReplies) {
-          const qrResponse = await fetch("/api/automations/" + automationId + "/messages/" + serverMessageId + "/quick-replies", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              title: reply.title.trim(),
-              payload: reply.payload,
-              destinationType: reply.destinationType,
-              savedResponseId: null,
-              destinationText: reply.destinationText.trim(),
-              destinationFormId: reply.destinationFormId,
-              destinationShowcaseId: reply.destinationShowcaseId,
-              destinationMediaUrl: reply.destinationMediaUrl,
-              destinationMediaId: reply.destinationMediaId,
-              destinationQuestion: reply.destinationQuestion.trim(),
-              question: reply.destinationQuestion.trim(),
-              destinationQuickReplies: serializeQuickReplies(reply.destinationQuickReplies),
-              nextMessageId: null,
-            }),
-          });
-          const qrResult = await qrResponse.json();
-          if (!qrResponse.ok || !qrResult.success)
-            throw new Error(qrResult.error || qrResult.message || "ذخیره گزینه‌های پاسخ ناموفق بود.");
-        }
-      }
-
-      if(triggerType==="STORY_REPLY_KEYWORD"){
-        activationRequested = true;
-        const activated=await fetch("/api/automations/"+encodeURIComponent(automationId),{
-          method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({isActive:true}),
-        });
-        const result=await activated.json();
-        if(!activated.ok||!result.success)throw new Error(result.error||"فعال‌سازی پاسخ جدید ناموفق بود.");
-      }
       setCompleted(true);
     } catch (e) {
-      let canRemoveFailedDraft = !activationRequested;
-      if (createdAutomationId && activationRequested) {
-        // A connection drop might hide a successful activation response.
-        // Never delete an active replacement without first checking the server.
-        try {
-          const check=await fetch("/api/automations?instagramAccountId="+encodeURIComponent(account.id),{
-            cache:"no-store",credentials:"include",
-          });
-          const data=await check.json();
-          if(!check.ok||!data.success||!Array.isArray(data.data))
-            throw new Error("وضعیت نامشخص");
-          const saved=data.data.find((item:{id:string;isActive:boolean})=>item.id===createdAutomationId);
-          if(saved?.isActive){setCompleted(true);return;}
-          canRemoveFailedDraft = true;
-        }catch { canRemoveFailedDraft = false; }
-      }
-      if(createdAutomationId && canRemoveFailedDraft)await fetch(
-        "/api/automations/"+encodeURIComponent(createdAutomationId),
-        {method:"DELETE",credentials:"include"},
-      ).catch(()=>undefined);
       setError(e instanceof Error ? e.message : "ذخیره پاسخ خودکار ناموفق بود.");
     } finally {
       setSaving(false);

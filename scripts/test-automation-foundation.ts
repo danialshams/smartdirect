@@ -215,8 +215,10 @@ assert(storyActivation.includes('FOR UPDATE') && storyActivation.includes('isAct
   storyActivation.includes('isActive: true') && storyActivation.includes('tx.$queryRawUnsafe'),
   "Activation of a new story reply must serialize sibling deactivation per account.");
 assert(storyCreation.includes("setStoryReplacement(") && storyCreation.includes("confirmedStoryReplacement") &&
-  storyCreation.includes("تأیید و ایجاد") && storyCreation.includes('JSON.stringify({isActive:true})'),
-  "New story response must ask before replacing active keywords and activate only when fully saved.");
+  storyCreation.includes("تأیید و ایجاد") &&
+  storyCreation.includes('activateAfterCreate: triggerType === "STORY_REPLY_KEYWORD"') &&
+  storyApi.includes('await activateStoryReply(automation.id, instagramAccountId)'),
+  "Story response must confirm replacement and activate only after atomic message creation.");
 assert(storyPublishing.includes('await activateStoryReply(job.storyReplyAutomationId, job.instagramAccountId)') &&
   storyPublishing.includes('await activateStoryReply(automation.id, instagramAccountId)'),
   "Publishing and legacy story automation paths must keep the single-active invariant.");
@@ -233,6 +235,9 @@ assert(publishingUI.includes('type!=="STORY" &&') &&
   publishingUI.includes('createJob(publishNow,true)') &&
   publishingUI.includes('در زمان انتشار موفق استوری زمان‌بندی‌شده'),
   "Publishing must avoid prior-story selection and confirm replacing global responses.");
-assert(storyCreation.includes("let activationRequested = false") &&
-  storyCreation.includes("if(saved?.isActive){setCompleted(true);return;}"),
-  "Connection loss after an already-successful activation must not delete the active replacement.");
+const batchMessages = readFileSync("src/lib/automation/batch-messages.ts", "utf8");
+assert(storyCreation.includes('messages: batchMessages') &&
+  storyApi.includes('messages: { create: preparedMessages }') &&
+  storyApi.includes('await prisma.automation.delete({where:{id:automation.id}})') &&
+  batchMessages.includes('quickReplies: replies.length ? {create:replies.map'),
+  "Atomic message trees must be committed before account-wide activation, cleaning up failed replacements.");

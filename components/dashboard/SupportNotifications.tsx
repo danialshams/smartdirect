@@ -21,10 +21,13 @@ export default function SupportNotifications({ children }: { children: ReactNode
   const lastId = useRef<string | null>(null);
   const booted = useRef(false);
   const initialTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestInFlight = useRef(false);
   const [count, setCount] = useState(0);
   const [notice, setNotice] = useState<Notice | null>(null);
   useEffect(() => { pathRef.current = pathname; }, [pathname]);
   const load = useCallback(async (reason: "initial" | "poll" | "event" | "silent" = "poll") => {
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
     try {
       const response = await fetch("/api/dashboard/tickets/summary", { cache: "no-store", credentials: "include" });
       if (!response.ok) return;
@@ -47,6 +50,7 @@ export default function SupportNotifications({ children }: { children: ReactNode
       }
       if ((reason === "event" || (!first && latest?.id !== original)) && latest) window.dispatchEvent(new Event("support:changed"));
     } catch { /* Preserve previous unread count during network outages. */ }
+    finally { requestInFlight.current = false; }
   }, []);
   useEffect(() => {
     void load("initial");
@@ -54,12 +58,16 @@ export default function SupportNotifications({ children }: { children: ReactNode
     window.addEventListener("support:refresh", refresh);
     const visible = () => { if (document.visibilityState === "visible") void load("poll"); };
     document.addEventListener("visibilitychange", visible);
-    const interval = setInterval(() => { if (document.visibilityState === "visible") void load("poll"); }, 5000);
+    let realtimeConnected = false;
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible" && !realtimeConnected) void load("poll");
+    }, 5000);
     let source: EventSource | null = null;
     if (typeof EventSource !== "undefined") {
       source = new EventSource("/api/dashboard/tickets/stream");
+      source.onopen = () => { realtimeConnected = true; void load("silent"); };
       source.addEventListener("support", () => { void load("event"); window.dispatchEvent(new Event("support:changed")); });
-      source.onerror = () => { source?.close(); source = null; };
+      source.onerror = () => { realtimeConnected = false; source?.close(); source = null; };
     }
     return () => {
       if (initialTimer.current) clearTimeout(initialTimer.current);

@@ -41,6 +41,7 @@ const PublishingStoryAutomationSetup = dynamic(() => import("./PublishingStoryAu
   loading: () => <PublishingPageSkeleton view="editor" />,
 });
 import { useStorageUploadLease } from "./useStorageUploadLease";
+import { useDashboardAccountSelection } from "../DashboardAccountContext";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
 type MediaType = "IMAGE" | "VIDEO";
@@ -340,6 +341,7 @@ function MediaTile({ item, type, onRemove, ready = false, compact = false }: Med
 
 export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?: (type: PublishType) => void }) {
   const router = useRouter();
+  const {accounts:dashboardAccounts,accountId:dashboardAccountId}=useDashboardAccountSelection();
   const [accounts, setAccounts] = useState<InstagramAccount[]>(publishingAccountsCache ?? []);
   const [jobs, setJobs] = useState<Job[]>(publishingJobsCache ?? []);
   const knownJobIdsRef = useRef(new Set<string>((publishingJobsCache ?? []).filter((job) => ["SCHEDULED", "PROCESSING", "PUBLISHING"].includes(job.status)).map((job) => job.id)));
@@ -456,7 +458,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         : type === "STORY"
           ? "تصویر یا ویدیوی استوری را انتخاب کن."
           : "تصویر پست را انتخاب کن.";
-  const activeInstagramAccount = accounts.find((account) => account.isConnected !== false);
+  const activeInstagramAccount = accounts.find((account) => account.id===dashboardAccountId && account.isConnected !== false)
+    ?? accounts.find((account) => account.isConnected !== false);
   const selectedAccountId = activeInstagramAccount?.id ?? "";
   const automationAccount: AutomationAccount = {
     id: selectedAccountId,
@@ -464,23 +467,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   };
 
   async function loadAccounts() {
-    const response = await fetch("/api/instagram/accounts", { cache: "no-store" });
-    if (!response.ok) throw new Error("دریافت اکانت‌های Instagram ناموفق بود.");
-
-    const result = await response.json();
-    const rawList = result.data ?? result.accounts ?? [];
-    const list = Array.isArray(rawList)
-      ? rawList
-        .filter((account) => account?.id)
-        .map((account) => ({
-          id: String(account.id),
-          igUserId: String(account.igUserId ?? ""),
-          igUsername: account.igUsername ?? account.username ?? null,
-          username: account.username ?? account.igUsername ?? null,
-          isConnected: account.isConnected !== false,
-        }))
-      : [];
-
+    // Accounts already arrived with the authenticated dashboard layout.
+    const list: InstagramAccount[] = dashboardAccounts.map(account => ({
+      id: account.id, igUserId: account.igUserId, igUsername: account.igUsername,
+      username: account.igUsername, isConnected: account.isConnected,
+    }));
     publishingAccountsCache = list;
     setAccounts(list);
   }
@@ -569,7 +560,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         previousDate.month !== nextDate.month ||
         previousDate.day !== nextDate.day;
 
-      setOfficialTehranClock(nextClock);
+      // Avoid re-rendering the entire publishing editor every second when
+      // the displayed Tehran clock still shows the same minute.
+      setOfficialTehranClock(current =>
+        current.hour === nextClock.hour && current.minute === nextClock.minute ? current : nextClock,
+      );
       if (dateChanged) setTodayJalali(nextDate);
 
       const stageDateIsPreviousToday =
@@ -625,13 +620,25 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     };
 
     window.addEventListener("smartdirect:publishing-refresh", refreshFromDetail);
-    const interval = window.setInterval(() => void loadJobs(), 5000);
-
+    let lastIdlePoll = Date.now();
+    const interval = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      const jobs = previousJobsRef.current;
+      const active = jobs.some(job => ["PROCESSING", "PUBLISHING"].includes(job.status));
+      if (!active && Date.now() - lastIdlePoll < 30_000) return;
+      lastIdlePoll = Date.now();
+      void loadJobs();
+    }, 5000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        lastIdlePoll = Date.now();
+        void loadJobs();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
-      window.removeEventListener(
-        "smartdirect:publishing-refresh",
-        refreshFromDetail,
-      );
+      window.removeEventListener("smartdirect:publishing-refresh", refreshFromDetail);
+      document.removeEventListener("visibilitychange", onVisible);
       window.clearInterval(interval);
     };
   }, []);
@@ -1037,18 +1044,15 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       return source.id;
     }
 
-    // Publishing automations use the compact stage-6 setup for POST/REEL/CAROUSEL.
+    // Post/reel/carousel creation uses one atomic request even if a DM is
+    // attached. The publishing job still links its automation after creation.
     if (type !== "STORY") {
-      const normalizedKeywords=automationKeywords.map(x=>x.trim()).filter(Boolean);
-      const replyVariants=publishingCommentReplies;
-      const replyText=directMessageText;
-      const follower=requireFollow;
-      const followCopy=followGateText;
+      const normalizedKeywords = automationKeywords.map(word => word.trim()).filter(Boolean);
+      const replyText = directMessageText.trim();
       if (!normalizedKeywords.length) throw new Error("حداقل یک کلمه کلیدی اضافه کن.");
-      if (follower && !followCopy.trim()) throw new Error("متن درخواست فالو را وارد کن.");
-
-      const automationResponse = await fetch("/api/automations", {
-        method: "POST",
+      if (requireFollow && !followGateText.trim()) throw new Error("متن درخواست فالو را وارد کن.");
+      const response = await fetch("/api/automations", {
+        method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           instagramAccountId: selectedAccountId,
@@ -1056,121 +1060,67 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           keyword: normalizedKeywords.join(","),
           keywordMatchMode: "EXACT",
           mediaId: `pending:${crypto.randomUUID()}`,
-          commentReplyVariants: validatePublicCommentReplies(replyVariants),
-          sendDm: Boolean(replyText.trim()),
-          requireFollow: follower,
-          followGateText: follower ? followCopy.trim() : null,
+          commentReplyVariants: validatePublicCommentReplies(publishingCommentReplies),
+          sendDm: Boolean(replyText),
+          requireFollow,
+          followGateText: requireFollow ? followGateText.trim() : null,
           isActive: true,
+          messages: replyText ? [{messageType:"TEXT",text:replyText,quickReplies:[]}] : [],
         }),
       });
-      const automationResult = await automationResponse.json();
-      if (!automationResponse.ok || !automationResult.success) {
-        throw new Error(automationResult.error || "ساخت پاسخ خودکار ناموفق بود.");
-      }
-
-      const automationId = automationResult.data.id as string;
-      if (replyText.trim()) {
-        try {
-          const messageResponse = await fetch(`/api/automations/${automationId}/messages`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messageType: "TEXT", text: replyText.trim(), savedResponseId:null, order: 0 }),
-          });
-          const messageResult = await messageResponse.json();
-          if (!messageResponse.ok || !messageResult.success) {
-            throw new Error(messageResult.error || "ذخیره متن دایرکت ناموفق بود.");
-          }
-        } catch (error) {
-          await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined);
-          throw error;
-        }
-      }
-      return automationId;
+      const result = await response.json();
+      if (!response.ok || !result.success || !result.data?.id)
+        throw new Error(result.error || "ساخت پاسخ خودکار ناموفق بود.");
+      return result.data.id as string;
     }
-    const storyKeywords=keywords.trim();
-    const effectiveMessages=messages;
+
+    const storyKeywords = keywords.trim();
     if (!storyKeywords) throw new Error("حداقل یک کلمه کلیدی ریپلای استوری وارد کن.");
-    validateMessages(effectiveMessages);
-    const follow=requireFollow;
-    const followText=followGateText;
-    if (follow&&!followText.trim())throw new Error("متن درخواست فالو را وارد کن.");
-
-    const automationPayload = {
-      instagramAccountId: selectedAccountId,
-      triggerType,
-      keyword: storyKeywords,
-      mediaId: `pending:${crypto.randomUUID()}`,
-      commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReplyText.trim() || null : null,
-      sendDm: true,
-      likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? (likeStoryReply) : false,
-      requireFollow: follow,
-      followGateText: follow ? followText.trim() : null,
-      isActive: true,
-    };
-
-    const automationResponse = await fetch("/api/automations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(automationPayload) });
-    const automationResult = await automationResponse.json();
-    if (!automationResponse.ok || !automationResult.success) throw new Error(automationResult.error || "ساخت Automation ناموفق بود.");
-    const automationId = automationResult.data.id as string;
-
-    try {
-      const serverMessageIds = new Map<string, string>();
-      for (let index = 0; index < effectiveMessages.length; index += 1) {
-        const message = effectiveMessages[index];
-        const response = await fetch(`/api/automations/${automationId}/messages`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageType: message.messageType, text: message.text.trim() || null, mediaUrl: message.mediaUrl.trim() || null, mediaId: message.mediaId.trim() || null, showcaseId: message.showcaseId || null, formId: message.formId || null, savedResponseId:null, order: index }) });
-        const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.error || `ساخت پیام ${index + 1} ناموفق بود.`);
-        serverMessageIds.set(message.id, result.data.id);
-      }
-      for (const message of effectiveMessages) {
-        const serverMessageId = serverMessageIds.get(message.id);
-        if (!serverMessageId) throw new Error("شناسه پیام Automation پیدا نشد.");
-        for (const quickReply of message.quickReplies) {
-          const serializeQuickReplyTree = (replies: MessageDraft["quickReplies"]): unknown[] =>
-            replies.map((reply) => ({
-              id: reply.id,
-              isExit: Boolean(reply.isExit),
-              title: reply.title.trim(),
-              payload: reply.payload,
-              destinationType: reply.destinationType,
-              destinationText: reply.destinationText.trim(),
-              destinationFormId: reply.destinationFormId,
-              destinationShowcaseId: reply.destinationShowcaseId,
-              destinationMediaUrl: reply.destinationMediaUrl,
-              destinationMediaId: reply.destinationMediaId,
-              destinationQuestion: reply.destinationQuestion.trim(),
-              question: reply.destinationQuestion.trim(),
-              destinationQuickReplies: serializeQuickReplyTree(reply.destinationQuickReplies),
-            }));
-
-          const response = await fetch(`/api/automations/${automationId}/messages/${serverMessageId}/quick-replies`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              title: quickReply.title.trim(),
-              payload: quickReply.payload,
-              destinationType: quickReply.destinationType,
-              isExit: Boolean(quickReply.isExit),
-              destinationText: quickReply.destinationText.trim() || null,
-              destinationFormId: quickReply.destinationFormId || null,
-              destinationShowcaseId: quickReply.destinationShowcaseId || null,
-              destinationMediaUrl: quickReply.destinationMediaUrl || null,
-              destinationMediaId: quickReply.destinationMediaId || null,
-              destinationQuestion: quickReply.destinationQuestion.trim() || null,
-              question: quickReply.destinationQuestion.trim() || null,
-              destinationQuickReplies: serializeQuickReplyTree(quickReply.destinationQuickReplies),
-            }),
-          });
-
-          const result = await response.json();
-          if (!response.ok || !result.success) throw new Error(result.error || `ساخت پاسخ «${quickReply.title}" ناموفق بود.`);
-        }
-      }
-      return automationId;
-    } catch (error) {
-      await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined);
-      throw error;
-    }
+    validateMessages(messages);
+    if (requireFollow && !followGateText.trim()) throw new Error("متن درخواست فالو را وارد کن.");
+    const serializeQuickReplyTree = (replies: MessageDraft["quickReplies"]): unknown[] =>
+      replies.map(reply => ({
+        isExit: Boolean(reply.isExit),
+        title: reply.title.trim(), payload: reply.payload,
+        destinationType: reply.destinationType,
+        destinationText: reply.destinationText.trim(),
+        destinationFormId: reply.destinationFormId,
+        destinationShowcaseId: reply.destinationShowcaseId,
+        destinationMediaUrl: reply.destinationMediaUrl,
+        destinationMediaId: reply.destinationMediaId,
+        destinationQuestion: reply.destinationQuestion.trim(),
+        destinationQuickReplies: serializeQuickReplyTree(reply.destinationQuickReplies),
+      }));
+    const preparedMessages = messages.map(message => ({
+      messageType: message.messageType,
+      text: message.text.trim() || null,
+      mediaUrl: message.mediaUrl.trim() || null,
+      mediaId: message.mediaId.trim() || null,
+      showcaseId: message.showcaseId || null,
+      formId: message.formId || null,
+      quickReplies: serializeQuickReplyTree(message.quickReplies),
+    }));
+    const response = await fetch("/api/automations", {
+      method: "POST", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        instagramAccountId: selectedAccountId,
+        triggerType: "STORY_REPLY_KEYWORD",
+        keyword: storyKeywords,
+        // This automation stays inactive until the scheduled story publishes.
+        mediaId: `pending:${crypto.randomUUID()}`,
+        sendDm: true,
+        likeStoryReply,
+        requireFollow,
+        followGateText: requireFollow ? followGateText.trim() : null,
+        isActive: false,
+        messages: preparedMessages,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success || !result.data?.id)
+      throw new Error(result.error || "ساخت پاسخ استوری ناموفق بود.");
+    return result.data.id as string;
   }
 
   async function createJob(publishNow: boolean, confirmedStoryReplacement = false) {

@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardAccountSelection } from "./DashboardAccountContext";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -25,6 +26,8 @@ function Guide({step,title,hint}:{step:number;title:string;hint:string}){
 }
 
 export default function ShareMentionEditor({id}:{id?:string}){
+  const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
+  const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
  const [account,setAccount]=useState<Account|null>(null);
  const [trigger,setTrigger]=useState<Trigger>("DM_MEDIA_SHARE");
  const [original,setOriginal]=useState<Existing|null>(null);
@@ -50,12 +53,12 @@ export default function ShareMentionEditor({id}:{id?:string}){
  const [occupied,setOccupied]=useState<Set<string>>(new Set());
  const responseValid=trigger==="STORY_MENTION"||selected.length>0;
  useEffect(()=>{
+  if(!dashboardReady)return;
   const controller=new AbortController();
   setLoading(true);setError("");
   (async()=>{
    try{
-    const accounts=await fetch("/api/instagram/accounts",{cache:"no-store",credentials:"include",signal:controller.signal}).then(r=>r.json());
-    const active=(Array.isArray(accounts.accounts)?accounts.accounts:[]).find((x:Account)=>x.isConnected) as Account|undefined;
+    const active=activeDashboardAccount;
     if(!active)throw new Error("ابتدا پیج اینستاگرام را متصل کنید.");
     const q="?instagramAccountId="+encodeURIComponent(active.id);
     const [a,m,sh,fo,sa,automations]=await Promise.all([
@@ -104,7 +107,7 @@ export default function ShareMentionEditor({id}:{id?:string}){
    finally{if(!controller.signal.aborted)setLoading(false);}
   })();
   return ()=>controller.abort();
- },[id,reload]);
+ },[id,reload,dashboardReady,activeDashboardAccount?.id]);
 
  async function refreshMedia(){
   if(!account)return;

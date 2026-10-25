@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { storePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
+import { prepareAutomationMessages } from "@/lib/automation/batch-messages";
+import { activateStoryReply } from "@/lib/automation/story-activation";
 import { getCachedInstagramMedia, invalidateAutomationCache } from "@/lib/cache/instagram";
 
 function normalizePersianDigits(value: string) {
@@ -47,6 +49,23 @@ export async function GET(request: NextRequest) {
       where: { id: instagramAccountId, userId: session.user.id },
     });
     if (!instagramAccount) return NextResponse.json({ success: false, error: "اکانت اینستاگرام پیدا نشد" }, { status: 404 });
+
+    // Metadata-only lists avoid loading nested message graphs on navigation.
+    if (searchParams.get("view") === "list") {
+      const automations = await prisma.automation.findMany({
+        where: { instagramAccountId },
+        select: {
+          id: true, instagramAccountId: true, triggerType: true,
+          mediaId: true, mediaIds: true, keyword: true, keywordMatchMode: true,
+          commentReplyText: true, isActive: true, createdAt: true, updatedAt: true,
+          messages: { orderBy: { order: "asc" }, take: 1, select: { messageType: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      return NextResponse.json({ success: true, data: automations }, {
+        headers: { "Cache-Control": "private, no-store" },
+      });
+    }
 
     const automations = await prisma.automation.findMany({
       where: { instagramAccountId },
@@ -100,6 +119,8 @@ export async function POST(request: NextRequest) {
       followGateText,
       followGateButtonText,
       isActive = true,
+      messages: submittedMessages,
+      activateAfterCreate = false,
     } = body;
 
     if (typeof instagramAccountId !== "string" || !instagramAccountId.trim()) return NextResponse.json({ success: false, error: "instagramAccountId الزامی است" }, { status: 400 });
@@ -171,8 +192,19 @@ export async function POST(request: NextRequest) {
 
     if (title !== undefined && (typeof title !== "string" || title.trim().length > 80)) return NextResponse.json({ success: false, error: "نام پاسخ حداکثر ۸۰ نویسه است." }, { status: 400 });
 
+    let preparedMessages: Awaited<ReturnType<typeof prepareAutomationMessages>> | undefined;
+    if (submittedMessages !== undefined) {
+      try {
+        preparedMessages = await prepareAutomationMessages(submittedMessages, instagramAccountId, session.user.id);
+        if (activateAfterCreate === true && (triggerType !== "STORY_REPLY_KEYWORD" || preparedMessages.length === 0))
+          return NextResponse.json({ success:false, error:"فعال‌سازی پاسخ استوری نیازمند پیام معتبر است." }, {status:400});
+      } catch (error) {
+        return NextResponse.json({success:false,error:error instanceof Error ? error.message : "محتوای پاسخ نامعتبر است."},{status:400});
+      }
+    }
     const automation = await prisma.automation.create({
       data: {
+        ...(preparedMessages !== undefined ? { messages: { create: preparedMessages } } : {}),
         instagramAccountId,
         title: typeof title === "string" ? title.trim() || null : null,
         triggerType,
@@ -195,6 +227,14 @@ export async function POST(request: NextRequest) {
       include: { messages: { orderBy: { order: "asc" } } },
     });
 
+    if (activateAfterCreate === true && triggerType === "STORY_REPLY_KEYWORD") {
+      try {
+        await activateStoryReply(automation.id, instagramAccountId);
+      } catch (activationError) {
+        await prisma.automation.delete({where:{id:automation.id}}).catch(() => undefined);
+        throw activationError;
+      }
+    }
     try {
       await invalidateAutomationCache(instagramAccountId);
     } catch (cacheError) {
