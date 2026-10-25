@@ -362,47 +362,67 @@ export default function InsightsDashboard() {
     setLoading(true);
     setError("");
     setWarning("");
-    try {
-      let syncWarning = "";
-      if (!lastSync.current || lastSync.current.id !== id || Date.now() - lastSync.current.at > 5 * 60 * 1000) {
-        // Sync only a bounded recent window. Date filter changes must not fan
-        // out into expensive duplicate Meta requests.
-        lastSync.current = { id, at: Date.now() };
+
+    const params = new URLSearchParams({ accountId: id });
+    if (custom) {
+      params.set("from", dateOnly(custom.from));
+      params.set("to", dateOnly(custom.to));
+    } else params.set("days", String(days));
+    const historyUrl = "/api/instagram/insights/history?" + params;
+    const isCurrent = () => !signal.aborted && requestNumber.current === currentRequest;
+
+    // Begin Meta synchronization without placing it ahead of cached DB history
+    // on the critical path to the first usable chart.
+    let syncPromise: Promise<string> | null = null;
+    if (!lastSync.current || lastSync.current.id !== id || Date.now() - lastSync.current.at > 5 * 60 * 1000) {
+      lastSync.current = { id, at: Date.now() };
+      syncPromise = (async () => {
         try {
           const syncFrom = shiftDay(today, -6);
           const sync = new URLSearchParams({ accountId: id, from: dateOnly(syncFrom), to: dateOnly(today) });
-          const syncResponse = await fetch("/api/instagram/insights?" + sync, { cache: "no-store", credentials: "include", signal });
-          const result = await syncResponse.json() as { error?: string; sync?: { syncedDays?: number; errors?: Array<{ error: string }> } };
-          if (!syncResponse.ok) syncWarning = result.error || "بروزرسانی داده‌ها از اینستاگرام ناموفق بود.";
-          else if ((result.sync?.syncedDays ?? 0) === 0 && (result.sync?.errors?.length ?? 0) > 0)
-            syncWarning = "آمار تازه دریافت نشد؛ داده‌های ذخیره‌شده نمایش داده می‌شوند.";
-        } catch (e) {
-          if (signal.aborted) return;
-          syncWarning = "بروزرسانی داده‌ها ناموفق بود؛ آمار ذخیره‌شده نمایش داده می‌شود.";
+          const response = await fetch("/api/instagram/insights?" + sync, {
+            cache: "no-store", credentials: "include", signal,
+          });
+          const result = await response.json() as { error?: string; sync?: { syncedDays?: number; errors?: Array<{ error: string }> } };
+          if (!response.ok) return result.error || "بروزرسانی داده‌ها از اینستاگرام ناموفق بود.";
+          if ((result.sync?.syncedDays ?? 0) === 0 && (result.sync?.errors?.length ?? 0) > 0)
+            return "آمار تازه دریافت نشد؛ داده‌های ذخیره‌شده نمایش داده می‌شوند.";
+          return "";
+        } catch {
+          return signal.aborted ? "" : "بروزرسانی داده‌ها ناموفق بود؛ آمار ذخیره‌شده نمایش داده می‌شود.";
         }
-      }
+      })();
+    }
 
-      const params = new URLSearchParams({ accountId: id });
-      if (custom) {
-        params.set("from", dateOnly(custom.from));
-        params.set("to", dateOnly(custom.to));
-      } else params.set("days", String(days));
-      const response = await fetch("/api/instagram/insights/history?" + params, {
-        cache: "no-store", credentials: "include", signal,
-      });
+    try {
+      const response = await fetch(historyUrl, { cache: "no-store", credentials: "include", signal });
       const result = await response.json() as InsightsData;
       if (!response.ok || !result.success) throw new Error(result.error || "دریافت آمار ناموفق بود.");
-      if (!signal.aborted && requestNumber.current === currentRequest) {
-        setData(result);
-        setWarning(syncWarning);
-      }
+      if (isCurrent()) setData(result);
     } catch (requestError) {
-      if (!signal.aborted && requestNumber.current === currentRequest) {
+      if (isCurrent()) {
         setData(null);
         setError(requestError instanceof Error ? requestError.message : "خطا در دریافت آمار.");
       }
     } finally {
-      if (!signal.aborted && requestNumber.current === currentRequest) setLoading(false);
+      if (isCurrent()) setLoading(false);
+    }
+
+    // Revalidate silently after the sync finishes; never replace another
+    // account/date range or flash the skeleton again.
+    if (syncPromise) {
+      void syncPromise.then(async syncWarning => {
+        if (!isCurrent()) return;
+        if (syncWarning) {
+          setWarning(syncWarning);
+          return;
+        }
+        try {
+          const response = await fetch(historyUrl, { cache: "no-store", credentials: "include", signal });
+          const result = await response.json() as InsightsData;
+          if (response.ok && result.success && isCurrent()) setData(result);
+        } catch { /* Keep the already displayed, usable history. */ }
+      });
     }
   }, [today]);
 

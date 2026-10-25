@@ -569,7 +569,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         previousDate.month !== nextDate.month ||
         previousDate.day !== nextDate.day;
 
-      setOfficialTehranClock(nextClock);
+      // Avoid re-rendering the entire publishing editor every second when
+      // the displayed Tehran clock still shows the same minute.
+      setOfficialTehranClock(current =>
+        current.hour === nextClock.hour && current.minute === nextClock.minute ? current : nextClock,
+      );
       if (dateChanged) setTodayJalali(nextDate);
 
       const stageDateIsPreviousToday =
@@ -625,13 +629,25 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     };
 
     window.addEventListener("smartdirect:publishing-refresh", refreshFromDetail);
-    const interval = window.setInterval(() => void loadJobs(), 5000);
-
+    let lastIdlePoll = Date.now();
+    const interval = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      const jobs = previousJobsRef.current;
+      const active = jobs.some(job => ["PROCESSING", "PUBLISHING"].includes(job.status));
+      if (!active && Date.now() - lastIdlePoll < 30_000) return;
+      lastIdlePoll = Date.now();
+      void loadJobs();
+    }, 5000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        lastIdlePoll = Date.now();
+        void loadJobs();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
-      window.removeEventListener(
-        "smartdirect:publishing-refresh",
-        refreshFromDetail,
-      );
+      window.removeEventListener("smartdirect:publishing-refresh", refreshFromDetail);
+      document.removeEventListener("visibilitychange", onVisible);
       window.clearInterval(interval);
     };
   }, []);

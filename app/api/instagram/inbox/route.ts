@@ -674,50 +674,11 @@ export async function GET(request: NextRequest) {
       lastInboundRows.map((item) => [item.conversationId, item.createdAt]),
     );
 
-    const handoffMap = await getHandoffStates(
-      conversations.map((item) => item.id),
-    );
-
-    const freshConversations = await prisma.conversation.findMany({
-      where: {
-        id: {
-          in: visibleConversations.map((item) => item.id),
-        },
-      },
-      orderBy: [
-        {
-          lastMessageAt: "desc",
-        },
-        {
-          updatedAt: "desc",
-        },
-      ],
-      include: {
-        messages: {
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 1,
-          select: {
-            id: true,
-            direction: true,
-            messageType: true,
-            text: true,
-            mediaUrl: true,
-            mediaId: true,
-            igMessageId: true,
-            readAt: true,
-            seenAt: true,
-            createdAt: true,
-          },
-        },
-        _count: {
-          select: {
-            messages: true,
-          },
-        },
-      },
-    });
+    const handoffMap = await getHandoffStates(conversationIds);
+    // The initial list already contains the latest message and count.
+    // Re-querying all 50 conversations duplicates the most expensive query
+    // and delays every inbox navigation without changing the response shape.
+    const freshConversations = visibleConversations;
 
     return NextResponse.json({
       success: true,
