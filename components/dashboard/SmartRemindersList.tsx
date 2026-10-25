@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Search, Pencil, Trash2, Clock3, RefreshCw, X, MessageSquare } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
 import SmartReminderSkeleton from "./SmartReminderSkeleton";
+import { getDashboardListSnapshot, setDashboardListSnapshot } from "@/src/lib/dashboard/list-snapshot-cache";
 import { smartReminderOptionName } from "@/lib/automation/smart-reminder-options";
 
 type Account = { id: string; isConnected: boolean };
@@ -25,9 +26,11 @@ export default function SmartRemindersList() {
   const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
   const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
   const router = useRouter();
-  const [account, setAccount] = useState<Account | null>(null);
-  const [rules, setRules] = useState<Rule[]>([]);
-  const [loading, setLoading] = useState(true);
+  const listKey = activeDashboardAccount ? "smart-reminders:" + activeDashboardAccount.id : null;
+  const [account, setAccount] = useState<Account | null>(() => listKey && getDashboardListSnapshot<Rule>(listKey) ? (activeDashboardAccount ?? null) : null);
+  const [rules, setRules] = useState<Rule[]>(() => listKey ? getDashboardListSnapshot<Rule>(listKey) ?? [] : []);
+  const [loadedFor, setLoadedFor] = useState<string | null>(() => listKey && getDashboardListSnapshot<Rule>(listKey) ? listKey : null);
+  const [loading, setLoading] = useState(() => !(listKey && getDashboardListSnapshot<Rule>(listKey)));
   const [refresh, setRefresh] = useState(0);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -38,7 +41,18 @@ export default function SmartRemindersList() {
   useEffect(() => {
     if (!dashboardReady) return;
     const controller = new AbortController();
-    setLoading(true);
+    const key = "smart-reminders:" + (activeDashboardAccount?.id || "");
+    const cached = activeDashboardAccount ? getDashboardListSnapshot<Rule>(key) : null;
+    if (cached) {
+      setAccount(activeDashboardAccount ?? null);
+      setRules(cached);
+      setLoadedFor(key);
+      setLoading(false);
+    } else {
+      setRules([]);
+      setLoadedFor(null);
+      setLoading(true);
+    }
     setError("");
     void (async () => {
       try {
@@ -47,9 +61,15 @@ export default function SmartRemindersList() {
         const response = await fetch("/api/smart-reminders?instagramAccountId=" + encodeURIComponent(connected.id), { cache: "no-store", credentials: "include", signal: controller.signal });
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.error || "دریافت یادآوری‌ها ناموفق بود.");
-        if (!controller.signal.aborted) { setAccount(connected); setRules(data.data || []); }
+        if (!controller.signal.aborted) {
+          const next = (Array.isArray(data.data) ? data.data : []) as Rule[];
+          setDashboardListSnapshot(key, next);
+          setAccount(connected);
+          setRules(next);
+          setLoadedFor(key);
+        }
       } catch (e) {
-        if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "خطا در بارگذاری یادآوری‌ها.");
+        if (!controller.signal.aborted && !cached) setError(e instanceof Error ? e.message : "خطا در بارگذاری یادآوری‌ها.");
       } finally { if (!controller.signal.aborted) setLoading(false); }
     })();
     return () => controller.abort();
@@ -69,13 +89,17 @@ export default function SmartRemindersList() {
       });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || "حذف یادآوری ناموفق بود.");
-      setRules(current => current.filter(r => r.id !== deleteTarget.id));
+      setRules(current => {
+        const next = current.filter(r => r.id !== deleteTarget.id);
+        if (listKey) setDashboardListSnapshot(listKey, next);
+        return next;
+      });
       setDeleteTarget(null);
     } catch (e) { setActionError(e instanceof Error ? e.message : "حذف یادآوری ناموفق بود."); }
     finally { setBusy(null); }
   }
 
-  if (loading) return <SmartReminderSkeleton />;
+  if (loading || (dashboardReady && Boolean(listKey) && loadedFor !== listKey && !error)) return <SmartReminderSkeleton />;
   if (error) return <div dir="rtl" className="mx-auto flex min-h-[45vh] max-w-4xl flex-col items-center justify-center gap-4 px-4">
     <p role="alert" className="w-full rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">{error}</p>
     <button onClick={() => setRefresh(v => v + 1)} className="flex min-h-11 items-center gap-2 rounded-xl bg-[var(--daira-primary)] px-5 text-sm font-bold text-white"><RefreshCw size={16}/> تلاش دوباره</button>
