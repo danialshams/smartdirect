@@ -74,22 +74,62 @@ export default function SupportNotifications({ children, userEmail }: { children
     void load("initial");
     const refresh = () => { void load("silent"); };
     window.addEventListener("support:refresh", refresh);
-    const visible = () => { if (document.visibilityState === "visible") void load("poll"); };
-    document.addEventListener("visibilitychange", visible);
     let realtimeConnected = false;
+    let source: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let reconnectDelayMs = 5000;
+    let disposed = false;
+    const connectRealtime = () => {
+      if (disposed || source || document.visibilityState !== "visible" || typeof EventSource === "undefined") return;
+      const connection = new EventSource("/api/dashboard/tickets/stream");
+      source = connection;
+      connection.onopen = () => {
+        if (disposed || source !== connection) return;
+        realtimeConnected = true;
+        reconnectDelayMs = 5000;
+        void load("silent");
+      };
+      connection.addEventListener("support", () => {
+        if (disposed || source !== connection) return;
+        window.dispatchEvent(new Event("support:changed"));
+        void load("event");
+      });
+      connection.onerror = () => {
+        if (disposed || source !== connection) return;
+        realtimeConnected = false;
+        connection.close();
+        source = null;
+        // Keep polling while disconnected, then retry SSE with bounded
+        // backoff so a transient stream failure does not cause permanent
+        // five-second polling for the entire dashboard session.
+        const delay = reconnectDelayMs;
+        reconnectDelayMs = Math.min(reconnectDelayMs * 2, 60_000);
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          connectRealtime();
+        }, delay);
+      };
+    };
+    const visible = () => {
+      if (document.visibilityState !== "visible") return;
+      void load("poll");
+      if (!source) {
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+        connectRealtime();
+      }
+    };
+    document.addEventListener("visibilitychange", visible);
     const interval = setInterval(() => {
       if (document.visibilityState === "visible" && !realtimeConnected) void load("poll");
     }, 5000);
-    let source: EventSource | null = null;
-    if (typeof EventSource !== "undefined") {
-      source = new EventSource("/api/dashboard/tickets/stream");
-      source.onopen = () => { realtimeConnected = true; void load("silent"); };
-      source.addEventListener("support", () => { window.dispatchEvent(new Event("support:changed")); void load("event"); });
-      source.onerror = () => { realtimeConnected = false; source?.close(); source = null; };
-    }
+    connectRealtime();
     return () => {
+      disposed = true;
       if (initialTimer.current) clearTimeout(initialTimer.current);
-      clearInterval(interval); source?.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      clearInterval(interval);
+      source?.close();
       document.removeEventListener("visibilitychange", visible);
       window.removeEventListener("support:refresh", refresh);
     };
