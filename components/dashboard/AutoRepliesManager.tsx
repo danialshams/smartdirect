@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useDashboardAccountId } from "@/components/dashboard/DashboardAccountContext";
+import { useDashboardAccountId, useDashboardAccounts } from "@/components/dashboard/DashboardAccountContext";
 import Link from "next/link";
 import { toast } from "sonner";
 import AutoRepliesSkeleton from "@/components/dashboard/AutoRepliesSkeleton";
@@ -130,6 +130,9 @@ function writeAutoRepliesCache(accountId: string, items: ReplyItem[]) {
 
 export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | "comments" | "stories" }) {
   const initialAccountId = useDashboardAccountId();
+  const dashboardAccounts = useDashboardAccounts();
+  const activeAccount = dashboardAccounts.find(account => account.id === initialAccountId && account.isConnected)
+    ?? dashboardAccounts.find(account => account.isConnected);
   const [items, setItems] = useState<ReplyItem[]>([]);
   const itemsRef = useRef<ReplyItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -178,17 +181,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
         if (itemsRef.current.length === 0) setLoading(true);
         setError("");
 
-        const accountsResponse = await fetch("/api/instagram/accounts", {
-          cache: "no-store",
-          credentials: "include",
-        });
-        const accountsResult = await accountsResponse.json();
-        if (!accountsResponse.ok || !accountsResult.success) {
-          throw new Error(accountsResult.error || "دریافت پیج اینستاگرام ناموفق بود.");
-        }
-
-        const account = (Array.isArray(accountsResult.accounts) ? accountsResult.accounts : [])
-          .find((item: { isConnected: boolean }) => item.isConnected);
+        const account = activeAccount;
         if (!account) {
           if (!cancelled) {
             itemsRef.current = [];
@@ -211,10 +204,10 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
         const accountQuery = `?instagramAccountId=${encodeURIComponent(account.id)}`;
         const [automationsResponse, mediaResponse, storiesResponse, jobsResponse] = await Promise.all([
-          fetch(`/api/automations${accountQuery}`, { cache: "no-store", credentials: "include" }),
-          fetch(`/api/instagram/media${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null),
-          fetch(`/api/instagram/stories${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null),
-          fetch(`/api/instagram/publishing${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null),
+          fetch(`/api/automations${accountQuery}&view=list`, { cache: "no-store", credentials: "include" }),
+          scope !== "stories" ? fetch(`/api/instagram/media${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null) : Promise.resolve(null),
+          scope === "all" ? fetch(`/api/instagram/stories${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null) : Promise.resolve(null),
+          scope !== "stories" ? fetch(`/api/instagram/publishing${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null) : Promise.resolve(null),
         ]);
 
         const automationsResult = await automationsResponse.json();
@@ -426,7 +419,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
     return () => {
       cancelled = true;
     };
-  }, [initialAccountId]);
+  }, [initialAccountId, activeAccount?.id, scope]);
 
   const scopedItems = useMemo(() => items.filter((item) => {
     if (scope === "comments") return item.title === "پاسخ خودکار کامنت" && ["POST", "CAROUSEL", "REEL"].includes(item.type);

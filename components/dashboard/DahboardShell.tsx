@@ -45,7 +45,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
   const initialAccountId = instagramAccounts.find((account) => account.isConnected)?.id ?? null;
 
   return (
-    <DashboardAccountProvider accountId={initialAccountId} accountIds={instagramAccounts.filter((account) => account.isConnected).map((account) => account.id)}>
+    <DashboardAccountProvider accountId={initialAccountId} accountIds={instagramAccounts.filter((account) => account.isConnected).map((account) => account.id)} accounts={instagramAccounts}>
     <DashboardBackNavigationProvider>
     <DashboardTheme>
     <SupportNotifications>

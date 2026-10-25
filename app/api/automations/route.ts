@@ -48,6 +48,22 @@ export async function GET(request: NextRequest) {
     });
     if (!instagramAccount) return NextResponse.json({ success: false, error: "اکانت اینستاگرام پیدا نشد" }, { status: 404 });
 
+    // Metadata-only lists avoid loading nested message graphs on navigation.
+    if (searchParams.get("view") === "list") {
+      const automations = await prisma.automation.findMany({
+        where: { instagramAccountId },
+        select: {
+          id: true, instagramAccountId: true, triggerType: true,
+          mediaId: true, mediaIds: true, keyword: true, keywordMatchMode: true,
+          commentReplyText: true, isActive: true, createdAt: true, updatedAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      return NextResponse.json({ success: true, data: automations }, {
+        headers: { "Cache-Control": "private, no-store" },
+      });
+    }
+
     const automations = await prisma.automation.findMany({
       where: { instagramAccountId },
       include: {
