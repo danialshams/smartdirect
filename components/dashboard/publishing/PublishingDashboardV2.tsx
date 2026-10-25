@@ -18,6 +18,7 @@ import { WheelPicker, type WheelPickerOption } from "@ncdai/react-wheel-picker";
 import "@ncdai/react-wheel-picker/style.css";
 import { toast } from "sonner";
 import PublishingSectionGuide from "./PublishingSectionGuide";
+import GlassModalPresence from "../GlassModalPresence";
 import { dairaPalette } from "../../../lib/design-system/palette";
 import PublishingQueue from "./PublishingQueue";
 import ReelSettingsFields from "./ReelSettingsFields";
@@ -385,6 +386,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const [reelCoverUploading, setReelCoverUploading] = useState(false);
   useStorageUploadLease([...uploadedMedia.map((item) => item.publicUrl), ...(reelOptions.coverUrl ? [reelOptions.coverUrl] : [])]);
   const [automationEnabled, setAutomationEnabled] = useState(false);
+  const [confirmStoryPublishingReplacement,setConfirmStoryPublishingReplacement] = useState<{
+    keywords:string[];publishNow:boolean;
+  }|null>(null);
   const [replyMode,setReplyMode]=useState<"new"|"existing">("new");
   const [previousRules,setPreviousRules]=useState<CompleteAutomation[]>([]);
   const [previousLoading,setPreviousLoading]=useState(false);
@@ -1169,7 +1173,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     }
   }
 
-  async function createJob(publishNow: boolean) {
+  async function createJob(publishNow: boolean, confirmedStoryReplacement = false) {
     const accountId = selectedAccountId;
     if (!accountId) { setError("اکانت فعال Instagram پیدا نشد."); return; }
     if (!uploadedMedia.length) { setError("ابتدا فایل را آپلود کنید."); return; }
@@ -1202,6 +1206,25 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         setError("زمان انتشار باید حداکثر تا ۴۸ ساعت آینده باشد.");
         return;
       }
+    }
+    if(type==="STORY"&&automationEnabled&&!confirmedStoryReplacement) {
+      try{
+        const response=await fetch("/api/automations?instagramAccountId="+encodeURIComponent(accountId),{
+          credentials:"include",cache:"no-store",
+        });
+        const result=await response.json();
+        if(!response.ok||!result.success||!Array.isArray(result.data))
+          throw new Error(result.error||"بررسی پاسخ فعال استوری ناموفق بود.");
+        const rules: Array<{triggerType:string;isActive:boolean;keyword?:string|null}> = result.data;
+        const active=rules.filter(rule=>rule.triggerType==="STORY_REPLY_KEYWORD"&&rule.isActive);
+        if(active.length){
+          setConfirmStoryPublishingReplacement({
+            keywords:active.map(rule=>(rule.keyword||"بدون کلمه کلیدی").replace(/,/g,"، ")),
+            publishNow,
+          });
+          return;
+        }
+      }catch(error){setError(error instanceof Error?error.message:"بررسی پاسخ فعال ناموفق بود.");return;}
     }
     try {
       setPublishing(true); setError("");
@@ -1926,6 +1949,34 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           </div>
         )}
       </div>
+      <GlassModalPresence open={Boolean(confirmStoryPublishingReplacement)}
+        onEscape={()=>{if(!publishing)setConfirmStoryPublishingReplacement(null);}}>
+        {confirmStoryPublishingReplacement&&<div className="daira-glass-overlay fixed inset-0 z-[9998] flex items-center justify-center p-4 backdrop-blur-md" role="presentation"
+          onMouseDown={event=>{if(event.target===event.currentTarget&&!publishing)setConfirmStoryPublishingReplacement(null);}}>
+          <section role="alertdialog" aria-modal="true" aria-labelledby="publishing-story-replacement-title"
+            className="daira-glass-modal w-full max-w-md rounded-3xl border border-[var(--daira-glass-rim)] bg-[var(--daira-glass-raised)] p-5 shadow-2xl">
+            <h2 id="publishing-story-replacement-title" className="text-base font-bold text-[var(--daira-heading)]">جایگزینی پاسخ فعال استوری</h2>
+            <p className="mt-3 text-sm leading-7 text-[var(--daira-text)]">پاسخ فعلی با کلمات کلیدی زیر فعال است:</p>
+            <div className="mt-3 space-y-2">{confirmStoryPublishingReplacement.keywords.map((words,index)=>(
+              <p key={index} className="rounded-xl border border-[var(--daira-glass-rim)] bg-[var(--daira-surface-hover)] px-3 py-2 text-sm font-semibold">{words}</p>
+            ))}</div>
+            <p className="mt-3 text-sm leading-7 text-[var(--daira-text)]">
+              پاسخ قبلی {confirmStoryPublishingReplacement.publishNow
+                ? "پس از انتشار موفق استوری جدید"
+                : "در زمان انتشار موفق استوری زمان‌بندی‌شده"} غیرفعال می‌شود؛ حذف نخواهد شد.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button type="button" onClick={()=>setConfirmStoryPublishingReplacement(null)} disabled={publishing}
+                className="min-h-11 flex-1 rounded-xl border border-[var(--daira-glass-rim)] text-sm font-semibold">انصراف</button>
+              <button type="button" disabled={publishing} onClick={()=>{
+                const publishNow=confirmStoryPublishingReplacement.publishNow;
+                setConfirmStoryPublishingReplacement(null);
+                void createJob(publishNow,true);
+              }} className="daira-complete-reply__select min-h-11 flex-1 rounded-xl text-sm font-bold">تأیید و ادامه</button>
+            </div>
+          </section>
+        </div>}
+      </GlassModalPresence>
     </div>
   );
 }
