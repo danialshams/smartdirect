@@ -60,6 +60,14 @@ async function main() {
       {messageType:"FORM",text:"ناامن",formId:foreignForm.id},
     ],account.id,owner.id));
     await assert.rejects(() => prepareAutomationMessages([
+      {messageType:"FORM",text:"سؤال",quickReplies:[
+        {title:"انتخاب",payload:"nested-"+seed,destinationType:"FORM",
+          destinationQuestion:"سؤال بعدی",destinationFormId:foreignForm.id,
+          destinationQuickReplies:[{title:"ادامه",payload:"child-"+seed,
+            destinationType:"TEXT",destinationText:"بسیار خوب"}]},
+      ]},
+    ],account.id,owner.id),"Nested form destinations cannot reference another account.");
+    await assert.rejects(() => prepareAutomationMessages([
       {messageType:"TEXT",text:"x",quickReplies:[
         {title:"۱",payload:"reused",destinationType:"TEXT",destinationText:"a"},
         {title:"۲",payload:"reused",destinationType:"TEXT",destinationText:"b"},

@@ -7,7 +7,7 @@ const DESTINATION_TYPES = ["TEXT", "IMAGE", "VIDEO", "AUDIO", "SHOWCASE", "FORM"
 type DestinationType = (typeof DESTINATION_TYPES)[number];
 const cleaned = (value: unknown) => typeof value === "string" ? value.trim() : "";
 
-function normalizeDestinationTree(nodes: unknown[], path: string, seen: Set<string>): unknown[] {
+function normalizeDestinationTree(nodes: unknown[], path: string, seen: Set<string>, forms: Set<string>, showcases: Set<string>): unknown[] {
   if (nodes.length > 13) throw Error(path + " حداکثر ۱۳ گزینه می‌تواند داشته باشد.");
   return nodes.map((node, index) => {
     if (!node || typeof node !== "object" || Array.isArray(node)) throw Error(path + " نامعتبر است.");
@@ -28,6 +28,10 @@ function normalizeDestinationTree(nodes: unknown[], path: string, seen: Set<stri
     if (type === "TEXT" && !text) throw Error("متن مقصد گزینه الزامی است.");
     if (type === "FORM" && (!question || !children.length)) throw Error("فرم مقصد باید سؤال و گزینه داشته باشد.");
     if (type === "SHOWCASE" && !cleaned(item.destinationShowcaseId)) throw Error("ویترین مقصد الزامی است.");
+    // Validate resource ownership at ALL levels of nested forms, not just
+    // top-level buttons. A deep destination must never reference another tenant.
+    if (type === "SHOWCASE") showcases.add(cleaned(item.destinationShowcaseId));
+    if (type === "FORM" && cleaned(item.destinationFormId)) forms.add(cleaned(item.destinationFormId));
     if (["IMAGE", "AUDIO", "VIDEO"].includes(type) &&
       !cleaned(item.destinationMediaUrl) && !cleaned(item.destinationMediaId)) throw Error("فایل مقصد الزامی است.");
     return {
@@ -38,7 +42,7 @@ function normalizeDestinationTree(nodes: unknown[], path: string, seen: Set<stri
       destinationMediaUrl: cleaned(item.destinationMediaUrl) || null,
       destinationMediaId: cleaned(item.destinationMediaId) || null,
       destinationQuestion: question || null, question: question || null,
-      destinationQuickReplies: type === "FORM" ? normalizeDestinationTree(children, path + " - " + title, seen) : [],
+      destinationQuickReplies: type === "FORM" ? normalizeDestinationTree(children, path + " - " + title, seen, forms, showcases) : [],
     };
   });
 }
@@ -89,15 +93,7 @@ export async function prepareAutomationMessages(
       throw Error("متن پاسخ از حداکثر طول مجاز بیشتر است.");
 
     const rawReplies = Array.isArray(entry.quickReplies) ? entry.quickReplies : [];
-    const replies = normalizeDestinationTree(rawReplies, "گزینه پاسخ", allPayloads) as Array<Record<string, unknown>>;
-    for (const node of replies) {
-      // Nested destinations are serialized into replyText for backwards compatibility.
-      const destination = { ...node };
-      delete destination.title;
-      delete destination.payload;
-      if (node.destinationType === "FORM" && node.destinationFormId) forms.add(String(node.destinationFormId));
-      if (node.destinationType === "SHOWCASE" && node.destinationShowcaseId) showcases.add(String(node.destinationShowcaseId));
-    }
+    const replies = normalizeDestinationTree(rawReplies, "گزینه پاسخ", allPayloads, forms, showcases) as Array<Record<string, unknown>>;
     results.push({
       messageType, order: index,
       text: text || null,
