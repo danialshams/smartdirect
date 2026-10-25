@@ -8,6 +8,7 @@ import { Plus, RadioTower, Search, Pencil, Trash2, Loader2, RefreshCw, X } from 
 import { toast } from "sonner";
 import { dairaPalette } from "../../lib/design-system/palette";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
+import { getDashboardListSnapshot, setDashboardListSnapshot } from "@/src/lib/dashboard/list-snapshot-cache";
 
 type LiveRule = {
   id: string; isActive?: boolean; keyword: string; matchMode?: "EXACT" | "CONTAINS_ANY"; initialText: string; requireFollow: boolean;
@@ -20,10 +21,12 @@ export default function LiveAutomationList() {
   const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
   const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
   const router = useRouter();
-  const [account, setAccount] = useState<Account | null>(null);
-  const [rules, setRules] = useState<LiveRule[]>([]);
+  const listKey = activeDashboardAccount ? "live-rules:" + activeDashboardAccount.id : null;
+  const [account, setAccount] = useState<Account | null>(() => listKey && getDashboardListSnapshot<LiveRule>(listKey) ? activeDashboardAccount : null);
+  const [rules, setRules] = useState<LiveRule[]>(() => listKey ? getDashboardListSnapshot<LiveRule>(listKey) ?? [] : []);
+  const [loadedFor, setLoadedFor] = useState<string | null>(() => listKey && getDashboardListSnapshot<LiveRule>(listKey) ? listKey : null);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(listKey && getDashboardListSnapshot<LiveRule>(listKey)));
   const [error, setError] = useState("");
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [subscriptionBusy, setSubscriptionBusy] = useState(false);
@@ -53,7 +56,20 @@ export default function LiveAutomationList() {
   useEffect(() => {
     if (!dashboardReady) return;
     const controller = new AbortController();
-    setLoading(true);
+    const key = "live-rules:" + (activeDashboardAccount?.id || "");
+    const cached = activeDashboardAccount ? getDashboardListSnapshot<LiveRule>(key) : null;
+    if (cached) {
+      setAccount(activeDashboardAccount);
+      setRules(cached);
+      setLoadedFor(key);
+      setLoading(false);
+    } else {
+      setRules([]);
+      setAccount(null);
+      setSubscription(null);
+      setLoadedFor(null);
+      setLoading(true);
+    }
     setError("");
     void (async () => {
       try {
@@ -67,12 +83,15 @@ export default function LiveAutomationList() {
         if (!listResponse.ok || !result.success) throw new Error(result.error || "دریافت پاسخ‌های لایو ناموفق بود.");
         const status = subscriptionResponse ? await subscriptionResponse.json().catch(() => null) : null;
         if (!controller.signal.aborted) {
+          const next = (Array.isArray(result.data) ? result.data : []) as LiveRule[];
+          setDashboardListSnapshot(key, next);
           setAccount(connected);
-          setRules(result.data || []);
+          setRules(next);
+          setLoadedFor(key);
           setSubscription(status?.data ?? null);
         }
       } catch (err) {
-        if (!controller.signal.aborted) setError(err instanceof Error ? err.message : "بارگذاری ناموفق بود.");
+        if (!controller.signal.aborted && !cached) setError(err instanceof Error ? err.message : "بارگذاری ناموفق بود.");
       } finally { if (!controller.signal.aborted) setLoading(false); }
     })();
     return () => controller.abort();
@@ -96,7 +115,11 @@ export default function LiveAutomationList() {
       });
       const data=await response.json();
       if(!response.ok||!data.success)throw new Error(data.error||"تغییر وضعیت لایو ناموفق بود.");
-      setRules(current=>current.map(item=>item.id===rule.id?{...item,isActive:rule.isActive===false}:item));
+      setRules(current => {
+        const next = current.map(item => item.id === rule.id ? { ...item, isActive: rule.isActive === false } : item);
+        if (listKey) setDashboardListSnapshot(listKey, next);
+        return next;
+      });
       toast.success(rule.isActive===false?"پاسخ لایو فعال شد.":"پاسخ لایو غیرفعال شد.");
     }catch(error){toast.error(error instanceof Error?error.message:"تغییر وضعیت لایو ناموفق بود.");}
   }
@@ -110,14 +133,18 @@ export default function LiveAutomationList() {
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || "حذف پاسخ خودکار لایو ناموفق بود.");
-      setRules(current => current.filter(rule => rule.id !== deleteTarget.id));
+      setRules(current => {
+        const next = current.filter(rule => rule.id !== deleteTarget.id);
+        if (listKey) setDashboardListSnapshot(listKey, next);
+        return next;
+      });
       setDeleteTarget(null);
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "حذف ناموفق بود.");
     } finally { setDeleting(false); }
   }
 
-  if (loading) return <LiveAutomationSkeleton />;
+  if (loading || (dashboardReady && Boolean(listKey) && loadedFor !== listKey && !error)) return <LiveAutomationSkeleton />;
   if (error) return (
     <div dir="rtl" className="mx-auto flex min-h-[45vh] max-w-4xl flex-col items-center justify-center gap-4 px-4">
       <p role="alert" className="w-full rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">{error}</p>
