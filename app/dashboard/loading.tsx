@@ -1,36 +1,14 @@
-"use client";
-
-import { usePathname } from "next/navigation";
-import AutoRepliesSkeleton from "@/components/dashboard/AutoRepliesSkeleton";
-import ShareMentionSkeleton from "@/components/dashboard/ShareMentionSkeleton";
-import DashboardHomeSkeleton from "@/components/dashboard/DashboardHomeSkeleton";
-
+/**
+ * Intentionally silent shared dashboard Suspense fallback.
+ *
+ * The authenticated DashboardShell keeps the real header, navigation and
+ * Home artwork mounted across client-side route changes. Rendering a generic
+ * Home / shell skeleton here, before each child route's own loading.tsx or
+ * client-side skeleton, produces an incorrect two-stage loading flash.
+ *
+ * Keep this loading boundary to prevent an ancestor app/loading.tsx fallback
+ * from replacing the dashboard chrome. Specific pages own their load states.
+ */
 export default function DashboardLoading() {
-  const pathname = usePathname() || "";
-  if (pathname.startsWith("/dashboard/share-mention/")) return <ShareMentionSkeleton />;
-  if (pathname === "/dashboard/share-mention") return <AutoRepliesSkeleton includeCreateButton />;
-  return (
-    <div className="daira-app-shell" dir="rtl" role="status" aria-busy="true" aria-label="در حال بارگذاری داشبورد">
-      <div className="daira-header-backdrop" aria-hidden="true" />
-      <div className="daira-home__header daira-home__loading-header" aria-hidden="true">
-        <span className="daira-home__skeleton-block daira-home__skeleton-header-icon" />
-        <span className="daira-home__skeleton-block daira-home__skeleton-logo" />
-        <span className="daira-home__skeleton-block daira-home__skeleton-header-icon" />
-      </div>
-      <main className="daira-app-main daira-app-main--home">
-        <div className="daira-app-content">
-          <DashboardHomeSkeleton />
-        </div>
-      </main>
-      <div className="daira-bottom-nav-backdrop" aria-hidden="true" />
-      <div className="daira-bottom-nav daira-home__loading-nav" aria-hidden="true">
-        {Array.from({ length: 3 }, (_, index) => (
-          <span className="daira-home__skeleton-nav-item" key={index}>
-            <span className="daira-home__skeleton-block daira-home__skeleton-nav-icon" />
-            <span className="daira-home__skeleton-block daira-home__skeleton-nav-label" />
-          </span>
-        ))}
-      </div>
-    </div>
-  );
+  return null;
 }
