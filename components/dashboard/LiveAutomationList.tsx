@@ -58,6 +58,9 @@ export default function LiveAutomationList() {
     const controller = new AbortController();
     const key = "live-rules:" + (activeDashboardAccount?.id || "");
     const cached = activeDashboardAccount ? getDashboardListSnapshot<LiveRule>(key) : null;
+    // Subscription state is never restored across account changes; the server
+    // must verify it separately before a subscription action may run.
+    setSubscription(null);
     if (cached) {
       setAccount(activeDashboardAccount);
       setRules(cached);
