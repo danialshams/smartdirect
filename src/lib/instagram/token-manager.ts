@@ -141,7 +141,7 @@ export async function exchangeInstagramToken(
   if (typeof data.expires_in !== "number" || data.expires_in <= 0) {
     console.error(
       "[Instagram Token] Meta did not return a valid expires_in:",
-      data,
+      { hasAccessToken: Boolean(data.access_token), hasError: Boolean(data.error) },
     );
 
     throw new Error("Instagram did not return a valid token expiration time");
@@ -319,7 +319,8 @@ export async function refreshInstagramToken(
       "[Instagram Token] Refresh succeeded but expires_in is invalid:",
       {
         instagramAccountId,
-        data,
+        hasAccessToken: Boolean(data.access_token),
+        hasError: Boolean(data.error),
       },
     );
 
