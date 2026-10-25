@@ -33,20 +33,18 @@ export default function AutoRepliesSkeleton({ includeCreateButton = false }: Aut
             {Array.from({ length: 3 }, (_, index) => (
               <article
                 key={index}
-                className="daira-skeleton-glass flex min-h-[84px] animate-pulse items-center justify-between gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4"
+                className="daira-automation-list-card daira-skeleton-glass relative flex min-h-[114px] animate-pulse items-center justify-between gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 pb-3 pt-9 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4"
               >
-                <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
-                  <div className="h-[38px] w-44 max-w-full rounded-xl border border-[#DCE6FF] bg-[#EEF3FF] px-3 py-2" />
-                  <div className="h-2.5 w-24 rounded-md bg-[#E8EDF5]" />
+                <span className="absolute left-3 top-3 h-2.5 w-24 rounded bg-[#E8EDF5]" />
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <span className="h-14 w-14 shrink-0 rounded-xl border border-[#E8EDF5] bg-[#E8EDF5]" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block h-[38px] w-32 max-w-full rounded-xl border border-[#DCE6FF] bg-[#EEF3FF]" />
+                  </span>
                 </div>
-
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <div className="inline-flex h-8 w-[66px] items-center justify-center rounded-[8px] border border-[#E8EDF5] bg-[#F8FAFC] sm:w-[74px]">
-                    <span className="h-2.5 w-8 rounded bg-[#E2E8F0]" />
-                  </div>
-                  <div className="inline-flex h-8 w-[54px] items-center justify-center rounded-[8px] border border-[#F3D5D5] bg-[#FFF8F8] sm:w-[62px]">
-                    <span className="h-2.5 w-6 rounded bg-[#F1DADA]" />
-                  </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="h-9 w-14 rounded-xl border border-[#E8EDF5] bg-[#F8FAFC] sm:w-[74px]" />
+                  <span className="h-9 w-12 rounded-xl border border-[#F3D5D5] bg-[#FFF8F8] sm:w-[62px]" />
                 </div>
               </article>
             ))}
