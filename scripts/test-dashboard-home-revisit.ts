@@ -27,4 +27,9 @@ assert(src.includes('cache: "no-store"'),"API remains authoritative");
 assert(src.includes("controller.abort()"),"Account changes must cancel pending requests");
 const api=readFileSync("app/api/dashboard/home-summary/route.ts","utf8");
 assert(api.includes('private, no-store'),"Sensitive dashboard API response must not be publicly cached");
+const automationManager=readFileSync("components/dashboard/AutoRepliesManager.tsx","utf8");
+assert(!automationManager.includes('fetch("/api/instagram/accounts"'),"Deletion must not refetch known accounts");
+assert(automationManager.includes("writeAutoRepliesCache(activeAccount.id, nextItems)"),
+  "Reply deletion must invalidate the currently selected account cache");
+
 console.log("DASHBOARD_HOME_REVISIT_CACHE_OK");
