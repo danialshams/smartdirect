@@ -22,11 +22,17 @@ export default function SupportNotifications({ children }: { children: ReactNode
   const booted = useRef(false);
   const initialTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestInFlight = useRef(false);
+  const pendingRealtimeRefresh = useRef(false);
   const [count, setCount] = useState(0);
   const [notice, setNotice] = useState<Notice | null>(null);
   useEffect(() => { pathRef.current = pathname; }, [pathname]);
   const load = useCallback(async (reason: "initial" | "poll" | "event" | "silent" = "poll") => {
-    if (requestInFlight.current) return;
+    if (requestInFlight.current) {
+      // Coalesce support events while the summary request is in flight.
+      // Do not lose an SSE update when realtime polling is suppressed.
+      if (reason === "event") pendingRealtimeRefresh.current = true;
+      return;
+    }
     requestInFlight.current = true;
     try {
       const response = await fetch("/api/dashboard/tickets/summary", { cache: "no-store", credentials: "include" });
@@ -48,9 +54,17 @@ export default function SupportNotifications({ children }: { children: ReactNode
       } else if (latest && latest.id !== original && !pathRef.current.startsWith("/dashboard/tickets/" + latest.ticketId)) {
         setNotice({ count: unread, item: latest, initial: false });
       }
-      if ((reason === "event" || (!first && latest?.id !== original)) && latest) window.dispatchEvent(new Event("support:changed"));
+      // The EventSource handler broadcasts each change once, even when there
+      // is no unread item. Do not broadcast it again after the summary fetch.
+      if (reason !== "event" && !first && latest && latest.id !== original) window.dispatchEvent(new Event("support:changed"));
     } catch { /* Preserve previous unread count during network outages. */ }
-    finally { requestInFlight.current = false; }
+    finally {
+      requestInFlight.current = false;
+      if (pendingRealtimeRefresh.current) {
+        pendingRealtimeRefresh.current = false;
+        void load("event");
+      }
+    }
   }, []);
   useEffect(() => {
     void load("initial");
@@ -66,7 +80,7 @@ export default function SupportNotifications({ children }: { children: ReactNode
     if (typeof EventSource !== "undefined") {
       source = new EventSource("/api/dashboard/tickets/stream");
       source.onopen = () => { realtimeConnected = true; void load("silent"); };
-      source.addEventListener("support", () => { void load("event"); window.dispatchEvent(new Event("support:changed")); });
+      source.addEventListener("support", () => { window.dispatchEvent(new Event("support:changed")); void load("event"); });
       source.onerror = () => { realtimeConnected = false; source?.close(); source = null; };
     }
     return () => {

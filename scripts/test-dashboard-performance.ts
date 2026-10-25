@@ -51,6 +51,12 @@ assert(automationApi.includes('select: { messageType: true }'),
 assert(redis.includes('const pendingLoads = new Map') &&
   redis.includes('const pending = pendingLoads.get(key);'),
   "Redis cache misses must coalesce inside each process.");
+// Each support SSE event must only refresh the visible support-ticket list once.
+assert(polling.includes('source.addEventListener("support", () => { window.dispatchEvent(new Event("support:changed")); void load("event"); });') &&
+  polling.includes('reason !== "event" && !first && latest && latest.id !== original') &&
+  polling.includes("pendingRealtimeRefresh.current = true") &&
+  polling.includes('void load("event");'),
+  "SSE notifications must be single-dispatch and queue a summary recheck when the first is in-flight.");
 assert(polling.includes('realtimeConnected = true') &&
   polling.includes('!realtimeConnected') &&
   publish.includes('Date.now() - lastIdlePoll < 30_000') &&
@@ -62,4 +68,14 @@ assert(batches.includes('prepareAutomationMessages') &&
   create.includes('messages: batchMessages') &&
   publish.includes('messages: preparedMessages'),
   "Create actions must validate and persist nested responses atomically in one request.");
+const publishApi = file("app/api/instagram/publishing/route.ts");
+const validationStart = publishApi.indexOf("const [conflict, ownedCover, tracked] = await Promise.all([");
+const conflictCheck = publishApi.indexOf("if (conflict) {", validationStart);
+const coverCheck = publishApi.indexOf("if (reelOptions?.coverStorageKey && !ownedCover)", validationStart);
+const mediaCheck = publishApi.indexOf("const trackedKeys = new Set(tracked.map", validationStart);
+assert(validationStart >= 0 && conflictCheck > validationStart && coverCheck > conflictCheck &&
+  mediaCheck > coverCheck && publishApi.includes("userId: session.user.id") &&
+  publishApi.includes("expiresAt: { gt: validAt }"),
+  "Publishing must parallelize independent ownership checks without altering error precedence or media security.");
+
 console.log("DASHBOARD_PERFORMANCE_REGRESSION_OK");
