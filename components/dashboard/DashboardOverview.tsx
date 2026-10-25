@@ -50,7 +50,7 @@ function formatNumber(value: number) {
   return value.toLocaleString("fa-IR");
 }
 
-export default function DashboardOverview({ instagramAccounts }: DashboardOverviewProps) {
+export default function DashboardOverview({ user, instagramAccounts }: DashboardOverviewProps) {
   const { accountId, isReady } = useDashboardAccountSelection();
   const activeAccount = instagramAccounts.find((account) => account.id === accountId && account.isConnected)
     ?? instagramAccounts.find((account) => account.isConnected);
@@ -76,8 +76,9 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
       setSummaryStatus("unavailable");
       return;
     }
-    const cached = getDashboardHomeSnapshot(summaryKey);
-    setSummaryState({ key: summaryKey, value: cached?.value ?? null });
+    const scopedKey = summaryKey;
+    const cached = getDashboardHomeSnapshot(scopedKey);
+    setSummaryState({ key: scopedKey, value: cached?.value ?? null });
     setSummaryStatus(cached ? "ready" : "loading");
     // Do not re-request a just-fetched home summary on quick back-navigation.
     // Other visits revalidate without hiding cached counters or artwork.
@@ -97,8 +98,8 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
         const result: { success?: boolean; data?: DashboardHomeCounts } = await response.json();
         if (controller.signal.aborted) return;
         if (result.success && result.data) {
-          setDashboardHomeSnapshot(summaryKey, result.data);
-          setSummaryState({ key: summaryKey, value: result.data });
+          setDashboardHomeSnapshot(scopedKey, result.data);
+          setSummaryState({ key: scopedKey, value: result.data });
           setSummaryStatus("ready");
         } else if (!cached) {
           setSummaryStatus("unavailable");
