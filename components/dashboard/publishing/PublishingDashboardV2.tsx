@@ -51,7 +51,7 @@ type UploadedMedia = { type: MediaType; storageKey: string; publicUrl: string; f
 type UploadApiResult = { success?: boolean; message?: string; data?: unknown };
 type Job = { id: string; type: PublishType; status: string; caption: string | null; scheduledAt: string | null; publishedAt: string | null; createdAt: string; errorMessage: string | null; media: UploadedMedia[]; instagramAccount?: { igUsername: string | null } };
 let publishingJobsCache: Job[] | null = null;
-let publishingAccountsCache: InstagramAccount[] | null = null;
+let publishingJobsCacheOwner: string | null = null;
 
 type InstagramAccount = { id: string; igUsername: string | null; username?: string | null; igUserId: string; isConnected?: boolean };
 
@@ -342,10 +342,19 @@ function MediaTile({ item, type, onRemove, ready = false, compact = false }: Med
 export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?: (type: PublishType) => void }) {
   const router = useRouter();
   const {accounts:dashboardAccounts,accountId:dashboardAccountId}=useDashboardAccountSelection();
-  const [accounts, setAccounts] = useState<InstagramAccount[]>(publishingAccountsCache ?? []);
-  const [jobs, setJobs] = useState<Job[]>(publishingJobsCache ?? []);
-  const knownJobIdsRef = useRef(new Set<string>((publishingJobsCache ?? []).filter((job) => ["SCHEDULED", "PROCESSING", "PUBLISHING"].includes(job.status)).map((job) => job.id)));
-  const previousJobsRef = useRef<Job[]>(publishingJobsCache ?? []);
+  // Module memory may survive a logout/login in this browser tab. Never
+  // hydrate a different user's publishing queue or account list from it.
+  const accountScopeKey = dashboardAccounts.map(account => account.id).sort().join("|");
+  const cachedJobs = publishingJobsCacheOwner === accountScopeKey ? publishingJobsCache : null;
+  const [accounts, setAccounts] = useState<InstagramAccount[]>(() => dashboardAccounts.map(account => ({
+    id: account.id, igUserId: account.igUserId, igUsername: account.igUsername,
+    username: account.igUsername, isConnected: account.isConnected,
+  })));
+  const [jobs, setJobs] = useState<Job[]>(cachedJobs ?? []);
+  const knownJobIdsRef = useRef(new Set<string>((cachedJobs ?? []).filter((job) => ["SCHEDULED", "PROCESSING", "PUBLISHING"].includes(job.status)).map((job) => job.id)));
+  const previousJobsRef = useRef<Job[]>(cachedJobs ?? []);
+  const jobsLoadInFlightRef = useRef<Promise<void> | null>(null);
+  const pendingJobsRefreshRef = useRef(false);
   const [activePublishJobId, setActivePublishJobId] = useState<string | null>(null);
   const activePublishJobIdRef = useRef<string | null>(null);
   const [publishResultVisible, setPublishResultVisible] = useState(false);
@@ -443,7 +452,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const activeUploadItemIdsRef = useRef(new Set<string>());
   const carouselInsertAtRef = useRef<number | null>(null);
   const [publishing, setPublishing] = useState(false);
-  const [loading, setLoading] = useState(publishingJobsCache === null);
+  const [loading, setLoading] = useState(cachedJobs === null);
   const [error, setError] = useState("");
 
   const triggerType = type === "STORY" ? "STORY_REPLY_KEYWORD" : "COMMENT_KEYWORD";
@@ -472,17 +481,37 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       id: account.id, igUserId: account.igUserId, igUsername: account.igUsername,
       username: account.igUsername, isConnected: account.isConnected,
     }));
-    publishingAccountsCache = list;
     setAccounts(list);
   }
-  async function loadJobs() {
+  function loadJobs(forceFresh = false): Promise<void> {
+    if (jobsLoadInFlightRef.current) {
+      // After a create/cancel/retry, do not discard the refresh event just
+      // because a polling request happened to be in flight.
+      if (forceFresh) pendingJobsRefreshRef.current = true;
+      return jobsLoadInFlightRef.current;
+    }
+    const request = (async () => {
+      do {
+        pendingJobsRefreshRef.current = false;
+        await fetchJobs();
+      } while (pendingJobsRefreshRef.current);
+    })();
+    jobsLoadInFlightRef.current = request;
+    const clear = () => {
+      if (jobsLoadInFlightRef.current === request) jobsLoadInFlightRef.current = null;
+    };
+    void request.then(clear, clear);
+    return request;
+  }
+
+  async function fetchJobs() {
     const response = await fetch("/api/instagram/publishing", { cache: "no-store" });
     if (!response.ok) throw new Error("دریافت Publishing Jobs ناموفق بود.");
     const result = await response.json();
     const nextJobs: Job[] = result.data ?? [];
     if (previousJobsRef.current.length === 0) {
       try {
-        const stored = sessionStorage.getItem("smartdirect:publishing-jobs");
+        const stored = sessionStorage.getItem("smartdirect:publishing-jobs:v2:" + accountScopeKey);
         const cached = stored ? JSON.parse(stored) as Job[] : [];
         if (Array.isArray(cached)) {
           previousJobsRef.current = cached;
@@ -528,8 +557,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
     previousJobsRef.current = nextJobs;
     publishingJobsCache = nextJobs;
+    publishingJobsCacheOwner = accountScopeKey;
     try {
-      sessionStorage.setItem("smartdirect:publishing-jobs", JSON.stringify(nextJobs));
+      sessionStorage.setItem("smartdirect:publishing-jobs:v2:" + accountScopeKey, JSON.stringify(nextJobs));
     } catch {
       // Session storage is only a navigation-speed cache; ignore quota/privacy failures.
     }
@@ -546,7 +576,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       ); setForms(Array.isArray(formResult.data) ? formResult.data : []);
     } finally { setLoadingResources(false); }
   }
-  async function load() { const showBlockingLoading = publishingJobsCache === null; try { if (showBlockingLoading) setLoading(true); setError(""); await Promise.all([loadAccounts(), loadJobs()]); } catch (e) { setError(e instanceof Error ? e.message : "خطا در دریافت اطلاعات."); } finally { if (showBlockingLoading) setLoading(false); } }
+  async function load() { const showBlockingLoading = cachedJobs === null; try { if (showBlockingLoading) setLoading(true); setError(""); await Promise.all([loadAccounts(), loadJobs()]); } catch (e) { setError(e instanceof Error ? e.message : "خطا در دریافت اطلاعات."); } finally { if (showBlockingLoading) setLoading(false); } }
   useEffect(() => {
     let previousDate = todayJalali;
     let previousHour = officialTehranClock.hour;
@@ -616,7 +646,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     void load();
 
     const refreshFromDetail = () => {
-      void loadJobs();
+      void loadJobs(true);
     };
 
     window.addEventListener("smartdirect:publishing-refresh", refreshFromDetail);
@@ -632,7 +662,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     const onVisible = () => {
       if (document.visibilityState === "visible") {
         lastIdlePoll = Date.now();
-        void loadJobs();
+        void loadJobs(true);
       }
     };
     document.addEventListener("visibilitychange", onVisible);
@@ -1273,15 +1303,15 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           setTagInputError("");
           setError("");
         });
-        await loadJobs();
+        await loadJobs(true);
         return;
       }
-      setCaption(""); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(currentJalaliDate()); await loadJobs();
+      setCaption(""); setUploadedMedia([]); setShowUploadedMediaPreview(false); resetAutomation(); setUploadProgress(0); setScheduledDate(currentJalaliDate()); await loadJobs(true);
     } catch (e) { setError(e instanceof Error ? e.message : "خطا در انتشار محتوا."); } finally { setPublishing(false); }
   }
 
-  async function retryJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}/retry`, { method: "POST" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "Retry ناموفق بود."); await loadJobs(); } catch (e) { setError(e instanceof Error ? e.message : "Retry ناموفق بود."); } }
-  async function cancelJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}`, { method: "DELETE" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "لغو ناموفق بود."); await loadJobs(); } catch (e) { setError(e instanceof Error ? e.message : "لغو ناموفق بود."); } }
+  async function retryJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}/retry`, { method: "POST" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "Retry ناموفق بود."); await loadJobs(true); } catch (e) { setError(e instanceof Error ? e.message : "Retry ناموفق بود."); } }
+  async function cancelJob(id: string) { try { setError(""); const response = await fetch(`/api/instagram/publishing/${id}`, { method: "DELETE" }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "لغو ناموفق بود."); await loadJobs(true); } catch (e) { setError(e instanceof Error ? e.message : "لغو ناموفق بود."); } }
 
 
   const canUpload = type === "CAROUSEL" ? uploadedMedia.length + media.length < 10 : uploadedMedia.length + media.length < 1;
