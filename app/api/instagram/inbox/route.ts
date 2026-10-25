@@ -649,7 +649,7 @@ export async function GET(request: NextRequest) {
       },
     }),
       conversationIds.length
-      ? await prisma.conversationMessage.findMany({
+        ? prisma.conversationMessage.findMany({
           where: {
             conversationId: {
               in: conversationIds,
