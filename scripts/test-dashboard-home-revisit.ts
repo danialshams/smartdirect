@@ -25,6 +25,17 @@ assert(src.includes("getDashboardHomeSnapshot"),"Dashboard must reuse snapshot o
 assert(src.includes("setDashboardHomeSnapshot"),"Successful responses must update snapshot");
 assert(src.includes('cache: "no-store"'),"API remains authoritative");
 assert(src.includes("controller.abort()"),"Account changes must cancel pending requests");
+const shell=readFileSync("components/dashboard/DahboardShell.tsx","utf8");
+assert(shell.includes("const [homeVisited, setHomeVisited] = useState(isHome)") &&
+  shell.includes("(homeVisited || isHome)") &&
+  shell.includes('className={isHome ? "w-full" : "hidden"}') &&
+  shell.includes("inert={!isHome}") &&
+  shell.includes("isActive={isHome}") &&
+  !shell.includes("isHome ? (\\n              <DashboardOverview"),
+  "Home artwork must remain mounted and inert while another dashboard page is visible");
+assert(src.includes("if (!isActive) return;") &&
+  src.includes("[activeAccountId, summaryKey, isActive]"),
+  "Retained Home must revalidate private counters after navigating back");
 const api=readFileSync("app/api/dashboard/home-summary/route.ts","utf8");
 assert(api.includes('private, no-store'),"Sensitive dashboard API response must not be publicly cached");
 const automationManager=readFileSync("components/dashboard/AutoRepliesManager.tsx","utf8");
