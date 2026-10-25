@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, CircleUserRound, Headset, ChevronRight } from "lucide-react";
@@ -39,6 +39,11 @@ const bottomItems = [
 export default function DashboardShell({ user, instagramAccounts, children }: DashboardShellProps) {
   const pathname = usePathname();
   const isHome = pathname === "/dashboard";
+  // Preserve the live Home tree after its first visit. Re-mounting all eleven
+  // artwork images on every back-navigation caused visible image placeholders
+  // and unnecessary work even when HTTP cache already held their bytes.
+  const [homeVisited, setHomeVisited] = useState(isHome);
+  useEffect(() => { if (isHome) setHomeVisited(true); }, [isHome]);
   const currentPageTitle = getDashboardBottomPageTitle(pathname);
   const isAutomationCreateFlow = [
     "/dashboard/comment-automation/new",
@@ -58,11 +63,12 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
         <DashboardHeader instagramAccounts={instagramAccounts} showBackButton={!isHome} />
         <main className={`daira-app-main${isHome ? " daira-app-main--home" : ""}${isAutomationCreateFlow ? " daira-app-main--flow-actions" : ""}`}>
           <div className="daira-app-content">
-            {isHome ? (
-              <DashboardOverview user={user} instagramAccounts={instagramAccounts} />
-            ) : (
-              children
+            {(homeVisited || isHome) && (
+              <div className={isHome ? "w-full" : "hidden"} aria-hidden={!isHome} inert={!isHome}>
+                <DashboardOverview user={user} instagramAccounts={instagramAccounts} />
+              </div>
             )}
+            {!isHome && children}
           </div>
         </main>
 
