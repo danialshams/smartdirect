@@ -5,6 +5,7 @@ import path from "node:path";
 import { authOptions } from "@/lib/auth";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isManualMessagingOptedOut } from "@/lib/instagram/automated-message-policy";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import {
   InstagramApiError,
@@ -854,7 +855,6 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         participantId: true,
-        isActive: true,
       },
     });
 
@@ -884,10 +884,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Respect the recipient's explicit opt-out for manual/API messaging too.
-    // Read receipts do not contact the recipient and remain available.
-    if (action !== "mark_seen" && !conversation.isActive) {
-      return jsonError("این مخاطب دریافت پیام را متوقف کرده است.", 403);
+    // Pausing the bot does NOT disable human support. Only a clear request
+    // to receive NO messages blocks an operator's outbound reply.
+    if (action !== "mark_seen" && await isManualMessagingOptedOut(conversation.id)) {
+      return jsonError("این مخاطب درخواست کرده هیچ پیامی دریافت نکند.", 403);
     }
 
     // The messaging window matters for outgoing messages, not read receipts.
