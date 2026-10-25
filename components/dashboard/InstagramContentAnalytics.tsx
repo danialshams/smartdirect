@@ -437,6 +437,7 @@ export default function InstagramContentAnalytics() {
         selectedDashboardAccountId ?? verifiedAccounts.find(account => account.isConnected)?.id ?? verifiedAccounts[0]?.id ?? ""
     );
     const loadingAccounts = !isReady;
+    const [reloadVersion, setReloadVersion] = useState(0);
 
     const [
         data,
@@ -541,7 +542,7 @@ export default function InstagramContentAnalytics() {
         const controller = new AbortController();
         void load(accountId, controller.signal);
         return () => controller.abort();
-    }, [accountId, isReady, load]);
+    }, [accountId, isReady, load, reloadVersion]);
 
     const filteredContent =
         useMemo(() => {
@@ -761,15 +762,7 @@ export default function InstagramContentAnalytics() {
 
                     <Button
                         type="button"
-                        onClick={() => {
-                            if (
-                                accountId
-                            ) {
-                                void load(
-                                    accountId,
-                                );
-                            }
-                        }}
+                        onClick={() => setReloadVersion(value => value + 1)}
                         className="inline-flex shrink-0 items-center gap-1.5 font-medium hover:underline"
                     >
                         <RefreshCw
