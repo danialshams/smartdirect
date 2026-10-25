@@ -38,6 +38,12 @@ assert.ok(readRoute.includes('searchParams.get("focusId")') && readRoute.include
 assert.ok(readRoute.includes('searchParams.get("messageSearch")') && readRoute.includes('text: { contains: messageSearch'), "Scoped message search missing");
 assert.ok(readRoute.includes('searchParams.get("conversationSearch")') && readRoute.includes("participantUsername"), "Global conversation search missing");
 assert.ok(component.includes("document.visibilityState") && component.includes("8000"), "Background polling must be bounded");
+assert.ok(component.includes("pendingConversationListRef.current === accountId") &&
+  component.includes("conversationListControllerRef.current?.abort()") &&
+  component.includes("conversationListControllerRef.current === controller") &&
+  component.includes("signal: controller.signal,") &&
+  component.includes("if (!controller.signal.aborted && requestId === conversationFetchIdRef.current)"),
+  "Repeated inbox polling must coalesce requests; account switches must abort stale responses without blanking current data");
 assert.ok(component.includes('selectedConversation.messagingWindow?.canSend'), "Sending must honor Instagram response window");
 assert.ok(component.includes('sendStatus: "SENDING"') && component.includes('sendStatus: "FAILED"'), "Outgoing state machine missing");
 assert.ok(component.includes("failedRetryRef.current.set"), "Failed sends must be retryable");
