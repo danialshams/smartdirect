@@ -3878,7 +3878,7 @@ async function processCommentEvent(
 
       // A public comment is NOT an inbound DM. Only ONE eligible Private Reply
       // is permitted until the commenter actively sends us a new message.
-      const gateSent = pendingGate.attempts > 0 ? false : await sendPrivateReply({
+      const gateDelivery = pendingGate.attempts > 0 ? null : await sendPrivateReplyWithRecipient({
         instagramAccountId: instagramAccount.id,
         igUserId: instagramAccount.igUserId,
         igCommentId,
@@ -3888,6 +3888,7 @@ async function processCommentEvent(
           (matchedAutomation.followGateButtonText?.trim() || "بررسی فالو") + "» را بنویسید.",
       });
 
+      const gateSent = gateDelivery?.sent === true;
       if (gateSent) {
         await prisma.pendingFollowGate.update({
           where: {
@@ -3895,9 +3896,11 @@ async function processCommentEvent(
           },
 
           data: {
-            attempts: {
-              increment: 1,
-            },
+            // The recipient_id returned by the comment Private Reply may be
+            // different from the comment author's id. Use Meta's canonical DM
+            // recipient ID for the user's eventual inbound follow-check DM.
+            ...(gateDelivery?.recipientId ? { participantId: gateDelivery.recipientId } : {}),
+            attempts: { increment: 1 },
           },
         });
       }
@@ -4088,7 +4091,7 @@ async function sendPublicCommentReply({
 // Send private reply to Instagram commenter
 // =========================================================
 
-async function sendPrivateReply({
+async function sendPrivateReplyWithRecipient({
   instagramAccountId,
   igUserId,
   igCommentId,
@@ -4100,9 +4103,9 @@ async function sendPrivateReply({
   igCommentId: string;
   accessToken: string;
   replyText: string;
-}): Promise<boolean> {
+}): Promise<{ sent: boolean; recipientId: string | null }> {
   try {
-    await instagramApiRequest(`/${igUserId}/messages`, {
+    const result = await instagramApiRequest<{ recipient_id?: string }>(`/${igUserId}/messages`, {
       method: "POST",
       accessToken,
       body: {
@@ -4112,9 +4115,13 @@ async function sendPrivateReply({
       rateLimit: { instagramAccountId, operation: "COMMENT_PRIVATE_REPLY" },
     });
 
-    return true;
+    return { sent: true, recipientId: result.recipient_id?.trim() || null };
   } catch (error) {
     console.error("Instagram private reply failed:", error);
-    return false;
+    return { sent: false, recipientId: null };
   }
+}
+type PrivateReplyInput = Parameters<typeof sendPrivateReplyWithRecipient>[0];
+async function sendPrivateReply(input: PrivateReplyInput): Promise<boolean> {
+  return (await sendPrivateReplyWithRecipient(input)).sent;
 }
