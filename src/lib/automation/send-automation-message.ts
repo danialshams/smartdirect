@@ -4,7 +4,7 @@ import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import type { InstagramRateLimitOperation } from "@/lib/instagram/rate-limit";
 import { prisma } from "@/lib/prisma";
-import { getAutomatedMessageBlockReason } from "@/lib/instagram/automated-message-policy";
+import { getAutomatedMessageBlockReason, reserveRecipientAutomatedMessageBudget } from "@/lib/instagram/automated-message-policy";
 import {
   claimSendMessage,
   completeSendMessage,
@@ -271,6 +271,11 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
 
     return result;
   };
+
+  // Idempotency claim above prevents duplicate budget charges on webhook retries.
+  if (!await reserveRecipientAutomatedMessageBudget({ instagramAccountId, participantId: recipientId })) {
+    return await finalizeResult({ success: false, error: "RECIPIENT_AUTOMATION_BUDGET_EXCEEDED" });
+  }
 
   const accessToken = await getValidInstagramAccessToken(instagramAccountId);
   const instagramAccount = await prisma.instagramAccount.findUnique({
