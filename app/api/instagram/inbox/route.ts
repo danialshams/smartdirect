@@ -534,7 +534,25 @@ export async function GET(request: NextRequest) {
         messagesPage = latest.slice(0, 50).reverse();
       }
 
-      const accessToken = await getValidInstagramAccessToken(account.id);
+      // These reads are independent of message media URL restoration.
+      // Resolve them alongside the Meta token rather than making every
+      // conversation open await them after the potentially slow Meta call.
+      const [accessToken, lastInbound, handoff] = await Promise.all([
+        getValidInstagramAccessToken(account.id),
+        prisma.conversationMessage.findFirst({
+          where: {
+            conversationId: conversation.id,
+            direction: "INBOUND",
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            createdAt: true,
+          },
+        }),
+        getHandoffState(conversation.id),
+      ]);
       const refreshedMessages = await refreshConversationMediaUrls({
         conversationId: conversation.id,
         accountId: account.id,
@@ -543,24 +561,9 @@ export async function GET(request: NextRequest) {
         messages: messagesPage,
       });
 
-      const lastInbound = await prisma.conversationMessage.findFirst({
-        where: {
-          conversationId: conversation.id,
-          direction: "INBOUND",
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        select: {
-          createdAt: true,
-        },
-      });
-
       const messagingWindow = getInstagramMessagingWindow(
         lastInbound?.createdAt ?? null,
       );
-
-      const handoff = await getHandoffState(conversation.id);
 
       return NextResponse.json({
         success: true,
