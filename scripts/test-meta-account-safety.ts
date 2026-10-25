@@ -46,7 +46,8 @@ async function main() {
     webhook.indexOf("FOLLOW GATE ENABLED FOR COMMENT AUTOMATION"),
     webhook.indexOf("// Normal Comment Automation"),
   );
-  assert(commentFollowGate.includes("pendingGate.attempts > 0 ? false : await sendPrivateReply({") &&
+  assert(commentFollowGate.includes("pendingGate.attempts > 0 ? null : await sendPrivateReplyWithRecipient({") &&
+    commentFollowGate.includes("gateDelivery?.recipientId ? { participantId: gateDelivery.recipientId }") &&
     !commentFollowGate.includes("await sendFollowGateMessage({"),
     "Comment follow-gate must send just one eligible Private Reply, not cold DM");
   assert(webhook.includes("FOLLOW_GATE_PAYLOAD_PREFIX + gate.id") &&
