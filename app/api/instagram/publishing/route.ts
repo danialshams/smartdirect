@@ -139,11 +139,28 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const accountId = searchParams.get("instagramAccountId");
     const status = searchParams.get("status");
-    const jobs = await prisma.instagramPublishJob.findMany({
-      where: { userId: session.user.id, ...(accountId ? { instagramAccountId: accountId } : {}), ...(status ? { status: status as never } : {}) },
-      include: { media: { orderBy: { sortOrder: "asc" } }, instagramAccount: { select: { id: true, igUsername: true, igUserId: true } } },
-      orderBy: { createdAt: "desc" }, take: 100,
-    });
+    const where = { userId: session.user.id, ...(accountId ? { instagramAccountId: accountId } : {}), ...(status ? { status: status as never } : {}) };
+    // The automation cards only need identifiers, captions, linked rules and
+    // a lightweight first-media preview. Avoid returning publishing metadata,
+    // storage keys and unrelated Instagram account graphs for this consumer.
+    const cardsView = searchParams.get("view") === "automation-cards" && Boolean(accountId);
+    const jobs = cardsView
+      ? await prisma.instagramPublishJob.findMany({
+          where,
+          select: {
+            id: true, type: true, status: true, createdAt: true, updatedAt: true,
+            publishedAt: true, instagramAccountId: true, instagramMediaId: true,
+            caption: true, commentAutomationId: true, storyReplyAutomationId: true,
+            commentTriggerKeywords: true, storyReplyTriggerKeywords: true,
+            media: { orderBy: { sortOrder: "asc" }, select: { type: true, publicUrl: true } },
+          },
+          orderBy: { createdAt: "desc" }, take: 100,
+        })
+      : await prisma.instagramPublishJob.findMany({
+          where,
+          include: { media: { orderBy: { sortOrder: "asc" } }, instagramAccount: { select: { id: true, igUsername: true, igUserId: true } } },
+          orderBy: { createdAt: "desc" }, take: 100,
+        });
     const now = Date.now();
     const visibleJobs = jobs.filter((job) => {
       if (job.status !== "PUBLISHED") return true;
