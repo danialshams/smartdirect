@@ -21,7 +21,7 @@ assert(publishApi.includes('searchParams.get("view") === "automation-cards" && B
   publishApi.includes('commentAutomationId: true, storyReplyAutomationId: true') &&
   publishApi.includes('commentTriggerKeywords: true, storyReplyTriggerKeywords: true') &&
   publishApi.includes('instagramMediaId: true') &&
-  publishApi.includes('where: { userId: session.user.id'),
+  publishApi.includes('const where = { userId: session.user.id'),
   "Compact publication responses must retain card, media verification and tenant ownership fields");
 assert(publishApi.includes('include: { media: { orderBy: { sortOrder: "asc" } }, instagramAccount:') &&
   publishApi.includes('after(() => validatePublishedJobsInBackground('),
