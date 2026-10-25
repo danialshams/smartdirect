@@ -8,8 +8,8 @@ assert(shell.includes('dynamic(() => import("./DashboardOverview")') &&
   shell.includes('loading: () => <DashboardHomeSkeleton />') &&
   !shell.includes('import DashboardOverview from "./DashboardOverview"'),
   "Home-only artwork, counters and cards must be split from every non-home route's shared shell");
-assert(shell.includes('<DashboardOverview user={user} instagramAccounts={instagramAccounts} />'),
-  "The actual Home design and data props must remain unchanged");
+assert(shell.includes('<DashboardOverview user={user} instagramAccounts={instagramAccounts} isActive={isHome} />'),
+  "The Home retains its existing design, data props and visible-route revalidation gate");
 
 const automationList=file("components/dashboard/AutoRepliesManager.tsx");
 const publishApi=file("app/api/instagram/publishing/route.ts");
