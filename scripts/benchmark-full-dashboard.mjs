@@ -91,9 +91,9 @@ try {
     });
     // Render measurements must not create/delete/send/publish data. Some app
     // pages may trigger side-effect APIs on mount; abort non-GET API calls.
-    await context.route("**/*", async route => {
+    await context.route("**/api/**", async route => {
       const request = route.request();
-      if (apiGroup(request.url()) && !["GET", "HEAD", "OPTIONS"].includes(request.method())) {
+      if (new URL(request.url()).origin === origin && apiGroup(request.url()) && !["GET", "HEAD", "OPTIONS"].includes(request.method())) {
         await route.abort("blockedbyclient");
       } else {
         await route.continue();
