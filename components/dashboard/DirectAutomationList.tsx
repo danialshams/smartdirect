@@ -9,6 +9,7 @@ import { Pencil, Plus, Search, Trash2, X, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { dairaPalette } from "../../lib/design-system/palette";
 import DirectAutomationSkeleton from "./DirectAutomationSkeleton";
+import { getDashboardListSnapshot, setDashboardListSnapshot } from "@/src/lib/dashboard/list-snapshot-cache";
 
 type Account = { id: string; isConnected: boolean };
 type Rule = { id: string; isActive?: boolean; keyword: string | null; triggerType: string; updatedAt: string; createdAt: string; messages?: Array<{ messageType: string }> };
@@ -19,9 +20,11 @@ export default function DirectAutomationList() {
   const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
   const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
   const router = useRouter();
-  const [rules, setRules] = useState<Rule[]>([]);
+  const listKey = activeDashboardAccount ? "dm-rules:" + activeDashboardAccount.id : null;
+  const [rules, setRules] = useState<Rule[]>(() => listKey ? getDashboardListSnapshot<Rule>(listKey) ?? [] : []);
+  const [loadedFor, setLoadedFor] = useState<string | null>(() => listKey && getDashboardListSnapshot<Rule>(listKey) ? listKey : null);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(listKey && getDashboardListSnapshot<Rule>(listKey)));
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
   const [deleting, setDeleting] = useState(false);
@@ -30,7 +33,18 @@ export default function DirectAutomationList() {
   useEffect(() => {
     if (!dashboardReady) return;
     const controller = new AbortController();
-    setLoading(true); setError("");
+    const key = "dm-rules:" + (activeDashboardAccount?.id || "");
+    const cached = activeDashboardAccount ? getDashboardListSnapshot<Rule>(key) : null;
+    if (cached) {
+      setRules(cached);
+      setLoadedFor(key);
+      setLoading(false);
+    } else {
+      setRules([]);
+      setLoadedFor(null);
+      setLoading(true);
+    }
+    setError("");
     void (async () => {
       try {
         const account=activeDashboardAccount;
@@ -41,11 +55,14 @@ export default function DirectAutomationList() {
         if (!listResponse.ok || !list.success) throw new Error(list.error || "دریافت پاسخ‌ها ناموفق بود.");
         if (!controller.signal.aborted) {
           const rows = (Array.isArray(list.data) ? list.data : []) as Rule[];
-          setRules(rows.filter(item => item.triggerType === "DM" && Boolean(item.keyword?.trim()))
-            .sort((a, b) => Date.parse(b.updatedAt || b.createdAt) - Date.parse(a.updatedAt || a.createdAt)));
+          const next = rows.filter(item => item.triggerType === "DM" && Boolean(item.keyword?.trim()))
+            .sort((a, b) => Date.parse(b.updatedAt || b.createdAt) - Date.parse(a.updatedAt || a.createdAt));
+          setDashboardListSnapshot(key, next);
+          setRules(next);
+          setLoadedFor(key);
         }
       } catch (reason) {
-        if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "بارگذاری پاسخ‌های خودکار ناموفق بود.");
+        if (!controller.signal.aborted && !cached) setError(reason instanceof Error ? reason.message : "بارگذاری پاسخ‌های خودکار ناموفق بود.");
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -66,7 +83,11 @@ export default function DirectAutomationList() {
         body:JSON.stringify({isActive:rule.isActive===false})});
       const data=await response.json();
       if(!response.ok||!data.success)throw new Error(data.error||"تغییر وضعیت ناموفق بود.");
-      setRules(current=>current.map(item=>item.id===rule.id?{...item,isActive:rule.isActive===false}:item));
+      setRules(current => {
+        const next = current.map(item => item.id === rule.id ? { ...item, isActive: rule.isActive === false } : item);
+        if (listKey) setDashboardListSnapshot(listKey, next);
+        return next;
+      });
       toast.success(rule.isActive===false?"پاسخ دایرکت فعال شد.":"پاسخ دایرکت غیرفعال شد.");
     }catch(error){toast.error(error instanceof Error?error.message:"تغییر وضعیت ناموفق بود.");}
   }
@@ -77,7 +98,11 @@ export default function DirectAutomationList() {
       const response = await fetch("/api/automations/" + encodeURIComponent(target.id), { method: "DELETE", credentials: "include" });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || "حذف پاسخ خودکار ناموفق بود.");
-      setRules(current => current.filter(item => item.id !== target.id));
+      setRules(current => {
+        const next = current.filter(item => item.id !== target.id);
+        if (listKey) setDashboardListSnapshot(listKey, next);
+        return next;
+      });
       setTarget(null);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "حذف پاسخ ناموفق بود.");
@@ -86,7 +111,7 @@ export default function DirectAutomationList() {
     }
   }
 
-  if (loading) return <DirectAutomationSkeleton />;
+  if (loading || (dashboardReady && Boolean(listKey) && loadedFor !== listKey && !error)) return <DirectAutomationSkeleton />;
 
   return (
     <div dir="rtl" className="min-h-[calc(100dvh-2rem)]">
