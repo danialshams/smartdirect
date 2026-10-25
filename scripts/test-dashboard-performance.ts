@@ -22,7 +22,8 @@ assert(contentAnalytics.includes("useDashboardAccountSelection()") &&
   !contentAnalytics.includes("loadAccounts()") &&
   contentAnalytics.includes("signal: AbortSignal") &&
   contentAnalytics.includes("const controller = new AbortController()") &&
-  contentAnalytics.includes("if (!signal.aborted) setData(result as AnalyticsData)") &&
+  contentAnalytics.includes("if (!signal.aborted) {") &&
+  contentAnalytics.includes("setData(result as AnalyticsData)") &&
   contentAnalytics.includes("return () => controller.abort()") &&
   contentAnalytics.includes('getDashboardListSnapshot<AnalyticsData>("content-analytics:" + accountId)') &&
   contentAnalytics.includes('setDashboardListSnapshot("content-analytics:" + selectedAccountId, [result as AnalyticsData])') &&
