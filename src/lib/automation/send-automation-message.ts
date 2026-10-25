@@ -4,6 +4,7 @@ import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import type { InstagramRateLimitOperation } from "@/lib/instagram/rate-limit";
 import { prisma } from "@/lib/prisma";
+import { getAutomatedMessageBlockReason } from "@/lib/instagram/automated-message-policy";
 import {
   claimSendMessage,
   completeSendMessage,
@@ -224,6 +225,13 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
 
   const { instagramAccountId, recipientId, instagramUserId, message } = payload;
   if (!instagramAccountId || !recipientId || !instagramUserId) throw new Error("Instagram message identifiers are missing");
+  // Enforce recipient opt-out and Meta's STANDARD 24-hour window at the
+  // shared automation adapter, including queued retries and follow-ups.
+  // A Private Reply is separate permission, never a normal DM window.
+  const blocked = await getAutomatedMessageBlockReason({
+    instagramAccountId, participantId: recipientId, isPrivateReply: Boolean(payload.commentId),
+  });
+  if (blocked) return { success: false, error: blocked };
   if (payload.executionId?.trim()) {
     const claim = await claimSendMessage({
       instagramAccountId,
