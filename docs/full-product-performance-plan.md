@@ -198,3 +198,32 @@ the authenticated test session captures full-route results, dynamic detail
 routes, cold-start outliers, CLS, actual button-to-confirmation latency and
 Meta/media operations. Successful CI and local database CRUD metrics are
 necessary but do not prove maximum user-perceived speed.
+
+
+## Browser layout shift and public asset reuse follow-up
+
+- On Comment and Story lists the first network-load placeholder now reserves one
+  automation card rather than three. The final empty-state block is about one
+  card tall, so cold empty lists no longer collapse two whole extra placeholder
+  rows. This is a source-verified geometry improvement, NOT proof that the
+  previous CLS 0.229 observation is eliminated: the new observed CLS must be
+  captured in a real authenticated browser.
+- AutoRepliesManager cancels all four parallel list requests when leaving a
+  route or changing Instagram account. Obsolete response handling was already
+  guarded; abort now also stops unnecessary network and server work when possible.
+- Only **public** dashboard WebP artwork and the user's exact approved header
+  PNG gain a five-minute browser Cache-Control lifetime (and one-hour shared
+  cache lifetime). The original image pixels and dashboard glass styling are
+  untouched. Sensitive profile/media APIs remain private and separately cached.
+- The full-dashboard Playwright audit intercepts non-GET API calls to avoid
+  unintended writes, but Playwright routing disables Chromium's HTTP cache.
+  Its guarded navigation image bytes CANNOT prove image cache reuse.
+  To address this, a separate unauthenticated Chromium context without
+  interception now downloads all public dashboard WebPs twice and records
+  first/second ResourceTiming transfer bytes in the same report. Only this
+  separate public-art measurement assesses browser reuse; it is still
+  best-effort and must be verified against actual network responses.
+- The latest browser audit is not run by CI without a locally available
+  authenticated storageState. Its results must be obtained before declaring
+  CLS, cold first load, dynamic detail-route navigation or Meta action
+  completion latency solved.

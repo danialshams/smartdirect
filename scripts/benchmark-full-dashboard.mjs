@@ -221,6 +221,51 @@ try {
     }
   }
 
+  // Interception via context.route deliberately disables Chromium HTTP cache.
+  // Measure immutable-looking, public artwork separately in an unauthenticated
+  // context WITHOUT request interception. Never browse private account data.
+  let artworkCache = null;
+  const artworkFiles = (await readdir(join("public", "dashboard-art")))
+    .filter(name => /^[a-z0-9][a-z0-9.-]*\.webp$/i.test(name)).sort();
+  const artContext = await browser.newContext({ viewport: profiles[0].viewport });
+  try {
+    const artPage = await artContext.newPage();
+    const login = await artPage.goto(origin + "/login", {
+      waitUntil: "domcontentloaded", timeout: 20000,
+    });
+    if (!login?.ok()) throw new Error("Unauthenticated public page unavailable");
+    async function loadPublicArtwork() {
+      return artPage.evaluate(async names => {
+        performance.clearResourceTimings();
+        const failures = [];
+        await Promise.all(names.map(name => new Promise(resolve => {
+          const image = new Image();
+          image.onload = () => resolve(null);
+          image.onerror = () => { failures.push(name); resolve(null); };
+          image.src = "/dashboard-art/" + name;
+        })));
+        const entries = performance.getEntriesByType("resource")
+          .filter(entry => new URL(entry.name).pathname.startsWith("/dashboard-art/"));
+        return {
+          requestEntries: entries.length,
+          transferBytes: Math.round(entries.reduce((sum, entry) => sum + (entry.transferSize || 0), 0)),
+          decodedBytes: Math.round(entries.reduce((sum, entry) => sum + (entry.decodedBodySize || 0), 0)),
+          failedAssets: failures.length,
+        };
+      }, artworkFiles);
+    }
+    const cold = await loadPublicArtwork();
+    const warm = await loadPublicArtwork();
+    artworkCache = { source: "unauthenticated-browser-with-http-cache-enabled",
+      assetCount: artworkFiles.length, cold, warm,
+      note: "ResourceTiming transferSize=0 can mean memory/disk cache or no new transfer; compare network headers when diagnosing." };
+  } catch (error) {
+    artworkCache = { source: "unauthenticated-browser-with-http-cache-enabled",
+      status: "failed", errorType: error instanceof Error ? error.name : "UnknownError" };
+  } finally {
+    await artContext.close();
+  }
+
   const aggregate = profiles.flatMap(profile =>
     allRoutes.map(route => summarize(records, profile.name, route)));
   const report = {
@@ -231,6 +276,7 @@ try {
     dynamicRoutesUnobserved: dynamicRoutes.filter(route =>
       !records.some(row => row.route === route && row.status === "ok")),
     profiles: profiles.map(p => p.name), runsPerProfile: runs,
+    artworkCache,
     caveats: [
       "Authenticated storageState must be provided locally, never checked into source control.",
       "Client non-GET API calls are blocked, so some page readiness may differ from normal user operation.",
@@ -238,7 +284,8 @@ try {
       "Parameterized :id pages are discovered from rendered same-origin links where available; undiscovered or inaccessible templates remain unobserved.",
       "First visible main includes shell/skeleton; not proof of usable data readiness.",
       "Observed LCP/CLS use a bounded sampling window and are not CrUX field Core Web Vitals.",
-      "An image response/resource entry is not proof of a cache miss; transferSize is best-effort.",
+      "Intercepting dashboard API requests disables Chromium HTTP cache, so guarded dashboard image-transfer figures MUST NOT be treated as cache measurements.",
+      "Public dashboard artwork is measured separately in an unauthenticated browser with routing disabled and HTTP cache enabled; transferSize remains best-effort.",
       "No create, edit, delete, send, publish or upload completion latency measured.",
     ],
     aggregate, records,

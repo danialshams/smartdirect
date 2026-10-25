@@ -52,5 +52,14 @@ assert(overview.includes("const automationTools:"),"Validate skeleton against Ho
 const repliesSkeleton=readFileSync("components/dashboard/AutoRepliesSkeleton.tsx","utf8");
 assert(repliesSkeleton.includes("daira-automation-list-card"),"Automation list skeleton must match live card geometry");
 assert(repliesSkeleton.includes("h-14 w-14"),"Automation skeleton must reserve live thumbnails");
+assert(repliesSkeleton.includes("Array.from({ length: 1 }") &&
+  !repliesSkeleton.includes("Array.from({ length: 3 }"),
+  "Cold comment/story skeleton should not reserve three cards before an empty list resolves.");
+assert(automationManager.includes("const controller = new AbortController();") &&
+  (automationManager.match(/signal: controller\.signal/g) || []).length >= 4 &&
+  automationManager.includes("controller.abort();"),
+  "Route exit and account switch must abort all four parallel automation list requests.");
+
+
 
 console.log("DASHBOARD_HOME_REVISIT_CACHE_OK");

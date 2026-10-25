@@ -29,8 +29,11 @@ export default function AutoRepliesSkeleton({ includeCreateButton = false }: Aut
             </div>
           </div>
 
+          {/* One geometry-matched placeholder avoids reserving three cards
+              that collapse into a single empty state on cold, empty lists.
+              This changes only loading layout, not the glass or pulse effect. */}
           <div className="space-y-2.5" aria-hidden="true">
-            {Array.from({ length: 3 }, (_, index) => (
+            {Array.from({ length: 1 }, (_, index) => (
               <article
                 key={index}
                 className="daira-automation-list-card daira-skeleton-glass relative flex min-h-[114px] animate-pulse items-center justify-between gap-3 rounded-[22px] border border-[#E8EDF5] bg-white px-3 pb-3 pt-9 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4"
