@@ -64,6 +64,7 @@ export default function CommentAutomationCreateConfigure() {
 
   return (
     <AutomationCreationFlow
+      key={account.id}
       account={account}
       mediaId={mediaId ?? ""}
       triggerType="COMMENT_KEYWORD"
