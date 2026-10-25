@@ -38,6 +38,11 @@ assert.ok(readRoute.includes('searchParams.get("focusId")') && readRoute.include
 assert.ok(readRoute.includes('searchParams.get("messageSearch")') && readRoute.includes('text: { contains: messageSearch'), "Scoped message search missing");
 assert.ok(readRoute.includes('searchParams.get("conversationSearch")') && readRoute.includes("participantUsername"), "Global conversation search missing");
 assert.ok(component.includes("document.visibilityState") && component.includes("8000"), "Background polling must be bounded");
+assert.ok(component.includes('setSearchResults(response.ok ? result.conversations || [] : [])') &&
+  component.includes('setConversationMatches(response.ok ? result.matches || [] : [])') &&
+  (component.match(/cache: "no-store", signal: controller.signal/g) || []).length >= 2 &&
+  (component.match(/controller.abort\(\); window.clearTimeout\(/g) || []).length === 2,
+  "Both inbox search fields must debounce, cancel stale network reads and keep private no-store access");
 assert.ok(component.includes("pendingConversationListRef.current === accountId") &&
   component.includes("conversationListControllerRef.current?.abort()") &&
   component.includes("conversationListControllerRef.current === controller") &&
