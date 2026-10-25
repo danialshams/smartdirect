@@ -42,6 +42,17 @@ function toPath(file) {
 const allRoutes = (await pages(routeRoot)).map(toPath).sort();
 const staticRoutes = allRoutes.filter(path => !path.includes("["));
 const dynamicRoutes = allRoutes.filter(path => path.includes("["));
+// Actual per-tenant IDs stay in memory only. Reports use route templates.
+const discoveredDynamicPaths = new Map();
+function matchDynamicTemplate(candidate) {
+  if (staticRoutes.includes(candidate)) return null;
+  const parts = candidate.split("/");
+  return dynamicRoutes.find(template => {
+    const segments = template.split("/");
+    return parts.length === segments.length && segments.every((segment, i) =>
+      segment.startsWith("[") && segment.endsWith("]") ? Boolean(parts[i]) : segment === parts[i]);
+  }) ?? null;
+}
 function percentile(data, fraction) {
   const sorted = data.filter(Number.isFinite).sort((a, b) => a - b);
   return sorted.length ? sorted[Math.ceil(sorted.length * fraction) - 1] : null;
@@ -101,7 +112,11 @@ try {
     });
     try {
       for (let round = 0; round < runs; round++) {
-        for (const route of staticRoutes) {
+        const planned = [
+          ...staticRoutes.map(route => ({ route, path: route })),
+          ...[...discoveredDynamicPaths.entries()].map(([route, path]) => ({ route, path })),
+        ];
+        for (const { route, path } of planned) {
           const page = await context.newPage();
           await page.addInitScript(() => {
             window.__sdAudit = { lcp: null, layoutShifts: [] };
@@ -122,18 +137,34 @@ try {
           });
           const started = Date.now();
           try {
-            const response = await page.goto(origin + route, {
+            const response = await page.goto(origin + path, {
               waitUntil: "domcontentloaded", timeout: 20000,
             });
             const finalPath = new URL(page.url()).pathname;
-            if (!response?.ok() || finalPath !== route) {
+            if (!response?.ok() || finalPath !== path) {
               records.push({ profile: profile.name, round, route, status: "skipped-or-redirected",
-                httpStatus: response?.status() ?? null, actualPath: finalPath === route ? "requested" : "other" });
+                httpStatus: response?.status() ?? null, actualPath: finalPath === path ? "requested" : "other" });
               continue;
             }
             await page.locator("main").first().waitFor({ state: "visible", timeout: 12000 });
             const firstMainMs = Date.now() - started;
             await page.waitForTimeout(waitMs);
+            // Collect real detail IDs from links in authenticated list pages.
+            // Never put those IDs or query parameters into output JSON.
+            if (round === 0) {
+              const links = await page.locator("a[href]").evaluateAll(nodes =>
+                nodes.map(node => node.getAttribute("href")).filter(Boolean));
+              for (const href of links) {
+                try {
+                  const url = new URL(href, origin);
+                  if (url.origin !== origin) continue;
+                  const template = matchDynamicTemplate(url.pathname);
+                  if (!template || discoveredDynamicPaths.has(template)) continue;
+                  discoveredDynamicPaths.set(template, url.pathname);
+                  planned.push({ route: template, path: url.pathname });
+                } catch { /* Ignore invalid or non-web links. */ }
+              }
+            }
             const metrics = await page.evaluate(() => {
               const nav = performance.getEntriesByType("navigation")[0];
               const resources = performance.getEntriesByType("resource");
@@ -191,18 +222,20 @@ try {
   }
 
   const aggregate = profiles.flatMap(profile =>
-    staticRoutes.map(route => summarize(records, profile.name, route)));
+    allRoutes.map(route => summarize(records, profile.name, route)));
   const report = {
     kind: "browser-page-navigation-read-only-guarded",
     measuredAt: new Date().toISOString(), origin,
-    totalKnownPageRoutes: allRoutes.length, staticRoutesTested: staticRoutes.length,
-    dynamicRoutesNotTested: dynamicRoutes,
+    totalKnownPageRoutes: allRoutes.length, staticRoutesAttempted: staticRoutes.length,
+    discoveredDynamicRouteTemplates: [...discoveredDynamicPaths.keys()],
+    dynamicRoutesUnobserved: dynamicRoutes.filter(route =>
+      !records.some(row => row.route === route && row.status === "ok")),
     profiles: profiles.map(p => p.name), runsPerProfile: runs,
     caveats: [
       "Authenticated storageState must be provided locally, never checked into source control.",
       "Client non-GET API calls are blocked, so some page readiness may differ from normal user operation.",
       "GET handlers may themselves synchronize Meta or update server-side caches; this is not guaranteed side-effect-free.",
-      "Dynamic :id pages need account-specific fixture IDs and are reported as not tested.",
+      "Parameterized :id pages are discovered from rendered same-origin links where available; undiscovered or inaccessible templates remain unobserved.",
       "First visible main includes shell/skeleton; not proof of usable data readiness.",
       "Observed LCP/CLS use a bounded sampling window and are not CrUX field Core Web Vitals.",
       "An image response/resource entry is not proof of a cache miss; transferSize is best-effort.",
