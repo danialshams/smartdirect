@@ -67,8 +67,10 @@ export async function GET(request: NextRequest) {
         .filter((automation) => automation.mediaId && !activeStoryIds.has(automation.mediaId))
         .map((automation) => automation.id);
 
+      // Story keyword automations are account-wide; detach expired legacy media,
+      // never delete their reply configuration.
       if (expiredIds.length) {
-        await prisma.automation.deleteMany({ where: { id: { in: expiredIds } } });
+        await prisma.automation.updateMany({ where: { id: { in: expiredIds } },data:{ mediaId: null,mediaIds: null } });
       }
 
       results.push({

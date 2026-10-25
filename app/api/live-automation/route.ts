@@ -9,6 +9,7 @@ import {
   assertNonOverlappingLiveKeywords, verifyLiveResponseOwnership,
 } from "@/lib/automation/live-reply-storage";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
+import { pollLiveReplySessions } from "@/lib/automation/live-session-lifecycle";
 import { subscribeLiveComments } from "@/lib/instagram/live-webhook-subscription";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +51,8 @@ export async function POST(request: NextRequest) {
     await assertNonOverlappingLiveKeywords(account.id, input.keyword, input.matchMode);
     await verifyLiveResponseOwnership(input, account.id, session.user.id);
     const rule = await createLiveReplyRule(input, account.id);
+    try { await pollLiveReplySessions({id:account.id,igUserId:(await prisma.instagramAccount.findUniqueOrThrow({where:{id:account.id},select:{igUserId:true}})).igUserId}); }
+    catch(error){ console.warn("[LIVE_REPLY] Session binding deferred:",error instanceof Error?error.message:String(error)); }
     try { await invalidateAutomationCache(account.id); }
     catch (e) { console.warn("Live automation cache invalidate failed:", e); }
     const subscription = await subscribeLiveComments(account.id);

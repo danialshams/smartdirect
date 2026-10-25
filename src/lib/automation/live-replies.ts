@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { synchronizeLiveReplySessions } from "./live-session-lifecycle";
 import { matchesAutomationKeyword } from "./trigger";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { instagramApiRequest } from "@/lib/instagram/client";
@@ -68,6 +69,8 @@ export async function processLiveComment(value: unknown, instagramAccount: {
   const participantId = typeof comment.from?.id === "string" ? comment.from.id.trim() : "";
   const text = typeof comment.text === "string" ? comment.text.trim() : "";
   if (!commentId || !participantId || !text) return;
+  const liveId=typeof comment.media?.id==="string"?comment.media.id:typeof comment.media_id==="string"?comment.media_id:"";
+  if (liveId) await synchronizeLiveReplySessions(instagramAccount.id,[liveId]);
 
   const automations = await prisma.automation.findMany({
     where: {

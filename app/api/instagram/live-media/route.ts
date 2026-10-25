@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { instagramApiRequest } from "@/lib/instagram/client";
+import { synchronizeLiveReplySessions } from "@/lib/automation/live-session-lifecycle";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
     const data = Array.isArray(response.data) ? response.data
       .filter(item => typeof item?.id === "string" && Boolean(item.id.trim()))
       .map(item => ({ id: item.id, permalink: item.permalink || null })) : [];
+    await synchronizeLiveReplySessions(account.id, data.map(item=>item.id));
     return NextResponse.json({ success: true, data }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("GET live media failed:", error instanceof Error ? error.name : "unknown");

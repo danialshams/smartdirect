@@ -880,7 +880,7 @@ async function bindConditionalAutomations(
         instagramAccountId: job.instagramAccountId,
         triggerType: "STORY_REPLY_KEYWORD",
       },
-      data: { mediaId: instagramMediaId },
+      data: { mediaId: null, mediaIds: null },
     });
   }
 
