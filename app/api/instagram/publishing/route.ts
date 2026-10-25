@@ -223,36 +223,70 @@ export async function POST(request: NextRequest) {
 
     const scheduledAt = data.scheduledAt ? new Date(data.scheduledAt) : null;
     if (scheduledAt && Number.isNaN(scheduledAt.getTime())) return NextResponse.json({ success: false, message: "تاریخ زمان‌بندی معتبر نیست." }, { status: 400 });
-    if (scheduledAt) {
-      const conflict = await prisma.instagramPublishJob.findFirst({ where: { instagramAccountId: account.id, scheduledAt, status: { not: "CANCELLED" } }, select: { id: true, type: true } });
-      if (conflict) return NextResponse.json({ success: false, message: "برای این اکانت در همین تاریخ و ساعت یک محتوای زمان‌بندی‌شده وجود دارد. زمان دیگری انتخاب کنید.", conflictJobId: conflict.id }, { status: 409 });
-    }
 
     const isScheduled = !!scheduledAt && scheduledAt.getTime() > Date.now();
     const mediaExpiry = getStorageObjectExpiry(scheduledAt);
+    const uploadedStorageKeys = [
+      ...data.media.map((item) => item.storageKey),
+      ...(reelOptions?.coverStorageKey ? [reelOptions.coverStorageKey] : []),
+    ];
+    const validAt = new Date();
 
-    const uploadedStorageKeys = [...data.media.map((item) => item.storageKey), ...(reelOptions?.coverStorageKey ? [reelOptions.coverStorageKey] : [])];
-    if (reelOptions?.coverStorageKey) {
-      const ownedCover = await prisma.instagramStorageObject.findFirst({
-        where: { userId: session.user.id, storageKey: reelOptions.coverStorageKey, publicUrl: reelOptions.coverUrl, deletedAt: null, expiresAt: { gt: new Date() } },
-        select: { id: true },
-      });
-      if (!ownedCover) return NextResponse.json({ success: false, message: "کاور معتبر نیست یا منقضی شده؛ دوباره آپلود کن." }, { status: 400 });
+    // Independent read-only checks share one database round trip window on the
+    // successful publishing path. Keep error precedence identical to the
+    // sequential implementation: schedule, cover ownership, then media keys.
+    const [conflict, ownedCover, tracked] = await Promise.all([
+      scheduledAt
+        ? prisma.instagramPublishJob.findFirst({
+            where: { instagramAccountId: account.id, scheduledAt, status: { not: "CANCELLED" } },
+            select: { id: true, type: true },
+          })
+        : Promise.resolve(null),
+      reelOptions?.coverStorageKey
+        ? prisma.instagramStorageObject.findFirst({
+            where: {
+              userId: session.user.id,
+              storageKey: reelOptions.coverStorageKey,
+              publicUrl: reelOptions.coverUrl,
+              deletedAt: null,
+              expiresAt: { gt: validAt },
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      uploadedStorageKeys.length
+        ? prisma.instagramStorageObject.findMany({
+            where: {
+              userId: session.user.id,
+              storageKey: { in: uploadedStorageKeys },
+              deletedAt: null,
+              expiresAt: { gt: validAt },
+            },
+            select: { storageKey: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    if (conflict) {
+      return NextResponse.json({
+        success: false,
+        message: "برای این اکانت در همین تاریخ و ساعت یک محتوای زمان‌بندی‌شده وجود دارد. زمان دیگری انتخاب کنید.",
+        conflictJobId: conflict.id,
+      }, { status: 409 });
     }
-    // S3 stores prefixed keys; all publishing files must be owned, tracked and alive.
+    if (reelOptions?.coverStorageKey && !ownedCover) {
+      return NextResponse.json({
+        success: false, message: "کاور معتبر نیست یا منقضی شده؛ دوباره آپلود کن.",
+      }, { status: 400 });
+    }
+    // S3 stores prefixed keys; publishing media must still be tracked,
+    // owned by this user and unexpired before the job can be created.
     if (uploadedStorageKeys.length) {
-      const tracked = await prisma.instagramStorageObject.findMany({
-        where: {
-          userId: session.user.id,
-          storageKey: { in: uploadedStorageKeys },
-          deletedAt: null,
-          expiresAt: { gt: new Date() },
-        },
-        select: { storageKey: true },
-      });
       const trackedKeys = new Set(tracked.map((item) => item.storageKey));
       if (trackedKeys.size !== new Set(uploadedStorageKeys).size) {
-        return NextResponse.json({ success: false, message: "یک یا چند فایل آپلودشده معتبر نیست یا منقضی شده است. دوباره آپلود کنید." }, { status: 400 });
+        return NextResponse.json({
+          success: false, message: "یک یا چند فایل آپلودشده معتبر نیست یا منقضی شده است. دوباره آپلود کنید.",
+        }, { status: 400 });
       }
     }
     let job;
