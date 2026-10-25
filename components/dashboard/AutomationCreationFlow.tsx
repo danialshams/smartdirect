@@ -238,33 +238,59 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+    setAutomationTemplates([]);
+    setLoadingResources(true);
+
+    // Forms and showcases are optional preview resources. Their latency or a
+    // transient error must not disable the "previous responses" switcher.
+    void (async () => {
+      const query = "?instagramAccountId=" + encodeURIComponent(account.id);
+      const [showcaseResult, formResult] = await Promise.allSettled([
+        fetch("/api/showcases" + query, { cache: "no-store", credentials: "include", signal: controller.signal })
+          .then(async response => response.ok ? response.json() : null),
+        fetch("/api/forms" + query, { cache: "no-store", credentials: "include", signal: controller.signal })
+          .then(async response => response.ok ? response.json() : null),
+      ]);
+      if (cancelled || controller.signal.aborted) return;
+      const showcasesData = showcaseResult.status === "fulfilled" ? showcaseResult.value : null;
+      const formsData = formResult.status === "fulfilled" ? formResult.value : null;
+      setShowcases(Array.isArray(showcasesData) ? showcasesData : Array.isArray(showcasesData?.data) ? showcasesData.data : []);
+      setForms(Array.isArray(formsData) ? formsData : Array.isArray(formsData?.data) ? formsData.data : []);
+    })();
+
     void (async () => {
       try {
-        const [showcaseResponse, formResponse, automationResponse, savedResponse] = await Promise.all([
-          fetch("/api/showcases?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
-          fetch("/api/forms?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
-          readAccountAutomations(account.id),
-          fetch("/api/saved-responses?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
-        ]);
-        const [showcaseResult, formResult, savedResult] = await Promise.all([
-          showcaseResponse.json(), formResponse.json(), savedResponse.json(),
-        ]);
-        const automationResult = automationResponse;
-        if (!cancelled) {
-          setShowcases(Array.isArray(showcaseResult) ? showcaseResult : Array.isArray(showcaseResult?.data) ? showcaseResult.data : []);
-          setForms(Array.isArray(formResult) ? formResult : Array.isArray(formResult?.data) ? formResult.data : []);
-          // Live-comment DM rules use a reserved media marker. Never present them
-          // as reusable post/comment automation templates.
-          const existingAutomations: AutomationTemplate[] = (Array.isArray(automationResult?.data) ? automationResult.data : [])
-            .filter((item: AutomationTemplate) => item.mediaId !== "__smartdirect_live_comments_v1__");
-          setAutomationTemplates(existingAutomations.filter((item) =>
-            item.triggerType === triggerType &&
-            item.id !== editAutomation?.id &&
-            (triggerType === "COMMENT_KEYWORD"
-              ? readPublicCommentReplies(item.commentReplyText).length >= 3
-              : normalizeMessages(item.messages).length > 0),
-          ));
+        const automationResult = await readAccountAutomations(account.id);
+        if (cancelled || controller.signal.aborted) return;
+        if (!automationResult?.success || !Array.isArray(automationResult.data)) {
+          throw new Error(automationResult?.error || "دریافت پاسخ‌های قبلی ناموفق بود.");
+        }
+        // Live-comment rules use a reserved marker and cannot be linked to
+        // posts. Preserve older one-reply records: the three-response minimum
+        // applies to NEW comment rules, not already saved historical rules.
+        const existingAutomations: AutomationTemplate[] = (automationResult.data as AutomationTemplate[])
+          .filter((item) => item.mediaId !== "__smartdirect_live_comments_v1__");
+        setAutomationTemplates(existingAutomations.filter((item) =>
+          item.triggerType === triggerType &&
+          item.id !== editAutomation?.id &&
+          (triggerType === "COMMENT_KEYWORD"
+            ? readPublicCommentReplies(item.commentReplyText).length > 0 ||
+              (item.sendDm !== false && normalizeMessages(item.messages).length > 0)
+            : normalizeMessages(item.messages).length > 0),
+        ));
+        setLoadingResources(false);
           if (triggerType === "STORY_REPLY_KEYWORD") {
+            // Saved-form metadata is only needed for Story templates, never to
+            // enable reuse of existing Comment automation rules.
+            let savedResult: { data?: unknown } | null = null;
+            try {
+              const response = await fetch("/api/saved-responses?instagramAccountId=" + encodeURIComponent(account.id), {
+                cache: "no-store", credentials: "include", signal: controller.signal,
+              });
+              if (response.ok) savedResult = await response.json();
+            } catch { /* Reusable automations remain available without saved forms. */ }
+            if (cancelled || controller.signal.aborted) return;
             const seen = new Set<string>();
             const templates: StoryFormTemplate[] = [];
             for (const automation of existingAutomations) {
@@ -293,18 +319,16 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             }
             setStoryFormTemplates(templates);
           }
-        }
-      } catch {
-        if (!cancelled) {
-          setShowcases([]);
-          setForms([]);
-          setStoryFormTemplates([]);
+      } catch (error) {
+        if (!cancelled && !controller.signal.aborted) {
+          setAutomationTemplates([]);
+          setError(error instanceof Error ? error.message : "دریافت پاسخ‌های قبلی ناموفق بود.");
         }
       } finally {
-        if (!cancelled) setLoadingResources(false);
+        if (!cancelled && !controller.signal.aborted) setLoadingResources(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; controller.abort(); };
   }, [account.id, triggerType, editAutomation?.id]);
 
   function applyAutomationTemplate(template: AutomationTemplate) {
