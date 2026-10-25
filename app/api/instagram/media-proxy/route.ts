@@ -66,27 +66,11 @@ async function fetchInstagramMessageMediaUrl(
 }
 
 async function fetchInstagramImageUrl(
-  accountId: string,
+  // The GET handler has already confirmed this account belongs to the user,
+  // is connected and retrieved its valid Meta token.
+  accessToken: string,
   participantId: string | null,
 ) {
-  const account = await prisma.instagramAccount.findFirst({
-    where: {
-      id: accountId,
-      isConnected: true,
-    },
-    select: {
-      id: true,
-      userId: true,
-      igUserId: true,
-    },
-  });
-
-  if (!account) {
-    return null;
-  }
-
-  const accessToken = await getValidInstagramAccessToken(account.id);
-
   const endpoint = participantId
     ? `${GRAPH_BASE}/${encodeURIComponent(
         participantId,
@@ -185,7 +169,7 @@ export async function GET(request: NextRequest) {
       }
     } else if (accountId) {
       const freshImageUrl = await fetchInstagramImageUrl(
-        accountId,
+        mediaAccessToken!,
         participantId || null,
       );
 
