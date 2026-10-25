@@ -1028,6 +1028,15 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     if (!selectedAccountId) throw new Error("اکانت فعال Instagram پیدا نشد.");
     const source=replyMode==="existing"?previousRules.find(x=>x.id===previousId):null;
     if(replyMode==="existing"&&!source)throw new Error("یک پاسخ قبلی انتخاب کن.");
+    if(source){
+      const response=await fetch("/api/automations/"+encodeURIComponent(source.id),{
+        method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({isActive:true}),
+      });
+      const result=await response.json();
+      if(!response.ok||!result.success)throw new Error(result.error||"فعال‌سازی پاسخ قبلی ناموفق بود.");
+      return source.id;
+    }
 
     // Publishing automations use the compact stage-6 setup for POST/REEL/CAROUSEL.
     if (type !== "STORY") {
@@ -1226,7 +1235,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         })
       });
       const result = await response.json();
-      if (!response.ok) { if (automationId) await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
+      if (!response.ok) { if (automationId && replyMode!=="existing") await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
       const job = result.data as Job;
       if (publishNow) {
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
@@ -1312,7 +1321,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const hasDraft = uploadedMedia.length > 0 || media.length > 0 || Boolean(caption.trim()) || automationEnabled || (type === "REEL" && JSON.stringify(reelOptions) !== JSON.stringify(DEFAULT_REEL_OPTIONS));
   const canSubmitMedia = uploadedMedia.length >= (type === "CAROUSEL" ? 2 : 1) && !uploading && !media.length;
   const canSubmitAutomation = !automationEnabled || (replyMode==="existing"
-    ? Boolean(previousId && (type!=="STORY" || copyStoryWords.trim()))
+    ? Boolean(previousId)
     : type === "STORY"
       ? storyResponseSaved && !storyResponseEditing && !storyResponseDirty
       : automationKeywords.length > 0 && publishingCommentReplies.length >= 3 && publishingCommentReplies.length <= 5 && publishingCommentReplies.every(text=>text.trim().length>0&&text.trim().length<=2000) && new Set(publishingCommentReplies.map(text=>text.trim())).size===publishingCommentReplies.length);
@@ -1580,12 +1589,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <CompleteAutomationPicker items={previousRules} selected={previousRules.find(x=>x.id===previousId)||null}
                     onSelect={item=>setPreviousId(item.id)} onChange={()=>setPreviousId("")}
                     kind={type==="STORY"?"STORY_REPLY_KEYWORD":"COMMENT_KEYWORD"} showcases={showcases} forms={forms} disabled={publishing}/>
-                  {type==="STORY" && <div className="rounded-xl border border-[var(--daira-outline)] bg-[var(--daira-glass-raised)] p-3">
-                    <label className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">کلمات کلیدی این پاسخ جدید</label>
-                    <input value={copyStoryWords} onChange={e=>setCopyStoryWords(e.target.value)} placeholder="مثلاً سفارش، موجودی" className="w-full rounded-lg border border-[var(--daira-outline)] bg-white p-3 text-base outline-none"/>
-                    <p className="mt-2 text-xs text-[var(--daira-text-secondary)]">متن پاسخ قبلی کپی می‌شود و قابل‌ویرایش نیست. برای جلوگیری از تداخل، کلمات کلیدی جدید وارد کن.</p>
-                  </div>}
-                  <p className="text-xs text-[var(--daira-text-secondary)]">انتخاب پاسخ قبلی، هنگام انتشار یک نسخه مستقل می‌سازد.</p>
+                  <p className="text-xs text-[var(--daira-text-secondary)]">پاسخ انتخاب‌شده روی این محتوا اعمال می‌شود و از فهرست پاسخ‌های موجود قابل ویرایش است.</p>
                 </div>}
               </div>}
               {automationEnabled && replyMode==="new" && (type==="STORY" ? <div className="mx-auto w-full max-w-2xl">

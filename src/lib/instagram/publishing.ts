@@ -863,13 +863,21 @@ async function bindConditionalAutomations(
   instagramMediaId: string,
 ) {
   if (job.commentAutomationId && job.type !== "STORY") {
-    await prisma.automation.updateMany({
-      where: {
-        id: job.commentAutomationId,
-        instagramAccountId: job.instagramAccountId,
-        triggerType: "COMMENT_KEYWORD",
-      },
-      data: { mediaId: instagramMediaId },
+    await prisma.$transaction(async tx => {
+      await tx.$queryRawUnsafe('SELECT id FROM "Automation" WHERE id = $1 FOR UPDATE', job.commentAutomationId);
+      const rule=await tx.automation.findFirst({
+        where:{id:job.commentAutomationId!,instagramAccountId:job.instagramAccountId,triggerType:"COMMENT_KEYWORD"},
+        select:{id:true,mediaId:true,mediaIds:true},
+      });
+      if(!rule)return;
+      const ids=Array.from(new Set([
+        ...(rule.mediaId && !rule.mediaId.startsWith("pending:") ? [rule.mediaId] : []),
+        ...(rule.mediaIds||"").split(",").filter(id=>id && !id.startsWith("pending:")),
+        instagramMediaId,
+      ]));
+      if(ids.length>50)throw new Error("حداکثر ۵۰ محتوا به هر پاسخ خودکار کامنت متصل می‌شود.");
+      await tx.automation.update({where:{id:rule.id},
+        data:{mediaId:ids.length===1?ids[0]:null,mediaIds:ids.join(",")}});
     });
   }
 
