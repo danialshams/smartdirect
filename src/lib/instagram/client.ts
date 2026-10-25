@@ -302,7 +302,13 @@ export async function instagramApiRequest<T = unknown>(
         path,
         operation,
         attempt,
-        url: url.toString().replace(/([?&])access_token=[^&]*/g, "$1access_token=[REDACTED]"),
+        url: (() => {
+          const safe = new URL(url);
+          for (const key of ["access_token", "client_secret", "appsecret_proof", "code", "authorization", "refresh_token"]) {
+            if (safe.searchParams.has(key)) safe.searchParams.set(key, "[REDACTED]");
+          }
+          return safe.toString();
+        })(),
         hasBody: options.body !== undefined,
         bodyType:
           options.body instanceof FormData
@@ -454,9 +460,9 @@ export async function instagramApiRequest<T = unknown>(
           message: details?.message ?? message,
           type: details?.type ?? null,
           fbtraceId: details?.fbtrace_id ?? null,
-          params: Object.fromEntries(
-            Object.entries(params).filter(([key]) => key !== "access_token"),
-          ),
+          // Logging only parameter names prevents leaking OAuth secrets,
+          // authorization codes, scoped user IDs and other private values.
+          paramNames: Object.keys(params).sort(),
           hasRequestBody: options.body !== undefined,
           metaErrorCode: details?.code ?? null,
           responseHeaders,
