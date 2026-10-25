@@ -164,17 +164,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       throw new StoryEditError("گزینه‌های فرم ذخیره‌شده معتبر نیستند. صفحه را دوباره باز کنید.");
 
     // Story responses no longer bind to an individual story.
-    const siblings = await prisma.automation.findMany({
-      where: { instagramAccountId: current.instagramAccountId,
-        triggerType: "STORY_REPLY_KEYWORD", id: { not: id } },
-      select: { keyword: true, keywordMatchMode: true },
-    });
-    const nextWords = keywords.map(word => word.trim().toLocaleLowerCase());
-    if (siblings.some(rule =>
-      rule.keywordMatchMode === "CONTAINS_ANY" || keywordMatchMode === "CONTAINS_ANY" ||
-      (rule.keyword || "").split(",").some(word => nextWords.includes(word.trim().toLocaleLowerCase()))
-    )) throw new StoryEditError("این کلمه کلیدی در پاسخ استوری دیگری استفاده شده است.",409);
-
+    // Inactive story rules may use the same keywords. The activation
+    // transaction guarantees only one can respond at a time.
     const showcaseIds = new Set<string>();
     if (message.messageType === "SHOWCASE") showcaseIds.add(message.showcaseId);
     if (message.updateQuickReplies) collectShowcases(message.quickReplies, showcaseIds);

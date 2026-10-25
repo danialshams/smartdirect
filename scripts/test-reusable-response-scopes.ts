@@ -302,3 +302,11 @@ const shareReuse=readFileSync("components/dashboard/ShareMentionEditor.tsx","utf
 assert(linkRoute.includes("body.activateOnLink === true") &&
   commentEditor.includes("activateOnLink:true") && shareReuse.includes("activateOnLink:true"),
   "Create from previous reply must activate the existing linked rule rather than leaving a newly attached reply inactive.");
+
+const storyFlow = readFileSync("components/dashboard/AutomationCreationFlow.tsx","utf8");
+const storyApi = readFileSync("app/api/automations/route.ts","utf8");
+assert(storyFlow.includes('!isEditing && triggerType === "COMMENT_KEYWORD"') &&
+  storyFlow.includes('triggerType === "COMMENT_KEYWORD" && creationMode === "existing"'),
+  "Only comment rules offer previous-response choices; story replies go directly to their editor.");
+assert(!storyApi.includes('const newWords = (normalizedKeyword || "")'),
+  "Single-active story replies must allow creating a replacement with the previous keyword.");

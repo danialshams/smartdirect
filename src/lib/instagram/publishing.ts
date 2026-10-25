@@ -831,7 +831,10 @@ async function createConditionalAutomation(
     select: { id: true },
   });
 
-  if (existing) return existing.id;
+  if (existing) {
+    if (triggerType === "STORY_REPLY_KEYWORD") await activateStoryReply(existing.id, instagramAccountId);
+    return existing.id;
+  }
 
   const automation = await prisma.automation.create({
     data: {
@@ -841,11 +844,14 @@ async function createConditionalAutomation(
       mediaId: instagramMediaId,
       sendDm: true,
       replyText: normalizedResponse,
-      isActive: true,
+      isActive: triggerType !== "STORY_REPLY_KEYWORD",
     },
     select: { id: true },
   });
 
+  if (triggerType === "STORY_REPLY_KEYWORD") {
+    await activateStoryReply(automation.id, instagramAccountId);
+  }
   await invalidateAutomationCache(instagramAccountId);
   return automation.id;
 }
