@@ -87,6 +87,7 @@ jobs:
         run: |
           npx tsx scripts/test-dashboard-route-isolation.ts
           node --check scripts/benchmark-dashboard-navigation.mjs
+          node --check scripts/benchmark-dashboard-diagnostics.mjs
           node --check scripts/report-dashboard-initial-js.mjs
 
       - name: Test complete Daira design system

@@ -62,3 +62,28 @@ browser benchmark or full bundle analysis.
 Only use authorized test accounts. Avoid posting cookies, local storage,
 user IDs, message contents, or trace archives from real accounts.
 Do not merge untested runtime changes into master.
+
+## Follow-up diagnostic: slow first load and layout shifts
+
+If the first report shows an exceptionally slow first visit or elevated CLS,
+use the separate diagnostic script (it preserves the existing baseline script):
+
+```powershell
+$env:SMARTDIRECT_BASE_URL="https://smartdirect.vercel.app"
+$env:SMARTDIRECT_STORAGE_STATE=".local-auth.json"
+$env:SMARTDIRECT_DIAGNOSTIC_RUNS="5"
+node scripts/benchmark-dashboard-diagnostics.mjs
+```
+
+The diagnostic launches the full Chromium already downloaded by Playwright,
+without Chrome Headless Shell. Do not rerun `npm ci` or download another browser.
+
+New metrics include document TTFB (time to first byte), a short-window
+cumulative layout-shift score and sanitized shift-source element classes,
+plus client navigation after waiting for the Home tool cards to hydrate.
+It does not collect rendered text, messages, cookie contents or session tokens.
+The report is written under `performance-results/` (gitignored).
+The new SPA measurement still does not certify full data readiness.
+
+Because there are only five samples, reported p95 equals the largest measured
+value; repeat with 10 rounds if an outlier persists.
