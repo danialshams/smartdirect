@@ -58,7 +58,7 @@ export default function SmartRemindersList() {
       try {
         const connected=activeDashboardAccount;
         if (!connected) throw new Error("ابتدا یک پیج اینستاگرام متصل کن.");
-        const response = await fetch("/api/smart-reminders?instagramAccountId=" + encodeURIComponent(connected.id), { cache: "no-store", credentials: "include", signal: controller.signal });
+        const response = await fetch("/api/smart-reminders?view=list&instagramAccountId=" + encodeURIComponent(connected.id), { cache: "no-store", credentials: "include", signal: controller.signal });
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.error || "دریافت یادآوری‌ها ناموفق بود.");
         if (!controller.signal.aborted) {
