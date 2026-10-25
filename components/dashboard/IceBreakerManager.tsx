@@ -210,7 +210,10 @@ export default function IceBreakerManager({
       setEditor(null);
       setResponseDirty(false);
       setNotice(draft.id ? "تغییرات پیام ذخیره شد." : "پیام جدید به پیام‌های شروع گفتگو اضافه شد.");
-      await loadQuestions(true);
+      // POST already returns the committed list; update immediately.
+      setQuestions((Array.isArray(result.data) ? result.data : []).map((item: {id:string;question:string;automationId:string|null}) => ({
+        id: item.id, label: item.question ?? "", automationId: item.automationId ?? null,
+      })));
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "ذخیره پیام شروع گفتگو ناموفق بود.");
     } finally {
@@ -246,7 +249,10 @@ export default function IceBreakerManager({
       if (editor?.id === removed.id) setEditor(null);
       setResponseDirty(false);
       setNotice("پیام از فهرست شروع گفتگو حذف شد.");
-      await loadQuestions(true);
+      // POST already returns the committed list; update immediately.
+      setQuestions((Array.isArray(result.data) ? result.data : []).map((item: {id:string;question:string;automationId:string|null}) => ({
+        id: item.id, label: item.question ?? "", automationId: item.automationId ?? null,
+      })));
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "حذف پیام شروع گفتگو ناموفق بود.");
     } finally {

@@ -250,7 +250,8 @@ export default function PersistentMenuManager({
       setEditor(null);
       setResponseDirty(false);
       setNotice(draft.id ? "تغییرات گزینه ذخیره شد." : "گزینه جدید به منوی دایرکت اضافه شد.");
-      await loadItems(true);
+      // POST returns the canonical saved menu, so no second API round-trip.
+      setItems(normalizeMenu(Array.isArray(result.data?.items) ? result.data.items : []));
     } catch (err) {
       setError(err instanceof Error ? err.message : "ذخیره منو ناموفق بود.");
     } finally {
@@ -285,7 +286,8 @@ export default function PersistentMenuManager({
       if (!response.ok || !result.success) throw new Error(result.error || "حذف گزینه ناموفق بود.");
       if (editor?.id === removed.id) setEditor(null);
       setNotice("گزینه از منوی دایرکت حذف شد.");
-      await loadItems(true);
+      // POST returns the canonical saved menu, so no second API round-trip.
+      setItems(normalizeMenu(Array.isArray(result.data?.items) ? result.data.items : []));
     } catch (err) {
       setError(err instanceof Error ? err.message : "حذف گزینه ناموفق بود.");
     } finally {
