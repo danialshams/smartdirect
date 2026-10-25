@@ -22,7 +22,7 @@
     },
     {
       "path": "/api/cron/cleanup-live-automations",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 8 * * *"
     }
   ]
 }

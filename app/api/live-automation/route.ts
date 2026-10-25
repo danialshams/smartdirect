@@ -24,6 +24,15 @@ export async function GET(request: NextRequest) {
       where: { id: instagramAccountId, userId: session.user.id }, select: { id: true },
     });
     if (!account) return NextResponse.json({ success: false, error: "پیج پیدا نشد." }, { status: 404 });
+    // Refresh end-of-Live status when users open their rules. A failed Meta
+    // request must not disable anything or prevent viewing the saved rules.
+    try {
+      const armed=await prisma.automation.count({where:{instagramAccountId,mediaId:LIVE_MEDIA_ID,isActive:true,mediaIds:{not:null}}});
+      if(armed){
+        const meta=await prisma.instagramAccount.findUnique({where:{id:instagramAccountId},select:{igUserId:true}});
+        if(meta) await pollLiveReplySessions({id:instagramAccountId,igUserId:meta.igUserId});
+      }
+    }catch(error){console.warn("[LIVE_REPLY] List-time session check deferred:",error instanceof Error?error.message:String(error));}
     const rules = await prisma.automation.findMany({
       where: { instagramAccountId, mediaId: LIVE_MEDIA_ID, triggerType: "COMMENT_KEYWORD" },
       orderBy: { createdAt: "desc" }, include: liveReplyInclude,

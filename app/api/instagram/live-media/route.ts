@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       .filter(item => typeof item?.id === "string" && Boolean(item.id.trim()))
       .map(item => ({ id: item.id, permalink: item.permalink || null })) : [];
     await synchronizeLiveReplySessions(account.id, data.map(item=>item.id));
+    if (!Array.isArray(response.data)) throw new Error("Invalid active Live response");
     return NextResponse.json({ success: true, data }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("GET live media failed:", error instanceof Error ? error.name : "unknown");
