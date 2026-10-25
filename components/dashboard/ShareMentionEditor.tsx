@@ -124,11 +124,20 @@ export default function ShareMentionEditor({id}:{id?:string}){
   setSaving(true);setError("");
   try{
    const previous=previousAutomations.find(item=>item.id===selectedPreviousId);
-    const copied=previous && !original && responseMode==="existing"
-      ? normalizeMessages(previous.messages)[0] : null;
-    const cloneReplies=(replies:MessageDraft["quickReplies"]):MessageDraft["quickReplies"] =>
-      replies.map(reply=>({...reply,payload:"copy_"+crypto.randomUUID(),savedResponseId:null,destinationQuickReplies:cloneReplies(reply.destinationQuickReplies)}));
-    const resolved= copied ? {...copied,id:"local_"+crypto.randomUUID(),savedResponseId:null,quickReplies:cloneReplies(copied.quickReplies)} : (prepared||message);
+   if(!original && responseMode==="existing" && trigger==="DM_MEDIA_SHARE"){
+     if(!previous)throw new Error("پاسخ قبلی انتخاب نشده است.");
+     const attach=await fetch("/api/automations/"+encodeURIComponent(previous.id),{
+       method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},
+       body:JSON.stringify({linkMediaOnly:true,triggerType:"DM_MEDIA_SHARE",
+         mediaIds:selected,mediaId:selected.length===1?selected[0]:null}),
+     });
+     const result=await attach.json();
+     if(!attach.ok||!result.success)throw new Error(result.error||"اتصال پاسخ قبلی ناموفق بود.");
+     setSaved(true);
+     window.scrollTo({top:0,behavior:"smooth"});
+     return;
+   }
+   const resolved=prepared||message;
     const response=await fetch("/api/share-mention",{method:original?"PUT":"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({
     id:original?.id,expectedUpdatedAt:original?.updatedAt,
     instagramAccountId:account.id,triggerType:trigger,
