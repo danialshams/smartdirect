@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import "dotenv/config";
 import { prisma } from "../src/lib/prisma";
+import { disconnectRedis } from "../src/lib/redis/client";
 import {
   applyInboundAutomationPreference,
   automatedMessageBlockReason,
@@ -115,6 +116,7 @@ async function main() {
   } finally {
     await prisma.user.delete({ where: { id: user.id } });
     await prisma.$disconnect();
+    await disconnectRedis();
   }
   console.log("META_ACCOUNT_SAFETY_GUARDRAILS_OK");
 }
