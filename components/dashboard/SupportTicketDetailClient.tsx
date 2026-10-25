@@ -5,7 +5,7 @@ import { CheckCheck, Ellipsis, Headset, ImagePlus, RefreshCw, Send, X, ZoomIn } 
 import { SUPPORT_STATUS, supportAttachmentUrl, supportDate } from "./support-ui";
 
 type Attachment = { id: string; fileName: string; mimeType: string };
-type Message = { id: string; body: string; createdAt: string; senderUserId: string; sender: { name: string | null; role: string }; attachments: Attachment[] };
+type Message = { id: string; body: string; createdAt: string; senderUserId: string; readAt: string | null; sender: { name: string | null; role: string }; attachments: Attachment[] };
 type Ticket = { id: string; subject: string; category: string; status: string; createdAt: string; updatedAt: string; messages: Message[] };
 type TicketResponse = { data: Ticket; userId: string; message?: string };
 
@@ -33,7 +33,7 @@ export default function SupportTicketDetailClient({ id }: { id: string }) {
     if (!response.ok) throw new Error(data.message || "دریافت گفتگو ناموفق بود.");
     if (signal?.aborted) return;
     setTicket(data.data); setUserId(data.userId);
-    if (document.visibilityState === "visible" && data.data.messages.some(message => message.senderUserId !== data.userId)) {
+    if (document.visibilityState === "visible" && data.data.messages.some(message => message.senderUserId !== data.userId && message.readAt === null)) {
       const seen = await fetch("/api/dashboard/tickets/" + encodeURIComponent(id) + "/read", { method: "PATCH" });
       if (seen.ok) {
         const result = await seen.json();
