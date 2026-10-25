@@ -34,7 +34,7 @@ export default function ShareMentionManager(){
   (async()=>{try{
    const account=activeDashboardAccount;
    if(!account)throw new Error("ابتدا یک پیج اینستاگرام متصل کن.");
-   const response=await fetch("/api/automations?instagramAccountId="+encodeURIComponent(account.id),{cache:"no-store",credentials:"include",signal:controller.signal});
+   const response=await fetch("/api/automations?view=share-mention&instagramAccountId="+encodeURIComponent(account.id),{cache:"no-store",credentials:"include",signal:controller.signal});
    const data=await response.json();
    if(!response.ok||!data.success)throw new Error(data.error||"دریافت پاسخ‌ها ناموفق بود.");
    if(!controller.signal.aborted){
