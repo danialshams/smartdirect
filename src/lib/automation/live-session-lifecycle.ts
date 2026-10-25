@@ -39,6 +39,20 @@ export async function synchronizeLiveReplySessions(accountId: string, activeIds:
   return changed;
 }
 
+/** A single incoming webhook comment proves this Live exists, but does not
+ * prove that any other Live has ended. Bind only waiting rules here; only
+ * verified complete /live_media snapshots can deactivate prior sessions.
+ */
+export async function bindPendingLiveReplyRules(accountId:string, liveId:string){
+  if(!liveId.trim())return;
+  const result=await prisma.automation.updateMany({
+    where:{instagramAccountId:accountId,triggerType:"COMMENT_KEYWORD",
+      mediaId:LIVE_SENTINEL,isActive:true,mediaIds:null},
+    data:{mediaIds:liveId},
+  });
+  if(result.count)await invalidateAutomationCache(accountId);
+}
+
 /** Graph /live_media returns active broadcasts; failure must not modify activation. */
 export async function pollLiveReplySessions(account: { id: string; igUserId: string }) {
   const token = await getValidInstagramAccessToken(account.id);

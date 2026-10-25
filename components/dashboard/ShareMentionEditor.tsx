@@ -120,7 +120,7 @@ export default function ShareMentionEditor({id}:{id?:string}){
  }
  async function save(prepared?:MessageDraft){
   if(saving||!account||!responseValid)return;
-   if (!original && responseMode === "existing" && !selectedPreviousId) {setError("ابتدا یک پاسخ قبلی انتخاب کن.");return;}
+   if (!original && trigger === "DM_MEDIA_SHARE" && responseMode === "existing" && !selectedPreviousId) {setError("ابتدا یک پاسخ قبلی انتخاب کن.");return;}
   setSaving(true);setError("");
   try{
    const previous=previousAutomations.find(item=>item.id===selectedPreviousId);

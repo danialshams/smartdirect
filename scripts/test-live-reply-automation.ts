@@ -122,3 +122,10 @@ assert(liveList.includes('role="switch"') && liveList.includes("toast.success"),
   "Live list must expose activation with a confirmation toast.");
 assert(shareEditor.includes("linkMediaOnly:true") && publishing.includes("return source.id"),
   "Existing share/publishing replies must be reused, not duplicated.");
+
+const liveProcessor = readFileSync("src/lib/automation/live-replies.ts","utf8");
+assert(liveLifecycle.includes("bindPendingLiveReplyRules") && liveProcessor.includes("bindPendingLiveReplyRules") &&
+  !liveProcessor.includes("synchronizeLiveReplySessions(instagramAccount.id,[liveId])"),
+  "A single Live comment cannot prove a different broadcast ended; only full polling may deactivate.");
+assert(liveProcessor.includes("...(liveId ? {mediaIds:liveId} : {})"),
+  "Live comments must not match a rule bound to a different broadcast.");
