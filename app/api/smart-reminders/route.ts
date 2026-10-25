@@ -35,13 +35,16 @@ export async function GET(request: NextRequest) {
       where: { id: instagramAccountId, userId }, select: { id: true },
     });
     if (!account) return fail("پیج متعلق به حساب شما نیست.", 403);
+    // The list view never uses the automation picker options. Skip this
+    // extra query on route visits; edit/create keep the full response.
+    const listOnly = new URL(request.url).searchParams.get("view") === "list";
     const [rules, candidates] = await Promise.all([
       prisma.smartReminderRule.findMany({
         where: { instagramAccountId, userId }, orderBy: { createdAt: "desc" },
         include: { automation: { select: { keyword: true, keywordMatchMode: true, triggerType: true, isActive: true } },
           _count: { select: { deliveries: { where: { status: "SENT" } } } } },
       }),
-      prisma.automation.findMany({
+      listOnly ? Promise.resolve([]) : prisma.automation.findMany({
         where: { instagramAccountId, isActive: true,
           triggerType: { in: ["DM", "STORY_REPLY_KEYWORD", "COMMENT_KEYWORD"] }, messages: { some: {} } },
         select: { id: true, triggerType: true, keyword: true, keywordMatchMode: true, mediaId: true },
