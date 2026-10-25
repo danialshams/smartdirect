@@ -58,7 +58,9 @@ export default function ShareMentionManager(){
    <div className="space-y-3">{filtered.map(item=>{
     const mention=item.triggerType==="STORY_MENTION";
     const count=(item.mediaIds||item.mediaId||"").split(",").filter(Boolean).length;
-    return <article key={item.id} className="daira-automation-list-card rounded-2xl border p-4">
+    return <article key={item.id} className="daira-automation-list-card relative rounded-2xl border px-4 pb-4 pt-10">
+     <time className="absolute left-4 top-3 text-[11px] font-medium text-[var(--daira-text-secondary)]"
+       dateTime={item.updatedAt}>{new Date(item.updatedAt).toLocaleString("fa-IR-u-ca-persian",{dateStyle:"medium",timeStyle:"short"})}</time>
      <div className="flex items-start gap-3">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-brand-100)] text-[var(--daira-primary)]">{mention?<AtSign size={21}/>:<Share2 size={21}/>}</div>
       <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><strong className="text-sm text-[var(--daira-heading)]">{title(item.triggerType)}</strong></div>

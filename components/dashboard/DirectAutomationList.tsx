@@ -122,7 +122,9 @@ export default function DirectAutomationList() {
             ) : (
               <div className="space-y-2.5">
                 {filtered.map(item => (
-                  <div key={item.id} className="daira-automation-list-card flex min-h-[84px] items-center justify-between gap-3 rounded-[22px] border border-[var(--daira-border)] bg-[var(--daira-surface)] px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
+                  <div key={item.id} className="daira-automation-list-card relative flex min-h-[84px] items-center justify-between gap-3 rounded-[22px] border border-[var(--daira-border)] bg-[var(--daira-surface)] px-3 pb-3 pt-9 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
+                    <time className="absolute left-3 top-3 text-[11px] font-medium text-[var(--daira-text-secondary)]"
+                      dateTime={item.updatedAt||item.createdAt}>{formatDate(item.updatedAt || item.createdAt)}</time>
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
                         <div className="max-w-full rounded-xl px-3 py-2 text-[13px] font-bold leading-6"
@@ -130,9 +132,6 @@ export default function DirectAutomationList() {
                             border: "1px solid " + dairaPalette.secondary.activeBackground }}>
                           <span className="break-words">{formatWords(item.keyword)}</span>
                         </div>
-                        <span className="text-[11px] font-medium" style={{ color: dairaPalette.text.muted }}>
-                          {formatDate(item.updatedAt || item.createdAt)}
-                        </span>
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">

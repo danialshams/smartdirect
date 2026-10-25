@@ -140,7 +140,9 @@ export default function LiveAutomationList() {
       {filtered.length ? (
         <div className="grid gap-3 sm:grid-cols-2">
           {filtered.map(rule => (
-            <article key={rule.id} className="daira-automation-list-card space-y-3 rounded-2xl border border-[var(--daira-border)] bg-[var(--daira-surface)] p-4">
+            <article key={rule.id} className="daira-automation-list-card relative space-y-3 rounded-2xl border border-[var(--daira-border)] bg-[var(--daira-surface)] px-4 pb-4 pt-10">
+              <time className="absolute left-4 top-3 text-[11px] font-medium text-[var(--daira-text-secondary)]"
+                dateTime={rule.updatedAt}>{new Date(rule.updatedAt).toLocaleString("fa-IR-u-ca-persian",{dateStyle:"medium",timeStyle:"short"})}</time>
               <div className="flex items-center gap-2">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--daira-outline-hover-bg)] text-[var(--daira-primary)]"><RadioTower size={18}/></span>
                 <div className="min-w-0 flex-1">
