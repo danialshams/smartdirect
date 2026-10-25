@@ -50,7 +50,8 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
     setVisited((current) => current.includes(id) ? current : [...current, id]);
     setExpandedId((current) => current === id ? null : id);
   };
-  const label = (item: T) => `${kind === "LIVE" ? "پاسخ لایو" : kind === "COMMENT_KEYWORD" ? "پاسخ کامنت" : kind === "STORY_REPLY_KEYWORD" ? "پاسخ استوری" : kind === "SHARE" ? (item.triggerType === "STORY_MENTION" ? "پاسخ منشن" : "پاسخ اشتراک‌گذاری") : "پاسخ دایرکت"} - ${item.keyword?.trim() ? "کلمات کلیدی: " + item.keyword : "فعال‌سازی برای همه"}`;
+  const titleFor = (item:T) => kind==="LIVE" ? "پاسخ لایو" : kind==="COMMENT_KEYWORD" ? "پاسخ کامنت" : kind==="STORY_REPLY_KEYWORD" ? "پاسخ استوری" : kind==="SHARE" ? (item.triggerType==="STORY_MENTION"?"پاسخ منشن":"پاسخ اشتراک‌گذاری") : "پاسخ دایرکت";
+  const label = (item:T) => item.keyword?.trim() ? "کلمات کلیدی: "+item.keyword : "بدون کلمه کلیدی";
   const renderDetail = (item: T) => {
     const messages = normalizeMessages(item.messages || []);
     const displayedMessages = kind === "LIVE"
@@ -84,8 +85,8 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
       <span className="daira-complete-reply__check flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"><CheckCircle2 size={21} aria-hidden="true"/></span>
       <div className="min-w-0 flex-1 space-y-1">
         <p className="text-xs font-bold text-[var(--daira-success-text)]">پاسخ انتخاب شد</p>
-        <h3 className="break-words text-sm font-bold text-[var(--daira-heading)]">{label(selected)}</h3>
-        <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">محتوای پاسخ قبلی برای ایجاد یک پاسخ مستقل استفاده می‌شود. پاسخ اصلی بدون تغییر باقی می‌ماند.</p>
+        <h3 className="break-words text-sm font-bold text-[var(--daira-heading)]">{titleFor(selected)} — {label(selected)}</h3>
+        <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">پاسخ انتخاب شده است. برای استفاده روی «ایجاد» بزن.</p>
       </div>
     </div>
     <div className="mt-4 flex flex-wrap gap-2">
@@ -119,7 +120,7 @@ export default function CompleteAutomationPicker<T extends CompleteAutomation>({
             <div className="min-w-0 flex-1">
               <h4 className="truncate text-xs font-bold leading-6 text-[var(--daira-heading)]">{label(item)}</h4>
               <p className="text-[11px] text-[var(--daira-text-secondary)]">
-                {kind === "LIVE" ? "پاسخ لایو" : kind === "COMMENT_KEYWORD" ? "پاسخ کامنت" : kind === "DM" ? "پاسخ دایرکت" : "پاسخ استوری"}
+                {titleFor(item)}
               </p>
             </div>
             <button type="button" aria-expanded={expanded} aria-controls={"complete-preview-" + item.id}

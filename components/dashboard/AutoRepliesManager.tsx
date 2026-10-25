@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDashboardAccountId } from "@/components/dashboard/DashboardAccountContext";
 import Link from "next/link";
+import { toast } from "sonner";
 import AutoRepliesSkeleton from "@/components/dashboard/AutoRepliesSkeleton";
 import { AlertTriangle, Image as ImageIcon, LoaderCircle, Pencil, Search, Trash2 } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
@@ -448,6 +449,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || "تغییر وضعیت پاسخ ناموفق بود.");
+      toast.success(active ? "پاسخ استوری غیرفعال شد." : "پاسخ استوری فعال شد.");
       setItems(current => {
         const next = current.map(entry => entry.id === item.id && entry.title === "پاسخ خودکار استوری"
           ? { ...entry, isActive: !active } : entry);
@@ -455,7 +457,8 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
         return next;
       });
     } catch (error) {
-      setError(error instanceof Error ? error.message : "تغییر وضعیت پاسخ ناموفق بود.");
+      const msg=error instanceof Error ? error.message : "تغییر وضعیت پاسخ ناموفق بود.";
+      setError(msg);toast.error(msg);
     }
   }
 
@@ -548,7 +551,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           ) : (
             <div className="space-y-2.5">
               {filteredItems.map((item) => (
-                <div key={item.key} className="daira-automation-list-card flex min-h-[84px] items-center justify-between gap-3 rounded-[22px] border border-[var(--daira-border)] bg-[var(--daira-surface)] px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
+                <div key={item.key} className={"daira-automation-list-card flex min-h-[84px] gap-3 rounded-[22px] border " + (scope === "stories" ? "flex-col items-stretch" : "items-center justify-between")} border-[var(--daira-border)] bg-[var(--daira-surface)] px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)]">
                       {item.previewUrl && item.previewKind === "video" ? (
@@ -572,8 +575,15 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {scope === "stories" && item.title === "پاسخ خودکار استوری" && !item.key.startsWith("publish:") && <label className="inline-flex items-center gap-1 text-[11px] text-[var(--daira-text)]"><input type="checkbox" aria-label="فعال‌سازی پاسخ استوری" checked={item.isActive !== false} onChange={() => void toggleStoryRule(item)} className="accent-blue-600"/>{item.isActive !== false ? "فعال" : "غیرفعال"}</label>}
+                  <div className={"flex shrink-0 items-center gap-2 " + (scope === "stories" ? "justify-between border-t border-[var(--daira-glass-rim)] pt-3" : "")}>
+                    {scope === "stories" && item.title === "پاسخ خودکار استوری" && !item.key.startsWith("publish:") &&
+                      <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border border-[var(--daira-glass-rim)] bg-[var(--daira-glass-raised)] px-2.5 text-xs font-semibold">
+                        <input role="switch" type="checkbox" className="daira-form-switch shrink-0 -scale-x-100"
+                          aria-label={"فعال‌سازی پاسخ استوری "+(item.keyword||"")}
+                          checked={item.isActive !== false} onChange={()=>void toggleStoryRule(item)}/>
+                        <span>{item.isActive !== false ? "فعال" : "غیرفعال"}</span>
+                      </label>}
+                    <div className="flex items-center gap-2">
                     <Link
                       href={item.href}
                       className="daira-reply-list-edit"
@@ -590,6 +600,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                       <span>حذف</span>
                       <Trash2 size={14} />
                     </button>
+                    </div>
                   </div>
                 </div>
               ))}
