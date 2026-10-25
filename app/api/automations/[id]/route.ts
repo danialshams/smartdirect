@@ -230,10 +230,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       ...(isActive !== undefined ? { isActive: nextTriggerType === "STORY_REPLY_KEYWORD" && isActive === true ? false : Boolean(isActive) } : {}),
     };
 
-    await prisma.automation.update({ where: { id }, data: updateData });
-    if (nextTriggerType === "STORY_REPLY_KEYWORD" && isActive === true)
+    const needsStoryActivation = nextTriggerType === "STORY_REPLY_KEYWORD" && isActive === true;
+    // Most edits/toggles do not require a post-update database refetch.
+    // Return the fully populated update result in one Prisma call. Story
+    // activation is the exception: it performs its own status transition,
+    // so a fresh read after activation is required for an accurate response.
+    const updated = await prisma.automation.update({
+      where: { id },
+      data: updateData,
+      ...(!needsStoryActivation ? { include: automationInclude } : {}),
+    });
+    if (needsStoryActivation)
       await activateStoryReply(id, existingAutomation.instagramAccountId);
-    const automation = await prisma.automation.findUniqueOrThrow({ where: { id }, include: automationInclude });
+    const automation = needsStoryActivation
+      ? await prisma.automation.findUniqueOrThrow({ where: { id }, include: automationInclude })
+      : updated;
     try {
       await invalidateAutomationCache(existingAutomation.instagramAccountId);
     } catch (cacheError) {
