@@ -101,3 +101,39 @@ after optimizations. No UI motion/effect changes to improve benchmark scores.
 Showing a skeleton repeatedly for already cached content is unnecessary.
 Skipping all network refreshes is not acceptable for live or security-scoped
 data. Do not conflate navigation URL timing with data-ready or action completion.
+
+
+## Isolated write-operation benchmark in CI
+
+The required GitHub Actions build now executes
+`scripts/benchmark-dashboard-crud-latency.ts` against a disposable tenant on
+the local PostgreSQL service **after** `prisma db push`. The script refuses to
+run unless `NODE_ENV=test` and the database host is loopback. It creates no
+external Instagram/Meta actions, sends no DM, performs no live S3 upload and
+deletes its throwaway tenant with cascading children after collecting results.
+
+The measured portions include:
+
+- Automation: create with nested message, metadata list, activation toggle,
+  edit, delete with nested message cleanup
+- Smart reminders: create, list with candidates, edit, delete
+- Support: create with first message, list with latest reply and unread-count
+  query, reply, detail, close and reopen
+- Publishing: create draft with linked media metadata, list with media, edit
+  draft, remove draft
+
+Each operation is sampled 20 times, with p50/p95/min/max reported in
+`performance-results/dashboard-isolated-crud.json` and GitHub Actions job
+summary. No speed targets are enforced on shared CI hardware. The output is
+archived as an artifact named `dashboard-isolated-crud` for 14 days.
+
+**Scope:** these are Prisma/database-operation timings on GitHub Actions,
+not full authenticated HTTP route timings or browser input-to-confirmation
+latency. Publishing real media conversion/transfer and Meta completion,
+Instagram inbox sending, story automation activation, and user-perceived
+navigation/CLS still require separate measurements. A claim that "all product
+features are at maximum speed" would be unsupported by this benchmark alone.
+
+The per-action measurements provide a consistent baseline for subsequent
+server query changes and help decide where further optimization is justified
+rather than guessing from UI loading indicators.
