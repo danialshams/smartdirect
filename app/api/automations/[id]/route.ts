@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { activateStoryReply } from "@/lib/automation/story-activation";
 import { storePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
 import { getCachedInstagramMedia, invalidateAutomationCache } from "@/lib/cache/instagram";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
@@ -226,10 +227,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       requireFollow: nextRequireFollow,
       followGateText: nextFollowGateText,
       followGateButtonText: nextFollowGateButtonText,
-      ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
+      ...(isActive !== undefined ? { isActive: nextTriggerType === "STORY_REPLY_KEYWORD" && isActive === true ? false : Boolean(isActive) } : {}),
     };
 
-    const automation = await prisma.automation.update({ where: { id }, data: updateData, include: automationInclude });
+    await prisma.automation.update({ where: { id }, data: updateData });
+    if (nextTriggerType === "STORY_REPLY_KEYWORD" && isActive === true)
+      await activateStoryReply(id, existingAutomation.instagramAccountId);
+    const automation = await prisma.automation.findUniqueOrThrow({ where: { id }, include: automationInclude });
     try {
       await invalidateAutomationCache(existingAutomation.instagramAccountId);
     } catch (cacheError) {

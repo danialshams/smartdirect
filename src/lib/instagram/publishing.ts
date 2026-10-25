@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { activateStoryReply } from "@/lib/automation/story-activation";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { deletePublishMediaStorage } from "@/lib/instagram/publishing-media-cleanup";
@@ -890,6 +891,8 @@ async function bindConditionalAutomations(
       },
       data: { mediaId: null, mediaIds: null },
     });
+    // Scheduled story rules replace the old reply only after publication.
+    await activateStoryReply(job.storyReplyAutomationId, job.instagramAccountId);
   }
 
   if (!job.commentAutomationId && job.type !== "STORY") {

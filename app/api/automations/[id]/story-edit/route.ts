@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { activateStoryReply } from "@/lib/automation/story-activation";
 import { validateSavedResponseOrigin } from "@/lib/automation/saved-response-origin";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
@@ -202,7 +203,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           followGateText: requireFollow ? followGateText : null,
           followGateButtonText: requireFollow ? followGateButtonText : null,
           likeStoryReply: body.likeStoryReply as boolean,
-          isActive: body.isActive as boolean,
+          isActive: body.isActive === true ? current.isActive : false,
           sendDm: true,
         },
       });
@@ -266,6 +267,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       // intact instead of silently deleting them when editing the main reply.
     }, { maxWait: 10000, timeout: 30000 });
 
+    if (body.isActive === true) await activateStoryReply(id, current.instagramAccountId);
     try { await invalidateAutomationCache(current.instagramAccountId); }
     catch (cacheError) { console.warn("Story automation cache invalidation failed:", cacheError); }
     return NextResponse.json({ success: true, data: { id } });
