@@ -1,6 +1,7 @@
 "use client";
 
 import { useDashboardAccountSelection } from "@/components/dashboard/DashboardAccountContext";
+import { getDashboardListSnapshot, setDashboardListSnapshot } from "@/src/lib/dashboard/list-snapshot-cache";
 import { DashboardLoading } from "@/components/dashboard/DashboardUI"
 import { Input } from "@/components/dashboard/DashboardUI"
 
@@ -439,12 +440,13 @@ export default function InstagramContentAnalytics() {
     const loadingAccounts = !isReady;
     const [reloadVersion, setReloadVersion] = useState(0);
 
-    const [
-        data,
-        setData,
-    ] = useState<AnalyticsData | null>(
-        null,
+    const [data, setData] = useState<AnalyticsData | null>(() =>
+        accountId ? getDashboardListSnapshot<AnalyticsData>("content-analytics:" + accountId)?.[0] ?? null : null
     );
+    const [loadedAccountId, setLoadedAccountId] = useState<string | null>(() =>
+        accountId && getDashboardListSnapshot<AnalyticsData>("content-analytics:" + accountId) ? accountId : null
+    );
+    const visibleData = loadedAccountId === accountId ? data : null;
 
     const [
         loading,
@@ -490,11 +492,14 @@ export default function InstagramContentAnalytics() {
                     return;
                 }
 
-                try {
-                    setLoading(true);
-
+                const cached = getDashboardListSnapshot<AnalyticsData>("content-analytics:" + selectedAccountId)?.[0] ?? null;
+                if (!signal.aborted) {
+                    setData(cached);
+                    setLoadedAccountId(cached ? selectedAccountId : null);
+                    setLoading(!cached);
                     setError("");
-
+                }
+                try {
                     const response =
                         await fetch(
                             `/api/instagram/content-analytics?instagramAccountId=${encodeURIComponent(
@@ -520,10 +525,17 @@ export default function InstagramContentAnalytics() {
                         );
                     }
 
-                    if (!signal.aborted) setData(result as AnalyticsData);
+                    if (!signal.aborted) {
+                        setDashboardListSnapshot("content-analytics:" + selectedAccountId, [result as AnalyticsData]);
+                        setData(result as AnalyticsData);
+                        setLoadedAccountId(selectedAccountId);
+                    }
                 } catch (error) {
                     if (signal.aborted) return;
-                    setData(null);
+                    if (!cached) {
+                        setData(null);
+                        setLoadedAccountId(null);
+                    }
 
                     setError(
                         error instanceof Error
