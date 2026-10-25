@@ -646,7 +646,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     void load();
 
     const refreshFromDetail = () => {
-      void loadJobs(true);
+      void loadJobs(true).catch(() => {
+        // A failed background refresh must not produce an unhandled promise.
+      });
     };
 
     window.addEventListener("smartdirect:publishing-refresh", refreshFromDetail);
@@ -657,12 +659,16 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       const active = jobs.some(job => ["PROCESSING", "PUBLISHING"].includes(job.status));
       if (!active && Date.now() - lastIdlePoll < 30_000) return;
       lastIdlePoll = Date.now();
-      void loadJobs();
+      void loadJobs().catch(() => {
+        // The next scheduled check or visible-tab refresh will retry.
+      });
     }, 5000);
     const onVisible = () => {
       if (document.visibilityState === "visible") {
         lastIdlePoll = Date.now();
-        void loadJobs(true);
+        void loadJobs(true).catch(() => {
+          // Keep the last usable queue while connectivity is unavailable.
+        });
       }
     };
     document.addEventListener("visibilitychange", onVisible);
