@@ -938,6 +938,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             ) : (
               <p className="rounded-xl border border-dashed border-[var(--daira-border)] bg-[var(--daira-surface-hover)] px-4 py-6 text-center text-xs leading-6 text-[var(--daira-text)]">هنوز محتوایی انتخاب نشده است. برای ذخیره حداقل یک محتوا انتخاب کنید.</p>
             )}
+            {isEditing && triggerType === "COMMENT_KEYWORD" && (
+              <p className="mt-3 text-xs leading-6 text-[var(--daira-text-secondary)]">
+                تغییرات این پاسخ روی همهٔ محتواهای متصل اعمال می‌شود. اگر محتوایی را از انتخاب خارج کنی، اتصال پاسخ به همان محتوا حذف خواهد شد.
+              </p>
+            )}
             {!mediaLoading && unknownMediaIds.length > 0 && (
               <p className="mt-3 text-xs leading-6 text-[var(--daira-text)]">پیش‌نمایش {new Intl.NumberFormat("fa-IR").format(unknownMediaIds.length)} محتوای قدیمی فعلاً در دسترس نیست؛ اتصال آن‌ها حفظ شده است.</p>
             )}

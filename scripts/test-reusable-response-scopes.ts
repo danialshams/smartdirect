@@ -247,8 +247,11 @@ assert(library.includes('method: approved || manualEdit ? "PATCH" : "POST"') &&
        library.includes('"/api/saved-responses/" + encodeURIComponent(editingId) + "/apply"'),
   "Explicit shared edits must use scoped PATCH while new templates use POST.");
 const editRoute = readFileSync("app/api/automations/[id]/comment-edit/route.ts", "utf8");
-assert(editRoute.includes("partitionResponseMediaScope(oldMediaIds, mediaIds)"));
-assert(editRoute.includes("const remaining = scope.untouchedIds;"));
+assert(!editRoute.includes("if (splitShared)") &&
+  !editRoute.includes("clonedMessageIds") &&
+  editRoute.includes("const removedMediaIds =") &&
+  editRoute.includes("instagramMediaId: { in: removedMediaIds }"),
+  "Editing a reply must update the original rule across all retained content without generating clones.");
 const pick = readFileSync("components/dashboard/AutomationCreationFlow.tsx", "utf8");
 assert(!pick.includes("<GlassModalPresence open={editScopeOpen}") && pick.includes("linkMediaOnly:true"),
   "Comment response editing applies to all associated media; existing replies are linked rather than copied.");
