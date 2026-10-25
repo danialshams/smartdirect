@@ -31,19 +31,30 @@ const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({ storageState: auth, viewport: { width: 390, height: 844 } });
 const page = await context.newPage();
 const entries = [];
+await page.addInitScript(() => {
+  window.__bench = { lcp: null, cls: 0 };
+  try { new PerformanceObserver(list => {
+    for (const entry of list.getEntries()) window.__bench.lcp = Math.round(entry.startTime);
+  }).observe({type: "largest-contentful-paint", buffered: true}); } catch {}
+  try { new PerformanceObserver(list => {
+    for (const entry of list.getEntries()) if (!entry.hadRecentInput) window.__bench.cls += entry.value;
+  }).observe({type: "layout-shift", buffered: true}); } catch {}
+});
 const percentile = (arr, p) => arr.length ? arr.slice().sort((a,b)=>a-b)[Math.ceil(p*arr.length)-1] : null;
 const snapshot = async () => page.evaluate(() => {
   const n = performance.getEntriesByType("navigation")[0];
   return { url: location.pathname, domContentLoadedMs: n ? Math.round(n.domContentLoadedEventEnd - n.startTime) : null,
     loadMs: n ? Math.round(n.loadEventEnd - n.startTime) : null,
-    transferBytes: n?.transferSize ?? null };
+    transferBytes: n?.transferSize ?? null,
+    lcpMs: window.__bench?.lcp ?? null, cls: window.__bench?.cls ?? null };
 });
 try {
   for (let iteration = 0; iteration < runs; iteration++) {
     for (const route of routes) {
       const started = Date.now();
       const response = await page.goto(origin + route, { waitUntil: "domcontentloaded", timeout: 30000 });
-      await page.locator("body").waitFor();
+      await page.locator("main").first().waitFor({state:"visible",timeout:15000});
+      if (new URL(page.url()).pathname !== route) throw new Error("Unexpected redirect: " + page.url());
       const metrics = await snapshot();
       entries.push({ iteration, route, mode: "document-navigation",
         elapsedMs: Date.now() - started, status: response?.status() ?? null, ...metrics });
@@ -57,11 +68,25 @@ try {
         entries.push({ iteration, route, mode: "client-navigation", skipped: "No visible matching link on dashboard" });
         continue;
       }
+      if (!(await link.isVisible())) {
+        entries.push({iteration, route, mode:"client-navigation", skipped:"Link not visible"});
+        continue;
+      }
+      const originalText = await page.locator("main").first().innerText();
       const started = Date.now();
       await link.click({ timeout: 10000 });
       await page.waitForURL(url => url.pathname === route, { timeout: 15000 });
-      entries.push({ iteration, route, mode: "client-navigation", urlChangeMs: Date.now() - started,
-        caveat: "URL change is not content-ready or data-ready time" });
+      const urlChangeMs = Date.now() - started;
+      let mainTextChangeMs = null;
+      try {
+        await page.waitForFunction(previous => {
+          const el = document.querySelector("main");
+          return el && el.innerText.trim() && el.innerText !== previous;
+        }, originalText, {timeout:15000});
+        mainTextChangeMs = Date.now() - started;
+      } catch {}
+      entries.push({iteration, route, mode:"client-navigation", urlChangeMs, mainTextChangeMs,
+        caveat:"Content text changed; not necessarily fully data-ready."});
       await page.goto(origin + "/dashboard", { waitUntil: "domcontentloaded" });
     }
   }
