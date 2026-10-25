@@ -96,6 +96,11 @@ jobs:
           node --check scripts/benchmark-dashboard-revisits.mjs
           node --check scripts/report-dashboard-performance-coverage.mjs
 
+      - name: Verify comprehensive dashboard performance and all-route audit
+        run: |
+          npx tsx scripts/test-dashboard-comprehensive-performance.ts
+          node --check scripts/benchmark-full-dashboard.mjs
+
       - name: Test account-scoped list revisits and coalesced reads
         run: npx tsx scripts/test-dashboard-list-revisit.ts
 
