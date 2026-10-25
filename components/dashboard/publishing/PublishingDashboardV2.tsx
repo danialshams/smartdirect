@@ -675,7 +675,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
   function clearLocalMedia() { for (const c of uploadAbortControllersRef.current.values()) c.abort(); uploadAbortControllersRef.current.clear(); activeUploadItemIdsRef.current.clear(); uploadQueueRef.current = []; setUploadRows([]); setMedia((current) => { revokeLocalMedia(current); return []; }); }
-  function resetAutomation() { setReplyMode("new"); setPreviousId(""); setCopyStoryWords(""); setAutomationEnabled(false); setStoryResponseSaved(false); setStoryResponseEditing(false); setStoryResponseDirty(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setPublishingCommentReplies(["", "", ""]); }
+  function resetAutomation() { setReplyMode("new"); setPreviousId(""); setAutomationEnabled(false); setStoryResponseSaved(false); setStoryResponseEditing(false); setStoryResponseDirty(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setPublishingCommentReplies(["", "", ""]); }
   function animateStepChange(action: () => void) {
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
@@ -1019,11 +1019,6 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   function removeQuickReply(messageIndex: number, quickReplyId: string) { setMessages((current) => current.map((message, index) => index === messageIndex ? { ...message, quickReplies: message.quickReplies.filter((qr) => qr.id !== quickReplyId) } : message)); }
 
-  function cloneMessage(source:MessageDraft):MessageDraft{
-    const cloneReplies=(xs:MessageDraft["quickReplies"]):MessageDraft["quickReplies"]=>
-      xs.map(x=>({...x,id:"local_"+crypto.randomUUID(),payload:"copy_"+crypto.randomUUID(),savedResponseId:null,destinationQuickReplies:cloneReplies(x.destinationQuickReplies)}));
-    return {...source,id:"local_"+crypto.randomUUID(),savedResponseId:null,quickReplies:cloneReplies(source.quickReplies)};
-  }
   async function createAutomation(): Promise<string> {
     if (!selectedAccountId) throw new Error("اکانت فعال Instagram پیدا نشد.");
     const source=replyMode==="existing"?previousRules.find(x=>x.id===previousId):null;
@@ -1040,13 +1035,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
     // Publishing automations use the compact stage-6 setup for POST/REEL/CAROUSEL.
     if (type !== "STORY") {
-      const normalizedKeywords=source?(source.keyword||"").split(/[,،;؛\n]+/).map(x=>x.trim()).filter(Boolean):automationKeywords.map(x=>x.trim()).filter(Boolean);
-      const replyVariants=source?readPublicCommentReplies(source.commentReplyText):publishingCommentReplies;
-      const copiedText=source&&source.sendDm!==false?(normalizeMessages(source.messages)[0]?.text||""):"";
-      const replyText=source?copiedText:directMessageText;
-      const follower=source?Boolean(source.requireFollow):requireFollow;
-      const followCopy=source?(source.followGateText||""):followGateText;
-      if (!normalizedKeywords.length && source?.keywordMatchMode!=="CONTAINS_ANY") throw new Error("حداقل یک کلمه کلیدی اضافه کن.");
+      const normalizedKeywords=automationKeywords.map(x=>x.trim()).filter(Boolean);
+      const replyVariants=publishingCommentReplies;
+      const replyText=directMessageText;
+      const follower=requireFollow;
+      const followCopy=followGateText;
+      if (!normalizedKeywords.length) throw new Error("حداقل یک کلمه کلیدی اضافه کن.");
       if (follower && !followCopy.trim()) throw new Error("متن درخواست فالو را وارد کن.");
 
       const automationResponse = await fetch("/api/automations", {
@@ -1056,7 +1050,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           instagramAccountId: selectedAccountId,
           triggerType: "COMMENT_KEYWORD",
           keyword: normalizedKeywords.join(","),
-          keywordMatchMode: source?.keywordMatchMode==="CONTAINS_ANY"?"CONTAINS_ANY":"EXACT",
+          keywordMatchMode: "EXACT",
           mediaId: `pending:${crypto.randomUUID()}`,
           commentReplyVariants: validatePublicCommentReplies(replyVariants),
           sendDm: Boolean(replyText.trim()),
@@ -1089,12 +1083,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       }
       return automationId;
     }
-    const storyKeywords=source?copyStoryWords.trim():keywords.trim();
-    const effectiveMessages=source?normalizeMessages(source.messages).map(cloneMessage):messages;
+    const storyKeywords=keywords.trim();
+    const effectiveMessages=messages;
     if (!storyKeywords) throw new Error("حداقل یک کلمه کلیدی ریپلای استوری وارد کن.");
     validateMessages(effectiveMessages);
-    const follow=source?Boolean(source.requireFollow):requireFollow;
-    const followText=source?(source.followGateText||""):followGateText;
+    const follow=requireFollow;
+    const followText=followGateText;
     if (follow&&!followText.trim())throw new Error("متن درخواست فالو را وارد کن.");
 
     const automationPayload = {
@@ -1104,7 +1098,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       mediaId: `pending:${crypto.randomUUID()}`,
       commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReplyText.trim() || null : null,
       sendDm: true,
-      likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? (source?Boolean(source.likeStoryReply):likeStoryReply) : false,
+      likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? (likeStoryReply) : false,
       requireFollow: follow,
       followGateText: follow ? followText.trim() : null,
       isActive: true,
@@ -1584,7 +1578,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </div>
               {automationEnabled && <div className="mx-auto w-full max-w-2xl space-y-3">
                 <ResponseModeSwitcher value={replyMode} existingAvailable={previousRules.length>0}
-                  loading={previousLoading} disabled={publishing} onChange={v=>{setReplyMode(v);setPreviousId("");setCopyStoryWords("");}}/>
+                  loading={previousLoading} disabled={publishing} onChange={v=>{setReplyMode(v);setPreviousId("");}}/>
                 {replyMode==="existing" && <div className="space-y-3">
                   <CompleteAutomationPicker items={previousRules} selected={previousRules.find(x=>x.id===previousId)||null}
                     onSelect={item=>setPreviousId(item.id)} onChange={()=>setPreviousId("")}

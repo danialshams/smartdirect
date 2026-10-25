@@ -107,11 +107,6 @@ export default function DirectAutomationEditor({id}:{id?:string}){
   })();
   return ()=>controller.abort();
  },[id,retry]);
-  function cloneIndependentMessage(source:MessageDraft):MessageDraft{
-    const cloneBranches=(replies:MessageDraft["quickReplies"]):MessageDraft["quickReplies"]=>
-      replies.map(reply=>({...reply,id:"local_"+crypto.randomUUID(),payload:"copy_"+crypto.randomUUID(),savedResponseId:null,destinationQuickReplies:cloneBranches(reply.destinationQuickReplies)}));
-    return {...source,id:"local_"+crypto.randomUUID(),savedResponseId:null,quickReplies:cloneBranches(source.quickReplies)};
-  }
   async function save(prepared?:MessageDraft){
   if(saving||!account||(original&&!hasChanges))return;
   const entries=effectiveKeywords.slice(0,11);

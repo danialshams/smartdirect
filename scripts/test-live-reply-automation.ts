@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { validateLiveReplyInput, liveReplyOptionsOverlap, LiveReplyValidationError } from "../src/lib/automation/live-reply-validation";
 import { matchesAutomationTrigger, matchesAutomationKeyword, splitAutomationKeywords } from "../src/lib/automation/trigger";
@@ -106,3 +107,18 @@ console.log("LIVE_AUTOMATION_VALIDATION_TEST_OK", {
   directText: true, commentIsolation: true, keywordMatching: true, anyLiveComment: true, catchAllConflict: true, legacySubstringCompatibility: true,
   followGate: true, customizableFollowCheckLabel: true, richMediaFollowup: true, nestedForms: true, invalidInputRejected: true,
 });
+
+const liveLifecycle=readFileSync("src/lib/automation/live-session-lifecycle.ts","utf8");
+const liveCron=readFileSync("app/api/cron/cleanup-live-automations/route.ts","utf8");
+const liveList=readFileSync("components/dashboard/LiveAutomationList.tsx","utf8");
+const shareEditor=readFileSync("components/dashboard/ShareMentionEditor.tsx","utf8");
+const publishing=readFileSync("components/dashboard/publishing/PublishingDashboardV2.tsx","utf8");
+assert(liveLifecycle.includes("mediaIds: current") &&
+  liveLifecycle.includes("isActive: false") && liveLifecycle.includes("if (rule.mediaIds)"),
+  "Live rules must bind to a broadcast and disable after it ends.");
+assert(liveCron.includes("pollLiveReplySessions") && liveCron.includes('process.env.CRON_SECRET'),
+  "Automatic Live cleanup must have authorized periodic checks.");
+assert(liveList.includes('role="switch"') && liveList.includes("toast.success"),
+  "Live list must expose activation with a confirmation toast.");
+assert(shareEditor.includes("linkMediaOnly:true") && publishing.includes("return source.id"),
+  "Existing share/publishing replies must be reused, not duplicated.");

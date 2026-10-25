@@ -42,6 +42,7 @@ production stays on Vercel. Do not change `vercel.json`, production
 7. Configure an external/supervised scheduler for maintenance:
    - `/api/cron/instagram-insights`: daily
    - `/api/cron/cleanup-story-automations`: daily
+   - `/api/cron/cleanup-live-automations`: every 15 minutes on VPS (daily on Vercel Hobby); checks active broadcasts and disables replies when their live session ends
    - `/api/cron/cleanup-publishing-storage`: daily
    - `/api/instagram/refresh-tokens`: daily
    - `/api/cron/webhook-inbox`: every 1–5 minutes **only as fallback**
