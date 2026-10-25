@@ -35,6 +35,14 @@ async function main() {
     "Existing user quick replies must remain intact");
   assert(webhook.includes("applyInboundAutomationPreference(conversation.id, messageText, quickReplyPayload)"),
     "The system STOP quick-reply payload must be handled without configured automation lookup");
+  for (const helperName of ["sendStoryReplyMessage", "sendDirectInstagramMessage"]) {
+    const helper = webhook.slice(webhook.indexOf("async function " + helperName + "("),
+      webhook.indexOf("\\n}\\n", webhook.indexOf("async function " + helperName + "(")) + 2);
+    assert(helper.includes("claimFirstAutomationStopOption(instagramAccountId, participantId)") &&
+      helper.includes("AUTOMATION_STOP_QUICK_REPLY_PAYLOAD") &&
+      helper.includes("releaseStopOption(true)") && helper.includes("releaseStopOption(false)"),
+      helperName + " must offer STOP only on successful plain-text DM and release after failures");
+  }
   assert(inbox.includes("isManualMessagingOptedOut(conversation.id)") &&
     !inbox.includes('action !== "mark_seen" && !conversation.isActive'),
     "Pausing bot must not block human operator's inbox reply");
