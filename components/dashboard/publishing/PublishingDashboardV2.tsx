@@ -491,10 +491,19 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       return jobsLoadInFlightRef.current;
     }
     const request = (async () => {
+      let lastError: unknown = null;
       do {
         pendingJobsRefreshRef.current = false;
-        await fetchJobs();
+        try {
+          await fetchJobs();
+          lastError = null;
+        } catch (error) {
+          lastError = error;
+        }
+        // A fresh check triggered during a failed poll is still necessary:
+        // the next read may observe a just-created/cancelled job.
       } while (pendingJobsRefreshRef.current);
+      if (lastError) throw lastError;
     })();
     jobsLoadInFlightRef.current = request;
     const clear = () => {
