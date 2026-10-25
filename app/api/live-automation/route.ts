@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const instagramAccountId = new URL(request.url).searchParams.get("instagramAccountId")?.trim();
     if (!instagramAccountId) return NextResponse.json({ success: false, error: "شناسه پیج الزامی است." }, { status: 400 });
     const account = await prisma.instagramAccount.findFirst({
-      where: { id: instagramAccountId, userId: session.user.id }, select: { id: true },
+      where: { id: instagramAccountId, userId: session.user.id }, select: { id: true, igUserId: true },
     });
     if (!account) return NextResponse.json({ success: false, error: "پیج پیدا نشد." }, { status: 404 });
     // Refresh end-of-Live status when users open their rules. A failed Meta
@@ -29,8 +29,7 @@ export async function GET(request: NextRequest) {
     try {
       const armed=await prisma.automation.count({where:{instagramAccountId,mediaId:LIVE_MEDIA_ID,isActive:true,mediaIds:{not:null}}});
       if(armed){
-        const meta=await prisma.instagramAccount.findUnique({where:{id:instagramAccountId},select:{igUserId:true}});
-        if(meta) await pollLiveReplySessions({id:instagramAccountId,igUserId:meta.igUserId});
+        await pollLiveReplySessions({ id: account.id, igUserId: account.igUserId });
       }
     }catch(error){console.warn("[LIVE_REPLY] List-time session check deferred:",error instanceof Error?error.message:String(error));}
     const rules = await prisma.automation.findMany({
@@ -53,14 +52,14 @@ export async function POST(request: NextRequest) {
     const accountId = (raw as Record<string, unknown>).instagramAccountId;
     if (typeof accountId !== "string" || !accountId.trim()) throw new LiveReplyValidationError("یک پیج انتخاب کن.");
     const account = await prisma.instagramAccount.findFirst({
-      where: { id: accountId, userId: session.user.id, isConnected: true }, select: { id: true },
+      where: { id: accountId, userId: session.user.id, isConnected: true }, select: { id: true, igUserId: true },
     });
     if (!account) return NextResponse.json({ success: false, error: "پیج متصل پیدا نشد." }, { status: 404 });
     const input = validateLiveReplyInput(raw);
     await assertNonOverlappingLiveKeywords(account.id, input.keyword, input.matchMode);
     await verifyLiveResponseOwnership(input, account.id, session.user.id);
     const rule = await createLiveReplyRule(input, account.id);
-    try { await pollLiveReplySessions({id:account.id,igUserId:(await prisma.instagramAccount.findUniqueOrThrow({where:{id:account.id},select:{igUserId:true}})).igUserId}); }
+    try { await pollLiveReplySessions({ id: account.id, igUserId: account.igUserId }); }
     catch(error){ console.warn("[LIVE_REPLY] Session binding deferred:",error instanceof Error?error.message:String(error)); }
     try { await invalidateAutomationCache(account.id); }
     catch (e) { console.warn("Live automation cache invalidate failed:", e); }
