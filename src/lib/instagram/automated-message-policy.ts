@@ -3,8 +3,9 @@ import { getInstagramMessagingWindow } from "@/lib/instagram/messaging-window";
 
 /**
  * Inbound user requests are stronger than automation rules. The existing
- * Conversation.isActive column is the durable, account-scoped opt-out switch:
- * no schema migration or Redis-only preference can be lost on redeployment.
+ * Conversation.isActive is the durable automation pause state.
+ * Explicit full-contact preferences and offered Quick Replies are audited in
+ * PostgreSQL, so no new schema or cache-only consent is required.
  */
 // Reserved payload is intentionally not a configurable automation keyword.
 export const AUTOMATION_STOP_QUICK_REPLY_PAYLOAD = "DAIRA_SYSTEM_AUTOMATION_STOP_V1";
@@ -15,7 +16,7 @@ const CONTACT_START_ACTION = "DAIRA_RECIPIENT_CONTACT_RESUMED";
 
 type InboundPreference = "STOP" | "START" | "AUTO_STOP" | "AUTO_START";
 const normalize = (value: string) => value.normalize("NFKC")
-  .replace(/[\\u200c\\u200e\\u200f]/g, " ").replace(/\\s+/g, " ").trim().toLowerCase();
+  .replace(/[\u200c\u200e\u200f]/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
 
 export function getInboundAutomationPreference(
   text: string | null | undefined, quickReplyPayload?: string | null,
