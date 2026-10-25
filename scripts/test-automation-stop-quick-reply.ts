@@ -37,7 +37,7 @@ async function main() {
     "The system STOP quick-reply payload must be handled without configured automation lookup");
   for (const helperName of ["sendStoryReplyMessage", "sendDirectInstagramMessage"]) {
     const helper = webhook.slice(webhook.indexOf("async function " + helperName + "("),
-      webhook.indexOf("\\n}\\n", webhook.indexOf("async function " + helperName + "(")) + 2);
+      webhook.indexOf("\n}\n", webhook.indexOf("async function " + helperName + "(")) + 2);
     assert(helper.includes("claimFirstAutomationStopOption(instagramAccountId, participantId)") &&
       helper.includes("AUTOMATION_STOP_QUICK_REPLY_PAYLOAD") &&
       helper.includes("releaseStopOption(true)") && helper.includes("releaseStopOption(false)"),
