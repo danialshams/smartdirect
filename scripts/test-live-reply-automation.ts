@@ -32,6 +32,10 @@ const oldSubstringRule = validateLiveReplyInput({ ...base(), keyword: "قیمت"
 assert.equal(oldSubstringRule.keyword, "قیمت");
 assert.equal(matchesAutomationKeyword(oldSubstringRule.keyword, "قیمت رو بگید", oldSubstringRule.matchMode), true);
 assert.equal(matchesAutomationTrigger({
+  triggerType: "COMMENT_KEYWORD", configuredKeyword: "قیمت", incomingKeyword: "قیمت",
+  automationMediaId: null, incomingMediaId: "post-345",
+}),false,"Unattached comment rule cannot match any post.");
+assert.equal(matchesAutomationTrigger({
   triggerType: "COMMENT_KEYWORD", configuredKeyword: direct.keyword, incomingKeyword: "قیمت",
   automationMediaId: "__smartdirect_live_comments_v1__", incomingMediaId: "1789938130",
 }), false, "Live rules must not match regular post comments");

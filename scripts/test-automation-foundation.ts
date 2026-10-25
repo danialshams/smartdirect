@@ -93,6 +93,14 @@ async function main() {
   );
 
   assert(
+    !matchesAutomationTrigger({
+      triggerType: "COMMENT_KEYWORD",
+      configuredKeyword: "قیمت", incomingKeyword: "قیمت",
+      automationMediaId: null, configuredMediaIds: null, incomingMediaId: "post-345",
+    }),
+    "Detaching every media must never turn a comment response into a global reply.",
+  );
+  assert(
     matchesAutomationTrigger({
       triggerType: "COMMENT_KEYWORD",
       configuredKeyword: "1, hello",

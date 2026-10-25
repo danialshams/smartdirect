@@ -76,6 +76,8 @@ export function matchesAutomationTrigger({
   // historical mediaId. Only comment automations remain bound to media.
   if (triggerType === "COMMENT_KEYWORD") {
     const selectedMediaIds = configuredMediaIds ? configuredMediaIds.split(",").filter(Boolean) : [];
+    // A detached reply must never become an account-wide comment automation.
+    if (!selectedMediaIds.length && !automationMediaId) return false;
     if (selectedMediaIds.length > 0 && (!incomingMediaId || !selectedMediaIds.includes(incomingMediaId))) return false;
     if (selectedMediaIds.length === 0 && automationMediaId && automationMediaId !== incomingMediaId) return false;
     if (selectedMediaIds.length === 0 && automationMediaId && !incomingMediaId) return false;
