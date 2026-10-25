@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
         key: "Cache-Control",
         value: "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
       }],
+    }, {
+      // Keep the user's exact approved PNG pixels. Reuse its bytes rather
+      // than converting the logo to a potentially different WebP/SVG.
+      source: "/daira-header-logo-original.png",
+      headers: [{
+        key: "Cache-Control",
+        value: "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
+      }],
     }];
   },
   outputFileTracingIncludes: {
