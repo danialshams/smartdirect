@@ -211,7 +211,7 @@ export default function IceBreakerManager({
       setResponseDirty(false);
       setNotice(draft.id ? "تغییرات پیام ذخیره شد." : "پیام جدید به پیام‌های شروع گفتگو اضافه شد.");
       // POST already returns the committed list; update immediately.
-      setQuestions((Array.isArray(result.data) ? result.data : []).map((item: {id:string;question:string;automationId:string|null}) => ({
+      setQuestions((Array.isArray(result.data) ? result.data : []).map((item: ServerQuestion) => ({
         id: item.id, label: item.question ?? "", automationId: item.automationId ?? null,
       })));
     } catch (saveError) {
@@ -250,7 +250,7 @@ export default function IceBreakerManager({
       setResponseDirty(false);
       setNotice("پیام از فهرست شروع گفتگو حذف شد.");
       // POST already returns the committed list; update immediately.
-      setQuestions((Array.isArray(result.data) ? result.data : []).map((item: {id:string;question:string;automationId:string|null}) => ({
+      setQuestions((Array.isArray(result.data) ? result.data : []).map((item: ServerQuestion) => ({
         id: item.id, label: item.question ?? "", automationId: item.automationId ?? null,
       })));
     } catch (deleteError) {
