@@ -162,6 +162,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
 
     // Restore only the account identified by the authenticated shared layout,
     // then revalidate the cached content in the background.
@@ -204,10 +205,10 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
 
         const accountQuery = `?instagramAccountId=${encodeURIComponent(account.id)}`;
         const [automationsResponse, mediaResponse, storiesResponse, jobsResponse] = await Promise.all([
-          fetch(`/api/automations${accountQuery}&view=list`, { cache: "no-store", credentials: "include" }),
-          scope !== "stories" ? fetch(`/api/instagram/media${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null) : Promise.resolve(null),
-          scope === "all" ? fetch(`/api/instagram/stories${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null) : Promise.resolve(null),
-          scope !== "stories" ? fetch(`/api/instagram/publishing${accountQuery}&view=automation-cards`, { cache: "no-store", credentials: "include" }).catch(() => null) : Promise.resolve(null),
+          fetch(`/api/automations${accountQuery}&view=list`, { cache: "no-store", credentials: "include", signal: controller.signal }),
+          scope !== "stories" ? fetch(`/api/instagram/media${accountQuery}`, { cache: "no-store", credentials: "include", signal: controller.signal }).catch(() => null) : Promise.resolve(null),
+          scope === "all" ? fetch(`/api/instagram/stories${accountQuery}`, { cache: "no-store", credentials: "include", signal: controller.signal }).catch(() => null) : Promise.resolve(null),
+          scope !== "stories" ? fetch(`/api/instagram/publishing${accountQuery}&view=automation-cards`, { cache: "no-store", credentials: "include", signal: controller.signal }).catch(() => null) : Promise.resolve(null),
         ]);
 
         const automationsResult = await automationsResponse.json();
@@ -418,6 +419,9 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
     void load();
     return () => {
       cancelled = true;
+      // Route exits and account switches should not leave four expensive
+      // API requests running in the background after their result is stale.
+      controller.abort();
     };
   }, [initialAccountId, activeAccount?.id, scope]);
 
