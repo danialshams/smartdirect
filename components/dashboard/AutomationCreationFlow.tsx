@@ -218,6 +218,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   const [loadingResources, setLoadingResources] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [storyReplacement, setStoryReplacement] = useState<{keywords:string[];draft:MessageDraft}|null>(null);
   const [storyShowcaseDraftChanged, setStoryShowcaseDraftChanged] = useState(false);
   const [error, setError] = useState("");
   const { registerBackHandler } = useDashboardBackNavigation();
@@ -507,7 +508,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     setKeywordDraft("");
   }
 
-  async function saveAutomation(finalMessage?: MessageDraft, applyScope?: string[]) {
+  async function saveAutomation(finalMessage?: MessageDraft, applyScope?: string[], confirmedStoryReplacement=false) {
     if (saving) return;
     if (isEditing && editingView === "replace" && !selectedTemplateId) {
       setError("ابتدا پاسخ کامل جایگزین را انتخاب کن.");
@@ -650,7 +651,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       return;
     }
 
-    if (creationMode === "existing") {
+    if (triggerType === "COMMENT_KEYWORD" && creationMode === "existing") {
       const previous=automationTemplates.find(item=>item.id===selectedTemplateId);
       if(!previous){setError("ابتدا پاسخ قبلی را انتخاب کن.");return;}
       setSaving(true);setError("");
@@ -696,10 +697,25 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     if (triggerType === "STORY_REPLY_KEYWORD") {
       try { validateMessages([currentMessage]); }
       catch (e) { setError(e instanceof Error ? e.message : "پاسخ استوری ناقص است."); return; }
+      if (!confirmedStoryReplacement) {
+        try {
+          const response=await fetch("/api/automations?instagramAccountId="+encodeURIComponent(account.id),{credentials:"include",cache:"no-store"});
+          const result=await response.json();
+          if(!response.ok||!result.success||!Array.isArray(result.data))
+            throw new Error(result.error||"بررسی پاسخ‌های فعال استوری ناموفق بود.");
+          const rules: Array<{triggerType:string;isActive:boolean;keyword?:string|null}> = result.data;
+          const active=rules.filter(rule=>rule.triggerType==="STORY_REPLY_KEYWORD"&&rule.isActive);
+          if(active.length){
+            setStoryReplacement({keywords:active.map(rule=>(rule.keyword||"بدون کلمه کلیدی").replace(/,/g,"، ")),draft:currentMessage});
+            return;
+          }
+        }catch(error){setError(error instanceof Error?error.message:"بررسی پاسخ‌های فعال ناموفق بود.");return;}
+      }
     }
 
     setSaving(true);
     setError("");
+    let createdAutomationId: string | null = null;
     try {
       const preparedPrimary = { ...currentMessage };
       const response = await fetch("/api/automations", {
@@ -732,6 +748,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       }
 
       const automationId = result.data.id as string;
+      createdAutomationId = automationId;
       const messagesToCreate = triggerType === "COMMENT_KEYWORD"
         ? (enteredDm ? [preparedPrimary, ...extraMessages] : [])
         : [currentMessage];
@@ -788,8 +805,18 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         }
       }
 
+      if(triggerType==="STORY_REPLY_KEYWORD"){
+        const activated=await fetch("/api/automations/"+encodeURIComponent(automationId),{
+          method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({isActive:true}),
+        });
+        const result=await activated.json();
+        if(!activated.ok||!result.success)throw new Error(result.error||"فعال‌سازی پاسخ جدید ناموفق بود.");
+      }
       setCompleted(true);
     } catch (e) {
+      if(createdAutomationId)await fetch("/api/automations/"+encodeURIComponent(createdAutomationId),{
+        method:"DELETE",credentials:"include",
+      }).catch(()=>undefined);
       setError(e instanceof Error ? e.message : "ذخیره پاسخ خودکار ناموفق بود.");
     } finally {
       setSaving(false);
@@ -1019,8 +1046,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           </section>
         )}
 
-        {!isEditing && (<>
-        <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "STORY_REPLY_KEYWORD" ? "۱. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن." : "۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن."}</AutomationSectionGuide></div>
+        {!isEditing && triggerType === "COMMENT_KEYWORD" && (<>
+        <div className="mb-2 mt-6"><AutomationSectionGuide>۲. روش پاسخ — پاسخ جدید بساز یا از پاسخ قبلی استفاده کن.</AutomationSectionGuide></div>
         <section aria-label="روش پاسخ" className="space-y-2">
           <ResponseModeSwitcher value={creationMode}
             existingAvailable={automationTemplates.length > 0}
@@ -1033,7 +1060,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
         </>)}
 
-        {creationMode === "existing" && !isEditing && (
+        {triggerType === "COMMENT_KEYWORD" && creationMode === "existing" && !isEditing && (
           <div className="mt-5 space-y-4">
             <div><AutomationSectionGuide>۳. پاسخ قبلی — پاسخ موردنظرت را انتخاب کن و روی ایجاد بزن.</AutomationSectionGuide></div>
             <CompleteAutomationPicker
@@ -1054,9 +1081,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
             </button>
           </div>
         )}
-            {(creationMode === "new" && !isEditing || isEditing && editingView === "edit") && (
+            {((triggerType === "STORY_REPLY_KEYWORD" || creationMode === "new") && !isEditing || isEditing && editingView === "edit") && (
             <div className="mt-5 space-y-5">
-            <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? (isEditing ? "۲. شرط فعال‌سازی — روش فعال شدن پاسخ خودکار را ویرایش کن." : "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص.") : (isEditing ? "۱. شرط فعال‌سازی — کلمات کلیدی ریپلای استوری را ویرایش کن." : "۲. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند.")}</AutomationSectionGuide></div>
+            <div className="mb-2 mt-6"><AutomationSectionGuide>{triggerType === "COMMENT_KEYWORD" ? (isEditing ? "۲. شرط فعال‌سازی — روش فعال شدن پاسخ خودکار را ویرایش کن." : "۳. شرط فعال‌سازی — انتخاب کن پاسخ با هر کامنت فعال شود یا فقط با کلمات مشخص.") : (isEditing ? "۱. شرط فعال‌سازی — کلمات کلیدی ریپلای استوری را ویرایش کن." : "۱. شرط فعال‌سازی — کلمه‌ها یا عبارت‌هایی را بنویس که پاسخ استوری را فعال می‌کنند.")}</AutomationSectionGuide></div>
             <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
               {triggerType === "COMMENT_KEYWORD" && (
                 <div className="mb-3">
@@ -1264,7 +1291,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                 </div>
               ) : (
                 <div className="space-y-3">
-                <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۲. نوع پاسخ — محتوای پاسخ استوری را ویرایش کن." : "۳. نوع پاسخ — مشخص کن در جواب استوری متن، عکس، ویدیو، وویس، ویترین یا فرم ارسال شود."}</AutomationSectionGuide></div>
+                <div className="mb-2 mt-6"><AutomationSectionGuide>{isEditing ? "۲. نوع پاسخ — محتوای پاسخ استوری را ویرایش کن." : "۲. نوع پاسخ — مشخص کن در جواب استوری متن، عکس، ویدیو، وویس، ویترین یا فرم ارسال شود."}</AutomationSectionGuide></div>
                 <div className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                 <PublishingStoryAutomationSetup
                   message={message}
@@ -1290,7 +1317,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                   extraSettings={
                     <div className="space-y-3 pt-2">
                       <div className="mb-2 mt-4">
-                        <AutomationSectionGuide>{isEditing ? "۳. اجبار به فالو — تنظیمات فالو را ویرایش کن." : "۴. اجبار به فالو — اختیاری است؛ وقتی فعال باشد کاربر قبل از دریافت پاسخ باید پیج را فالو کند."}</AutomationSectionGuide>
+                        <AutomationSectionGuide>{isEditing ? "۳. اجبار به فالو — تنظیمات فالو را ویرایش کن." : "۳. اجبار به فالو — اختیاری است؛ وقتی فعال باشد کاربر قبل از دریافت پاسخ باید پیج را فالو کند."}</AutomationSectionGuide>
                       </div>
                       <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                         <label className="flex cursor-pointer items-center justify-between gap-3">
@@ -1322,7 +1349,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                         )}
                       </section>
                       <div className="mb-2 mt-4">
-                        <AutomationSectionGuide>{isEditing ? "۴. لایک ریپلای — لایک خودکار ریپلای استوری را تنظیم کن." : "۵. لایک ریپلای — اختیاری است؛ در صورت فعال بودن، ریپلای کاربر به استوری لایک می‌شود."}</AutomationSectionGuide>
+                        <AutomationSectionGuide>{isEditing ? "۴. لایک ریپلای — لایک خودکار ریپلای استوری را تنظیم کن." : "۴. لایک ریپلای — اختیاری است؛ در صورت فعال بودن، ریپلای کاربر به استوری لایک می‌شود."}</AutomationSectionGuide>
                       </div>
                       <section className="rounded-2xl border border-[var(--daira-border)] bg-white p-4 sm:p-5">
                         <label className="flex cursor-pointer items-center justify-between gap-3">
@@ -1360,6 +1387,26 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
           {error && <div role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-6 text-[var(--daira-error-text)]">{error}</div>}
 
+
+        <GlassModalPresence open={Boolean(storyReplacement)} onEscape={()=>{if(!saving)setStoryReplacement(null);}}>
+          {storyReplacement && <div role="presentation" className="daira-glass-overlay fixed inset-0 z-[9998] flex items-center justify-center p-4 backdrop-blur-md"
+            onMouseDown={event=>{if(event.target===event.currentTarget&&!saving)setStoryReplacement(null);}}>
+            <section role="alertdialog" aria-modal="true" aria-labelledby="story-replacement-title"
+              className="daira-glass-modal w-full max-w-md rounded-3xl border border-[var(--daira-glass-rim)] p-5 shadow-2xl">
+              <h2 id="story-replacement-title" className="text-base font-extrabold text-[var(--daira-heading)]">فعال‌سازی پاسخ جدید استوری</h2>
+              <p className="mt-3 text-sm leading-7 text-[var(--daira-text)]">پاسخ {storyReplacement.keywords.length>1?"‌های":"‌"} فعلی با کلمات زیر فعال است:</p>
+              <div className="mt-3 space-y-2">{storyReplacement.keywords.map((value,index)=><p key={index}
+                className="rounded-xl border border-[var(--daira-glass-rim)] bg-[var(--daira-glass-raised)] px-3 py-2 text-sm font-semibold text-[var(--daira-heading)]">{value}</p>)}</div>
+              <p className="mt-3 text-sm leading-7 text-[var(--daira-text)]">با تأیید، پاسخ جدید ابتدا ذخیره می‌شود و پس از ذخیرهٔ موفق، پاسخ قبلی غیرفعال خواهد شد؛ حذف نمی‌شود.</p>
+              <div className="mt-5 flex gap-2">
+                <button type="button" disabled={saving} onClick={()=>setStoryReplacement(null)}
+                  className="min-h-11 flex-1 rounded-xl border border-[var(--daira-glass-rim)] text-sm font-semibold text-[var(--daira-text)]">انصراف</button>
+                <button type="button" disabled={saving} onClick={()=>{const draft=storyReplacement.draft;setStoryReplacement(null);void saveAutomation(draft,undefined,true);}}
+                  className="daira-complete-reply__select min-h-11 flex-1 rounded-xl text-sm font-bold disabled:opacity-50">تأیید و ایجاد</button>
+              </div>
+            </section>
+          </div>}
+        </GlassModalPresence>
 
         {triggerType === "COMMENT_KEYWORD" && mediaDialogOpen && (
           <ContentSelectionDialog
