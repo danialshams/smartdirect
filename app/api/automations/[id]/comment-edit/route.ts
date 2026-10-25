@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateSavedResponseOrigin } from "@/lib/automation/saved-response-origin";
 import { storePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
-import { partitionResponseMediaScope } from "@/lib/automation/response-media-scope";
 import { getCachedInstagramMedia, invalidateAutomationCache } from "@/lib/cache/instagram";
 
 export const dynamic = "force-dynamic";
@@ -198,12 +197,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     ]);
     if (sourceMediaId && !oldMediaIds.has(sourceMediaId))
       throw new EditError("این محتوا دیگر به پاسخ انتخاب‌شده متصل نیست.", 409);
-    // Editing a subset forks only those media; editing the complete set updates in place.
-    const scope = partitionResponseMediaScope(oldMediaIds, mediaIds);
-    if (!scope.appliedExistingIds.length)
-      throw new EditError("حداقل یکی از محتواهای متصل باید برای ویرایش انتخاب شود.", 400);
-    const splitShared = scope.splitShared;
-    const newMediaIds = mediaIds.filter((value) => !oldMediaIds.has(value));
+    // Each automation owns ONE response across all currently associated media.
+    // Removing a media association must not duplicate the reply rule.
+    const removedMediaIds = [...oldMediaIds].filter(value => !mediaIds.includes(value));
+    const newMediaIds = mediaIds.filter(value => !oldMediaIds.has(value));
     if (newMediaIds.length) {
       const account = await prisma.instagramAccount.findFirst({
         where: { id: automation.instagramAccountId, userId: session.user.id, isConnected: true },
@@ -251,118 +248,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         isActive: body.isActive as boolean,
         sendDm: body.sendDm as boolean,
       };
-
-      if (splitShared) {
-        // Split the selected content away from the shared automation. Do not
-        // change the shared messages, keywords, or follow settings of siblings.
-        const remaining = scope.untouchedIds;
-        const detached = await tx.automation.updateMany({
-          where: { id, updatedAt: new Date(expectedUpdatedAt) },
-          data: {
-            mediaId: remaining.length === 1 ? remaining[0] : null,
-            mediaIds: remaining.join(",") || null,
-          },
-        });
-        if (detached.count !== 1)
-          throw new EditError("پاسخ هم‌زمان تغییر کرده است. صفحه را دوباره باز کنید.", 409);
-
-        const cloned = await tx.automation.create({
-          data: {
-            ...updatedData,
-            instagramAccountId: automation.instagramAccountId,
-            triggerType: "COMMENT_KEYWORD",
-            replyText: automation.replyText,
-            likeComment: automation.likeComment,
-            likeIncomingDm: automation.likeIncomingDm,
-            likeStoryReply: automation.likeStoryReply,
-          },
-          select: { id: true },
-        });
-
-        // First create all messages, so quick reply nextMessageId references can
-        // be remapped to the new automation, never to a sibling's message.
-        const clonedMessageIds = new Map<string, string>();
-        const savedMessages: string[] = [];
-        for (const [index, item] of messages.entries()) {
-          const type = item.messageType;
-          const created = await tx.automationMessage.create({
-            data: {
-              automationId: cloned.id, order: index, messageType: type,
-              savedResponseId: item.savedResponseId || null,
-              text: item.text || null,
-              mediaUrl: ["IMAGE", "VIDEO", "AUDIO"].includes(type) ? item.mediaUrl || null : null,
-              mediaId: ["IMAGE", "VIDEO", "AUDIO"].includes(type) ? item.mediaId || null : null,
-              showcaseId: type === "SHOWCASE" ? item.showcaseId || null : null,
-              formId: type === "FORM" ? item.formId || null : null,
-              linkButtonUrl: type === "TEXT" ? item.linkButtons?.[0]?.url || null : null,
-              linkButtonTitle: type === "TEXT" ? item.linkButtons?.[0]?.title || null : null,
-              linkButtons: type === "TEXT" ? item.linkButtons || [] : [],
-            },
-            select: { id: true },
-          });
-          savedMessages.push(created.id);
-          if (item.id && originalMessageIds.has(item.id)) clonedMessageIds.set(item.id, created.id);
-        }
-
-        for (const [index, item] of messages.entries()) {
-          const nextId = savedMessages[index];
-          if (!nextId) continue;
-          if (item.updateQuickReplies === false && item.id && originalMessageIds.has(item.id)) {
-            // Old rich replies are preserved byte-for-byte, including JSON
-            // destinations, while relational message links are remapped.
-            const oldReplies = await tx.quickReply.findMany({
-              where: { automationMessageId: item.id },
-              select: { title: true, payload: true, replyText: true, nextMessageId: true },
-            });
-            for (const reply of oldReplies) {
-              await tx.quickReply.create({
-                data: {
-                  automationMessageId: nextId,
-                  title: reply.title,
-                  payload: reply.payload,
-                  replyText: reply.replyText,
-                  nextMessageId: reply.nextMessageId ? clonedMessageIds.get(reply.nextMessageId) || null : null,
-                },
-              });
-            }
-          } else {
-            for (const reply of item.quickReplies || []) {
-              await tx.quickReply.create({
-                data: {
-                  automationMessageId: nextId,
-                  title: reply.title,
-                  payload: reply.payload,
-                  nextMessageId: reply.nextMessageId ? clonedMessageIds.get(reply.nextMessageId) || null : null,
-                  replyText: JSON.stringify({
-                    isExit: reply.isExit === true,
-                    destinationType: reply.destinationType,
-                    savedResponseId: null,
-                    destinationText: reply.destinationText,
-                    destinationFormId: reply.destinationFormId,
-                    destinationShowcaseId: reply.destinationShowcaseId,
-                    destinationMediaUrl: reply.destinationMediaUrl,
-                    destinationMediaId: reply.destinationMediaId,
-                    destinationQuestion: reply.destinationQuestion,
-                    destinationQuickReplies: reply.destinationQuickReplies || [],
-                  }),
-                },
-              });
-            }
-          }
-        }
-
-        // A published media job may reference the old shared response. Move
-        // only the selected media to its independent reply configuration.
-        await tx.instagramPublishJob.updateMany({
-          where: {
-            instagramAccountId: automation.instagramAccountId,
-            instagramMediaId: { in: mediaIds },
-            commentAutomationId: id,
-          },
-          data: { commentAutomationId: cloned.id },
-        });
-        return cloned.id;
-      }
 
       const updated = await tx.automation.updateMany({
         where: { id, updatedAt: new Date(expectedUpdatedAt) },
@@ -428,13 +313,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         await tx.quickReply.deleteMany({ where: { automationMessageId: { in: removed } } });
         await tx.automationMessage.deleteMany({ where: { automationId: id, id: { in: removed } } });
       }
-      // Single-media edits remain in place. If the user replaced the selected
-      // media, do not leave a stale publishing-job association behind.
-      if (sourceMediaId && !mediaIds.includes(sourceMediaId)) {
+      // Detach only explicitly unselected media. All remaining associations
+      // receive the same edited response; no clones are ever generated.
+      if (removedMediaIds.length) {
         await tx.instagramPublishJob.updateMany({
           where: {
             instagramAccountId: automation.instagramAccountId,
-            instagramMediaId: sourceMediaId, commentAutomationId: id,
+            instagramMediaId: { in: removedMediaIds },
+            commentAutomationId: id,
           },
           data: {
             commentAutomationId: null, commentTriggerKeywords: null,
@@ -446,7 +332,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }, { maxWait: 10000, timeout: 30000 });
     try { await invalidateAutomationCache(automation.instagramAccountId); }
     catch (cacheError) { console.warn("Comment automation cache invalidation failed:", cacheError); }
-    return NextResponse.json({ success: true, data: { id: savedId, detachedFromShared: splitShared } });
+    return NextResponse.json({ success: true, data: { id: savedId, detachedFromShared: false } });
   } catch (error) {
     if (error instanceof EditError)
       return NextResponse.json({ success: false, error: error.message }, { status: error.status });

@@ -166,21 +166,21 @@ assert(variantsField.includes('daira-comment-replies__option') &&
 assert(commentFlow.includes('useState<"edit" | "replace">("edit")') &&
   !commentFlow.includes("ویرایش پاسخ فعلی") &&
   !commentFlow.includes("مشاهده جزئیات پاسخ فعلی") &&
-  commentFlow.includes('savedResponseId: null'),
-  "Comment/story edits must use independent reply content and show the current editor directly.");
+  commentFlow.includes("linkMediaOnly:true"),
+  "Comment/story edits must update the existing reply on every attached media.");
 assert(liveEditor.includes('creationMode==="existing"') &&
-  liveEditor.includes("ثبت پاسخ مستقل") &&
-  liveEditor.includes("/api/instagram/live-media") &&
+  liveEditor.includes("ایجاد پاسخ") &&
+  !liveEditor.includes("لایو فعال {") &&
   !liveEditor.includes("مشاهده پاسخ انتخاب‌شده") &&
   !liveEditor.includes("<CompleteResponseNameField"),
-  "Live responses must be independent and editable only in their own edit pages.");
+  "Live responses must reuse existing rules without extra live selection controls.");
 const directEditor = src("components/dashboard/DirectAutomationEditor.tsx");
 assert(directEditor.includes("hideLibrary") &&
-  directEditor.includes("!original && <section") &&
-  directEditor.includes("ثبت پاسخ مستقل") &&
+  !directEditor.includes("<ResponseModeSwitcher") &&
+  !directEditor.includes("<CompleteAutomationPicker") &&
   !directEditor.includes("<CompleteResponseNameField") &&
   !directEditor.includes("ویرایش پاسخ فعلی"),
-  "Direct edit pages stay simple and previous DM replies can be copied on create.");
+  "Direct replies must be authored in place without previous-answer selection.");
 const menu = src("components/dashboard/PersistentMenuManager.tsx");
 const icebreaker = src("components/dashboard/IceBreakerManager.tsx");
 assert(menu.includes("hideReusableLibrary") && icebreaker.includes("hideReusableLibrary") &&
@@ -201,3 +201,13 @@ assert(!/#[0-9a-f]{3,8}\\b/i.test(responseCss),
   "The response UI must use canonical Daira palette tokens rather than literal colors.");
 
 console.log("DAIRA_GLASS_COVERAGE_OK");
+
+// Automation activation and unified reply picker regression.
+const storyList=src("components/dashboard/AutoRepliesManager.tsx");
+const directList=src("components/dashboard/DirectAutomationList.tsx");
+const shareList=src("components/dashboard/ShareMentionManager.tsx");
+assert(storyList.includes('toast.success(active ?') && storyList.includes('role="switch"') &&
+  directList.includes('role="switch"') && shareList.includes('role="switch"'),
+  "Story, DM, share and mention activation controls must show explicit state.");
+assert(!completePicker.includes("محتوای پاسخ قبلی برای ایجاد یک پاسخ مستقل") &&
+  !commentFlow.includes("ایجاد پاسخ مستقل"), "Previous replies must not be described as duplicate copies.");

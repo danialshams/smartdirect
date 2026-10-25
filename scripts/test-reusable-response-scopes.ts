@@ -247,13 +247,17 @@ assert(library.includes('method: approved || manualEdit ? "PATCH" : "POST"') &&
        library.includes('"/api/saved-responses/" + encodeURIComponent(editingId) + "/apply"'),
   "Explicit shared edits must use scoped PATCH while new templates use POST.");
 const editRoute = readFileSync("app/api/automations/[id]/comment-edit/route.ts", "utf8");
-assert(editRoute.includes("partitionResponseMediaScope(oldMediaIds, mediaIds)"));
-assert(editRoute.includes("const remaining = scope.untouchedIds;"));
+assert(!editRoute.includes("if (splitShared)") &&
+  !editRoute.includes("clonedMessageIds") &&
+  editRoute.includes("const removedMediaIds =") &&
+  editRoute.includes("instagramMediaId: { in: removedMediaIds }"),
+  "Editing a reply must update the original rule across all retained content without generating clones.");
 const pick = readFileSync("components/dashboard/AutomationCreationFlow.tsx", "utf8");
-assert(pick.includes("editScopeIds") && pick.includes("GlassModalPresence open={editScopeOpen}"));
-assert(pick.includes("const copyNested =") && pick.includes('savedResponseId:null') &&
-  !pick.includes('linkMediaOnly: true'),
-  "Reusing a previous reply must create an independent rule with detached message references.");
+assert(!pick.includes("<GlassModalPresence open={editScopeOpen}") && pick.includes("linkMediaOnly:true"),
+  "Comment response editing applies to all associated media; existing replies are linked rather than copied.");
+assert(pick.includes("linkMediaOnly:true") &&
+  !pick.includes("const copyNested =") && !pick.includes("ایجاد پاسخ مستقل"),
+  "Choosing a previous rule must attach the existing reply to additional media.");
 const api = readFileSync("app/api/automations/[id]/route.ts", "utf8");
 assert(api.includes("isActive: Boolean") || api.includes("Boolean(isActive)"),
   "Each independent reply must still support its own activation state.");
@@ -284,3 +288,17 @@ assert(!nestedForm.includes("<ReusableResponseLibrary") && nestedForm.includes('
   "Nested branches must edit their own independent content without a shared response picker.");
 assert(library.includes('mode !== "existing"'), "Nested reply lists must fetch lazily, not on every mount.");
 console.log("REUSABLE_RESPONSES_SCOPED_EDIT_AND_NAME_TESTS_OK");
+
+const commentEditor=readFileSync("components/dashboard/AutomationCreationFlow.tsx","utf8");
+const storyCron=readFileSync("app/api/cron/cleanup-story-automations/route.ts","utf8");
+assert(commentEditor.includes("Edits to an automation apply to every post/reel using its response.") &&
+  !commentEditor.includes("editingMediaId ? [editingMediaId]"),
+  "Editing a connected comment automation must update every attached post and reel.");
+assert(storyCron.includes('!automation.mediaId.startsWith("pending:")'),
+  "Scheduled story automations must not activate before their Instagram publication.");
+
+const linkRoute=readFileSync("app/api/automations/[id]/route.ts","utf8");
+const shareReuse=readFileSync("components/dashboard/ShareMentionEditor.tsx","utf8");
+assert(linkRoute.includes("body.activateOnLink === true") &&
+  commentEditor.includes("activateOnLink:true") && shareReuse.includes("activateOnLink:true"),
+  "Create from previous reply must activate the existing linked rule rather than leaving a newly attached reply inactive.");

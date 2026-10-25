@@ -65,6 +65,9 @@ export async function DELETE(request: NextRequest, { params }: Context) {
           select: { id: true, mediaId: true, mediaIds: true },
         });
         if (!automation || !job.instagramMediaId) continue;
+        // Story keyword rules apply to all stories. Removing a published
+        // job's association must never modify the account-wide rule.
+        if (linkedId === job.storyReplyAutomationId) continue;
         const current = Array.from(new Set([
           ...(automation.mediaId ? [automation.mediaId] : []),
           ...(automation.mediaIds || "").split(",").map((value) => value.trim()).filter(Boolean),

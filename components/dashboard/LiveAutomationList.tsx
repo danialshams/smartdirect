@@ -4,11 +4,12 @@ import GlassModalPresence from "./GlassModalPresence";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, RadioTower, Search, Pencil, Trash2, Loader2, RefreshCw, X } from "lucide-react";
+import { toast } from "sonner";
 import { dairaPalette } from "../../lib/design-system/palette";
 import LiveAutomationSkeleton from "./LiveAutomationSkeleton";
 
 type LiveRule = {
-  id: string; keyword: string; matchMode?: "EXACT" | "CONTAINS_ANY"; initialText: string; requireFollow: boolean;
+  id: string; isActive?: boolean; keyword: string; matchMode?: "EXACT" | "CONTAINS_ANY"; initialText: string; requireFollow: boolean;
   followupEnabled: boolean; followupKeyword: string; updatedAt: string;
 };
 type Account = { id: string; igUsername: string; isConnected: boolean };
@@ -86,6 +87,18 @@ export default function LiveAutomationList() {
     [item.keyword || (item.matchMode === "CONTAINS_ANY" ? "هر کامنتی" : ""), item.initialText, item.followupKeyword].some(value => value.toLocaleLowerCase("fa").includes(search.trim().toLocaleLowerCase("fa"))),
   ), [rules, search]);
 
+  async function toggleRule(rule:LiveRule){
+    try{
+      const response=await fetch("/api/live-automation/"+encodeURIComponent(rule.id),{
+        method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({isActive:rule.isActive===false}),
+      });
+      const data=await response.json();
+      if(!response.ok||!data.success)throw new Error(data.error||"تغییر وضعیت لایو ناموفق بود.");
+      setRules(current=>current.map(item=>item.id===rule.id?{...item,isActive:rule.isActive===false}:item));
+      toast.success(rule.isActive===false?"پاسخ لایو فعال شد.":"پاسخ لایو غیرفعال شد.");
+    }catch(error){toast.error(error instanceof Error?error.message:"تغییر وضعیت لایو ناموفق بود.");}
+  }
   async function deleteRule() {
     if (!deleteTarget || deleting) return;
     setDeleting(true);
@@ -140,7 +153,12 @@ export default function LiveAutomationList() {
                 {rule.followupEnabled && <span className="rounded-lg bg-[var(--daira-neutral-bg)] px-2.5 py-1">پاسخ چندمرحله‌ای</span>}
                 {rule.requireFollow && <span className="rounded-lg bg-[var(--daira-neutral-bg)] px-2.5 py-1">اجبار به فالو</span>}
               </div>
-              <div className="flex gap-2 border-t border-[var(--daira-neutral-bg)] pt-3">
+              <div className="flex flex-wrap items-center gap-2 border-t border-[var(--daira-neutral-bg)] pt-3">
+                <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border border-[var(--daira-glass-rim)] px-2.5 text-xs font-semibold">
+                  <input type="checkbox" role="switch" className="daira-form-switch shrink-0 -scale-x-100"
+                    checked={rule.isActive!==false} onChange={()=>void toggleRule(rule)} aria-label={"فعال‌سازی پاسخ لایو "+rule.keyword}/>
+                  <span>{rule.isActive!==false?"فعال":"غیرفعال"}</span>
+                </label>
                 <button type="button" onClick={() => router.push("/dashboard/live-automation/" + rule.id)}
                   className="daira-reply-list-edit flex-1">
                   ویرایش <Pencil size={15} />

@@ -69,7 +69,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         return NextResponse.json({ success: false, error: "نوع پاسخ خودکار با محتوای انتخابی سازگار نیست" }, { status: 400 });
       }
       const trigger = existingAutomation.triggerType;
-      if (trigger !== "COMMENT_KEYWORD" && trigger !== "STORY_REPLY_KEYWORD") {
+      if (trigger !== "COMMENT_KEYWORD" && trigger !== "STORY_REPLY_KEYWORD" && trigger !== "DM_MEDIA_SHARE") {
         return NextResponse.json({ success: false, error: "این نوع پاسخ خودکار به محتوا متصل نمی‌شود" }, { status: 400 });
       }
       if (!Array.isArray(body.mediaIds) || body.mediaIds.some((value: unknown) => typeof value !== "string" || !value.trim())) {
@@ -83,7 +83,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (trigger === "STORY_REPLY_KEYWORD" && requestedMediaId !== targetIds[0]) {
         return NextResponse.json({ success: false, error: "شناسه استوری با محتوای انتخابی مطابقت ندارد" }, { status: 400 });
       }
-      if (trigger === "COMMENT_KEYWORD" && requestedMediaId !== (targetIds.length === 1 ? targetIds[0] : null)) {
+      if ((trigger === "COMMENT_KEYWORD" || trigger === "DM_MEDIA_SHARE") && requestedMediaId !== (targetIds.length === 1 ? targetIds[0] : null)) {
         return NextResponse.json({ success: false, error: "شناسه محتوا با فهرست انتخابی مطابقت ندارد" }, { status: 400 });
       }
 
@@ -95,7 +95,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (!account) return NextResponse.json({ success: false, error: "اکانت اینستاگرام متصل نیست" }, { status: 409 });
 
       let ownedMediaIds = new Set<string>();
-      if (trigger === "COMMENT_KEYWORD") {
+      if (trigger === "COMMENT_KEYWORD" || trigger === "DM_MEDIA_SHARE") {
         const mediaResult = await getCachedInstagramMedia(account.id, 50);
         ownedMediaIds = new Set((mediaResult?.data ?? []).map((item: Record<string, unknown>) => String(item.id ?? "")).filter(Boolean));
       } else {
@@ -133,7 +133,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         ...(existingAutomation.mediaId ? [existingAutomation.mediaId] : []),
         ...(existingAutomation.mediaIds || "").split(",").map((value) => value.trim()).filter(Boolean),
       ]));
-      const allIds = trigger === "COMMENT_KEYWORD"
+      const allIds = trigger !== "STORY_REPLY_KEYWORD"
         ? Array.from(new Set([...previousIds, ...targetIds]))
         : targetIds;
       if (allIds.length > 50) return NextResponse.json({ success: false, error: "حداکثر پنجاه محتوا مجاز است." }, { status: 400 });
@@ -141,8 +141,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         where: { id },
         data: {
           mediaId: trigger === "STORY_REPLY_KEYWORD" ? targetIds[0] : (allIds.length === 1 ? allIds[0] : null),
-          mediaIds: trigger === "COMMENT_KEYWORD" ? allIds.join(",") : null,
-          // Reusing a saved response is a new activity and should update its list position/date.
+          mediaIds: trigger !== "STORY_REPLY_KEYWORD" ? allIds.join(",") : null,
+          // "Create" using a previous reply activates the original rule across its linked content.
+          ...(body.activateOnLink === true ? { isActive: true } : {}),
           updatedAt: new Date(),
         },
         include: automationInclude,
@@ -160,7 +161,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     let nextKeyword: string | null = null;
     if (requiresKeyword) {
       nextKeyword = keyword !== undefined ? normalizeKeywords(keyword) : normalizeKeywords(existingAutomation.keyword);
-      if (!nextKeyword) return NextResponse.json({ success: false, error: "حداقل یک Keyword معتبر وارد کنید" }, { status: 400 });
+      if (!nextKeyword && !(keyword === undefined && triggerType === undefined && existingAutomation.keywordMatchMode === "CONTAINS_ANY"))
+        return NextResponse.json({ success: false, error: "حداقل یک Keyword معتبر وارد کنید" }, { status: 400 });
     }
 
     const nextMediaId = mediaId !== undefined

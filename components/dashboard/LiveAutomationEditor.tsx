@@ -73,15 +73,11 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
   const [retry, setRetry] = useState(0);
   const [saved, setSaved] = useState(false);
   const [showcaseDirty, setShowcaseDirty] = useState(false);
-  const [liveMedia, setLiveMedia] = useState<Array<{ id: string; permalink?: string | null }>>([]);
-  const [liveMediaLoading, setLiveMediaLoading] = useState(true);
-  const [liveMediaError, setLiveMediaError] = useState("");
   const [liveRules, setLiveRules] = useState<Rule[]>([]);
   const [loadingLiveRules, setLoadingLiveRules] = useState(true);
   const [creationMode, setCreationMode] = useState<"new" | "existing">("new");
   const [selectedLiveRuleId, setSelectedLiveRuleId] = useState("");
   const [editingView] = useState<"edit" | "replace">("edit");
-  const [reuseKeywords,setReuseKeywords] = useState("");
   const initialSnapshot = useRef("");
   const initialVersion = useRef("");
 
@@ -154,30 +150,6 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
     return () => controller.abort();
   }, [id, retry]);
 
-  useEffect(() => {
-    if (!account?.id) return;
-    const controller = new AbortController();
-    setLiveMediaLoading(true);
-    setLiveMediaError("");
-    void fetch("/api/instagram/live-media?instagramAccountId=" + encodeURIComponent(account.id), {
-      cache: "no-store", credentials: "include", signal: controller.signal,
-    }).then(async response => {
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.error || "دریافت لایو فعلی ناموفق بود.");
-      return result.data as Array<{ id: string; permalink?: string | null }>;
-    }).then(data => {
-      if (!controller.signal.aborted) setLiveMedia(Array.isArray(data) ? data : []);
-    }).catch(error => {
-      if (!controller.signal.aborted) {
-        setLiveMedia([]);
-        setLiveMediaError(error instanceof Error ? error.message : "دریافت لایو فعلی ناموفق بود.");
-      }
-    }).finally(() => {
-      if (!controller.signal.aborted) setLiveMediaLoading(false);
-    });
-    return () => controller.abort();
-  }, [account?.id]);
-
   const dirty = useMemo(() => snapshot(draft) !== initialSnapshot.current || showcaseDirty, [draft, showcaseDirty]);
   const keywords = useMemo(() => draft.keyword.split(/[,،;؛\n]+/).map(s => s.trim()).filter(Boolean), [draft.keyword]);
   const anyComment = draft.matchMode === "CONTAINS_ANY" && !draft.keyword.trim();
@@ -206,29 +178,17 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
     if (!account || saving) return;
     if (!id && creationMode === "existing") {
       const previous=liveRules.find(rule=>rule.id===selectedLiveRuleId);
-      const newKeywords=reuseKeywords.split(/[,،;؛\n]+/).map(value=>value.trim()).filter(Boolean).slice(0,10);
-      if (!previous || newKeywords.length===0) {setError("یک پاسخ قبلی و کلمات کلیدی جدید انتخاب کن.");return;}
+      if(!previous){setError("یک پاسخ قبلی انتخاب کن.");return;}
       setSaving(true);setError("");
-      try {
-        const copied=normalizeMessages(previous.messages)[0]||createEmptyMessage();
-        const cloneReplies=(items:MessageDraft["quickReplies"]):MessageDraft["quickReplies"]=>
-          items.map(item=>({...item,id:"local_"+crypto.randomUUID(),payload:"copy_"+crypto.randomUUID(),savedResponseId:null,destinationQuickReplies:cloneReplies(item.destinationQuickReplies)}));
-        const response=await fetch("/api/live-automation",{method:"POST",credentials:"include",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({
-            instagramAccountId:account.id,
-            title:("پاسخ لایو - "+newKeywords.join("، ")).slice(0,80),
-            keyword:newKeywords.join(","),matchMode:"EXACT",initialText:previous.initialText,
-            followupEnabled:previous.followupEnabled,followupKeyword:previous.followupKeyword,
-            requireFollow:previous.requireFollow,followGateText:previous.followGateText,
-            followGateButtonText:previous.followGateButtonText,
-            message:previous.followupEnabled?{...copied,id:"local_"+crypto.randomUUID(),savedResponseId:null,quickReplies:cloneReplies(copied.quickReplies)}:null,
-          }),
+      try{
+        const response=await fetch("/api/live-automation/"+encodeURIComponent(previous.id),{
+          method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({isActive:true}),
         });
         const result=await response.json();
-        if (!response.ok||!result.success)throw new Error(result.error||"کپی پاسخ لایو ناموفق بود.");
+        if(!response.ok||!result.success)throw new Error(result.error||"فعال‌سازی پاسخ انتخاب‌شده ناموفق بود.");
         router.push("/dashboard/live-automation",{scroll:true});
-      } catch(e){setError(e instanceof Error?e.message:"کپی پاسخ لایو ناموفق بود.");}
+      }catch(error){setError(error instanceof Error?error.message:"ثبت پاسخ قبلی ناموفق بود.");}
       finally{setSaving(false);}
       return;
     }
@@ -280,37 +240,19 @@ export default function LiveAutomationEditor({ id }: { id?: string }) {
 
   return (
     <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-5 py-3 sm:py-4">
-      <section className="daira-complete-reply space-y-2 rounded-2xl border p-4 sm:p-5" aria-label="لایو فعلی">
-        <h2 className="text-sm font-bold text-[var(--daira-heading)]">لایو فعلی</h2>
-        {liveMediaLoading ? <p className="text-xs text-[var(--daira-text-secondary)]">در حال بررسی لایو فعال...</p> :
-          liveMediaError ? <p role="status" className="text-xs leading-6 text-[var(--daira-text-secondary)]">{liveMediaError} — قوانین پاسخ برای لایو بعدی نیز قابل تنظیم‌اند.</p> :
-          liveMedia.length > 0 ? <div className="space-y-2">
-            {liveMedia.map((item, index) => <div key={item.id} className="flex items-center justify-between gap-2 rounded-xl border border-[var(--daira-primary)] bg-[var(--daira-surface-hover)] p-3">
-              <span className="min-w-0 text-xs font-bold text-[var(--daira-heading)]">لایو فعال {new Intl.NumberFormat("fa-IR").format(index + 1)}</span>
-              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[var(--daira-primary)]"><CheckCircle2 size={16}/> انتخاب‌شده</span>
-            </div>)}
-            <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">پاسخ‌های خودکار به لایوهای فعال این پیج متصل هستند و نیازی به انتخاب دستی ندارند.</p>
-          </div> :
-          <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">در حال حاضر لایو فعالی وجود ندارد. قوانین پاسخ برای لایو بعدی آماده خواهند بود.</p>}
-      </section>
+      <p className="daira-guide-glass rounded-xl border p-3 text-xs leading-6 text-[var(--daira-text)]">پاسخ برای لایو فعلی یا اولین لایو بعدی آماده می‌شود و پس از پایان لایوی که در آن اجرا شده، غیرفعال خواهد شد.</p>
       {!id && (
         <section className="space-y-3">
           <ResponseModeSwitcher value={creationMode} existingAvailable={liveRules.length > 0}
             loading={loadingLiveRules} disabled={saving}
-            onChange={next=>{setCreationMode(next);setSelectedLiveRuleId("");setReuseKeywords("");}}/>
+            onChange={next=>{setCreationMode(next);setSelectedLiveRuleId("");}}/>
           {creationMode==="existing" && <div className="space-y-3">
             <CompleteAutomationPicker kind="LIVE" items={liveRules}
               selected={liveRules.find(rule=>rule.id===selectedLiveRuleId)||null}
               onSelect={rule=>setSelectedLiveRuleId(rule.id)}
               onChange={()=>setSelectedLiveRuleId("")} showcases={showcases} forms={forms}/>
-            <div className="rounded-xl border border-[var(--daira-outline)] bg-[var(--daira-glass-raised)] p-3">
-              <label className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">کلمات کلیدی پاسخ جدید</label>
-              <input value={reuseKeywords} onChange={e=>setReuseKeywords(e.target.value)} placeholder="مثلاً سفارش، موجودی"
-                className="w-full rounded-lg border border-[var(--daira-outline)] bg-white p-3 text-base outline-none"/>
-              <p className="mt-2 text-xs text-[var(--daira-text-secondary)]">محتوا از پاسخ قبلی کپی می‌شود؛ پاسخ قبلی تغییر نخواهد کرد.</p>
-            </div>
-            <button type="button" disabled={saving||!selectedLiveRuleId||!reuseKeywords.trim()}
-              onClick={()=>void save()} className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold disabled:opacity-50">ثبت پاسخ مستقل</button>
+            <button type="button" disabled={saving||!selectedLiveRuleId}
+              onClick={()=>void save()} className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold disabled:opacity-50">ایجاد پاسخ</button>
           </div>}
         </section>
       )}

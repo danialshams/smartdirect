@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { bindPendingLiveReplyRules } from "./live-session-lifecycle";
 import { matchesAutomationKeyword } from "./trigger";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { instagramApiRequest } from "@/lib/instagram/client";
@@ -68,6 +69,8 @@ export async function processLiveComment(value: unknown, instagramAccount: {
   const participantId = typeof comment.from?.id === "string" ? comment.from.id.trim() : "";
   const text = typeof comment.text === "string" ? comment.text.trim() : "";
   if (!commentId || !participantId || !text) return;
+  const liveId=typeof comment.media?.id==="string"?comment.media.id:typeof comment.media_id==="string"?comment.media_id:"";
+  if (liveId) await bindPendingLiveReplyRules(instagramAccount.id,liveId);
 
   const automations = await prisma.automation.findMany({
     where: {
@@ -75,6 +78,7 @@ export async function processLiveComment(value: unknown, instagramAccount: {
       triggerType: "COMMENT_KEYWORD",
       mediaId: LIVE_MEDIA_ID,
       isActive: true,
+      ...(liveId ? {mediaIds:liveId} : {}),
     },
     orderBy: { createdAt: "asc" },
     select: { id: true, keyword: true, keywordMatchMode: true, replyText: true, commentReplyText: true, requireFollow: true, followGateText: true, followGateButtonText: true, messages: { select: { id: true }, take: 1 } },

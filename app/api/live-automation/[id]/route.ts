@@ -9,6 +9,7 @@ import {
   assertNonOverlappingLiveKeywords, verifyLiveResponseOwnership,
 } from "@/lib/automation/live-reply-storage";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
+import { pollLiveReplySessions } from "@/lib/automation/live-session-lifecycle";
 
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ id: string }> };
@@ -61,6 +62,35 @@ export async function PUT(request: NextRequest, { params }: Context) {
       return NextResponse.json({ success: false, error: error.message }, { status: error.status });
     console.error("PUT /api/live-automation/[id] error:", error);
     return NextResponse.json({ success: false, error: "ویرایش پاسخ لایو ناموفق بود." }, { status: 500 });
+  }
+}
+
+export async function PATCH(request:NextRequest,{params}:Context){
+  try{
+    const session=await getServerSession(authOptions);
+    if(!session?.user?.id)return NextResponse.json({success:false,error:"احراز هویت لازم است."},{status:401});
+    const {id}=await params;
+    const rule=await ownedRule(id,session.user.id);
+    if(!rule)return NextResponse.json({success:false,error:"پاسخ لایو پیدا نشد."},{status:404});
+    const body:unknown=await request.json();
+    if(!body||typeof body!=="object"||Array.isArray(body)||typeof (body as {isActive?:unknown}).isActive!=="boolean")
+      return NextResponse.json({success:false,error:"وضعیت نامعتبر است."},{status:400});
+    const isActive=(body as {isActive:boolean}).isActive;
+    const updated=await prisma.automation.update({where:{id:rule.id},data:{isActive,...(isActive?{mediaIds:null}:{})},include:liveReplyInclude});
+    await invalidateAutomationCache(rule.instagramAccountId);
+    if(isActive){
+      try{
+        const account=await prisma.instagramAccount.findUnique({where:{id:rule.instagramAccountId},select:{igUserId:true}});
+        if(account)await pollLiveReplySessions({id:rule.instagramAccountId,igUserId:account.igUserId});
+      }catch(error){
+        console.warn("[LIVE_REPLY] New activation will bind on next live event:",error instanceof Error?error.message:String(error));
+      }
+    }
+    const fresh=await ownedRule(id,session.user.id);
+    return NextResponse.json({success:true,data:displayLiveReply(fresh||updated)});
+  }catch(error){
+    console.error("Live rule toggle failed",error);
+    return NextResponse.json({success:false,error:"تغییر وضعیت لایو ناموفق بود."},{status:500});
   }
 }
 

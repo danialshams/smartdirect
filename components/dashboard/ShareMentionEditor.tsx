@@ -70,7 +70,7 @@ export default function ShareMentionEditor({id}:{id?:string}){
     const existing=id?a.data as Existing:null;
     if(existing&&(!["DM_MEDIA_SHARE","STORY_MENTION"].includes(existing.triggerType)||existing.instagramAccountId!==active.id))throw new Error("پاسخ انتخاب‌شده متعلق به این بخش نیست.");
     const all=Array.isArray(automations?.data)?automations.data:[];
-     setPreviousAutomations(all.filter((item:Existing)=>["DM_MEDIA_SHARE","STORY_MENTION"].includes(item.triggerType) && item.id!==existing?.id));
+     setPreviousAutomations(all.filter((item:Existing)=>item.triggerType==="DM_MEDIA_SHARE" && item.id!==existing?.id));
     const busy=new Set<string>();
     for(const item of all){
      if(item.triggerType!=="DM_MEDIA_SHARE"||item.id===existing?.id)continue;
@@ -120,19 +120,28 @@ export default function ShareMentionEditor({id}:{id?:string}){
  }
  async function save(prepared?:MessageDraft){
   if(saving||!account||!responseValid)return;
-   if (!original && responseMode === "existing" && !selectedPreviousId) {setError("ابتدا یک پاسخ قبلی انتخاب کن.");return;}
+   if (!original && trigger === "DM_MEDIA_SHARE" && responseMode === "existing" && !selectedPreviousId) {setError("ابتدا یک پاسخ قبلی انتخاب کن.");return;}
   setSaving(true);setError("");
   try{
    const previous=previousAutomations.find(item=>item.id===selectedPreviousId);
-    const copied=previous && !original && responseMode==="existing"
-      ? normalizeMessages(previous.messages)[0] : null;
-    const cloneReplies=(replies:MessageDraft["quickReplies"]):MessageDraft["quickReplies"] =>
-      replies.map(reply=>({...reply,payload:"copy_"+crypto.randomUUID(),savedResponseId:null,destinationQuickReplies:cloneReplies(reply.destinationQuickReplies)}));
-    const resolved= copied ? {...copied,id:"local_"+crypto.randomUUID(),savedResponseId:null,quickReplies:cloneReplies(copied.quickReplies)} : (prepared||message);
+   if(!original && responseMode==="existing" && trigger==="DM_MEDIA_SHARE"){
+     if(!previous)throw new Error("پاسخ قبلی انتخاب نشده است.");
+     const attach=await fetch("/api/automations/"+encodeURIComponent(previous.id),{
+       method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},
+       body:JSON.stringify({linkMediaOnly:true,activateOnLink:true,triggerType:"DM_MEDIA_SHARE",
+         mediaIds:selected,mediaId:selected.length===1?selected[0]:null}),
+     });
+     const result=await attach.json();
+     if(!attach.ok||!result.success)throw new Error(result.error||"اتصال پاسخ قبلی ناموفق بود.");
+     setSaved(true);
+     window.scrollTo({top:0,behavior:"smooth"});
+     return;
+   }
+   const resolved=prepared||message;
     const response=await fetch("/api/share-mention",{method:original?"PUT":"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({
     id:original?.id,expectedUpdatedAt:original?.updatedAt,
     instagramAccountId:account.id,triggerType:trigger,
-    mediaIds:trigger==="DM_MEDIA_SHARE"?selected:[],isActive:true,
+    mediaIds:trigger==="DM_MEDIA_SHARE"?selected:[],isActive:original?.isActive!==false,
     message:resolved,
    })});
    const data=await response.json();
@@ -196,17 +205,17 @@ export default function ShareMentionEditor({id}:{id?:string}){
    <Guide step={2} title="منشن در استوری دیگران" hint="نیازی به انتخاب استوری نیست. این پاسخ برای منشن جدید پیجت در استوری مخاطبان ارسال می‌شود؛ ریپلای به استوری خودت همچنان در بخش پاسخ به استوری مدیریت می‌شود."/>
    <div className="rounded-2xl border bg-white p-4 text-xs leading-7 text-slate-600" style={{borderColor:dairaPalette.border}}>برای این پیج فقط یک پاسخ به منشن استوری می‌توانی تعریف کنی. ارسال پیام به دریافت رویداد مجاز از Meta وابسته است.</div>
   </section>}
-  {!original && <section className="space-y-3"><ResponseModeSwitcher value={responseMode} existingAvailable={previousAutomations.some(item=>item.triggerType===trigger)} onChange={next=>{setResponseMode(next);setSelectedPreviousId("");}} disabled={saving}/></section>}
+  {!original && trigger==="DM_MEDIA_SHARE" && <section className="space-y-3"><ResponseModeSwitcher value={responseMode} existingAvailable={previousAutomations.some(item=>item.triggerType===trigger)} onChange={next=>{setResponseMode(next);setSelectedPreviousId("");}} disabled={saving}/></section>}
   <section>
    <Guide step={3} title="نوع پاسخ" hint="از همان پاسخ‌های فعلی دایرا استفاده کن: متن، عکس، ویدیو، وویس، ویترین یا فرم چندمرحله‌ای. فایل‌ها فقط وقتی ذخیره شوند که پاسخ ثبت شده باشد باقی می‌مانند."/>
-   {responseMode === "existing" && !original ? <div className="space-y-3">
+   {responseMode === "existing" && trigger==="DM_MEDIA_SHARE" && !original ? <div className="space-y-3">
       <CompleteAutomationPicker items={previousAutomations.filter(item=>item.triggerType===trigger)}
         selected={previousAutomations.find(item=>item.id===selectedPreviousId)||null}
         onSelect={item=>setSelectedPreviousId(item.id)}
         onChange={()=>setSelectedPreviousId("")} showcases={showcases} forms={forms} kind="SHARE" disabled={saving}/>
       <button type="button" disabled={saving || !selectedPreviousId || !responseValid}
         onClick={()=>void save()} className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold disabled:opacity-50">
-        {saving?"در حال ثبت...":"ثبت پاسخ مستقل"}
+        {saving?"در حال ثبت...":"ایجاد پاسخ"}
       </button>
     </div> : <div className="rounded-2xl border bg-white p-4 sm:p-5" style={{borderColor:dairaPalette.border}}>
     <PublishingStoryAutomationSetup key={original?.id||account.id} message={message} showcases={showcases} forms={forms} formTemplates={formTemplates}

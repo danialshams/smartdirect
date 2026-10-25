@@ -675,7 +675,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   function revokeLocalMedia(items: LocalMedia[]) { items.forEach((item) => URL.revokeObjectURL(item.previewUrl)); }
   function clearLocalMedia() { for (const c of uploadAbortControllersRef.current.values()) c.abort(); uploadAbortControllersRef.current.clear(); activeUploadItemIdsRef.current.clear(); uploadQueueRef.current = []; setUploadRows([]); setMedia((current) => { revokeLocalMedia(current); return []; }); }
-  function resetAutomation() { setReplyMode("new"); setPreviousId(""); setCopyStoryWords(""); setAutomationEnabled(false); setStoryResponseSaved(false); setStoryResponseEditing(false); setStoryResponseDirty(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setPublishingCommentReplies(["", "", ""]); }
+  function resetAutomation() { setReplyMode("new"); setPreviousId(""); setAutomationEnabled(false); setStoryResponseSaved(false); setStoryResponseEditing(false); setStoryResponseDirty(false); setKeywords(""); setMessages([createEmptyMessage()]); setCommentReplyText(""); setLikeStoryReply(false); setRequireFollow(false); setFollowGateText("برای دریافت اطلاعات لطفاً ابتدا پیج را فالو کنید."); setAutomationSetupConfirmed(false); setAutomationKeywordDraft(""); setAutomationKeywords([]); setDirectMessageText(""); setPublishingCommentReplies(["", "", ""]); }
   function animateStepChange(action: () => void) {
     setStepVisible(false);
     window.setTimeout(() => { action(); window.requestAnimationFrame(() => setStepVisible(true)); }, 180);
@@ -1019,25 +1019,28 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   function removeQuickReply(messageIndex: number, quickReplyId: string) { setMessages((current) => current.map((message, index) => index === messageIndex ? { ...message, quickReplies: message.quickReplies.filter((qr) => qr.id !== quickReplyId) } : message)); }
 
-  function cloneMessage(source:MessageDraft):MessageDraft{
-    const cloneReplies=(xs:MessageDraft["quickReplies"]):MessageDraft["quickReplies"]=>
-      xs.map(x=>({...x,id:"local_"+crypto.randomUUID(),payload:"copy_"+crypto.randomUUID(),savedResponseId:null,destinationQuickReplies:cloneReplies(x.destinationQuickReplies)}));
-    return {...source,id:"local_"+crypto.randomUUID(),savedResponseId:null,quickReplies:cloneReplies(source.quickReplies)};
-  }
   async function createAutomation(): Promise<string> {
     if (!selectedAccountId) throw new Error("اکانت فعال Instagram پیدا نشد.");
     const source=replyMode==="existing"?previousRules.find(x=>x.id===previousId):null;
     if(replyMode==="existing"&&!source)throw new Error("یک پاسخ قبلی انتخاب کن.");
+    if(source){
+      const response=await fetch("/api/automations/"+encodeURIComponent(source.id),{
+        method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({isActive:true}),
+      });
+      const result=await response.json();
+      if(!response.ok||!result.success)throw new Error(result.error||"فعال‌سازی پاسخ قبلی ناموفق بود.");
+      return source.id;
+    }
 
     // Publishing automations use the compact stage-6 setup for POST/REEL/CAROUSEL.
     if (type !== "STORY") {
-      const normalizedKeywords=source?(source.keyword||"").split(/[,،;؛\n]+/).map(x=>x.trim()).filter(Boolean):automationKeywords.map(x=>x.trim()).filter(Boolean);
-      const replyVariants=source?readPublicCommentReplies(source.commentReplyText):publishingCommentReplies;
-      const copiedText=source&&source.sendDm!==false?(normalizeMessages(source.messages)[0]?.text||""):"";
-      const replyText=source?copiedText:directMessageText;
-      const follower=source?Boolean(source.requireFollow):requireFollow;
-      const followCopy=source?(source.followGateText||""):followGateText;
-      if (!normalizedKeywords.length && source?.keywordMatchMode!=="CONTAINS_ANY") throw new Error("حداقل یک کلمه کلیدی اضافه کن.");
+      const normalizedKeywords=automationKeywords.map(x=>x.trim()).filter(Boolean);
+      const replyVariants=publishingCommentReplies;
+      const replyText=directMessageText;
+      const follower=requireFollow;
+      const followCopy=followGateText;
+      if (!normalizedKeywords.length) throw new Error("حداقل یک کلمه کلیدی اضافه کن.");
       if (follower && !followCopy.trim()) throw new Error("متن درخواست فالو را وارد کن.");
 
       const automationResponse = await fetch("/api/automations", {
@@ -1047,7 +1050,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
           instagramAccountId: selectedAccountId,
           triggerType: "COMMENT_KEYWORD",
           keyword: normalizedKeywords.join(","),
-          keywordMatchMode: source?.keywordMatchMode==="CONTAINS_ANY"?"CONTAINS_ANY":"EXACT",
+          keywordMatchMode: "EXACT",
           mediaId: `pending:${crypto.randomUUID()}`,
           commentReplyVariants: validatePublicCommentReplies(replyVariants),
           sendDm: Boolean(replyText.trim()),
@@ -1080,12 +1083,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       }
       return automationId;
     }
-    const storyKeywords=source?copyStoryWords.trim():keywords.trim();
-    const effectiveMessages=source?normalizeMessages(source.messages).map(cloneMessage):messages;
+    const storyKeywords=keywords.trim();
+    const effectiveMessages=messages;
     if (!storyKeywords) throw new Error("حداقل یک کلمه کلیدی ریپلای استوری وارد کن.");
     validateMessages(effectiveMessages);
-    const follow=source?Boolean(source.requireFollow):requireFollow;
-    const followText=source?(source.followGateText||""):followGateText;
+    const follow=requireFollow;
+    const followText=followGateText;
     if (follow&&!followText.trim())throw new Error("متن درخواست فالو را وارد کن.");
 
     const automationPayload = {
@@ -1095,7 +1098,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
       mediaId: `pending:${crypto.randomUUID()}`,
       commentReplyText: triggerType === "COMMENT_KEYWORD" ? commentReplyText.trim() || null : null,
       sendDm: true,
-      likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? (source?Boolean(source.likeStoryReply):likeStoryReply) : false,
+      likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? (likeStoryReply) : false,
       requireFollow: follow,
       followGateText: follow ? followText.trim() : null,
       isActive: true,
@@ -1226,7 +1229,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         })
       });
       const result = await response.json();
-      if (!response.ok) { if (automationId) await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
+      if (!response.ok) { if (automationId && replyMode!=="existing") await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
       const job = result.data as Job;
       if (publishNow) {
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
@@ -1312,7 +1315,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const hasDraft = uploadedMedia.length > 0 || media.length > 0 || Boolean(caption.trim()) || automationEnabled || (type === "REEL" && JSON.stringify(reelOptions) !== JSON.stringify(DEFAULT_REEL_OPTIONS));
   const canSubmitMedia = uploadedMedia.length >= (type === "CAROUSEL" ? 2 : 1) && !uploading && !media.length;
   const canSubmitAutomation = !automationEnabled || (replyMode==="existing"
-    ? Boolean(previousId && (type!=="STORY" || copyStoryWords.trim()))
+    ? Boolean(previousId)
     : type === "STORY"
       ? storyResponseSaved && !storyResponseEditing && !storyResponseDirty
       : automationKeywords.length > 0 && publishingCommentReplies.length >= 3 && publishingCommentReplies.length <= 5 && publishingCommentReplies.every(text=>text.trim().length>0&&text.trim().length<=2000) && new Set(publishingCommentReplies.map(text=>text.trim())).size===publishingCommentReplies.length);
@@ -1575,17 +1578,12 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
               </div>
               {automationEnabled && <div className="mx-auto w-full max-w-2xl space-y-3">
                 <ResponseModeSwitcher value={replyMode} existingAvailable={previousRules.length>0}
-                  loading={previousLoading} disabled={publishing} onChange={v=>{setReplyMode(v);setPreviousId("");setCopyStoryWords("");}}/>
+                  loading={previousLoading} disabled={publishing} onChange={v=>{setReplyMode(v);setPreviousId("");}}/>
                 {replyMode==="existing" && <div className="space-y-3">
                   <CompleteAutomationPicker items={previousRules} selected={previousRules.find(x=>x.id===previousId)||null}
                     onSelect={item=>setPreviousId(item.id)} onChange={()=>setPreviousId("")}
                     kind={type==="STORY"?"STORY_REPLY_KEYWORD":"COMMENT_KEYWORD"} showcases={showcases} forms={forms} disabled={publishing}/>
-                  {type==="STORY" && <div className="rounded-xl border border-[var(--daira-outline)] bg-[var(--daira-glass-raised)] p-3">
-                    <label className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">کلمات کلیدی این پاسخ جدید</label>
-                    <input value={copyStoryWords} onChange={e=>setCopyStoryWords(e.target.value)} placeholder="مثلاً سفارش، موجودی" className="w-full rounded-lg border border-[var(--daira-outline)] bg-white p-3 text-base outline-none"/>
-                    <p className="mt-2 text-xs text-[var(--daira-text-secondary)]">متن پاسخ قبلی کپی می‌شود و قابل‌ویرایش نیست. برای جلوگیری از تداخل، کلمات کلیدی جدید وارد کن.</p>
-                  </div>}
-                  <p className="text-xs text-[var(--daira-text-secondary)]">انتخاب پاسخ قبلی، هنگام انتشار یک نسخه مستقل می‌سازد.</p>
+                  <p className="text-xs text-[var(--daira-text-secondary)]">پاسخ انتخاب‌شده روی این محتوا اعمال می‌شود و از فهرست پاسخ‌های موجود قابل ویرایش است.</p>
                 </div>}
               </div>}
               {automationEnabled && replyMode==="new" && (type==="STORY" ? <div className="mx-auto w-full max-w-2xl">
