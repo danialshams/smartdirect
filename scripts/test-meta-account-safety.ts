@@ -43,7 +43,7 @@ async function main() {
   const client = readFileSync("src/lib/instagram/client.ts", "utf8");
   const token = readFileSync("src/lib/instagram/token-manager.ts", "utf8");
   const commentFollowGate = webhook.slice(
-    webhook.indexOf("// FOLLOW GATE ENABLED FOR COMMENT AUTOMATION"),
+    webhook.indexOf("FOLLOW GATE ENABLED FOR COMMENT AUTOMATION"),
     webhook.indexOf("// Normal Comment Automation"),
   );
   assert(commentFollowGate.includes("pendingGate.attempts > 0 ? false : await sendPrivateReply({") &&
