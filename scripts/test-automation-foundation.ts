@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import {
   AUTOMATION_TRIGGER_TYPES,
   isSupportedAutomationTriggerType,
@@ -200,3 +201,38 @@ main().catch((error) => {
   console.error("95-97 Automation trigger foundation: FAILED");
   throw error;
 });
+
+const storyApi = readFileSync("app/api/automations/route.ts", "utf8");
+const storyEdit = readFileSync("app/api/automations/[id]/story-edit/route.ts", "utf8");
+const storyActivation = readFileSync("src/lib/automation/story-activation.ts", "utf8");
+const storyPublishing = readFileSync("src/lib/instagram/publishing.ts", "utf8");
+const storyCreation = readFileSync("components/dashboard/AutomationCreationFlow.tsx", "utf8");
+const storyCard = readFileSync("components/dashboard/AutoRepliesManager.tsx", "utf8");
+const storyMigration = readFileSync("prisma/migrations/20261025155000_single_active_story_reply/migration.sql", "utf8");
+assert(storyApi.includes('triggerType === "STORY_REPLY_KEYWORD" ? false : Boolean(isActive)'),
+  "New story rules must be disabled until full response save.");
+assert(storyActivation.includes('FOR UPDATE') && storyActivation.includes('isActive: false') &&
+  storyActivation.includes('isActive: true') && storyActivation.includes('tx.$queryRawUnsafe'),
+  "Activation of a new story reply must serialize sibling deactivation per account.");
+assert(storyCreation.includes("setStoryReplacement(") && storyCreation.includes("confirmedStoryReplacement") &&
+  storyCreation.includes("تأیید و ایجاد") && storyCreation.includes('JSON.stringify({isActive:true})'),
+  "New story response must ask before replacing active keywords and activate only when fully saved.");
+assert(storyPublishing.includes('await activateStoryReply(job.storyReplyAutomationId, job.instagramAccountId)') &&
+  storyPublishing.includes('await activateStoryReply(automation.id, instagramAccountId)'),
+  "Publishing and legacy story automation paths must keep the single-active invariant.");
+assert(!storyEdit.includes('const siblings = await prisma.automation.findMany'),
+  "Inactive story reply keyword reuse must remain available.");
+assert(storyMigration.includes('ROW_NUMBER() OVER') && storyMigration.includes('ranked.ord > 1'),
+  "Existing accounts must retain a single active story reply.");
+assert(storyCard.includes('absolute left-3 top-3') && storyCard.includes('dateTime={item.date || undefined}'),
+  "Reply cards must show their dates in the upper-left.");
+
+const publishingUI = readFileSync("components/dashboard/publishing/PublishingDashboardV2.tsx", "utf8");
+assert(publishingUI.includes('type!=="STORY" &&') &&
+  publishingUI.includes('confirmedStoryReplacement = false') &&
+  publishingUI.includes('createJob(publishNow,true)') &&
+  publishingUI.includes('در زمان انتشار موفق استوری زمان‌بندی‌شده'),
+  "Publishing must avoid prior-story selection and confirm replacing global responses.");
+assert(storyCreation.includes("let activationRequested = false") &&
+  storyCreation.includes("if(saved?.isActive){setCompleted(true);return;}"),
+  "Connection loss after an already-successful activation must not delete the active replacement.");

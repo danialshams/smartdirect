@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { activateStoryReply } from "@/lib/automation/story-activation";
 import { validateSavedResponseOrigin } from "@/lib/automation/saved-response-origin";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
@@ -163,17 +164,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       throw new StoryEditError("گزینه‌های فرم ذخیره‌شده معتبر نیستند. صفحه را دوباره باز کنید.");
 
     // Story responses no longer bind to an individual story.
-    const siblings = await prisma.automation.findMany({
-      where: { instagramAccountId: current.instagramAccountId,
-        triggerType: "STORY_REPLY_KEYWORD", id: { not: id } },
-      select: { keyword: true, keywordMatchMode: true },
-    });
-    const nextWords = keywords.map(word => word.trim().toLocaleLowerCase());
-    if (siblings.some(rule =>
-      rule.keywordMatchMode === "CONTAINS_ANY" || keywordMatchMode === "CONTAINS_ANY" ||
-      (rule.keyword || "").split(",").some(word => nextWords.includes(word.trim().toLocaleLowerCase()))
-    )) throw new StoryEditError("این کلمه کلیدی در پاسخ استوری دیگری استفاده شده است.",409);
-
+    // Inactive story rules may use the same keywords. The activation
+    // transaction guarantees only one can respond at a time.
     const showcaseIds = new Set<string>();
     if (message.messageType === "SHOWCASE") showcaseIds.add(message.showcaseId);
     if (message.updateQuickReplies) collectShowcases(message.quickReplies, showcaseIds);
@@ -202,7 +194,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           followGateText: requireFollow ? followGateText : null,
           followGateButtonText: requireFollow ? followGateButtonText : null,
           likeStoryReply: body.likeStoryReply as boolean,
-          isActive: body.isActive as boolean,
+          isActive: body.isActive === true ? current.isActive : false,
           sendDm: true,
         },
       });
@@ -266,6 +258,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       // intact instead of silently deleting them when editing the main reply.
     }, { maxWait: 10000, timeout: 30000 });
 
+    if (body.isActive === true) await activateStoryReply(id, current.instagramAccountId);
     try { await invalidateAutomationCache(current.instagramAccountId); }
     catch (cacheError) { console.warn("Story automation cache invalidation failed:", cacheError); }
     return NextResponse.json({ success: true, data: { id } });

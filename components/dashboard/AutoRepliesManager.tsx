@@ -451,8 +451,9 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
       if (!response.ok || !result.success) throw new Error(result.error || "تغییر وضعیت پاسخ ناموفق بود.");
       toast.success(active ? "پاسخ استوری غیرفعال شد." : "پاسخ استوری فعال شد.");
       setItems(current => {
-        const next = current.map(entry => entry.id === item.id && entry.title === "پاسخ خودکار استوری"
-          ? { ...entry, isActive: !active } : entry);
+        const next = current.map(entry => entry.title === "پاسخ خودکار استوری" && !entry.key.startsWith("publish:")
+          ? { ...entry, isActive: entry.id === item.id ? !active : (!active ? false : entry.isActive) }
+          : entry);
         itemsRef.current = next;
         return next;
       });
@@ -551,7 +552,9 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           ) : (
             <div className="space-y-2.5">
               {filteredItems.map((item) => (
-                <div key={item.key} className={"daira-automation-list-card flex min-h-[84px] gap-3 rounded-[22px] border border-[var(--daira-border)] bg-[var(--daira-surface)] px-3 py-3 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4 " + (scope === "stories" ? "flex-col items-stretch" : "items-center justify-between")}>
+                <div key={item.key} className={"daira-automation-list-card relative flex min-h-[84px] gap-3 rounded-[22px] border border-[var(--daira-border)] bg-[var(--daira-surface)] px-3 pb-3 pt-9 shadow-[0_3px_12px_rgba(15,23,42,.025)] sm:px-4 " + (scope === "stories" ? "flex-col items-stretch" : "items-center justify-between")}>
+                  <time className="absolute left-3 top-3 text-[11px] font-medium text-[var(--daira-text-secondary)]"
+                    dateTime={item.date || undefined}>{formatDate(item.date)}</time>
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)]">
                       {item.previewUrl && item.previewKind === "video" ? (
@@ -571,7 +574,6 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
                     >
                       <span className="break-words">{item.keyword || "بدون کلمه کلیدی"}</span>
                     </div>
-                    <span className="text-[11px] font-medium" style={{ color: dairaPalette.text.muted }}>{formatDate(item.date)}</span>
                     </div>
                   </div>
 

@@ -136,20 +136,6 @@ export async function POST(request: NextRequest) {
     // Menu items each need their own hidden DM automation.
     const isMediaBasedTrigger = triggerType === "COMMENT_KEYWORD";
 
-    if (triggerType === "STORY_REPLY_KEYWORD") {
-      const existing = await prisma.automation.findMany({
-        where: { instagramAccountId, triggerType: "STORY_REPLY_KEYWORD" },
-        select: { keyword: true, keywordMatchMode: true },
-      });
-      const newWords = (normalizedKeyword || "").split(",").map(value=>value.trim().toLocaleLowerCase()).filter(Boolean);
-      const duplicate = existing.some(rule =>
-        rule.keywordMatchMode === "CONTAINS_ANY" ||
-        normalizedKeywordMatchMode === "CONTAINS_ANY" ||
-        (rule.keyword || "").split(",").some(word => newWords.includes(word.trim().toLocaleLowerCase())));
-      if (duplicate) return NextResponse.json({
-        success:false,error:"این کلمه کلیدی برای پاسخ استوری دیگری استفاده شده است؛ کلمه متفاوتی انتخاب کن.",
-      },{status:409});
-    }
     if (isMediaBasedTrigger) {
       const existingAutomations = await prisma.automation.findMany({
         where: { instagramAccountId, triggerType },
@@ -203,7 +189,8 @@ export async function POST(request: NextRequest) {
         requireFollow: normalizedRequireFollow,
         followGateText: normalizedFollowGateText,
         followGateButtonText: normalizedFollowGateButtonText,
-        isActive: Boolean(isActive),
+        // Story is a draft until its messages are saved and it is activated.
+        isActive: triggerType === "STORY_REPLY_KEYWORD" ? false : Boolean(isActive),
       },
       include: { messages: { orderBy: { order: "asc" } } },
     });
