@@ -6,7 +6,11 @@ import { usePathname } from "next/navigation";
 import { Home, CircleUserRound, Headset, ChevronRight } from "lucide-react";
 import DashboardTheme from "./DashboardTheme";
 import { getDashboardBottomPageTitle } from "./dashboard-bottom-nav-labels";
-import DashboardOverview from "./DashboardOverview";
+import dynamic from "next/dynamic";
+import DashboardHomeSkeleton from "./DashboardHomeSkeleton";
+const DashboardOverview = dynamic(() => import("./DashboardOverview"), {
+  loading: () => <DashboardHomeSkeleton />,
+});
 import DashboardHeader from "./DashboardHeader";
 import { DashboardAccountProvider } from "./DashboardAccountContext";
 import { DashboardBackNavigationProvider } from "./DashboardBackNavigationContext";

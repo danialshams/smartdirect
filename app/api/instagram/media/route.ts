@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
         userId: session.user.id,
         isConnected: true,
       },
+      select: { id: true },
     });
 
     if (!account) {

@@ -106,8 +106,7 @@ export async function GET(request: NextRequest) {
                       id: true,
                       igUserId: true,
                       igUsername: true,
-                      accessToken: true,
-                      createdAt: true,
+                                            createdAt: true,
                   },
               })
             : await prisma.instagramAccount.findFirst({
@@ -120,8 +119,7 @@ export async function GET(request: NextRequest) {
                       id: true,
                       igUserId: true,
                       igUsername: true,
-                      accessToken: true,
-                      createdAt: true,
+                                            createdAt: true,
                   },
               });
 
