@@ -20,11 +20,11 @@ largest observation, not a production SLO or reliable percentile.
 
 After a production build run:
 
-\`\`\`powershell
+```powershell
 node scripts/report-dashboard-performance-coverage.mjs
-\`\`\`
+```
 
-This produces \`performance-results/dashboard-performance-coverage.json\` and
+This produces `performance-results/dashboard-performance-coverage.json` and
 lists dashboard page routes, parameterized routes needing fixture IDs and API
 handlers with declared GET/POST/PUT/PATCH/DELETE methods. It does not call
 any API or measure latency.
@@ -33,18 +33,21 @@ any API or measure latency.
 
 Run only with an authorized disposable test-user session:
 
-\`\`\`powershell
+```powershell
 git pull origin master
 $env:SMARTDIRECT_BASE_URL="https://smartdirect.vercel.app"
 $env:SMARTDIRECT_STORAGE_STATE=".local-auth.json"
 $env:SMARTDIRECT_REVISIT_RUNS="2"
 node scripts/benchmark-dashboard-revisits.mjs
-\`\`\`
+```
 
 It navigates to every visible Home tool card using actual Next links and
 returns using browser history, recording page transition and Home revisit
-times, plus response-event counts for dashboard artwork. This is an
-**observation** of artwork requests; it is not a precise cache-hit indicator.
+times, plus response-event counts for dashboard artwork observed shortly after
+returning Home. The test no longer waits for the page's `load` event after SPA
+navigation. Per-route timeouts are written to the result JSON rather than
+ending the test early. Response counts are **not** measured transfer bytes,
+and do not establish whether an image was served from browser cache.
 The JSON report is gitignored. Do not upload Playwright storage state.
 
 Existing Next/Image optimizations and browser HTTP caches should be reused

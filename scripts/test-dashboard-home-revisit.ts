@@ -32,4 +32,15 @@ assert(!automationManager.includes('fetch("/api/instagram/accounts"'),"Deletion 
 assert(automationManager.includes("writeAutoRepliesCache(activeAccount.id, nextItems)"),
   "Reply deletion must invalidate the currently selected account cache");
 
+
+// The read-only browser diagnostic must not mistake pending "load" events
+// for failed client-side route transitions or abort the whole benchmark.
+const revisit=readFileSync("scripts/benchmark-dashboard-revisits.mjs","utf8");
+assert(revisit.includes("waitForPath(route)"),"Benchmark must await pathname independently of load");
+assert(revisit.includes("window.location.pathname === target"),"Benchmark must poll the URL without load-event dependency");
+assert(!revisit.includes("page.waitForURL("),"Benchmark must not wait for load after SPA navigation");
+assert(revisit.includes("homeReturnArtResponses"),"Art observations should be measured only after Home return");
+assert(revisit.includes("failedAt: stage"),"Per-route failures must be reported rather than terminating the run");
+assert(revisit.includes("window.history.back()"),"Benchmark must return through native history");
+
 console.log("DASHBOARD_HOME_REVISIT_CACHE_OK");
