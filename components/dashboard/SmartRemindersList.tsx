@@ -27,7 +27,7 @@ export default function SmartRemindersList() {
   const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
   const router = useRouter();
   const listKey = activeDashboardAccount ? "smart-reminders:" + activeDashboardAccount.id : null;
-  const [account, setAccount] = useState<Account | null>(() => listKey && getDashboardListSnapshot<Rule>(listKey) ? activeDashboardAccount : null);
+  const [account, setAccount] = useState<Account | null>(() => listKey && getDashboardListSnapshot<Rule>(listKey) ? (activeDashboardAccount ?? null) : null);
   const [rules, setRules] = useState<Rule[]>(() => listKey ? getDashboardListSnapshot<Rule>(listKey) ?? [] : []);
   const [loadedFor, setLoadedFor] = useState<string | null>(() => listKey && getDashboardListSnapshot<Rule>(listKey) ? listKey : null);
   const [loading, setLoading] = useState(() => !(listKey && getDashboardListSnapshot<Rule>(listKey)));
