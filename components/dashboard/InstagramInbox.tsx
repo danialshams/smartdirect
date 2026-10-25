@@ -448,6 +448,7 @@ export default function InstagramInbox({
   const conversationListControllerRef = useRef<AbortController | null>(null);
   const loadedMoreConversationsRef = useRef(false);
   const messageFetchIdRef = useRef(0);
+  const messageFetchControllerRef = useRef<AbortController | null>(null);
   const pendingMessageFetchRef = useRef<string | null>(null);
   const activeConversationRef = useRef("");
   const previousNewestIdRef = useRef<string | null>(null);
@@ -616,6 +617,9 @@ export default function InstagramInbox({
     const key = accountId + ":" + selectedId;
     if (!options && pendingMessageFetchRef.current === key) return;
     if (!options) pendingMessageFetchRef.current = key;
+    messageFetchControllerRef.current?.abort();
+    const controller = new AbortController();
+    messageFetchControllerRef.current = controller;
     const requestId = ++messageFetchIdRef.current;
     const container = messagesScrollRef.current;
     const previousHeight = container?.scrollHeight ?? 0;
@@ -634,6 +638,7 @@ export default function InstagramInbox({
       const response = await fetch(`/api/instagram/inbox?${params.toString()}`, {
         cache: "no-store",
         headers: { Accept: "application/json" },
+        signal: controller.signal,
       });
       const result = await readApiResult(response);
       if (!response.ok || !result.success || !result.conversation) {
@@ -699,17 +704,23 @@ export default function InstagramInbox({
         void markConversationSeen(latestInbound.igMessageId || latestInbound.id);
       }
     } catch (err) {
-      if (requestId === messageFetchIdRef.current && activeConversationRef.current === key) {
+      if (!controller.signal.aborted && requestId === messageFetchIdRef.current && activeConversationRef.current === key) {
         setError(err instanceof Error ? err.message : "خطا در دریافت پیام‌ها");
       }
     } finally {
-      if (requestId === messageFetchIdRef.current) {
+      if (messageFetchControllerRef.current === controller) messageFetchControllerRef.current = null;
+      if (requestId === messageFetchIdRef.current && !controller.signal.aborted) {
         setMessagesLoading(false);
         setLoadingOlderMessages(false);
       }
       if (pendingMessageFetchRef.current === key) pendingMessageFetchRef.current = null;
     }
   }, [accountId, selectedId, markConversationSeen, mobileChatOpen]);
+
+  useEffect(() => () => {
+    messageFetchControllerRef.current?.abort();
+    pendingMessageFetchRef.current = null;
+  }, []);
 
   async function loadMoreConversations() {
     if (!accountId || loadingMoreConversations || !hasMoreConversations) return;
