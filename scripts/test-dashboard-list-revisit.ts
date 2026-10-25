@@ -48,6 +48,17 @@ for(const path of [
 }
 const live=file("components/dashboard/LiveAutomationList.tsx");
 assert(live.includes("setSubscription(null)"),"Live subscription authorization must be refreshed when account changes");
+const supportNotifications=file("components/dashboard/SupportNotifications.tsx");
+assert(supportNotifications.includes("const connectRealtime = () =>") &&
+  supportNotifications.includes("connection.onerror = () =>") &&
+  supportNotifications.includes("reconnectDelayMs = Math.min(reconnectDelayMs * 2, 60_000)") &&
+  supportNotifications.includes("connectRealtime();") &&
+  supportNotifications.includes("if (reconnectTimer) clearTimeout(reconnectTimer)") &&
+  supportNotifications.includes("disposed = true"),
+  "Support stream must recover after a disconnect, back off, and clean up on unmount");
+assert(supportNotifications.includes('!realtimeConnected) void load("poll")') &&
+  supportNotifications.includes('window.dispatchEvent(new Event("support:changed"))'),
+  "Support must keep unread refresh and list notifications while realtime is unavailable");
 const flow=file("components/dashboard/AutomationCreationFlow.tsx");
 const helper=file("src/lib/dashboard/automation-read.ts");
 assert(flow.split("readAccountAutomations(account.id)").length===3,
