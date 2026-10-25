@@ -42,8 +42,12 @@ async function main() {
   const inbox = readFileSync("app/api/instagram/inbox/route.ts", "utf8");
   const client = readFileSync("src/lib/instagram/client.ts", "utf8");
   const token = readFileSync("src/lib/instagram/token-manager.ts", "utf8");
-  assert(webhook.includes("pendingGate.attempts > 0 ? false : await sendPrivateReply({") &&
-    !webhook.includes("const gateSent = await sendFollowGateMessage({"),
+  const commentFollowGate = webhook.slice(
+    webhook.indexOf("// FOLLOW GATE ENABLED FOR COMMENT AUTOMATION"),
+    webhook.indexOf("// Normal Comment Automation"),
+  );
+  assert(commentFollowGate.includes("pendingGate.attempts > 0 ? false : await sendPrivateReply({") &&
+    !commentFollowGate.includes("await sendFollowGateMessage({"),
     "Comment follow-gate must send just one eligible Private Reply, not cold DM");
   assert(webhook.includes("FOLLOW_GATE_PAYLOAD_PREFIX + gate.id") &&
     webhook.includes('source: "UNKNOWN_POSTBACK"'),
