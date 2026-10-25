@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Headset, MessageCircle, Plus, RefreshCw, ArrowLeft, Inbox, CheckCheck } from "lucide-react";
 import { SUPPORT_STATUS, supportDate, supportNumber } from "./support-ui";
@@ -18,25 +18,57 @@ export default function SupportTicketsClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
-  const load = useCallback(async (signal?: AbortSignal, initial = false) => {
+  const activeController = useRef<AbortController | null>(null);
+  const inFlightSignal = useRef<AbortSignal | null>(null);
+  const pendingRefresh = useRef(false);
+  const load = useCallback(async function refreshTickets(signal?: AbortSignal, initial = false) {
+    const currentSignal = signal ?? activeController.current?.signal;
+    if (!currentSignal || currentSignal.aborted) return;
+    // SSE, focus and manual refreshes can arrive together. Keep at most one
+    // request in flight and one trailing read, so an update is never lost.
+    if (inFlightSignal.current === currentSignal) {
+      pendingRefresh.current = true;
+      return;
+    }
+    inFlightSignal.current = currentSignal;
     if (initial) setLoading(true);
     try {
-      const response = await fetch("/api/dashboard/tickets", { cache: "no-store", credentials: "include", signal });
+      const response = await fetch("/api/dashboard/tickets", { cache: "no-store", credentials: "include", signal: currentSignal });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "خطا در دریافت درخواست‌ها");
-      if (!signal?.aborted) { setTickets(data.data || []); setUserId(data.userId || ""); setError(""); }
+      if (!currentSignal.aborted) { setTickets(data.data || []); setUserId(data.userId || ""); setError(""); }
     } catch (err) {
-      if (!signal?.aborted) setError(err instanceof Error ? err.message : "ارتباط با سرور برقرار نشد.");
-    } finally { if (!signal?.aborted) setLoading(false); }
+      if (!currentSignal.aborted) setError(err instanceof Error ? err.message : "ارتباط با سرور برقرار نشد.");
+    } finally {
+      // React Strict Mode can abort and remount an effect. A previous request
+      // must not clear the in-flight flag of the newly mounted effect.
+      if (inFlightSignal.current === currentSignal) {
+        inFlightSignal.current = null;
+        if (!currentSignal.aborted) {
+          setLoading(false);
+          if (pendingRefresh.current) {
+            pendingRefresh.current = false;
+            void refreshTickets(currentSignal);
+          }
+        }
+      }
+    }
   }, []);
   useEffect(() => {
     const controller = new AbortController();
+    activeController.current = controller;
+    pendingRefresh.current = false;
     void load(controller.signal, true);
-    const onChange = () => { if (document.visibilityState === "visible") void load(); };
+    const onChange = () => { if (document.visibilityState === "visible") void load(controller.signal); };
     window.addEventListener("support:changed", onChange);
-    const visibility = () => { if (document.visibilityState === "visible") void load(); };
+    const visibility = () => { if (document.visibilityState === "visible") void load(controller.signal); };
     document.addEventListener("visibilitychange", visibility);
-    return () => { controller.abort(); window.removeEventListener("support:changed", onChange); document.removeEventListener("visibilitychange", visibility); };
+    return () => {
+      controller.abort();
+      if (activeController.current === controller) activeController.current = null;
+      window.removeEventListener("support:changed", onChange);
+      document.removeEventListener("visibilitychange", visibility);
+    };
   }, [load]);
   const shown = useMemo(() => tickets.filter(ticket =>
     filter === "unread" ? ticket.unreadCount > 0 :
