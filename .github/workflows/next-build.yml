@@ -80,6 +80,9 @@ jobs:
       - name: Verify the single canonical Daira color palette
         run: npm run theme:check
 
+      - name: Verify dashboard performance and atomic save invariants
+        run: npx tsx scripts/test-dashboard-performance.ts
+
       - name: Test complete Daira design system
         run: npx tsx scripts/test-daira-design-system.ts
 
