@@ -1,4 +1,5 @@
 import { pickPublicCommentReply } from "@/lib/automation/comment-reply-variants";
+import { applyInboundAutomationPreference, getAutomatedMessageBlockReason, reserveRecipientAutomatedMessageBudget } from "@/lib/instagram/automated-message-policy";
 import { createHash } from "node:crypto";
 import { verifyInstagramWebhookSignature } from "@/lib/webhook/verify-signature";
 import { after, NextRequest, NextResponse } from "next/server";
@@ -1276,7 +1277,6 @@ async function processMessagingEventLocked(
               where: { id: conversation.id },
               data: {
                 lastMessageAt: new Date(),
-                isActive: true,
               },
             });
           }
@@ -1481,7 +1481,6 @@ async function processMessagingEventLocked(
 
         data: {
           lastMessageAt: new Date(),
-          isActive: true,
         },
       });
     }
@@ -1687,6 +1686,9 @@ async function processMessagingEventLocked(
     );
 
     await cancelSmartRemindersForConversation(conversation.id);
+    if (await applyInboundAutomationPreference(conversation.id, messageText)) return;
+    // STOP is sticky. A new inbound message does not silently re-enable automation.
+    if (!conversation.isActive) return;
 
     console.log(
       "Incoming Instagram message saved:",
@@ -1694,6 +1696,30 @@ async function processMessagingEventLocked(
     );
 
     console.log("Incoming message type:", incomingMessageType);
+
+    // Comment Private Replies can only invite a user to DM first. A new DM
+    // with the configured follow-check phrase resumes the pending gate safely.
+    if (messageText?.trim()) {
+      const gate = await prisma.pendingFollowGate.findFirst({
+        where: {
+          instagramAccountId: instagramAccount.id, participantId,
+          status: "PENDING", expiresAt: { gt: new Date() },
+          automation: { triggerType: "COMMENT_KEYWORD",
+            mediaId: { not: "__smartdirect_live_comments_v1__" }, isActive: true },
+        },
+        include: { automation: { select: { followGateButtonText: true } } },
+        orderBy: { createdAt: "desc" },
+      });
+      if (gate && messageText.trim().normalize("NFKC").toLocaleLowerCase("fa-IR") ===
+        (gate.automation.followGateButtonText?.trim() || "بررسی فالو").normalize("NFKC").toLocaleLowerCase("fa-IR")) {
+        await processFollowGatePostback({
+          senderId: participantId,
+          payload: FOLLOW_GATE_PAYLOAD_PREFIX + gate.id,
+          instagramAccount, executionId,
+        });
+        return;
+      }
+    }
 
     // Interactions never fall through to keyword automations: one inbound event, one response.
     if (interaction) {
@@ -1959,8 +1985,6 @@ async function processInstagramStoryReply(
           igUserId: participantId,
 
           lastMessageAt: new Date(),
-
-          isActive: true,
         },
       });
 
@@ -2022,6 +2046,8 @@ async function processInstagramStoryReply(
     });
 
     await cancelSmartRemindersForConversation(conversation.id);
+    if (await applyInboundAutomationPreference(conversation.id, messageText)) return;
+    if (!conversation.isActive) return;
     console.log("Story Reply saved:", savedMessage.id);
 
     // =======================================================
@@ -2395,6 +2421,10 @@ async function sendStoryReplyMessage({
   accessToken: string;
   replyText: string;
 }): Promise<boolean> {
+  if (await getAutomatedMessageBlockReason({
+    instagramAccountId, participantId,
+  })) return false;
+  if (!await reserveRecipientAutomatedMessageBudget({ instagramAccountId, participantId })) return false;
   try {
     await instagramApiRequest(`/${igUserId}/messages`, {
       method: "POST",
@@ -2477,6 +2507,12 @@ async function sendFollowGateMessage({
 }): Promise<boolean> {
   const postbackPayload = `${FOLLOW_GATE_PAYLOAD_PREFIX}${pendingGateId}`;
 
+  if (await getAutomatedMessageBlockReason({
+    instagramAccountId: instagramAccount.id, participantId,
+  })) return false;
+  if (!await reserveRecipientAutomatedMessageBudget({
+    instagramAccountId: instagramAccount.id, participantId,
+  })) return false;
   try {
     await instagramApiRequest(`/${instagramAccount.igUserId}/messages`, {
       method: "POST",
@@ -2523,6 +2559,10 @@ async function sendDirectInstagramMessage({
   accessToken: string;
   text: string;
 }): Promise<boolean> {
+  if (await getAutomatedMessageBlockReason({
+    instagramAccountId, participantId,
+  })) return false;
+  if (!await reserveRecipientAutomatedMessageBudget({ instagramAccountId, participantId })) return false;
   try {
     await instagramApiRequest(`/${igUserId}/messages`, {
       method: "POST",
@@ -2947,6 +2987,11 @@ async function processInstagramPostback(
     // =======================================================
 
     if (payload.startsWith(FOLLOW_GATE_PAYLOAD_PREFIX)) {
+      // The button press is a fresh user-initiated messaging interaction;
+      // record it before enforcing the 24h window for the outgoing response.
+      await saveEntryPointInteraction({
+        instagramAccount, participantId, title, payload, source: "UNKNOWN_POSTBACK",
+      });
       await processFollowGatePostback({
         senderId: participantId,
 
@@ -3352,8 +3397,6 @@ async function getOrCreateConversation({
         igUserId,
 
         lastMessageAt: new Date(),
-
-        isActive: true,
       },
     });
 
@@ -3611,6 +3654,13 @@ async function processCommentEvent(
       return;
     }
 
+    // Respect a previous explicit STOP request by this commenter, even if
+    // they post a new public comment. A public comment is not an opt-in.
+    if (commenterIgUserId && await getAutomatedMessageBlockReason({
+      instagramAccountId: instagramAccount.id, participantId: commenterIgUserId,
+      isPrivateReply: true,
+    }) === "OPTED_OUT") return;
+
     // =======================================================
     // Public comment reply
     //
@@ -3826,19 +3876,19 @@ async function processCommentEvent(
         matchedAutomation.followGateText?.trim() ||
         "برای دریافت این محتوا ابتدا پیج ما را فالو کنید.";
 
-      const gateSent = await sendFollowGateMessage({
-        instagramAccount,
-
-        participantId: commenterIgUserId,
-
+      // A public comment is NOT an inbound DM. Only ONE eligible Private Reply
+      // is permitted until the commenter actively sends us a new message.
+      const gateDelivery = pendingGate.attempts > 0 ? null : await sendPrivateReplyWithRecipient({
+        instagramAccountId: instagramAccount.id,
+        igUserId: instagramAccount.igUserId,
+        igCommentId,
         accessToken,
-
-        pendingGateId: pendingGate.id,
-
-        followGateText: gateText,
-        followGateButtonText: matchedAutomation.followGateButtonText?.trim() || "بررسی فالو",
+        replyText: gateText + "\n\n" +
+          "پس از فالوکردن، در دایرکت «" +
+          (matchedAutomation.followGateButtonText?.trim() || "بررسی فالو") + "» را بنویسید.",
       });
 
+      const gateSent = gateDelivery?.sent === true;
       if (gateSent) {
         await prisma.pendingFollowGate.update({
           where: {
@@ -3846,9 +3896,11 @@ async function processCommentEvent(
           },
 
           data: {
-            attempts: {
-              increment: 1,
-            },
+            // The recipient_id returned by the comment Private Reply may be
+            // different from the comment author's id. Use Meta's canonical DM
+            // recipient ID for the user's eventual inbound follow-check DM.
+            ...(gateDelivery?.recipientId ? { participantId: gateDelivery.recipientId } : {}),
+            attempts: { increment: 1 },
           },
         });
       }
@@ -4039,7 +4091,7 @@ async function sendPublicCommentReply({
 // Send private reply to Instagram commenter
 // =========================================================
 
-async function sendPrivateReply({
+async function sendPrivateReplyWithRecipient({
   instagramAccountId,
   igUserId,
   igCommentId,
@@ -4051,9 +4103,9 @@ async function sendPrivateReply({
   igCommentId: string;
   accessToken: string;
   replyText: string;
-}): Promise<boolean> {
+}): Promise<{ sent: boolean; recipientId: string | null }> {
   try {
-    await instagramApiRequest(`/${igUserId}/messages`, {
+    const result = await instagramApiRequest<{ recipient_id?: string }>(`/${igUserId}/messages`, {
       method: "POST",
       accessToken,
       body: {
@@ -4063,9 +4115,13 @@ async function sendPrivateReply({
       rateLimit: { instagramAccountId, operation: "COMMENT_PRIVATE_REPLY" },
     });
 
-    return true;
+    return { sent: true, recipientId: result.recipient_id?.trim() || null };
   } catch (error) {
     console.error("Instagram private reply failed:", error);
-    return false;
+    return { sent: false, recipientId: null };
   }
+}
+type PrivateReplyInput = Parameters<typeof sendPrivateReplyWithRecipient>[0];
+async function sendPrivateReply(input: PrivateReplyInput): Promise<boolean> {
+  return (await sendPrivateReplyWithRecipient(input)).sent;
 }

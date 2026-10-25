@@ -7,6 +7,7 @@ import {
 } from "@/generated/prisma/client";
 
 import { sendAutomationMessage } from "./send-automation-message";
+import { getAutomatedMessageBlockReason } from "@/lib/instagram/automated-message-policy";
 import { scheduleSmartReminder } from "./smart-reminders";
 import { evaluateAutomationConditions } from "./conditions";
 import { resolveAutomationAction } from "./action";
@@ -108,10 +109,20 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
       isActive: true,
     },
     update: {
-      isActive: true,
       igUserId: input.igUserId,
     },
   });
+
+  // A STOP preference survives unrelated future interactions; automated
+  // replies only resume upon an explicit START from this participant.
+  const policyBlock = await getAutomatedMessageBlockReason({
+    instagramAccountId: input.instagramAccountId,
+    participantId: input.participantId,
+    isPrivateReply: Boolean(input.commentId),
+  });
+  if (policyBlock) return {
+    success: true, executed: false, reason: policyBlock, conversationId: conversation.id,
+  };
 
   // =========================================================
   // 4. Human Agent / Transfer-to-Operator guard

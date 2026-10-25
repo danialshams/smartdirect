@@ -854,6 +854,7 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         participantId: true,
+        isActive: true,
       },
     });
 
@@ -881,6 +882,12 @@ export async function POST(request: NextRequest) {
       if (!unreadInbound) {
         return NextResponse.json({ success: true, markedSeen: true });
       }
+    }
+
+    // Respect the recipient's explicit opt-out for manual/API messaging too.
+    // Read receipts do not contact the recipient and remain available.
+    if (action !== "mark_seen" && !conversation.isActive) {
+      return jsonError("این مخاطب دریافت پیام را متوقف کرده است.", 403);
     }
 
     // The messaging window matters for outgoing messages, not read receipts.
