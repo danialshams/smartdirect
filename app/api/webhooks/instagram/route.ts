@@ -1,4 +1,5 @@
 import { pickPublicCommentReply } from "@/lib/automation/comment-reply-variants";
+import { applyInboundAutomationPreference, getAutomatedMessageBlockReason } from "@/lib/instagram/automated-message-policy";
 import { createHash } from "node:crypto";
 import { verifyInstagramWebhookSignature } from "@/lib/webhook/verify-signature";
 import { after, NextRequest, NextResponse } from "next/server";
@@ -1481,7 +1482,6 @@ async function processMessagingEventLocked(
 
         data: {
           lastMessageAt: new Date(),
-          isActive: true,
         },
       });
     }
@@ -1687,6 +1687,9 @@ async function processMessagingEventLocked(
     );
 
     await cancelSmartRemindersForConversation(conversation.id);
+    if (await applyInboundAutomationPreference(conversation.id, messageText)) return;
+    // STOP is sticky. A new inbound message does not silently re-enable automation.
+    if (!conversation.isActive) return;
 
     console.log(
       "Incoming Instagram message saved:",
@@ -1694,6 +1697,30 @@ async function processMessagingEventLocked(
     );
 
     console.log("Incoming message type:", incomingMessageType);
+
+    // Comment Private Replies can only invite a user to DM first. A new DM
+    // with the configured follow-check phrase resumes the pending gate safely.
+    if (messageText?.trim()) {
+      const gate = await prisma.pendingFollowGate.findFirst({
+        where: {
+          instagramAccountId: instagramAccount.id, participantId,
+          status: "PENDING", expiresAt: { gt: new Date() },
+          automation: { triggerType: "COMMENT_KEYWORD",
+            mediaId: { not: "__smartdirect_live_comments_v1__" }, isActive: true },
+        },
+        include: { automation: { select: { followGateButtonText: true } } },
+        orderBy: { createdAt: "desc" },
+      });
+      if (gate && messageText.trim().normalize("NFKC").toLocaleLowerCase("fa-IR") ===
+        (gate.automation.followGateButtonText?.trim() || "بررسی فالو").normalize("NFKC").toLocaleLowerCase("fa-IR")) {
+        await processFollowGatePostback({
+          senderId: participantId,
+          payload: FOLLOW_GATE_PAYLOAD_PREFIX + gate.id,
+          instagramAccount, executionId,
+        });
+        return;
+      }
+    }
 
     // Interactions never fall through to keyword automations: one inbound event, one response.
     if (interaction) {
@@ -1959,8 +1986,6 @@ async function processInstagramStoryReply(
           igUserId: participantId,
 
           lastMessageAt: new Date(),
-
-          isActive: true,
         },
       });
 
@@ -2022,6 +2047,8 @@ async function processInstagramStoryReply(
     });
 
     await cancelSmartRemindersForConversation(conversation.id);
+    if (await applyInboundAutomationPreference(conversation.id, messageText)) return;
+    if (!conversation.isActive) return;
     console.log("Story Reply saved:", savedMessage.id);
 
     // =======================================================
@@ -2395,6 +2422,9 @@ async function sendStoryReplyMessage({
   accessToken: string;
   replyText: string;
 }): Promise<boolean> {
+  if (await getAutomatedMessageBlockReason({
+    instagramAccountId, participantId,
+  })) return false;
   try {
     await instagramApiRequest(`/${igUserId}/messages`, {
       method: "POST",
@@ -2477,6 +2507,9 @@ async function sendFollowGateMessage({
 }): Promise<boolean> {
   const postbackPayload = `${FOLLOW_GATE_PAYLOAD_PREFIX}${pendingGateId}`;
 
+  if (await getAutomatedMessageBlockReason({
+    instagramAccountId: instagramAccount.id, participantId,
+  })) return false;
   try {
     await instagramApiRequest(`/${instagramAccount.igUserId}/messages`, {
       method: "POST",
@@ -2523,6 +2556,9 @@ async function sendDirectInstagramMessage({
   accessToken: string;
   text: string;
 }): Promise<boolean> {
+  if (await getAutomatedMessageBlockReason({
+    instagramAccountId, participantId,
+  })) return false;
   try {
     await instagramApiRequest(`/${igUserId}/messages`, {
       method: "POST",
@@ -3352,8 +3388,6 @@ async function getOrCreateConversation({
         igUserId,
 
         lastMessageAt: new Date(),
-
-        isActive: true,
       },
     });
 
@@ -3826,17 +3860,16 @@ async function processCommentEvent(
         matchedAutomation.followGateText?.trim() ||
         "برای دریافت این محتوا ابتدا پیج ما را فالو کنید.";
 
-      const gateSent = await sendFollowGateMessage({
-        instagramAccount,
-
-        participantId: commenterIgUserId,
-
+      // A public comment is NOT an inbound DM. Only ONE eligible Private Reply
+      // is permitted until the commenter actively sends us a new message.
+      const gateSent = pendingGate.attempts > 0 ? false : await sendPrivateReply({
+        instagramAccountId: instagramAccount.id,
+        igUserId: instagramAccount.igUserId,
+        igCommentId,
         accessToken,
-
-        pendingGateId: pendingGate.id,
-
-        followGateText: gateText,
-        followGateButtonText: matchedAutomation.followGateButtonText?.trim() || "بررسی فالو",
+        replyText: gateText + "\\n\\n" +
+          "پس از فالوکردن، در دایرکت «" +
+          (matchedAutomation.followGateButtonText?.trim() || "بررسی فالو") + "» را بنویسید.",
       });
 
       if (gateSent) {
