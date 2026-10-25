@@ -15,7 +15,7 @@ assert(shell.includes('<DashboardOverview user={user} instagramAccounts={instagr
 // shell skeleton before the destination route's own loading state.
 const dashboardLoading=file("app/dashboard/loading.tsx");
 assert(dashboardLoading.includes("export default function DashboardLoading()") &&
-  /return\\s+null\\s*;/.test(dashboardLoading) &&
+  /return\s+null\s*;/.test(dashboardLoading) &&
   !dashboardLoading.includes("<DashboardHomeSkeleton") &&
   !dashboardLoading.includes('from "next/navigation"') &&
   !dashboardLoading.includes('className="daira-app-shell"'),
