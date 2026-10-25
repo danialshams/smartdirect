@@ -93,7 +93,7 @@ assert(helper.includes("accessToken: string") &&
   !helper.includes("prisma.instagramAccount.findFirst") &&
   !helper.includes("getValidInstagramAccessToken") &&
   mediaProxy.includes("userId: session.user.id") &&
-  mediaProxy.includes("fetchInstagramImageUrl(\n        mediaAccessToken!,"),
+  mediaProxy.includes("fetchInstagramImageUrl(\n        accountId,\n        mediaAccessToken!,"),
   "Profile proxy must reuse its authenticated account token without repeating DB/token lookups.");
 assert(mediaProxy.includes("private, max-age=300, stale-while-revalidate=60") &&
   mediaProxy.includes("isAllowedInstagramHost(targetUrl.hostname)"),
