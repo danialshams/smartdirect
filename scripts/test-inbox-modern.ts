@@ -6,6 +6,22 @@ const component = read("components/dashboard/InstagramInbox.tsx");
 const inbox = read("app/api/instagram/inbox/route.ts");
 
 const readRoute = inbox.slice(inbox.indexOf("export async function GET("), inbox.indexOf("export async function POST("));
+
+const sendRoute = inbox.slice(inbox.indexOf("export async function POST("));
+const ownerCheck = sendRoute.indexOf("const conversation = await prisma.conversation.findFirst");
+const unreadCheck = sendRoute.indexOf("const unreadInbound = await prisma.conversationMessage.findFirst");
+const accessTokenCheck = sendRoute.indexOf("const accessToken = await getValidInstagramAccessToken(account.id)");
+const metaReceipt = sendRoute.indexOf('sender_action: "mark_seen"');
+assert.ok(ownerCheck >= 0 && unreadCheck > ownerCheck && accessTokenCheck > unreadCheck &&
+  metaReceipt > accessTokenCheck &&
+  sendRoute.includes('if (action === "mark_seen") {') &&
+  sendRoute.includes("readAt: null,") &&
+  sendRoute.includes("if (!unreadInbound) {") &&
+  sendRoute.includes("markedSeen: true") &&
+  sendRoute.includes('const lastInbound = action === "mark_seen"') &&
+  sendRoute.includes('direction: "INBOUND",\n            readAt: null,'),
+  "Already read conversations must skip redundant Meta mark_seen after tenant authorization while unread receipts still reach Meta.");
+
 assert.ok(!readRoute.includes("conversationMessage.updateMany"), "Reading conversation must not mark messages read");
 assert.ok(readRoute.includes("const needsMediaRefresh = messagesPage.some(") &&
   readRoute.includes('["IMAGE", "VIDEO", "AUDIO", "STICKER"].includes(message.messageType)') &&
