@@ -160,7 +160,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     let nextKeyword: string | null = null;
     if (requiresKeyword) {
       nextKeyword = keyword !== undefined ? normalizeKeywords(keyword) : normalizeKeywords(existingAutomation.keyword);
-      if (!nextKeyword) return NextResponse.json({ success: false, error: "حداقل یک Keyword معتبر وارد کنید" }, { status: 400 });
+      if (!nextKeyword && !(keyword === undefined && triggerType === undefined && existingAutomation.keywordMatchMode === "CONTAINS_ANY"))
+        return NextResponse.json({ success: false, error: "حداقل یک Keyword معتبر وارد کنید" }, { status: 400 });
     }
 
     const nextMediaId = mediaId !== undefined
