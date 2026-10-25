@@ -64,6 +64,26 @@ export async function PUT(request: NextRequest, { params }: Context) {
   }
 }
 
+export async function PATCH(request:NextRequest,{params}:Context){
+  try{
+    const session=await getServerSession(authOptions);
+    if(!session?.user?.id)return NextResponse.json({success:false,error:"احراز هویت لازم است."},{status:401});
+    const {id}=await params;
+    const rule=await ownedRule(id,session.user.id);
+    if(!rule)return NextResponse.json({success:false,error:"پاسخ لایو پیدا نشد."},{status:404});
+    const body:unknown=await request.json();
+    if(!body||typeof body!=="object"||Array.isArray(body)||typeof (body as {isActive?:unknown}).isActive!=="boolean")
+      return NextResponse.json({success:false,error:"وضعیت نامعتبر است."},{status:400});
+    const isActive=(body as {isActive:boolean}).isActive;
+    const updated=await prisma.automation.update({where:{id:rule.id},data:{isActive,...(isActive?{mediaIds:null}:{})},include:liveReplyInclude});
+    await invalidateAutomationCache(rule.instagramAccountId);
+    return NextResponse.json({success:true,data:displayLiveReply(updated)});
+  }catch(error){
+    console.error("Live rule toggle failed",error);
+    return NextResponse.json({success:false,error:"تغییر وضعیت لایو ناموفق بود."},{status:500});
+  }
+}
+
 export async function DELETE(_request: NextRequest, { params }: Context) {
   try {
     const session = await getServerSession(authOptions);

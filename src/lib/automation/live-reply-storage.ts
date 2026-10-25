@@ -142,11 +142,11 @@ export function displayLiveReply(rule: {
   id: string; instagramAccountId: string; keyword: string | null; title: string | null;
   keywordMatchMode: string; replyText: string | null; commentReplyText: string | null;
   requireFollow: boolean; followGateText: string | null; followGateButtonText: string | null; updatedAt: Date;
-  createdAt: Date; messages: unknown[];
+  createdAt: Date; isActive: boolean; messages: unknown[];
 }) {
   const config = parseLiveConfig(rule.commentReplyText);
   return {
-    id: rule.id, instagramAccountId: rule.instagramAccountId,
+    id: rule.id, instagramAccountId: rule.instagramAccountId, isActive: rule.isActive,
     title: rule.title || "پاسخ لایو",
     keyword: rule.keyword ?? "", matchMode: rule.keywordMatchMode,
     initialText: rule.replyText ?? "", followupKeyword: config.followupKeyword,
