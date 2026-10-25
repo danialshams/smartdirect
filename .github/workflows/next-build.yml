@@ -165,6 +165,22 @@ jobs:
           npx prisma db push
           npx tsx scripts/test-durable-webhook-migration.ts
 
+      - name: Benchmark isolated dashboard CRUD operation timings
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          NODE_ENV: test
+          CRUD_BENCH_SAMPLES: "20"
+        run: npx tsx scripts/benchmark-dashboard-crud-latency.ts
+
+      - name: Archive isolated CRUD operation timings
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-isolated-crud
+          path: performance-results/dashboard-isolated-crud.json
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Test atomic automation response creation and cross-account media references
         env:
           DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
