@@ -1,54 +1,85 @@
 /**
- * Read-only estimate of JS included in Next's initial app route manifest.
- * This is NOT a measurement of real device loading or dynamically imported chunks.
+ * Read-only JavaScript report from Next production build output.
+ * Per-route sizes need a compatible manifest; when Next/Turbopack omits
+ * that manifest, fall back to static client chunk inventory.
+ * Neither estimate is a substitute for real network/browser measurements.
  */
-import { readFileSync, existsSync, statSync, writeFileSync, mkdirSync, appendFileSync } from "node:fs";
-import { join } from "node:path";
-import { gzipSync } from "node:zlib";
+import {readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, appendFileSync} from "node:fs";
+import {join, relative} from "node:path";
+import {gzipSync} from "node:zlib";
 
 const manifestPath = ".next/app-build-manifest.json";
-if (!existsSync(manifestPath)) {
-  console.log("DASHBOARD_BUNDLE_REPORT_SKIPPED: App build manifest is absent.");
-  process.exit(0);
-}
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-if (!manifest.pages || typeof manifest.pages !== "object") {
-  console.log("DASHBOARD_BUNDLE_REPORT_SKIPPED: Unknown manifest structure.");
-  process.exit(0);
-}
-const rows = [];
-for (const [route, assets] of Object.entries(manifest.pages)) {
-  if (!route.startsWith("/dashboard") || !Array.isArray(assets)) continue;
-  const names = [...new Set(assets.filter((asset) => typeof asset === "string" && asset.endsWith(".js")))];
-  let bytes = 0;
-  let gzipBytes = 0;
-  let chunks = 0;
-  for (const asset of names) {
-    const path = join(".next", asset);
-    if (!existsSync(path)) continue;
-    const content = readFileSync(path);
-    bytes += content.length;
-    gzipBytes += gzipSync(content).length;
-    chunks++;
+const root = ".next";
+const report = {method:null, caveat:null, routes:[], chunks:[], totals:null};
+if (existsSync(manifestPath)) {
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  if (manifest.pages && typeof manifest.pages === "object") {
+    report.method = "app-build-manifest";
+    report.caveat = "Manifest-listed entry chunks only, excluding lazily imported assets.";
+    for (const [route, assets] of Object.entries(manifest.pages)) {
+      if (!route.startsWith("/dashboard") || !Array.isArray(assets)) continue;
+      const names = [...new Set(assets.filter(asset => typeof asset === "string" && asset.endsWith(".js")))];
+      let bytes = 0, gzipBytes = 0, chunks = 0;
+      for (const name of names) {
+        const file = join(root, name);
+        if (!existsSync(file)) continue;
+        const data = readFileSync(file);
+        bytes += data.length;
+        gzipBytes += gzipSync(data).length;
+        chunks++;
+      }
+      report.routes.push({route, chunks, bytes, gzipBytes});
+    }
+    report.routes.sort((a, b) => b.gzipBytes - a.gzipBytes);
   }
-  rows.push({ route, chunks, bytes, gzipBytes });
 }
-rows.sort((a, b) => b.gzipBytes - a.gzipBytes);
-mkdirSync("performance-results", { recursive: true });
-const outPath = "performance-results/dashboard-initial-js.json";
-writeFileSync(outPath, JSON.stringify({ description: "Manifest-listed initial JS, not full load or route timings", rows }, null, 2));
-console.log("DASHBOARD_INITIAL_JS_MANIFEST");
-console.table(rows);
+if (report.routes.length === 0) {
+  // Turbopack releases may not emit the traditional per-route manifest.
+  // Report all emitted static client chunks without pretending they are
+  // downloaded on any single route.
+  const staticDir = join(root, "static");
+  if (!existsSync(staticDir)) throw new Error("Build output does not contain .next/static");
+  report.method = "static-client-chunks";
+  report.caveat = "All emitted client JS assets, NOT per-route bundle size and not page transfer size.";
+  const files = [];
+  const visit = dir => {
+    for (const item of readdirSync(dir, {withFileTypes:true})) {
+      const name = join(dir,item.name);
+      if (item.isDirectory()) visit(name);
+      else if (item.isFile() && item.name.endsWith(".js")) files.push(name);
+    }
+  };
+  visit(staticDir);
+  const all = files.map(file => {
+    const data = readFileSync(file);
+    return {file:relative(staticDir,file),bytes:data.length,gzipBytes:gzipSync(data).length};
+  }).sort((a,b)=>b.gzipBytes-a.gzipBytes);
+  report.chunks = all.slice(0,20);
+  report.totals = {
+    jsChunkCount:all.length,
+    rawBytes:all.reduce((sum,row)=>sum+row.bytes,0),
+    gzipBytes:all.reduce((sum,row)=>sum+row.gzipBytes,0)
+  };
+}
+mkdirSync("performance-results",{recursive:true});
+writeFileSync("performance-results/dashboard-initial-js.json",JSON.stringify(report,null,2));
+console.log("DASHBOARD_JS_REPORT_METHOD: "+report.method);
+console.log("DASHBOARD_JS_REPORT_CAVEAT: "+report.caveat);
+if (report.method === "app-build-manifest") console.table(report.routes);
+else {
+  console.log("DASHBOARD_CLIENT_JS_TOTALS: "+JSON.stringify(report.totals));
+  console.table(report.chunks.slice(0,10));
+}
 if (process.env.GITHUB_STEP_SUMMARY) {
-  const lines = [
-    "### Dashboard initial JavaScript manifest (estimate)",
-    "",
-    "| Route | Chunks | Raw bytes | Gzip bytes |",
-    "|---|---:|---:|---:|",
-    ...rows.map((r) => "| " + r.route + " | " + r.chunks + " | " + r.bytes + " | " + r.gzipBytes + " |"),
-    "",
-    "_Excludes lazy chunks and browser/runtime costs; use authenticated benchmark for UX timings._",
-    "",
-  ];
-  appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n"));
+  let lines=["### SmartDirect client JavaScript build inventory","",report.caveat,""];
+  if (report.method === "app-build-manifest") {
+    lines=lines.concat(["| Route | Chunks | Raw bytes | Gzip bytes |","|---|---:|---:|---:|",
+      ...report.routes.map(row=>"| "+row.route+" | "+row.chunks+" | "+row.bytes+" | "+row.gzipBytes+" |")]);
+  } else {
+    lines=lines.concat(["Static JS chunks: "+report.totals.jsChunkCount,
+      "Total JS bytes emitted: "+report.totals.rawBytes,
+      "Total gzip bytes across chunks: "+report.totals.gzipBytes,
+      "","_All chunks across all pages; a browser will fetch only a subset._"]);
+  }
+  appendFileSync(process.env.GITHUB_STEP_SUMMARY,lines.join("\n")+"\n");
 }
