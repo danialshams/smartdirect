@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import {
   AUTOMATION_TRIGGER_TYPES,
   isSupportedAutomationTriggerType,
@@ -201,14 +202,13 @@ main().catch((error) => {
   throw error;
 });
 
-const fs = await import("node:fs");
-const storyApi = fs.readFileSync("app/api/automations/route.ts", "utf8");
-const storyEdit = fs.readFileSync("app/api/automations/[id]/story-edit/route.ts", "utf8");
-const storyActivation = fs.readFileSync("src/lib/automation/story-activation.ts", "utf8");
-const storyPublishing = fs.readFileSync("src/lib/instagram/publishing.ts", "utf8");
-const storyCreation = fs.readFileSync("components/dashboard/AutomationCreationFlow.tsx", "utf8");
-const storyCard = fs.readFileSync("components/dashboard/AutoRepliesManager.tsx", "utf8");
-const storyMigration = fs.readFileSync("prisma/migrations/20261025155000_single_active_story_reply/migration.sql", "utf8");
+const storyApi = readFileSync("app/api/automations/route.ts", "utf8");
+const storyEdit = readFileSync("app/api/automations/[id]/story-edit/route.ts", "utf8");
+const storyActivation = readFileSync("src/lib/automation/story-activation.ts", "utf8");
+const storyPublishing = readFileSync("src/lib/instagram/publishing.ts", "utf8");
+const storyCreation = readFileSync("components/dashboard/AutomationCreationFlow.tsx", "utf8");
+const storyCard = readFileSync("components/dashboard/AutoRepliesManager.tsx", "utf8");
+const storyMigration = readFileSync("prisma/migrations/20261025155000_single_active_story_reply/migration.sql", "utf8");
 assert(storyApi.includes('triggerType === "STORY_REPLY_KEYWORD" ? false : Boolean(isActive)'),
   "New story rules must be disabled until full response save.");
 assert(storyActivation.includes('FOR UPDATE') && storyActivation.includes('isActive: false') &&
