@@ -292,7 +292,9 @@ jobs:
         env:
           DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
           DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
-        run: npx tsx scripts/test-share-mention-account-isolation.ts
+        run: |
+          npx tsx scripts/test-share-mention-account-isolation.ts
+          npx tsx scripts/test-share-mention-compact-list.ts
 
       - name: Test redesigned support center, unread isolation and attachment persistence
         env:

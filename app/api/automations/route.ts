@@ -50,6 +50,27 @@ export async function GET(request: NextRequest) {
     });
     if (!instagramAccount) return NextResponse.json({ success: false, error: "اکانت اینستاگرام پیدا نشد" }, { status: 404 });
 
+    // Share/Mention cards need only their message texts for display/search.
+    // Filter this account's applicable triggers at the database and avoid
+    // loading quick replies, forms, showcases or unrelated automations.
+    if (searchParams.get("view") === "share-mention") {
+      const automations = await prisma.automation.findMany({
+        where: { instagramAccountId, triggerType: { in: ["DM_MEDIA_SHARE", "STORY_MENTION"] } },
+        select: {
+          id: true, instagramAccountId: true, triggerType: true,
+          mediaId: true, mediaIds: true, isActive: true, updatedAt: true,
+          messages: {
+            orderBy: { order: "asc" },
+            select: { messageType: true, text: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      return NextResponse.json({ success: true, data: automations }, {
+        headers: { "Cache-Control": "private, no-store" },
+      });
+    }
+
     // Metadata-only lists avoid loading nested message graphs on navigation.
     if (searchParams.get("view") === "list") {
       const automations = await prisma.automation.findMany({
