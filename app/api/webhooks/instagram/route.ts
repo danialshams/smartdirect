@@ -1686,7 +1686,7 @@ async function processMessagingEventLocked(
     );
 
     await cancelSmartRemindersForConversation(conversation.id);
-    if (await applyInboundAutomationPreference(conversation.id, messageText)) return;
+    if (await applyInboundAutomationPreference(conversation.id, messageText, quickReplyPayload)) return;
     // STOP is sticky. A new inbound message does not silently re-enable automation.
     if (!conversation.isActive) return;
 
