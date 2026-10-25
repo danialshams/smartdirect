@@ -1,5 +1,7 @@
 "use client";
 
+import { useDashboardAccountSelection } from "@/components/dashboard/DashboardAccountContext";
+import { getDashboardListSnapshot, setDashboardListSnapshot } from "@/src/lib/dashboard/list-snapshot-cache";
 import { DashboardLoading } from "@/components/dashboard/DashboardUI"
 import { Input } from "@/components/dashboard/DashboardUI"
 
@@ -423,32 +425,33 @@ function Metric({
 }
 
 export default function InstagramContentAnalytics() {
-    const [
-        accounts,
-        setAccounts,
-    ] = useState<Account[]>([]);
-
-    const [
-        accountId,
-        setAccountId,
-    ] = useState("");
-
-    const [
-        data,
-        setData,
-    ] = useState<AnalyticsData | null>(
-        null,
+    // The protected dashboard layout already loads and authorizes accounts.
+    // Avoid the extra /api/instagram/accounts round trip before analytics.
+    const { accounts: verifiedAccounts, accountId: selectedDashboardAccountId, isReady } = useDashboardAccountSelection();
+    const accounts = useMemo<Account[]>(() => verifiedAccounts.map(account => ({
+        id: account.id,
+        igUserId: account.igUserId,
+        username: account.igUsername,
+        isConnected: account.isConnected,
+    })), [verifiedAccounts]);
+    const [accountId, setAccountId] = useState(() =>
+        selectedDashboardAccountId ?? verifiedAccounts.find(account => account.isConnected)?.id ?? verifiedAccounts[0]?.id ?? ""
     );
+    const loadingAccounts = !isReady;
+    const [reloadVersion, setReloadVersion] = useState(0);
+
+    const [data, setData] = useState<AnalyticsData | null>(() =>
+        accountId ? getDashboardListSnapshot<AnalyticsData>("content-analytics:" + accountId)?.[0] ?? null : null
+    );
+    const [loadedAccountId, setLoadedAccountId] = useState<string | null>(() =>
+        accountId && getDashboardListSnapshot<AnalyticsData>("content-analytics:" + accountId) ? accountId : null
+    );
+    const visibleData = loadedAccountId === accountId ? data : null;
 
     const [
         loading,
         setLoading,
     ] = useState(false);
-
-    const [
-        loadingAccounts,
-        setLoadingAccounts,
-    ] = useState(true);
 
     const [
         error,
@@ -467,83 +470,21 @@ export default function InstagramContentAnalytics() {
         "interactions",
     );
 
-    const loadAccounts =
-        useCallback(
-            async () => {
-                try {
-                    setLoadingAccounts(
-                        true,
-                    );
-
-                    setError("");
-
-                    const response =
-                        await fetch(
-                            "/api/instagram/accounts",
-                            {
-                                cache: "no-store",
-                            },
-                        );
-
-                    const result =
-                        await response.json();
-
-                    if (
-                        !response.ok ||
-                        !result.success
-                    ) {
-                        throw new Error(
-                            result.error ||
-                            result.message ||
-                            "خطا در دریافت اکانت‌ها",
-                        );
-                    }
-
-                    const list =
-                        Array.isArray(
-                            result.accounts,
-                        )
-                            ? (result.accounts as Account[])
-                            : [];
-
-                    setAccounts(list);
-
-                    const connected =
-                        list.find(
-                            (
-                                item,
-                            ) =>
-                                item.isConnected,
-                        );
-
-                    setAccountId(
-                        connected?.id ||
-                        list[0]?.id ||
-                        "",
-                    );
-                } catch (error) {
-                    setAccounts([]);
-
-                    setAccountId("");
-
-                    setError(
-                        error instanceof Error
-                            ? error.message
-                            : "خطا در دریافت اکانت‌ها",
-                    );
-                } finally {
-                    setLoadingAccounts(
-                        false,
-                    );
-                }
-            },
-            [],
-        );
+    // A global account switch should still update this page; selecting a page
+    // locally keeps its previous behavior and does not mutate the global choice.
+    useEffect(() => {
+        const validId = selectedDashboardAccountId &&
+            accounts.some(account => account.id === selectedDashboardAccountId)
+            ? selectedDashboardAccountId
+            : accounts.find(account => account.isConnected)?.id ?? accounts[0]?.id ?? "";
+        setAccountId(validId);
+    }, [selectedDashboardAccountId, accounts]);
 
     const load =
         useCallback(
             async (
                 selectedAccountId: string,
+                signal: AbortSignal,
             ) => {
                 if (
                     !selectedAccountId
@@ -551,11 +492,14 @@ export default function InstagramContentAnalytics() {
                     return;
                 }
 
-                try {
-                    setLoading(true);
-
+                const cached = getDashboardListSnapshot<AnalyticsData>("content-analytics:" + selectedAccountId)?.[0] ?? null;
+                if (!signal.aborted) {
+                    setData(cached);
+                    setLoadedAccountId(cached ? selectedAccountId : null);
+                    setLoading(!cached);
                     setError("");
-
+                }
+                try {
                     const response =
                         await fetch(
                             `/api/instagram/content-analytics?instagramAccountId=${encodeURIComponent(
@@ -563,6 +507,7 @@ export default function InstagramContentAnalytics() {
                             )}`,
                             {
                                 cache: "no-store",
+                                signal,
                             },
                         );
 
@@ -580,11 +525,17 @@ export default function InstagramContentAnalytics() {
                         );
                     }
 
-                    setData(
-                        result as AnalyticsData,
-                    );
+                    if (!signal.aborted) {
+                        setDashboardListSnapshot("content-analytics:" + selectedAccountId, [result as AnalyticsData]);
+                        setData(result as AnalyticsData);
+                        setLoadedAccountId(selectedAccountId);
+                    }
                 } catch (error) {
-                    setData(null);
+                    if (signal.aborted) return;
+                    if (!cached) {
+                        setData(null);
+                        setLoadedAccountId(null);
+                    }
 
                     setError(
                         error instanceof Error
@@ -592,47 +543,27 @@ export default function InstagramContentAnalytics() {
                             : "خطا در دریافت عملکرد محتوا",
                     );
                 } finally {
-                    setLoading(false);
+                    if (!signal.aborted) setLoading(false);
                 }
             },
             [],
         );
 
     useEffect(() => {
-        const timer = window.setTimeout(() => {
-            void loadAccounts();
-        }, 0);
-
-        return () => {
-            window.clearTimeout(timer);
-        };
-    }, [loadAccounts]);
-
-    useEffect(() => {
-        if (!accountId) {
-            return;
-        }
-
-        const timer = window.setTimeout(() => {
-            void load(accountId);
-        }, 0);
-
-        return () => {
-            window.clearTimeout(timer);
-        };
-    }, [
-        accountId,
-        load,
-    ]);
+        if (!accountId || !isReady) return;
+        const controller = new AbortController();
+        void load(accountId, controller.signal);
+        return () => controller.abort();
+    }, [accountId, isReady, load, reloadVersion]);
 
     const filteredContent =
         useMemo(() => {
-            if (!data) {
+            if (!visibleData) {
                 return [];
             }
 
             let result = [
-                ...data.content,
+                ...visibleData.content,
             ];
 
             if (
@@ -710,13 +641,13 @@ export default function InstagramContentAnalytics() {
 
             return result;
         }, [
-            data,
+            visibleData,
             filter,
             sort,
         ]);
 
     const summary =
-        data?.summary;
+        visibleData?.summary;
 
     return (
         <section
@@ -843,15 +774,7 @@ export default function InstagramContentAnalytics() {
 
                     <Button
                         type="button"
-                        onClick={() => {
-                            if (
-                                accountId
-                            ) {
-                                void load(
-                                    accountId,
-                                );
-                            }
-                        }}
+                        onClick={() => setReloadVersion(value => value + 1)}
                         className="inline-flex shrink-0 items-center gap-1.5 font-medium hover:underline"
                     >
                         <RefreshCw
@@ -864,7 +787,7 @@ export default function InstagramContentAnalytics() {
             )}
 
             {loading &&
-                !data && (
+                !visibleData && (
                     <DashboardLoading label="در حال دریافت عملکرد محتوا..." className="min-h-48" />
                 )}
 
@@ -886,7 +809,7 @@ export default function InstagramContentAnalytics() {
                     </div>
                 )}
 
-            {data &&
+            {visibleData &&
                 summary && (
                     <>
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

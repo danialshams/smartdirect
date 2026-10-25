@@ -15,6 +15,23 @@ const publish = file("components/dashboard/publishing/PublishingDashboardV2.tsx"
 const create = file("components/dashboard/AutomationCreationFlow.tsx");
 const batches = file("src/lib/automation/batch-messages.ts");
 
+const contentAnalytics = file("components/dashboard/InstagramContentAnalytics.tsx");
+assert(contentAnalytics.includes("useDashboardAccountSelection()") &&
+  contentAnalytics.includes("username: account.igUsername") &&
+  !contentAnalytics.includes('fetch(\n                            "/api/instagram/accounts"') &&
+  !contentAnalytics.includes("loadAccounts()") &&
+  contentAnalytics.includes("signal: AbortSignal") &&
+  contentAnalytics.includes("const controller = new AbortController()") &&
+  contentAnalytics.includes("if (!signal.aborted) {") &&
+  contentAnalytics.includes("setData(result as AnalyticsData)") &&
+  contentAnalytics.includes("return () => controller.abort()") &&
+  contentAnalytics.includes('getDashboardListSnapshot<AnalyticsData>("content-analytics:" + accountId)') &&
+  contentAnalytics.includes('setDashboardListSnapshot("content-analytics:" + selectedAccountId, [result as AnalyticsData])') &&
+  contentAnalytics.includes("const visibleData = loadedAccountId === accountId ? data : null") &&
+  contentAnalytics.includes("if (!cached) {") &&
+  contentAnalytics.includes("setLoading(!cached)"),
+  "Content analytics should use layout-verified account data and abort stale responses rather than blocking on a duplicate accounts API.");
+
 assert(accountContext.includes("export function useDashboardAccounts()") &&
   shell.includes("accounts={instagramAccounts}") &&
   !accountWrapper.includes('fetch("/api/instagram/accounts"'),
