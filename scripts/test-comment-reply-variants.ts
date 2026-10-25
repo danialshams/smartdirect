@@ -20,6 +20,28 @@ assert.throws(() => validatePublicCommentReplies(["a","b","c".repeat(2001)]));
 assert.equal(validatePublicCommentReplies(["a","b","c","d","e"]).length, 5);
 const flow = readFileSync("components/dashboard/AutomationCreationFlow.tsx", "utf8");
 assert(flow.includes("CommentReplyVariantsField") && flow.includes("commentReplyVariants: validatePublicCommentReplies(commentReplies)"));
+assert(flow.includes("readPublicCommentReplies(item.commentReplyText).length > 0") &&
+  flow.includes("item.sendDm !== false && normalizeMessages(item.messages).length > 0") &&
+  flow.includes('item.mediaId !== "__smartdirect_live_comments_v1__"') &&
+  flow.includes("setAutomationTemplates(existingAutomations.filter(") &&
+  flow.includes("setLoadingResources(false);"),
+  "Previous comment rules with one historical comment reply or a usable DM must remain selectable without relaxing new-rule 3-reply validation");
+assert(flow.includes("Promise.allSettled([") &&
+  flow.includes("const automationResult = await readAccountAutomations(account.id)") &&
+  flow.includes("triggerType === \"STORY_REPLY_KEYWORD\"") &&
+  flow.includes("controller.abort()"),
+  "Previous-response readiness must not wait for showcase/form/saved-response reads");
+const create=readFileSync("components/dashboard/CommentAutomationCreateConfigure.tsx","utf8");
+assert(create.includes("useDashboardAccountSelection()") &&
+  !create.includes('fetch("/api/instagram/accounts"') &&
+  create.includes("mediaValidation?.key !== validationKey") &&
+  create.includes("controller.abort()"),
+  "Comment editor must reuse layout-verified accounts, but retain account-scoped deep-link media verification");
+const landing=readFileSync("components/dashboard/CommentAutomationLanding.tsx","utf8");
+assert(landing.includes('<Link') &&
+  landing.includes('href="/dashboard/comment-automation/new"') &&
+  !landing.includes("router.push("),
+  "Comment-create navigation must be prefetched by Next Link rather than imperatively pushed");
 const editor = readFileSync("components/dashboard/MediaAutomationEditor.tsx","utf8");
 assert(editor.includes("CommentReplyVariantsField") && editor.includes("commentReplyVariants: validatePublicCommentReplies(commentReplies)"));
 const webhook=readFileSync("app/api/webhooks/instagram/route.ts","utf8");
