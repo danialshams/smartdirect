@@ -80,6 +80,26 @@ assert(!audit.includes("request.postData()") &&
   !audit.includes("await page.screenshot("),
   "Performance reports must not accidentally persist request bodies or screenshots of private user content");
 
+const appConfig=file("next.config.ts");
+const browserAudit=file("scripts/benchmark-full-dashboard.mjs");
+const dashboardHeader=file("components/dashboard/DashboardHeader.tsx");
+assert(appConfig.includes('source: "/dashboard-art/:path*"') &&
+  appConfig.includes('source: "/daira-header-logo-original.png"') &&
+  (appConfig.match(/public, max-age=300, s-maxage=3600, stale-while-revalidate=86400/g) || []).length===2 &&
+  dashboardHeader.includes('src="/daira-header-logo-original.png"') &&
+  dashboardHeader.includes("unoptimized priority"),
+  "Reuse public artwork and the exact approved unoptimized logo across pages, never private account media.");
+assert(!appConfig.includes('source: "/api/') &&
+  !appConfig.includes('source: "/api/instagram/media-proxy'),
+  "Public asset cache headers must never cover private APIs or Meta media.");
+assert(browserAudit.includes("const artContext = await browser.newContext(") &&
+  browserAudit.includes("const cold = await loadPublicArtwork()") &&
+  browserAudit.includes("const warm = await loadPublicArtwork()") &&
+  browserAudit.includes("artworkCache,") &&
+  browserAudit.includes("Intercepting dashboard API requests disables Chromium HTTP cache") &&
+  !browserAudit.includes("artContext.route("),
+  "Public artwork cache must be measured without route interception, separate from protected route navigation.");
+
 console.log("DASHBOARD_COMPREHENSIVE_PERFORMANCE_GUARDS_OK",{
   allDashboardRoutes:pages.length,staticRoutes:staticPages.length,dynamicRoutes:dynamicPages.length,
 });
