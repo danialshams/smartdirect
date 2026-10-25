@@ -173,6 +173,10 @@ variables. The test uses full Chromium with a retained authenticated session,
 and discovers pages from `app/dashboard/**/page.tsx`. At time of authoring,
 there are **37** dashboard pages: **29 static**, **8 parameterized**. It
 samples the 29 static pages on **mobile and desktop** for **cold/warm repeats**.
+It also discovers authorized detail URLs from same-origin anchors in rendered
+lists and measures available parameterized routes using the same method, with
+all raw entity IDs kept out of saved reports. Any of the eight detail route
+templates with no accessible fixture link remains explicitly unobserved.
 For each route it logs TTFB, first visible main, FCP, observed LCP, bounded
 session-window CLS, API request group counts and total image transfer bytes.
 Failures, redirects and admin-inaccessible pages are recorded rather than
@@ -184,8 +188,8 @@ The audit blocks non-GET same-origin API requests to minimize mutations. Some
 GET endpoints synchronize Meta data or refresh caches, so it is not guaranteed
 to be strictly side-effect-free on the server. **Do not describe this audit
 as end-to-end operational coverage:** it does not measure authenticated
-create/edit/delete/send/publish/upload operations, and cannot automatically
-visit `[id]` pages without account-specific fixtures. The script and route
+create/edit/delete/send/publish/upload operations, and only visits `[id]`
+pages for which links are discoverable in the authenticated test account. The script and route
 inventory are regression-tested in GitHub Actions, but real browser readings
 require an authenticated test session that is not available in CI.
 
