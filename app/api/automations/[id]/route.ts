@@ -142,7 +142,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         data: {
           mediaId: trigger === "STORY_REPLY_KEYWORD" ? targetIds[0] : (allIds.length === 1 ? allIds[0] : null),
           mediaIds: trigger !== "STORY_REPLY_KEYWORD" ? allIds.join(",") : null,
-          // Reusing a saved response is a new activity and should update its list position/date.
+          // "Create" using a previous reply activates the original rule across its linked content.
+          ...(body.activateOnLink === true ? { isActive: true } : {}),
           updatedAt: new Date(),
         },
         include: automationInclude,

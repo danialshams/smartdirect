@@ -658,7 +658,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         const response=await fetch("/api/automations/"+encodeURIComponent(previous.id),{
           method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},
           body:JSON.stringify(triggerType==="COMMENT_KEYWORD"
-            ? {linkMediaOnly:true,triggerType,mediaIds:targetMediaIds,mediaId:targetMediaIds.length===1?targetMediaIds[0]:null}
+            ? {linkMediaOnly:true,activateOnLink:true,triggerType,mediaIds:targetMediaIds,mediaId:targetMediaIds.length===1?targetMediaIds[0]:null}
             : {isActive:true}),
         });
         const result=await response.json();

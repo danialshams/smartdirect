@@ -128,7 +128,7 @@ export default function ShareMentionEditor({id}:{id?:string}){
      if(!previous)throw new Error("پاسخ قبلی انتخاب نشده است.");
      const attach=await fetch("/api/automations/"+encodeURIComponent(previous.id),{
        method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},
-       body:JSON.stringify({linkMediaOnly:true,triggerType:"DM_MEDIA_SHARE",
+       body:JSON.stringify({linkMediaOnly:true,activateOnLink:true,triggerType:"DM_MEDIA_SHARE",
          mediaIds:selected,mediaId:selected.length===1?selected[0]:null}),
      });
      const result=await attach.json();

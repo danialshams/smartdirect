@@ -293,3 +293,9 @@ assert(commentEditor.includes("Edits to an automation apply to every post/reel u
   "Editing a connected comment automation must update every attached post and reel.");
 assert(storyCron.includes('!automation.mediaId.startsWith("pending:")'),
   "Scheduled story automations must not activate before their Instagram publication.");
+
+const linkRoute=readFileSync("app/api/automations/[id]/route.ts","utf8");
+const shareReuse=readFileSync("components/dashboard/ShareMentionEditor.tsx","utf8");
+assert(linkRoute.includes("body.activateOnLink === true") &&
+  commentEditor.includes("activateOnLink:true") && shareReuse.includes("activateOnLink:true"),
+  "Create from previous reply must activate the existing linked rule rather than leaving a newly attached reply inactive.");
