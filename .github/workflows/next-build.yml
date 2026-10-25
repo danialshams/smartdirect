@@ -179,6 +179,15 @@ jobs:
           NODE_ENV: test
         run: npx tsx scripts/test-meta-account-safety.ts
 
+      - name: Verify Persian automation STOP Quick Reply and manual-support separation
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          REDIS_DRIVER: redis
+          REDIS_URL: redis://127.0.0.1:6379
+          NODE_ENV: test
+        run: npx tsx scripts/test-automation-stop-quick-reply.ts
+
       - name: Benchmark isolated dashboard CRUD operation timings
         env:
           DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
