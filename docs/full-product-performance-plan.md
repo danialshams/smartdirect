@@ -121,6 +121,9 @@ The measured portions include:
   query, reply, detail, close and reopen
 - Publishing: create draft with linked media metadata, list with media, edit
   draft, remove draft
+- Inbox: create disposable conversations with inbound/outbound text messages,
+  list with latest message and unread counts, open latest messages, search,
+  mark inbound read, and delete disposable conversations
 
 Each operation is sampled 20 times, with p50/p95/min/max reported in
 `performance-results/dashboard-isolated-crud.json` and GitHub Actions job
@@ -137,3 +140,5 @@ features are at maximum speed" would be unsupported by this benchmark alone.
 The per-action measurements provide a consistent baseline for subsequent
 server query changes and help decide where further optimization is justified
 rather than guessing from UI loading indicators.
+
+Inbox measurements cover only the local PostgreSQL portion; they do not include Meta messaging windows, token retrieval, media URL refresh, WebSocket/SSE, Redis handoff, browser rendering or user-visible send acknowledgements.
