@@ -18,7 +18,7 @@ const walk=(root,extensions)=> {
   return paths;
 };
 const normalize=p=>p.split(sep).join("/");
-const pageFiles=walk("app/dashboard",["/page.tsx"]).sort();
+const pageFiles=walk("app/dashboard",["page.tsx"]).sort();
 pageFiles.push("app/dashboard/page.tsx");
 const pages=[...new Set(pageFiles)].sort().map(file=>{
   const route="/"+normalize(file).replace(/^app\//,"").replace(/\/page\.tsx$/,"");
@@ -27,13 +27,13 @@ const pages=[...new Set(pageFiles)].sort().map(file=>{
   const source=readFileSync(file,"utf8");
   return {route,area,dynamic,hasClientDirective:source.includes('"use client"')||source.includes("'use client'")};
 });
-const apiFiles=walk("app/api",["/route.ts"]).sort();
+const apiFiles=walk("app/api",["route.ts"]).sort();
 const actionMethods=["POST","PUT","PATCH","DELETE"];
 const endpoints=apiFiles.map(file=>{
   const source=readFileSync(file,"utf8");
   const methods=["GET",...actionMethods].filter(method=>
-    new RegExp("export\\\\s+(?:async\\\\s+)?function\\\\s+"+method+"\\\\s*\\\\(").test(source) ||
-    new RegExp("export\\\\s+const\\\\s+"+method+"\\\\s*=").test(source)
+    new RegExp("export\\s+(?:async\\s+)?function\\s+"+method+"\\s*\\(").test(source) ||
+    new RegExp("export\\s+const\\s+"+method+"\\s*=").test(source)
   );
   return {path:"/"+normalize(file).replace(/^app\//,"").replace(/\/route\.ts$/,""),
     methods,mutatingMethods:methods.filter(m=>actionMethods.includes(m))};
