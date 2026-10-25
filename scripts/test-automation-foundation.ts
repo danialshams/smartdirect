@@ -215,7 +215,7 @@ assert(storyActivation.includes('FOR UPDATE') && storyActivation.includes('isAct
   storyActivation.includes('isActive: true') && storyActivation.includes('tx.$queryRawUnsafe'),
   "Activation of a new story reply must serialize sibling deactivation per account.");
 assert(storyCreation.includes("setStoryReplacement(") && storyCreation.includes("confirmedStoryReplacement") &&
-  storyCreation.includes("تأیید و ایجاد") && storyCreation.includes('body: JSON.stringify({ isActive: true })'),
+  storyCreation.includes("تأیید و ایجاد") && storyCreation.includes('JSON.stringify({isActive:true})'),
   "New story response must ask before replacing active keywords and activate only when fully saved.");
 assert(storyPublishing.includes('await activateStoryReply(job.storyReplyAutomationId, job.instagramAccountId)') &&
   storyPublishing.includes('await activateStoryReply(automation.id, instagramAccountId)'),
