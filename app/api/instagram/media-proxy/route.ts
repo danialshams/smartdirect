@@ -66,8 +66,8 @@ async function fetchInstagramMessageMediaUrl(
 }
 
 async function fetchInstagramImageUrl(
-  // The GET handler has already confirmed this account belongs to the user,
-  // is connected and retrieved its valid Meta token.
+  // Keep account identity for diagnostics; the owner/token are verified in GET.
+  accountId: string,
   accessToken: string,
   participantId: string | null,
 ) {
@@ -169,6 +169,7 @@ export async function GET(request: NextRequest) {
       }
     } else if (accountId) {
       const freshImageUrl = await fetchInstagramImageUrl(
+        accountId,
         mediaAccessToken!,
         participantId || null,
       );
