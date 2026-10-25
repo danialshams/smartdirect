@@ -25,6 +25,13 @@ assert.deepEqual(getDashboardListSnapshot("qa:26",now),[26]);
 clearDashboardListSnapshot("qa:26");
 assert.equal(getDashboardListSnapshot("qa:26",now),null,"Explicit invalidation");
 
+setDashboardListSnapshot("support-tickets:ci-user-a@example.invalid",[{userId:"a",tickets:[{id:"ticket-a"}]}],now);
+setDashboardListSnapshot("support-tickets:ci-user-b@example.invalid",[{userId:"b",tickets:[{id:"ticket-b"}]}],now);
+assert.equal(getDashboardListSnapshot<{userId:string}>("support-tickets:ci-user-a@example.invalid",now)?.[0]?.userId,"a");
+assert.equal(getDashboardListSnapshot<{userId:string}>("support-tickets:ci-user-b@example.invalid",now)?.[0]?.userId,"b");
+assert.equal(getDashboardListSnapshot("support-tickets:ci-user-c@example.invalid",now),null,
+  "Private support list must never be reused for another authenticated user.");
+
 const file=(p:string)=>readFileSync(p,"utf8");
 for(const path of [
   "components/dashboard/DirectAutomationList.tsx",
