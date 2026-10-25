@@ -1021,8 +1021,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
   async function createAutomation(): Promise<string> {
     if (!selectedAccountId) throw new Error("اکانت فعال Instagram پیدا نشد.");
-    const source=replyMode==="existing"?previousRules.find(x=>x.id===previousId):null;
-    if(replyMode==="existing"&&!source)throw new Error("یک پاسخ قبلی انتخاب کن.");
+    const source=type!=="STORY"&&replyMode==="existing"?previousRules.find(x=>x.id===previousId):null;
+    if(type!=="STORY"&&replyMode==="existing"&&!source)throw new Error("یک پاسخ قبلی انتخاب کن.");
     if(source){
       const response=await fetch("/api/automations/"+encodeURIComponent(source.id),{
         method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},
@@ -1229,7 +1229,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         })
       });
       const result = await response.json();
-      if (!response.ok) { if (automationId && replyMode!=="existing") await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
+      if (!response.ok) { if (automationId && (type==="STORY"||replyMode!=="existing")) await fetch(`/api/automations/${automationId}`, { method: "DELETE" }).catch(() => undefined); throw new Error(result.message || "ساخت Publishing Job ناموفق بود."); }
       const job = result.data as Job;
       if (publishNow) {
         setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
@@ -1314,10 +1314,10 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   const canUpload = type === "CAROUSEL" ? uploadedMedia.length + media.length < 10 : uploadedMedia.length + media.length < 1;
   const hasDraft = uploadedMedia.length > 0 || media.length > 0 || Boolean(caption.trim()) || automationEnabled || (type === "REEL" && JSON.stringify(reelOptions) !== JSON.stringify(DEFAULT_REEL_OPTIONS));
   const canSubmitMedia = uploadedMedia.length >= (type === "CAROUSEL" ? 2 : 1) && !uploading && !media.length;
-  const canSubmitAutomation = !automationEnabled || (replyMode==="existing"
-    ? Boolean(previousId)
-    : type === "STORY"
+  const canSubmitAutomation = !automationEnabled || (type === "STORY"
       ? storyResponseSaved && !storyResponseEditing && !storyResponseDirty
+    : replyMode==="existing"
+      ? Boolean(previousId)
       : automationKeywords.length > 0 && publishingCommentReplies.length >= 3 && publishingCommentReplies.length <= 5 && publishingCommentReplies.every(text=>text.trim().length>0&&text.trim().length<=2000) && new Set(publishingCommentReplies.map(text=>text.trim())).size===publishingCommentReplies.length);
   function changeContentType(nextType: PublishType) {
     if (nextType === type || uploading || reelCoverUploading || publishing) return;
@@ -1567,7 +1567,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
 
             <section aria-label="پاسخ خودکار" className="space-y-3">
               <PublishingSectionGuide number={type==="STORY"?2:3} title="پاسخ خودکار (اختیاری)">
-                {type==="STORY"?"اگر می‌خواهی به ریپلای این استوری پاسخ داده شود، این بخش را فعال کن.":"اگر می‌خواهی به کامنت‌ها و دایرکت‌ها پاسخ داده شود، این بخش را فعال کن."}
+                {type==="STORY"?"پاسخ استوری برای تمام استوری‌های پیج فعال است. پاسخ جدید هنگام انتشار موفق، جای پاسخ فعال قبلی را می‌گیرد.":"اگر می‌خواهی به کامنت‌ها و دایرکت‌ها پاسخ داده شود، این بخش را فعال کن."}
               </PublishingSectionGuide>
               <div className="rounded-[22px] border border-[var(--daira-publishing-border)] bg-white p-4 shadow-sm sm:p-5">
                 <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3">
@@ -1576,7 +1576,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <input type="checkbox" role="switch" checked={automationEnabled} disabled={publishing} onChange={e=>handleAutomationChoice(e.target.checked)} className="daira-form-switch shrink-0 -scale-x-100"/>
                 </label>
               </div>
-              {automationEnabled && <div className="mx-auto w-full max-w-2xl space-y-3">
+              {automationEnabled && type!=="STORY" && <div className="mx-auto w-full max-w-2xl space-y-3">
                 <ResponseModeSwitcher value={replyMode} existingAvailable={previousRules.length>0}
                   loading={previousLoading} disabled={publishing} onChange={v=>{setReplyMode(v);setPreviousId("");}}/>
                 {replyMode==="existing" && <div className="space-y-3">
@@ -1586,7 +1586,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                   <p className="text-xs text-[var(--daira-text-secondary)]">پاسخ انتخاب‌شده روی این محتوا اعمال می‌شود و از فهرست پاسخ‌های موجود قابل ویرایش است.</p>
                 </div>}
               </div>}
-              {automationEnabled && replyMode==="new" && (type==="STORY" ? <div className="mx-auto w-full max-w-2xl">
+              {automationEnabled && (type==="STORY"||replyMode==="new") && (type==="STORY" ? <div className="mx-auto w-full max-w-2xl">
                 
 
                 <section className="space-y-5 rounded-2xl border border-[var(--daira-border)] bg-white p-4 shadow-sm sm:p-6">
