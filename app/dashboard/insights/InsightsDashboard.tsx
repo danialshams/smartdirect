@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ElementType, ty
 import { createPortal } from "react-dom";
 import { dairaPalette } from "../../../lib/design-system/palette";
 import { Calendar } from "@/components/dashboard/DashboardUI";
+import { useDashboardAccountSelection } from "@/components/dashboard/DashboardAccountContext";
 
 type Preset = 7 | 30 | 90;
 type Metric = "reach" | "views" | "interactions";
@@ -304,6 +305,7 @@ function Stat({ label, value, icon: Icon }: { label: string; value: number | nul
 }
 
 export default function InsightsDashboard() {
+  const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
   const [accountId, setAccountId] = useState("");
   const [preset, setPreset] = useState<Preset>(30);
   const [metric, setMetric] = useState<Metric>("reach");
@@ -332,28 +334,20 @@ export default function InsightsDashboard() {
   const lastSync = useRef<{ id: string; at: number } | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const response = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include" });
-        const json = await response.json();
-        if (!response.ok || !json.success)
-          throw new Error(json.error || "دریافت پیج فعال ناموفق بود.");
-        const accounts = (Array.isArray(json.accounts) ? json.accounts : []) as Array<{id:string;isConnected:boolean}>;
-        const current = accounts.find((account) => account.isConnected);
-        if (!cancelled) {
-          if (current) setAccountId(current.id);
-          else { setError("هیچ پیج اینستاگرامی متصل نیست."); setLoading(false); }
-        }
-      } catch (requestError) {
-        if (!cancelled) {
-          setError(requestError instanceof Error ? requestError.message : "دریافت پیج فعال ناموفق بود.");
-          setLoading(false);
-        }
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+    if (!dashboardReady) return;
+    const selected = dashboardAccounts.find(item => item.id === dashboardAccountId && item.isConnected);
+    // Reuse the selected account loaded by the authenticated dashboard layout.
+    // A changed account must not briefly show a previous account's insights.
+    setData(null);
+    if (selected) {
+      setAccountId(selected.id);
+      setError("");
+    } else {
+      setAccountId("");
+      setError("هیچ پیج اینستاگرامی متصل نیست.");
+      setLoading(false);
+    }
+  }, [dashboardReady, dashboardAccountId, dashboardAccounts]);
 
 
   const fetchInsights = useCallback(async (
