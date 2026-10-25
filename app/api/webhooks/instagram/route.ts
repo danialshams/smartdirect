@@ -1277,7 +1277,6 @@ async function processMessagingEventLocked(
               where: { id: conversation.id },
               data: {
                 lastMessageAt: new Date(),
-                isActive: true,
               },
             });
           }
@@ -3867,7 +3866,7 @@ async function processCommentEvent(
         igUserId: instagramAccount.igUserId,
         igCommentId,
         accessToken,
-        replyText: gateText + "\\n\\n" +
+        replyText: gateText + "\n\n" +
           "پس از فالوکردن، در دایرکت «" +
           (matchedAutomation.followGateButtonText?.trim() || "بررسی فالو") + "» را بنویسید.",
       });
