@@ -97,6 +97,9 @@ export async function claimFirstAutomationStopOption(
   if (!conversation) return null;
   const { getRedisClient } = await import("@/lib/redis/client");
   const redis = getRedisClient();
+  const seenKey = "daira:stop-option-confirmed:" + conversation.id;
+  // Redis is only a fast read-through cache. The permanent source is AuditLog.
+  if (await redis.exists(seenKey)) return null;
   const key = "daira:stop-option-lease:" + conversation.id;
   const locked = await redis.set(key, "1", { nx: true, ex: 90 });
   if (locked !== "OK") return null;
@@ -106,6 +109,7 @@ export async function claimFirstAutomationStopOption(
       select: { id: true },
     });
     if (prior) {
+      await redis.set(seenKey, "1", { ex: 30 * 24 * 60 * 60 });
       await redis.del(key);
       return null;
     }
@@ -115,6 +119,7 @@ export async function claimFirstAutomationStopOption(
           await prisma.auditLog.create({ data: {
             action: STOP_OFFER_ACTION, targetType: "CONVERSATION", targetId: conversation.id,
           } });
+          await redis.set(seenKey, "1", { ex: 30 * 24 * 60 * 60 });
         }
       } catch (error) {
         // The Instagram send has already succeeded. Do not retry it for a log failure.
