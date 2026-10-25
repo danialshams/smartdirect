@@ -16,6 +16,7 @@ import { dairaPalette } from "../../lib/design-system/palette";
 import ContentSelectionDialog from "./ContentSelectionDialog";
 import GlassModalPresence from "./GlassModalPresence";
 import { useDashboardBackNavigation } from "./DashboardBackNavigationContext";
+import { readAccountAutomations } from "@/src/lib/dashboard/automation-read";
 
 type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
@@ -242,12 +243,13 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
         const [showcaseResponse, formResponse, automationResponse, savedResponse] = await Promise.all([
           fetch("/api/showcases?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
           fetch("/api/forms?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
-          fetch("/api/automations?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
+          readAccountAutomations(account.id),
           fetch("/api/saved-responses?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }),
         ]);
-        const [showcaseResult, formResult, automationResult, savedResult] = await Promise.all([
-          showcaseResponse.json(), formResponse.json(), automationResponse.json(), savedResponse.json(),
+        const [showcaseResult, formResult, savedResult] = await Promise.all([
+          showcaseResponse.json(), formResponse.json(), savedResponse.json(),
         ]);
+        const automationResult = automationResponse;
         if (!cancelled) {
           setShowcases(Array.isArray(showcaseResult) ? showcaseResult : Array.isArray(showcaseResult?.data) ? showcaseResult.data : []);
           setForms(Array.isArray(formResult) ? formResult : Array.isArray(formResult?.data) ? formResult.data : []);
@@ -459,7 +461,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     const mediaEndpoint = triggerType === "COMMENT_KEYWORD" ? "/api/instagram/media?instagramAccountId=" : "/api/instagram/stories?instagramAccountId=";
     void Promise.all([
       fetch(mediaEndpoint + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }).then((response) => response.json()),
-      fetch("/api/automations?instagramAccountId=" + encodeURIComponent(account.id), { cache: "no-store", credentials: "include" }).then((response) => response.json()),
+      readAccountAutomations(account.id),
     ])
       .then(([mediaResult, automationResult]) => {
         if (cancelled) return;
