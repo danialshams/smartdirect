@@ -85,4 +85,18 @@ assert(automationDetailApi.includes('const needsStoryActivation = nextTriggerTyp
   automationDetailApi.includes('? await prisma.automation.findUniqueOrThrow({ where: { id }, include: automationInclude })') &&
   automationDetailApi.includes(': updated;'),
   "Regular automation edits must return the updated graph without a redundant Prisma read; story activation still needs its final read.");
+// Cached profile images still require per-request ownership checks, but
+// the already verified account/token must be reused inside the image resolver.
+const mediaProxy = file("app/api/instagram/media-proxy/route.ts");
+const helper = mediaProxy.split("async function fetchInstagramImageUrl(")[1]?.split("export async function GET")[0] || "";
+assert(helper.includes("accessToken: string") &&
+  !helper.includes("prisma.instagramAccount.findFirst") &&
+  !helper.includes("getValidInstagramAccessToken") &&
+  mediaProxy.includes("userId: session.user.id") &&
+  mediaProxy.includes("fetchInstagramImageUrl(\n        mediaAccessToken!,"),
+  "Profile proxy must reuse its authenticated account token without repeating DB/token lookups.");
+assert(mediaProxy.includes("private, max-age=300, stale-while-revalidate=60") &&
+  mediaProxy.includes("isAllowedInstagramHost(targetUrl.hostname)"),
+  "Private image cache and strict allowlist must remain unchanged.");
+
 console.log("DASHBOARD_PERFORMANCE_REGRESSION_OK");
