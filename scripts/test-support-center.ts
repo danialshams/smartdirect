@@ -29,7 +29,26 @@ async function main() {
     assert.equal(marked.count, 1);
     assert.equal(await prisma.ticketMessage.count({ where: unread }), 0);
     assert.equal((await prisma.ticketMessage.findUnique({ where: { id: reply.id } }))?.senderUserId, agent.id);
+    // The initial ticket read PATCH is unnecessary if every support message
+    // already has readAt. Verify that the database projection exposes it and
+    // the UI checks unread replies, rather than any historical agent reply.
+    const unreadDetail = await prisma.ticket.findFirst({
+      where: { id: ticket.id, userId: owner.id },
+      select: { messages: { where: { senderUserId: agent.id }, select: { readAt: true } } },
+    });
+    assert(unreadDetail?.messages.some(message => message.readAt === null) === false,
+      "Previously read agent messages must not be marked read again.");
+    const detailApi = source("app/api/dashboard/tickets/[id]/route.ts");
+    const detailClient = source("components/dashboard/SupportTicketDetailClient.tsx");
+    assert(detailApi.includes("senderUserId: true, readAt: true, createdAt: true") &&
+      detailClient.includes("message.senderUserId !== data.userId && message.readAt === null"),
+      "Support detail must check readAt before issuing a read-receipt PATCH.");
     const list = source("components/dashboard/SupportTicketsClient.tsx");
+    assert(list.includes("inFlightSignal.current === currentSignal") &&
+      list.includes("pendingRefresh.current = true") &&
+      list.includes("void refreshTickets(currentSignal)") &&
+      list.includes("controller.abort()"),
+      "Support ticket list refreshes must coalesce concurrent SSE/focus reads without dropping updates.");
     assert.equal((list.match(/href="\/dashboard\/tickets\/new"/g) || []).length, 1, "Exactly one new ticket CTA");
     assert(list.includes('value: "unread"') && list.includes("unreadCount"), "Unread conversation filter missing");
     const newForm = source("components/dashboard/SupportTicketNewClient.tsx");
