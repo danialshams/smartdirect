@@ -91,9 +91,6 @@ export async function getOrSetCachedJson<T>(
   if (pending) return pending as Promise<T>;
 
   const load = (async () => {
-    // A sibling request might have populated Redis while we checked it.
-    const recentlyCached = await getCachedJson<T>(key);
-    if (recentlyCached !== null) return recentlyCached;
     const value = await factory();
     await setCachedJson(key, value, ttlSeconds);
     return value;

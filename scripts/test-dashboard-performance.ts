@@ -43,8 +43,11 @@ assert(insights.includes('const historyUrl =') &&
   insights.includes('void syncPromise.then(async syncWarning =>'),
   "Analytics history must load independently of the slow Meta sync, then revalidate silently.");
 assert(inboxApi.includes('const freshConversations = visibleConversations;') &&
-  !inboxApi.includes('const freshConversations = await prisma.conversation.findMany'),
-  "Inbox lists must not repeat an expensive query for the same 50 conversations.");
+  !inboxApi.includes('const freshConversations = await prisma.conversation.findMany') &&
+  inboxApi.includes('const [unread, lastInboundRows, handoffMap] = await Promise.all(['),
+  "Inbox lists must avoid duplicate queries and execute independent lookups concurrently.");
+assert(automationApi.includes('select: { messageType: true }'),
+  "Metadata-only DM list must keep its response-type search without nested response graphs.");
 assert(redis.includes('const pendingLoads = new Map') &&
   redis.includes('const pending = pendingLoads.get(key);'),
   "Redis cache misses must coalesce inside each process.");

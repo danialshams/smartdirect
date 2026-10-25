@@ -633,7 +633,9 @@ export async function GET(request: NextRequest) {
     const visibleConversations = conversations.slice(0, 50);
     const conversationIds = visibleConversations.map((item) => item.id);
 
-    const unread = await prisma.conversationMessage.groupBy({
+    // Independent DB/Redis reads share the same critical path to the inbox.
+    const [unread, lastInboundRows, handoffMap] = await Promise.all([
+      prisma.conversationMessage.groupBy({
       by: ["conversationId"],
       where: {
         conversationId: {
@@ -645,13 +647,8 @@ export async function GET(request: NextRequest) {
       _count: {
         _all: true,
       },
-    });
-
-    const unreadMap = new Map(
-      unread.map((item) => [item.conversationId, item._count._all]),
-    );
-
-    const lastInboundRows = conversationIds.length
+    }),
+      conversationIds.length
       ? await prisma.conversationMessage.findMany({
           where: {
             conversationId: {
@@ -668,13 +665,18 @@ export async function GET(request: NextRequest) {
             createdAt: true,
           },
         })
-      : [];
+      : [],
+      getHandoffStates(conversationIds),
+    ]);
+
+    const unreadMap = new Map(
+      unread.map((item) => [item.conversationId, item._count._all]),
+    );
 
     const lastInboundMap = new Map(
       lastInboundRows.map((item) => [item.conversationId, item.createdAt]),
     );
 
-    const handoffMap = await getHandoffStates(conversationIds);
     // The initial list already contains the latest message and count.
     // Re-querying all 50 conversations duplicates the most expensive query
     // and delays every inbox navigation without changing the response shape.

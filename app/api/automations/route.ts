@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
           id: true, instagramAccountId: true, triggerType: true,
           mediaId: true, mediaIds: true, keyword: true, keywordMatchMode: true,
           commentReplyText: true, isActive: true, createdAt: true, updatedAt: true,
+          messages: { take: 1, orderBy: { order: "asc" }, select: { messageType: true } },
           messages: { orderBy: { order: "asc" }, take: 1, select: { messageType: true } },
         },
         orderBy: { createdAt: "desc" },
