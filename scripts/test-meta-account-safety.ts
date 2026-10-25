@@ -15,9 +15,9 @@ import {
 async function main() {
   assert.equal(getInboundAutomationPreference("STOP"), "STOP");
   assert.equal(getInboundAutomationPreference("دیگه پیام نده"), "STOP");
-  assert.equal(getInboundAutomationPreference("توقف پیام‌های خودکار"), "STOP");
+  assert.equal(getInboundAutomationPreference("توقف پیام‌های خودکار"), "AUTO_STOP");
   assert.equal(getInboundAutomationPreference("start"), "START");
-  assert.equal(getInboundAutomationPreference("فعال‌سازی پاسخ خودکار"), "START");
+  assert.equal(getInboundAutomationPreference("فعال‌سازی پاسخ خودکار"), "AUTO_START");
   assert.equal(getInboundAutomationPreference("قیمت"), null);
   const now = new Date("2026-10-26T12:00:00Z");
   const recent = new Date(now.getTime() - 60 * 60 * 1000);
@@ -54,7 +54,8 @@ async function main() {
   assert(webhook.includes("FOLLOW_GATE_PAYLOAD_PREFIX + gate.id") &&
     webhook.includes('source: "UNKNOWN_POSTBACK"'),
     "Follow-up must be resumed only after an explicit, persisted inbound DM or postback");
-  assert((webhook.match(/applyInboundAutomationPreference\(conversation\.id, messageText\)/g) || []).length === 2,
+  assert(webhook.includes("applyInboundAutomationPreference(conversation.id, messageText, quickReplyPayload)") &&
+    webhook.includes("applyInboundAutomationPreference(conversation.id, messageText)"),
     "Normal inbound DMs and Story replies must respect STOP and START");
   assert(engine.includes('if (policyBlock) return {') &&
     !engine.includes("update: {\n      isActive: true,\n      igUserId: input.igUserId"),
@@ -63,8 +64,8 @@ async function main() {
     sender.includes("reserveRecipientAutomatedMessageBudget({") &&
     sender.includes("RECIPIENT_AUTOMATION_BUDGET_EXCEEDED"),
     "Shared sender must enforce recipient opt-out, window and burst protection");
-  assert(inbox.includes('action !== "mark_seen" && !conversation.isActive'),
-    "Inbox manual send should respect opted-out recipients");
+  assert(inbox.includes('action !== "mark_seen" && await isManualMessagingOptedOut(conversation.id)'),
+    "Inbox human operator can message when bot paused, but not when recipient opts out of all contact");
   assert(client.includes('"client_secret", "appsecret_proof", "code"') &&
     client.includes("paramNames: Object.keys(params).sort()"),
     "Never leak OAuth secrets or auth codes in Graph debug/error logs");
