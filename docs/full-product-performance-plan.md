@@ -142,3 +142,55 @@ server query changes and help decide where further optimization is justified
 rather than guessing from UI loading indicators.
 
 Inbox measurements cover only the local PostgreSQL portion; they do not include Meta messaging windows, token retrieval, media URL refresh, WebSocket/SSE, Redis handoff, browser rendering or user-visible send acknowledgements.
+
+
+## Consolidated dashboard bundle and full static-route audit
+
+The dashboard's shared shell now loads Home-only counters, cards and artwork
+through a dynamic split rather than including DashboardOverview as a direct
+shared import on every other dashboard page. The Home JSX props, artwork,
+Liquid Glass presentation and existing loading skeleton remain unchanged.
+Do not infer actual transfer savings without comparing client JS manifests
+or captured browser transfers; the CI initial JS report is a build inventory.
+
+The comment automation listing requests
+`/api/instagram/publishing?instagramAccountId=...&view=automation-cards`,
+which returns only the publishing fields used for card rendering, including
+linked automation IDs, media ID, keywords, caption and thumbnail candidates.
+Ordinary publishing pages continue to receive full job/media/account graphs.
+Account authorization, PUBLISHED remote validation and listing order remain.
+
+The authenticated profile, media and Insights history API routes select only
+the account columns they actually use. They still validate that the connected
+account belongs to the current user. This avoids loading Meta access-token
+columns on read-only views that do not use them.
+
+### All-route browser audit
+
+Run `node scripts/benchmark-full-dashboard.mjs` with the already-existing
+`SMARTDIRECT_BASE_URL` and local `SMARTDIRECT_STORAGE_STATE` environment
+variables. The test uses full Chromium with a retained authenticated session,
+and discovers pages from `app/dashboard/**/page.tsx`. At time of authoring,
+there are **37** dashboard pages: **29 static**, **8 parameterized**. It
+samples the 29 static pages on **mobile and desktop** for **cold/warm repeats**.
+For each route it logs TTFB, first visible main, FCP, observed LCP, bounded
+session-window CLS, API request group counts and total image transfer bytes.
+Failures, redirects and admin-inaccessible pages are recorded rather than
+halting the audit. Saved JSON under `performance-results/` excludes raw
+request URLs/query parameters, auth headers, cookies, response bodies,
+user identifiers, and screenshots.
+
+The audit blocks non-GET same-origin API requests to minimize mutations. Some
+GET endpoints synchronize Meta data or refresh caches, so it is not guaranteed
+to be strictly side-effect-free on the server. **Do not describe this audit
+as end-to-end operational coverage:** it does not measure authenticated
+create/edit/delete/send/publish/upload operations, and cannot automatically
+visit `[id]` pages without account-specific fixtures. The script and route
+inventory are regression-tested in GitHub Actions, but real browser readings
+require an authenticated test session that is not available in CI.
+
+**Closure criteria for the broader optimization project remain open** until
+the authenticated test session captures full-route results, dynamic detail
+routes, cold-start outliers, CLS, actual button-to-confirmation latency and
+Meta/media operations. Successful CI and local database CRUD metrics are
+necessary but do not prove maximum user-perceived speed.
