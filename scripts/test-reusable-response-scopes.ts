@@ -285,3 +285,11 @@ assert(!nestedForm.includes("<ReusableResponseLibrary") && nestedForm.includes('
   "Nested branches must edit their own independent content without a shared response picker.");
 assert(library.includes('mode !== "existing"'), "Nested reply lists must fetch lazily, not on every mount.");
 console.log("REUSABLE_RESPONSES_SCOPED_EDIT_AND_NAME_TESTS_OK");
+
+const commentEditor=readFileSync("components/dashboard/AutomationCreationFlow.tsx","utf8");
+const storyCron=readFileSync("app/api/cron/cleanup-story-automations/route.ts","utf8");
+assert(commentEditor.includes("Edits to an automation apply to every post/reel using its response.") &&
+  !commentEditor.includes("editingMediaId ? [editingMediaId]"),
+  "Editing a connected comment automation must update every attached post and reel.");
+assert(storyCron.includes('!automation.mediaId.startsWith("pending:")'),
+  "Scheduled story automations must not activate before their Instagram publication.");

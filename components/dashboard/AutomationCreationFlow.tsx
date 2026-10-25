@@ -148,8 +148,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
   // while another effect hydrates form fields.
   const initialEditState = useMemo(() => {
     if (!editAutomation) return null;
-    // The list opens one media-specific edit, not a bulk edit of every linked post.
-    const mediaIds = editingMediaId ? [editingMediaId] : Array.from(new Set([
+    // Edits to an automation apply to every post/reel using its response.
+    const mediaIds = Array.from(new Set([
       ...(editAutomation.mediaId ? [editAutomation.mediaId] : []),
       ...(editAutomation.mediaIds || "").split(",").map((value) => value.trim()).filter(Boolean),
     ]));
