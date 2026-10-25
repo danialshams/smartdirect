@@ -7,7 +7,9 @@ _Last reviewed: 2026-10-26. This checklist supplements Meta's current documentat
 - Official Instagram OAuth and only the permissions required by currently enabled product features. Never collect Instagram account passwords or simulate device/browser sessions.
 - Account-scoped distributed token-bucket rate limits, per-account adaptive concurrency/circuit breaker, and Meta 429/5xx backoff. `content_publishing_limit` remains authoritative; never treat generic usage headers as a guaranteed publishing quota.
 - Durable webhook idempotency, account-and-recipient conversation locks, and automated message idempotency.
-- An explicit customer DM containing one of the documented STOP phrases deactivates that conversation's automations without affecting any other account/customer. An explicit START reenables it. Merely sending another message does not silently opt them back in.
+- A single Persian «توقف پاسخ خودکار» Quick Reply is offered on the first compatible normal automated text DM in a conversation, while preserving configured customer buttons. It does not appear on comment-triggered Private Replies or full quick-reply sets (13 max). Instagram Web clients may not display it; manual Persian phrases still work.
+- «توقف پاسخ خودکار» pauses **automation only**; an operator can still reply inside Meta's normal permitted messaging window. Explicit «فعال‌سازی پاسخ خودکار» reenables the bot. Merely sending another message never resets the pause.
+- «دیگه پیام نده» / STOP is a full do-not-contact command that also blocks human replies until the recipient explicitly sends START / «شروع مجدد پیام». These choices are account-and-recipient scoped.
 - Central outbound automation adapter blocks STOP recipients and rejects ordinary automated DMs without an inbound message from the recipient in the prior 24 hours. `HUMAN_AGENT` is not used to extend automated replies.
 - Product-level per-recipient burst cap of 20 automated outbound messages per 10 minutes, across workers and automation types via Redis. **This is an internal anti-abuse bound, not Meta's official limit.** Monitor legitimate user impact before retuning it.
 - Existing automated Smart Reminders are also constrained to standard 24-hour window with a five-minute margin, skip after the conversation changes, and honor conversation activity/handoff state.
@@ -17,9 +19,9 @@ _Last reviewed: 2026-10-26. This checklist supplements Meta's current documentat
 
 ## Product behavior and tradeoffs
 
-- When a recipient opts out, all automated DM/Private Reply sends stop, including from newly created rules, remounts and delayed jobs. Support staff see a refusal to send even manually until that recipient sends START.
-- STOP/START are exact, normalized user messages. Treat these as service commands; do not match arbitrary sentences containing the words.
-- `Conversation.isActive` is used as the durable opt-out switch (there is no schema migration). Existing code paths must never set it back to true on every inbound message or outgoing echo. New code should check it and honor explicit START.
+- When a recipient pauses automation, all automated DM/Private Reply sends stop, including delayed jobs. Human Inbox replies remain possible where Meta allows them. A **full** do-not-contact command separately blocks manual/API sends until explicit restoration.
+- Automation-pause and full-contact commands are exact, normalized Persian/English service messages; the reserved STOP quick-reply payload is recognized even if no customer automation matches. Do not match sentences merely containing the words.
+- `Conversation.isActive` is the durable **automation** pause, while existing PostgreSQL AuditLog records full-contact stop/resume and the one-time offered button. No Prisma migration was needed. Do not reset `isActive` on every inbound message or outgoing echo. Full no-contact opt-outs cannot be reset by automation-only START.
 - Human operators should be able to explain why a message was suppressed, without claiming it was sent.
 - Meta's 24-hour standard messaging window is independent of the special one-time Private Reply permission for comments. Neither opens an unlimited DM conversation.
 - Do not use randomness, proxies, account rotation or artificial human-like typing to evade anti-spam detection.
