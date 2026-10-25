@@ -4,8 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Headset, MessageCircle, Plus, RefreshCw, ArrowLeft, Inbox, CheckCheck } from "lucide-react";
 import { SUPPORT_STATUS, supportDate, supportNumber } from "./support-ui";
+import { useSupportOwnerKey } from "./SupportNotifications";
+import { getDashboardListSnapshot, setDashboardListSnapshot } from "@/src/lib/dashboard/list-snapshot-cache";
 
 type Ticket = { id: string; subject: string; status: string; category: string; updatedAt: string; unreadCount: number; messages: { body: string; senderUserId: string }[] };
+type SupportCachedList = { userId: string; tickets: Ticket[] };
 type Filter = "all" | "unread" | "active" | "closed";
 const filters: { value: Filter; label: string }[] = [
   { value: "all", label: "همه" }, { value: "unread", label: "خوانده‌نشده" },
@@ -13,9 +16,13 @@ const filters: { value: Filter; label: string }[] = [
 ];
 
 export default function SupportTicketsClient() {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [userId, setUserId] = useState("");
-  const [loading, setLoading] = useState(true);
+  const ownerKey = useSupportOwnerKey();
+  const listKey = ownerKey ? "support-tickets:" + ownerKey : null;
+  const readSnapshot = () => listKey ? getDashboardListSnapshot<SupportCachedList>(listKey)?.[0] : null;
+  const [tickets, setTickets] = useState<Ticket[]>(() => readSnapshot()?.tickets ?? []);
+  const [userId, setUserId] = useState(() => readSnapshot()?.userId ?? "");
+  const [loadedFor, setLoadedFor] = useState<string | null>(() => readSnapshot() ? listKey : null);
+  const [loading, setLoading] = useState(() => !readSnapshot());
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const activeController = useRef<AbortController | null>(null);
@@ -36,7 +43,15 @@ export default function SupportTicketsClient() {
       const response = await fetch("/api/dashboard/tickets", { cache: "no-store", credentials: "include", signal: currentSignal });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "خطا در دریافت درخواست‌ها");
-      if (!currentSignal.aborted) { setTickets(data.data || []); setUserId(data.userId || ""); setError(""); }
+      if (!currentSignal.aborted) {
+        const rows = (Array.isArray(data.data) ? data.data : []) as Ticket[];
+        const currentUserId = typeof data.userId === "string" ? data.userId : "";
+        setTickets(rows);
+        setUserId(currentUserId);
+        setLoadedFor(listKey);
+        if (listKey && currentUserId) setDashboardListSnapshot<SupportCachedList>(listKey, [{ userId: currentUserId, tickets: rows }]);
+        setError("");
+      }
     } catch (err) {
       if (!currentSignal.aborted) setError(err instanceof Error ? err.message : "ارتباط با سرور برقرار نشد.");
     } finally {
@@ -53,12 +68,24 @@ export default function SupportTicketsClient() {
         }
       }
     }
-  }, []);
+  }, [listKey]);
   useEffect(() => {
     const controller = new AbortController();
     activeController.current = controller;
     pendingRefresh.current = false;
-    void load(controller.signal, true);
+    const cached = listKey ? getDashboardListSnapshot<SupportCachedList>(listKey)?.[0] : null;
+    if (cached) {
+      setTickets(cached.tickets);
+      setUserId(cached.userId);
+      setLoadedFor(listKey);
+      setLoading(false);
+    } else {
+      setTickets([]);
+      setUserId("");
+      setLoadedFor(null);
+      setLoading(true);
+    }
+    void load(controller.signal, !cached);
     const onChange = () => { if (document.visibilityState === "visible") void load(controller.signal); };
     window.addEventListener("support:changed", onChange);
     const visibility = () => { if (document.visibilityState === "visible") void load(controller.signal); };
@@ -69,7 +96,7 @@ export default function SupportTicketsClient() {
       window.removeEventListener("support:changed", onChange);
       document.removeEventListener("visibilitychange", visibility);
     };
-  }, [load]);
+  }, [load, listKey]);
   const shown = useMemo(() => tickets.filter(ticket =>
     filter === "unread" ? ticket.unreadCount > 0 :
     filter === "active" ? !["CLOSED", "RESOLVED"].includes(ticket.status) :
@@ -90,7 +117,7 @@ export default function SupportTicketsClient() {
         {item.label}{item.value === "unread" && unreadTickets > 0 && <span className="daira-support__filter-count">{supportNumber(unreadTickets)}</span>}
       </button>)}
     </div>
-    {loading ? <div className="daira-support__list" role="status" aria-label="در حال دریافت گفتگوها">
+    {loading || (Boolean(listKey) && loadedFor !== listKey && !error) ? <div className="daira-support__list" role="status" aria-label="در حال دریافت گفتگوها">
       {Array.from({ length: 4 }, (_, i) => <div key={i} className="daira-support__ticket is-skeleton"><span className="daira-support__avatar daira-support__skeleton"/><div className="daira-support__ticket-main"><i className="daira-support__skeleton w-65"/><i className="daira-support__skeleton w-85"/><i className="daira-support__skeleton w-45"/></div></div>)}
     </div> : error ? <div className="daira-support__empty daira-empty-state"><RefreshCw size={28}/><strong>دریافت گفتگوها ناموفق بود</strong><p>{error}</p><button className="daira-support__secondary" onClick={() => void load()}>تلاش دوباره</button></div> :
       shown.length ? <div className="daira-support__list">

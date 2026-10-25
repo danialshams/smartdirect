@@ -48,7 +48,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
     <DashboardAccountProvider accountId={initialAccountId} accountIds={instagramAccounts.filter((account) => account.isConnected).map((account) => account.id)} accounts={instagramAccounts}>
     <DashboardBackNavigationProvider>
     <DashboardTheme>
-    <SupportNotifications>
+    <SupportNotifications userEmail={user.email}>
       <div dir="rtl" className={`daira-app-shell${isAutomationCreateFlow ? " daira-app-shell--automation-flow" : ""}`}>
         <div className="daira-header-backdrop daira-header-backdrop--liquid" aria-hidden="true" />
         <DashboardHeader instagramAccounts={instagramAccounts} showBackButton={!isHome} />

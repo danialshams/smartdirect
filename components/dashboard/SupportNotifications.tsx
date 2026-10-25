@@ -10,12 +10,16 @@ type Latest = { id: string; ticketId: string; subject: string; body: string; cre
 type Summary = { unreadCount: number; latestUnread: Latest | null };
 type Notice = { count: number; item: Latest | null; initial: boolean };
 const Context = createContext(0);
+// Scoped to the authenticated dashboard user; never use Instagram account
+// selection as a cache key for private support conversations.
+const SupportOwnerContext = createContext<string | null>(null);
+export function useSupportOwnerKey() { return useContext(SupportOwnerContext); }
 export function SupportUnreadBadge() {
   const unread = useContext(Context);
   return unread ? <span className="daira-support-nav-badge" aria-label={supportNumber(unread) + " پیام خوانده‌نشده"}>{unread > 99 ? "+۹۹" : supportNumber(unread)}</span> : null;
 }
 
-export default function SupportNotifications({ children }: { children: ReactNode }) {
+export default function SupportNotifications({ children, userEmail }: { children: ReactNode; userEmail: string }) {
   const pathname = usePathname();
   const pathRef = useRef(pathname);
   const lastId = useRef<string | null>(null);
@@ -96,7 +100,7 @@ export default function SupportNotifications({ children }: { children: ReactNode
     return () => clearTimeout(timeout);
   }, [notice]);
   const destination = notice?.item ? "/dashboard/tickets/" + encodeURIComponent(notice.item.ticketId) : "/dashboard/tickets";
-  return <Context.Provider value={count}>
+  return <SupportOwnerContext.Provider value={userEmail}><Context.Provider value={count}>
     {children}
     {notice && <div className="daira-support-toast-wrap" dir="rtl" role="status" aria-live="polite">
       <div className="daira-support-toast">
@@ -109,5 +113,5 @@ export default function SupportNotifications({ children }: { children: ReactNode
         <button type="button" onClick={() => setNotice(null)} className="daira-support-toast__close" aria-label="بستن اعلان"><X size={18}/></button>
       </div>
     </div>}
-  </Context.Provider>;
+  </Context.Provider></SupportOwnerContext.Provider>;
 }

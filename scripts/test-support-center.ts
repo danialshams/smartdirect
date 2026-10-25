@@ -62,7 +62,14 @@ async function main() {
     const global = source("components/dashboard/SupportNotifications.tsx");
     assert(global.includes("SupportUnreadBadge") && global.includes("setTimeout") && global.includes("EventSource"), "Global notifications missing");
     const shell = source("components/dashboard/DahboardShell.tsx");
-    assert(shell.includes("<SupportUnreadBadge />") && shell.includes("<SupportNotifications>"), "Global shell must include notifications");
+    assert(shell.includes("<SupportUnreadBadge />") && shell.includes("<SupportNotifications userEmail={user.email}>"), "Global shell must scope support notifications to signed-in user");
+    assert(global.includes("SupportOwnerContext.Provider value={userEmail}") && global.includes("useSupportOwnerKey"),
+      "Support user key must come from the authenticated dashboard shell.");
+    assert(list.includes('ownerKey ? "support-tickets:" + ownerKey : null') &&
+      list.includes("getDashboardListSnapshot<SupportCachedList>(listKey)") &&
+      list.includes("setDashboardListSnapshot<SupportCachedList>(listKey, [{ userId: currentUserId, tickets: rows }])") &&
+      list.includes("void load(controller.signal, !cached)"),
+      "Support tickets must restore only the signed-in user's snapshot and revalidate on revisit.");
     const migration = source("prisma/migrations/20261023220000_support_center_notifications/migration.sql");
     assert(migration.includes('"readAt"') && migration.includes('"TicketAttachment"'), "Read receipts and attachment migration missing");
     console.log("DAIRA_SUPPORT_CENTER_OK");
