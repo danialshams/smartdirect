@@ -53,7 +53,7 @@ assert(redis.includes('const pendingLoads = new Map') &&
   "Redis cache misses must coalesce inside each process.");
 // Each support SSE event must only refresh the visible support-ticket list once.
 assert(polling.includes('source.addEventListener("support", () => { window.dispatchEvent(new Event("support:changed")); void load("event"); });') &&
-  polling.includes('reason !== "event" && !first && latest && latest.id !== original'),
+  polling.includes('reason !== "event" && !first && latest && latest.id !== original') &&
   polling.includes("pendingRealtimeRefresh.current = true") &&
   polling.includes('void load("event");'),
   "SSE notifications must be single-dispatch and queue a summary recheck when the first is in-flight.");
