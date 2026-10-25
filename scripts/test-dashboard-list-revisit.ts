@@ -30,6 +30,7 @@ for(const path of [
   "components/dashboard/DirectAutomationList.tsx",
   "components/dashboard/SmartRemindersList.tsx",
   "components/dashboard/ShareMentionManager.tsx",
+  "components/dashboard/LiveAutomationList.tsx",
 ]){
   const content=file(path);
   assert(content.includes("getDashboardListSnapshot"),path+" must restore on revisit");
@@ -38,6 +39,8 @@ for(const path of [
     path+" API requests must revalidate against the server");
   assert(content.includes("controller.abort()"),path+" must cancel old account reads");
 }
+const live=file("components/dashboard/LiveAutomationList.tsx");
+assert(live.includes("setSubscription(null)"),"Live subscription authorization must be refreshed when account changes");
 const flow=file("components/dashboard/AutomationCreationFlow.tsx");
 const helper=file("src/lib/dashboard/automation-read.ts");
 assert(flow.split("readAccountAutomations(account.id)").length===3,
