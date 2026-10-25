@@ -226,3 +226,13 @@ assert(storyMigration.includes('ROW_NUMBER() OVER') && storyMigration.includes('
   "Existing accounts must retain a single active story reply.");
 assert(storyCard.includes('absolute left-3 top-3') && storyCard.includes('dateTime={item.date || undefined}'),
   "Reply cards must show their dates in the upper-left.");
+
+const publishingUI = readFileSync("components/dashboard/publishing/PublishingDashboardV2.tsx", "utf8");
+assert(publishingUI.includes('type!=="STORY" &&') &&
+  publishingUI.includes('confirmedStoryReplacement = false') &&
+  publishingUI.includes('createJob(publishNow,true)') &&
+  publishingUI.includes('در زمان انتشار موفق استوری زمان‌بندی‌شده'),
+  "Publishing must avoid prior-story selection and confirm replacing global responses.");
+assert(storyCreation.includes("let activationRequested = false") &&
+  storyCreation.includes("if(saved?.isActive){setCompleted(true);return;}"),
+  "Connection loss after an already-successful activation must not delete the active replacement.");

@@ -716,6 +716,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     setSaving(true);
     setError("");
     let createdAutomationId: string | null = null;
+    let activationRequested = false;
     try {
       const preparedPrimary = { ...currentMessage };
       const response = await fetch("/api/automations", {
@@ -806,6 +807,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       }
 
       if(triggerType==="STORY_REPLY_KEYWORD"){
+        activationRequested = true;
         const activated=await fetch("/api/automations/"+encodeURIComponent(automationId),{
           method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({isActive:true}),
         });
@@ -814,9 +816,26 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       }
       setCompleted(true);
     } catch (e) {
-      if(createdAutomationId)await fetch("/api/automations/"+encodeURIComponent(createdAutomationId),{
-        method:"DELETE",credentials:"include",
-      }).catch(()=>undefined);
+      let canRemoveFailedDraft = !activationRequested;
+      if (createdAutomationId && activationRequested) {
+        // A connection drop might hide a successful activation response.
+        // Never delete an active replacement without first checking the server.
+        try {
+          const check=await fetch("/api/automations?instagramAccountId="+encodeURIComponent(account.id),{
+            cache:"no-store",credentials:"include",
+          });
+          const data=await check.json();
+          if(!check.ok||!data.success||!Array.isArray(data.data))
+            throw new Error("وضعیت نامشخص");
+          const saved=data.data.find((item:{id:string;isActive:boolean})=>item.id===createdAutomationId);
+          if(saved?.isActive){setCompleted(true);return;}
+          canRemoveFailedDraft = true;
+        }catch { canRemoveFailedDraft = false; }
+      }
+      if(createdAutomationId && canRemoveFailedDraft)await fetch(
+        "/api/automations/"+encodeURIComponent(createdAutomationId),
+        {method:"DELETE",credentials:"include"},
+      ).catch(()=>undefined);
       setError(e instanceof Error ? e.message : "ذخیره پاسخ خودکار ناموفق بود.");
     } finally {
       setSaving(false);
@@ -1392,9 +1411,9 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           {storyReplacement && <div role="presentation" className="daira-glass-overlay fixed inset-0 z-[9998] flex items-center justify-center p-4 backdrop-blur-md"
             onMouseDown={event=>{if(event.target===event.currentTarget&&!saving)setStoryReplacement(null);}}>
             <section role="alertdialog" aria-modal="true" aria-labelledby="story-replacement-title"
-              className="daira-glass-modal w-full max-w-md rounded-3xl border border-[var(--daira-glass-rim)] p-5 shadow-2xl">
+              className="daira-glass-modal w-full max-w-md rounded-3xl border border-[var(--daira-glass-rim)] bg-[var(--daira-glass-raised)] p-5 shadow-2xl">
               <h2 id="story-replacement-title" className="text-base font-extrabold text-[var(--daira-heading)]">فعال‌سازی پاسخ جدید استوری</h2>
-              <p className="mt-3 text-sm leading-7 text-[var(--daira-text)]">پاسخ {storyReplacement.keywords.length>1?"‌های":"‌"} فعلی با کلمات زیر فعال است:</p>
+              <p className="mt-3 text-sm leading-7 text-[var(--daira-text)]">{storyReplacement.keywords.length>1?"پاسخ‌های فعلی":"پاسخ فعلی"} با کلمات زیر فعال است:</p>
               <div className="mt-3 space-y-2">{storyReplacement.keywords.map((value,index)=><p key={index}
                 className="rounded-xl border border-[var(--daira-glass-rim)] bg-[var(--daira-glass-raised)] px-3 py-2 text-sm font-semibold text-[var(--daira-heading)]">{value}</p>)}</div>
               <p className="mt-3 text-sm leading-7 text-[var(--daira-text)]">با تأیید، پاسخ جدید ابتدا ذخیره می‌شود و پس از ذخیرهٔ موفق، پاسخ قبلی غیرفعال خواهد شد؛ حذف نمی‌شود.</p>
