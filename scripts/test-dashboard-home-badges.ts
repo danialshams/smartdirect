@@ -5,7 +5,7 @@ const overview = readFileSync("components/dashboard/DashboardOverview.tsx", "utf
 const skeleton = readFileSync("components/dashboard/DashboardHomeSkeleton.tsx", "utf8");
 const styles = readFileSync("app/globals.css", "utf8");
 
-assert(overview.includes('className={"daira-home__quick-card daira-home__quick-card--" + tool.key + (status || (summaryStatus === "loading" && tool.key !== "insights")'), "Inbox and publishing cards must reserve a badge slot");
+assert(overview.includes('className={"daira-home__quick-card daira-home__quick-card--" + tool.key + (status || (visibleSummaryStatus === "loading" && tool.key !== "insights")'), "Inbox and publishing cards must reserve a badge slot");
 assert(overview.includes('<span>{status.text}</span>'), "Status text should be a separate child of the badge");
 const descriptionEnd = overview.indexOf('<span className="daira-home__quick-desc">{tool.description}</span>');
 const badgeStart = overview.indexOf('className={"daira-home__status daira-home__status--"');
