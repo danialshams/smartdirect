@@ -51,23 +51,17 @@ export default function DashboardHomeSkeleton() {
       <section className="daira-home__section">
         <SkeletonHeading title="پاسخ‌های هوشمند" withStatus />
         <div className="daira-home__tool-grid daira-home__tool-grid--automation">
-          {Array.from({ length: 4 }, (_, index) => <SkeletonCard key={index} kind="tool" index={index} />)}
+          {Array.from({ length: 8 }, (_, index) => <SkeletonCard key={index} kind="tool" index={index} />)}
         </div>
       </section>
 
       <section className="daira-home__section">
-        <SkeletonHeading title="دسترسی سریع" />
+        <SkeletonHeading title="مدیریت پیج" />
         <div className="daira-home__quick-grid">
           {Array.from({ length: 3 }, (_, index) => <SkeletonCard key={index} kind="quick" index={index} featured={index === 0} />)}
         </div>
       </section>
 
-      <section className="daira-home__section">
-        <SkeletonHeading title="ابزارهای تکمیلی" />
-        <div className="daira-home__tool-grid daira-home__tool-grid--extra">
-          {Array.from({ length: 3 }, (_, index) => <SkeletonCard key={index} kind="tool" index={index} />)}
-        </div>
-      </section>
     </div>
   );
 }
