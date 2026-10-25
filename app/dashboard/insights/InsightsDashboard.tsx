@@ -375,7 +375,9 @@ export default function InsightsDashboard() {
     // Begin Meta synchronization without placing it ahead of cached DB history
     // on the critical path to the first usable chart.
     let syncPromise: Promise<string> | null = null;
-    if (!lastSync.current || lastSync.current.id !== id || Date.now() - lastSync.current.at > 5 * 60 * 1000) {
+    // An account/range snapshot under 90 seconds old does not need another
+    // costly seven-day Meta synchronization on a quick revisit.
+    if (!cached && (!lastSync.current || lastSync.current.id !== id || Date.now() - lastSync.current.at > 5 * 60 * 1000)) {
       lastSync.current = { id, at: Date.now() };
       syncPromise = (async () => {
         try {
