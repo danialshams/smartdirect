@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Bot, Camera, CheckCircle2, Clock3, LayoutGrid, MessageCircle } from "lucide-react";
 import { useDashboardAccountSelection } from "./DashboardAccountContext";
 import DashboardHomeSkeleton from "./DashboardHomeSkeleton";
+import { getDashboardHomeSnapshot, setDashboardHomeSnapshot, type DashboardHomeCounts } from "@/src/lib/dashboard/home-summary-cache";
 
 type InstagramAccount = {
   id: string;
@@ -26,12 +27,6 @@ type Tool = {
   image: string;
   href: string;
   key: string;
-};
-
-type HomeSummary = {
-  unreadConversations: number;
-  pendingPublishing: number;
-  activeAutomations: number;
 };
 
 const quickTools: Tool[] = [
@@ -61,38 +56,61 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
     ?? instagramAccounts.find((account) => account.isConnected);
   const activeAccountId = activeAccount?.id ?? null;
   const [avatarFailedFor, setAvatarFailedFor] = useState<string | null>(null);
-  const [summary, setSummary] = useState<HomeSummary | null>(null);
-  const [summaryStatus, setSummaryStatus] = useState<"loading" | "ready" | "unavailable">("loading");
+  // Account and user-scoped snapshots survive route unmounts within this tab.
+  // A revisit shows existing counters immediately, then revalidates in the
+  // background. The API remains authoritative and uses no-store.
+  const summaryKey = activeAccountId ? user.email + ":" + activeAccountId : null;
+  const [summaryState, setSummaryState] = useState<{ key: string | null; value: DashboardHomeCounts | null }>(() => {
+    const cached = summaryKey ? getDashboardHomeSnapshot(summaryKey) : null;
+    return { key: summaryKey, value: cached?.value ?? null };
+  });
+  const [summaryStatus, setSummaryStatus] = useState<"loading" | "ready" | "unavailable">(() =>
+    summaryKey && getDashboardHomeSnapshot(summaryKey) ? "ready" : "loading"
+  );
+  const summary = summaryState.key === summaryKey ? summaryState.value : null;
+  const visibleSummaryStatus = summaryState.key === summaryKey ? summaryStatus : "loading";
 
   useEffect(() => {
-    if (!activeAccountId) return;
+    if (!activeAccountId || !summaryKey) {
+      setSummaryState({ key: null, value: null });
+      setSummaryStatus("unavailable");
+      return;
+    }
+    const cached = getDashboardHomeSnapshot(summaryKey);
+    setSummaryState({ key: summaryKey, value: cached?.value ?? null });
+    setSummaryStatus(cached ? "ready" : "loading");
+    // Do not re-request a just-fetched home summary on quick back-navigation.
+    // Other visits revalidate without hiding cached counters or artwork.
+    if (cached && Date.now() - cached.fetchedAt < 10_000) return;
     const controller = new AbortController();
-    setSummary(null);
-    setSummaryStatus("loading");
 
     async function loadSummary() {
       try {
         const response = await fetch(
           "/api/dashboard/home-summary?accountId=" + encodeURIComponent(activeAccountId!),
-          { cache: "no-store", signal: controller.signal },
+          { cache: "no-store", credentials: "include", signal: controller.signal },
         );
-        if (!response.ok) return;
-        const result: { success?: boolean; data?: HomeSummary } = await response.json();
+        if (!response.ok) {
+          if (!controller.signal.aborted && !cached) setSummaryStatus("unavailable");
+          return;
+        }
+        const result: { success?: boolean; data?: DashboardHomeCounts } = await response.json();
         if (controller.signal.aborted) return;
         if (result.success && result.data) {
-          setSummary(result.data);
+          setDashboardHomeSnapshot(summaryKey, result.data);
+          setSummaryState({ key: summaryKey, value: result.data });
           setSummaryStatus("ready");
-        } else {
+        } else if (!cached) {
           setSummaryStatus("unavailable");
         }
       } catch {
-        if (!controller.signal.aborted) setSummaryStatus("unavailable");
+        if (!controller.signal.aborted && !cached) setSummaryStatus("unavailable");
       }
     }
 
     void loadSummary();
     return () => controller.abort();
-  }, [activeAccountId]);
+  }, [activeAccountId, summaryKey]);
 
   if (!isReady) return <DashboardHomeSkeleton />;
 
@@ -170,7 +188,7 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
               <CheckCircle2 size={14} aria-hidden="true" />
               <span>{formatNumber(summary.activeAutomations)} پاسخ خودکار فعال</span>
             </span>
-          ) : summaryStatus === "loading" ? (
+          ) : visibleSummaryStatus === "loading" ? (
             <span className="daira-home__skeleton-block daira-home__automation-count-skeleton" aria-hidden="true" />
           ) : null}
         </div>
@@ -200,7 +218,7 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
           {quickTools.map((tool) => {
             const status = quickStatus(tool.key);
             return (
-              <Link key={tool.key} className={"daira-home__quick-card daira-home__quick-card--" + tool.key + (status || (summaryStatus === "loading" && tool.key !== "insights") ? " daira-home__quick-card--status" : "")} href={tool.href}>
+              <Link key={tool.key} className={"daira-home__quick-card daira-home__quick-card--" + tool.key + (status || (visibleSummaryStatus === "loading" && tool.key !== "insights") ? " daira-home__quick-card--status" : "")} href={tool.href}>
                 <span className="daira-home__quick-art">
                   <Image src={tool.image} alt="" width={192} height={192} sizes="(max-width: 680px) 114px, (max-width: 1000px) 128px, 144px" />
                 </span>
@@ -213,7 +231,7 @@ export default function DashboardOverview({ instagramAccounts }: DashboardOvervi
                     {status.tone === "attention" ? <MessageCircle size={13} aria-hidden="true" /> : status.tone === "queue" ? <Clock3 size={13} aria-hidden="true" /> : <CheckCircle2 size={13} aria-hidden="true" />}
                     <span>{status.text}</span>
                   </span>
-                ) : summaryStatus === "loading" && tool.key !== "insights" ? (
+                ) : visibleSummaryStatus === "loading" && tool.key !== "insights" ? (
                   <span className="daira-home__skeleton-block daira-home__status-skeleton" aria-hidden="true" />
                 ) : null}
               </Link>
