@@ -1605,7 +1605,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                 {replyMode==="existing" && <div className="space-y-3">
                   <CompleteAutomationPicker items={previousRules} selected={previousRules.find(x=>x.id===previousId)||null}
                     onSelect={item=>setPreviousId(item.id)} onChange={()=>setPreviousId("")}
-                    kind={type==="STORY"?"STORY_REPLY_KEYWORD":"COMMENT_KEYWORD"} showcases={showcases} forms={forms} disabled={publishing}/>
+                    kind="COMMENT_KEYWORD" showcases={showcases} forms={forms} disabled={publishing}/>
                   <p className="text-xs text-[var(--daira-text-secondary)]">پاسخ انتخاب‌شده روی این محتوا اعمال می‌شود و از فهرست پاسخ‌های موجود قابل ویرایش است.</p>
                 </div>}
               </div>}
