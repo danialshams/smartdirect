@@ -78,4 +78,11 @@ assert(validationStart >= 0 && conflictCheck > validationStart && coverCheck > c
   publishApi.includes("expiresAt: { gt: validAt }"),
   "Publishing must parallelize independent ownership checks without altering error precedence or media security.");
 
+const automationDetailApi = file("app/api/automations/[id]/route.ts");
+assert(automationDetailApi.includes('const needsStoryActivation = nextTriggerType === "STORY_REPLY_KEYWORD" && isActive === true') &&
+  automationDetailApi.includes('!needsStoryActivation ? { include: automationInclude } : {}') &&
+  automationDetailApi.includes('await activateStoryReply(id, existingAutomation.instagramAccountId)') &&
+  automationDetailApi.includes('? await prisma.automation.findUniqueOrThrow({ where: { id }, include: automationInclude })') &&
+  automationDetailApi.includes(': updated;'),
+  "Regular automation edits must return the updated graph without a redundant Prisma read; story activation still needs its final read.");
 console.log("DASHBOARD_PERFORMANCE_REGRESSION_OK");
