@@ -22,7 +22,7 @@ export default function LiveAutomationList() {
   const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
   const router = useRouter();
   const listKey = activeDashboardAccount ? "live-rules:" + activeDashboardAccount.id : null;
-  const [account, setAccount] = useState<Account | null>(() => listKey && getDashboardListSnapshot<LiveRule>(listKey) ? activeDashboardAccount : null);
+  const [account, setAccount] = useState<Account | null>(() => listKey && getDashboardListSnapshot<LiveRule>(listKey) ? (activeDashboardAccount ?? null) : null);
   const [rules, setRules] = useState<LiveRule[]>(() => listKey ? getDashboardListSnapshot<LiveRule>(listKey) ?? [] : []);
   const [loadedFor, setLoadedFor] = useState<string | null>(() => listKey && getDashboardListSnapshot<LiveRule>(listKey) ? listKey : null);
   const [search, setSearch] = useState("");
@@ -62,7 +62,7 @@ export default function LiveAutomationList() {
     // must verify it separately before a subscription action may run.
     setSubscription(null);
     if (cached) {
-      setAccount(activeDashboardAccount);
+      setAccount(activeDashboardAccount ?? null);
       setRules(cached);
       setLoadedFor(key);
       setLoading(false);
