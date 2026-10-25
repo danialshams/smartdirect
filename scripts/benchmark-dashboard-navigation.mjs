@@ -43,10 +43,14 @@ await page.addInitScript(() => {
 const percentile = (arr, p) => arr.length ? arr.slice().sort((a,b)=>a-b)[Math.ceil(p*arr.length)-1] : null;
 const snapshot = async () => page.evaluate(() => {
   const n = performance.getEntriesByType("navigation")[0];
+  const apiResources = performance.getEntriesByType("resource")
+    .filter(e => e.initiatorType === "fetch" || e.initiatorType === "xmlhttprequest");
   return { url: location.pathname, domContentLoadedMs: n ? Math.round(n.domContentLoadedEventEnd - n.startTime) : null,
-    loadMs: n ? Math.round(n.loadEventEnd - n.startTime) : null,
+    loadMs: n?.loadEventEnd ? Math.round(n.loadEventEnd - n.startTime) : null,
     transferBytes: n?.transferSize ?? null,
-    lcpMs: window.__bench?.lcp ?? null, cls: window.__bench?.cls ?? null };
+    lcpMs: window.__bench?.lcp ?? null, cls: window.__bench?.cls ?? null,
+    apiRequestCount: apiResources.length,
+    maxApiResourceMs: apiResources.length ? Math.round(Math.max(...apiResources.map(e => e.duration))) : null };
 });
 try {
   for (let iteration = 0; iteration < runs; iteration++) {
@@ -55,10 +59,14 @@ try {
       const response = await page.goto(origin + route, { waitUntil: "domcontentloaded", timeout: 30000 });
       await page.locator("main").first().waitFor({state:"visible",timeout:15000});
       if (new URL(page.url()).pathname !== route) throw new Error("Unexpected redirect: " + page.url());
+      const firstMainVisibleMs = Date.now() - started;
+      // Wait after DOM ready to observe LCP. Never fold this deliberate
+      // observation delay into the first-visible timing.
+      await page.waitForLoadState("load", {timeout: 20000}).catch(() => {});
+      await page.waitForTimeout(1000);
       const metrics = await snapshot();
       entries.push({ iteration, route, mode: "document-navigation",
-        elapsedMs: Date.now() - started, status: response?.status() ?? null, ...metrics });
-      if (page.url().includes("/login")) throw new Error("Auth redirected to /login. Provide valid storageState.");
+        elapsedMs: firstMainVisibleMs, status: response?.status() ?? null, ...metrics });
     }
     // Measure SPA transitions only where genuine Next.js links exist in the rendered DOM.
     await page.goto(origin + "/dashboard", { waitUntil: "domcontentloaded" });
@@ -90,9 +98,19 @@ try {
       await page.goto(origin + "/dashboard", { waitUntil: "domcontentloaded" });
     }
   }
+  const summarize = (collection, key) => {
+    const values = collection.map(e => e[key]).filter(v => typeof v === "number");
+    return {samples: values.length, p50Ms: percentile(values, .5), p95Ms: percentile(values, .95)};
+  };
   const aggregate = routes.map(route => {
-    const values = entries.filter(e => e.route === route && e.mode === "document-navigation" && e.elapsedMs != null).map(e => e.elapsedMs);
-    return { route, samples: values.length, p50Ms: percentile(values, .5), p95Ms: percentile(values, .95) };
+    const doc = entries.filter(e => e.route === route && e.mode === "document-navigation");
+    const spa = entries.filter(e => e.route === route && e.mode === "client-navigation");
+    return { route,
+      firstMainVisible: summarize(doc, "elapsedMs"),
+      lcp: summarize(doc, "lcpMs"),
+      apiMax: summarize(doc, "maxApiResourceMs"),
+      clientUrl: summarize(spa, "urlChangeMs"),
+      clientTextChange: summarize(spa, "mainTextChangeMs") };
   });
   await mkdir("performance-results", { recursive: true });
   const path = "performance-results/dashboard-navigation-" + new Date().toISOString().replace(/[:.]/g, "-") + ".json";
