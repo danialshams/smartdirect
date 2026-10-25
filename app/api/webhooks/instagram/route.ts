@@ -1,5 +1,5 @@
 import { pickPublicCommentReply } from "@/lib/automation/comment-reply-variants";
-import { applyInboundAutomationPreference, getAutomatedMessageBlockReason } from "@/lib/instagram/automated-message-policy";
+import { applyInboundAutomationPreference, getAutomatedMessageBlockReason, reserveRecipientAutomatedMessageBudget } from "@/lib/instagram/automated-message-policy";
 import { createHash } from "node:crypto";
 import { verifyInstagramWebhookSignature } from "@/lib/webhook/verify-signature";
 import { after, NextRequest, NextResponse } from "next/server";
@@ -2424,6 +2424,7 @@ async function sendStoryReplyMessage({
   if (await getAutomatedMessageBlockReason({
     instagramAccountId, participantId,
   })) return false;
+  if (!await reserveRecipientAutomatedMessageBudget({ instagramAccountId, participantId })) return false;
   try {
     await instagramApiRequest(`/${igUserId}/messages`, {
       method: "POST",
@@ -2509,6 +2510,9 @@ async function sendFollowGateMessage({
   if (await getAutomatedMessageBlockReason({
     instagramAccountId: instagramAccount.id, participantId,
   })) return false;
+  if (!await reserveRecipientAutomatedMessageBudget({
+    instagramAccountId: instagramAccount.id, participantId,
+  })) return false;
   try {
     await instagramApiRequest(`/${instagramAccount.igUserId}/messages`, {
       method: "POST",
@@ -2558,6 +2562,7 @@ async function sendDirectInstagramMessage({
   if (await getAutomatedMessageBlockReason({
     instagramAccountId, participantId,
   })) return false;
+  if (!await reserveRecipientAutomatedMessageBudget({ instagramAccountId, participantId })) return false;
   try {
     await instagramApiRequest(`/${igUserId}/messages`, {
       method: "POST",
@@ -2982,6 +2987,11 @@ async function processInstagramPostback(
     // =======================================================
 
     if (payload.startsWith(FOLLOW_GATE_PAYLOAD_PREFIX)) {
+      // The button press is a fresh user-initiated messaging interaction;
+      // record it before enforcing the 24h window for the outgoing response.
+      await saveEntryPointInteraction({
+        instagramAccount, participantId, title, payload, source: "UNKNOWN_POSTBACK",
+      });
       await processFollowGatePostback({
         senderId: participantId,
 
@@ -3643,6 +3653,13 @@ async function processCommentEvent(
 
       return;
     }
+
+    // Respect a previous explicit STOP request by this commenter, even if
+    // they post a new public comment. A public comment is not an opt-in.
+    if (commenterIgUserId && await getAutomatedMessageBlockReason({
+      instagramAccountId: instagramAccount.id, participantId: commenterIgUserId,
+      isPrivateReply: true,
+    }) === "OPTED_OUT") return;
 
     // =======================================================
     // Public comment reply
