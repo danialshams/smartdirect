@@ -1229,20 +1229,21 @@ export default function InstagramInbox({
       return;
     }
     let valid = true;
+    const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setSearchingThreads(true);
       try {
         const params = new URLSearchParams({ accountId, conversationSearch: search.trim() });
-        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store" });
+        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store", signal: controller.signal });
         const result = await readApiResult(response);
-        if (valid) setSearchResults(response.ok ? result.conversations || [] : []);
+        if (valid && !controller.signal.aborted) setSearchResults(response.ok ? result.conversations || [] : []);
       } catch {
-        if (valid) setSearchResults([]);
+        if (valid && !controller.signal.aborted) setSearchResults([]);
       } finally {
-        if (valid) setSearchingThreads(false);
+        if (valid && !controller.signal.aborted) setSearchingThreads(false);
       }
     }, 300);
-    return () => { valid = false; window.clearTimeout(timer); };
+    return () => { valid = false; controller.abort(); window.clearTimeout(timer); };
   }, [accountId, search]);
 
   const filteredConversations = (search.trim() ? searchResults : conversations).filter((conversation) => {
@@ -1283,6 +1284,7 @@ export default function InstagramInbox({
       return;
     }
     let active = true;
+    const controller = new AbortController();
     const timeout = window.setTimeout(async () => {
       setConversationSearching(true);
       try {
@@ -1291,16 +1293,16 @@ export default function InstagramInbox({
           conversationId: selectedId,
           messageSearch: conversationSearchText.trim(),
         });
-        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store" });
+        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store", signal: controller.signal });
         const result = await readApiResult(response);
-        if (active) setConversationMatches(response.ok ? result.matches || [] : []);
+        if (active && !controller.signal.aborted) setConversationMatches(response.ok ? result.matches || [] : []);
       } catch {
-        if (active) setConversationMatches([]);
+        if (active && !controller.signal.aborted) setConversationMatches([]);
       } finally {
-        if (active) setConversationSearching(false);
+        if (active && !controller.signal.aborted) setConversationSearching(false);
       }
     }, 320);
-    return () => { active = false; window.clearTimeout(timeout); };
+    return () => { active = false; controller.abort(); window.clearTimeout(timeout); };
   }, [accountId, selectedId, conversationSearchOpen, conversationSearchText]);
 
   async function focusSearchResult(id: string) {
