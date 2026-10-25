@@ -207,7 +207,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           fetch(`/api/automations${accountQuery}&view=list`, { cache: "no-store", credentials: "include" }),
           scope !== "stories" ? fetch(`/api/instagram/media${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null) : Promise.resolve(null),
           scope === "all" ? fetch(`/api/instagram/stories${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null) : Promise.resolve(null),
-          scope !== "stories" ? fetch(`/api/instagram/publishing${accountQuery}`, { cache: "no-store", credentials: "include" }).catch(() => null) : Promise.resolve(null),
+          scope !== "stories" ? fetch(`/api/instagram/publishing${accountQuery}&view=automation-cards`, { cache: "no-store", credentials: "include" }).catch(() => null) : Promise.resolve(null),
         ]);
 
         const automationsResult = await automationsResponse.json();
