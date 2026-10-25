@@ -4,7 +4,11 @@ import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import type { InstagramRateLimitOperation } from "@/lib/instagram/rate-limit";
 import { prisma } from "@/lib/prisma";
-import { getAutomatedMessageBlockReason, reserveRecipientAutomatedMessageBudget } from "@/lib/instagram/automated-message-policy";
+import {
+  getAutomatedMessageBlockReason, reserveRecipientAutomatedMessageBudget,
+  claimFirstAutomationStopOption, AUTOMATION_STOP_QUICK_REPLY_PAYLOAD,
+  AUTOMATION_STOP_QUICK_REPLY_TITLE,
+} from "@/lib/instagram/automated-message-policy";
 import {
   claimSendMessage,
   completeSendMessage,
@@ -293,9 +297,35 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
   }
 
   if (message.messageType === "TEXT") {
-    const result = await sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId: payload.commentId, accessToken, text: message.text || "", quickReplies: message.quickReplies, linkButtonUrl: message.linkButtonUrl, linkButtonTitle: message.linkButtonTitle, linkButtons: message.linkButtons });
-    if (result.success) result.conversationText = message.text?.trim() || null;
-    return await finalizeResult(result);
+    const replies = message.quickReplies ?? [];
+    const plainTextNormalDm = !payload.commentId && (message.text?.trim() || "") !== "" &&
+      !(message.linkButtons?.length) && !(message.linkButtonUrl && message.linkButtonTitle);
+    // Never exceed Meta's limit of 13 quick replies or modify Private Replies
+    // triggered by a comment. Existing customer-configured reply buttons win.
+    const releaseStopOption = plainTextNormalDm && replies.length < MAX_QUICK_REPLIES
+      ? await claimFirstAutomationStopOption(instagramAccountId, recipientId)
+      : null;
+    const offeredReplies = releaseStopOption
+      ? [...replies, {
+        id: "daira-stop-option", title: AUTOMATION_STOP_QUICK_REPLY_TITLE,
+        payload: AUTOMATION_STOP_QUICK_REPLY_PAYLOAD,
+      }]
+      : message.quickReplies;
+    try {
+      const result = await sendTextLike({
+        instagramAccountId, tenantId, instagramUserId, recipientId,
+        commentId: payload.commentId, accessToken, text: message.text || "",
+        quickReplies: offeredReplies,
+        linkButtonUrl: message.linkButtonUrl, linkButtonTitle: message.linkButtonTitle,
+        linkButtons: message.linkButtons,
+      });
+      if (releaseStopOption) await releaseStopOption(result.success);
+      if (result.success) result.conversationText = message.text?.trim() || null;
+      return await finalizeResult(result);
+    } catch (error) {
+      if (releaseStopOption) await releaseStopOption(false);
+      throw error;
+    }
   }
 
   if (message.messageType === "FORM") {
