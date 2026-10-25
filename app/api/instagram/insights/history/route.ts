@@ -73,7 +73,6 @@ export async function GET(request: NextRequest) {
                 id: true,
                 igUserId: true,
                 igUsername: true,
-                accessToken: true,
                 isConnected: true,
                 createdAt: true,
             },
