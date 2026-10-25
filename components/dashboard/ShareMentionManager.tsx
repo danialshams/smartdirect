@@ -1,4 +1,5 @@
 "use client";
+import { useDashboardAccountSelection } from "./DashboardAccountContext";
 
 import {useEffect,useMemo,useState} from "react";
 import Link from "next/link";
@@ -9,6 +10,8 @@ import AutoRepliesSkeleton from "./AutoRepliesSkeleton";
 type Item={id:string;instagramAccountId:string;triggerType:string;mediaId:string|null;mediaIds:string|null;isActive:boolean;updatedAt:string;messages:Array<{messageType:string;text?:string|null}>};
 const title=(type:string)=>type==="STORY_MENTION"?"منشن در استوری":"اشتراک‌گذاری پست و ریلز";
 export default function ShareMentionManager(){
+ const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
+ const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
  const [accountId,setAccountId]=useState("");
  const [items,setItems]=useState<Item[]>([]);
  const [loading,setLoading]=useState(true);
@@ -18,10 +21,10 @@ export default function ShareMentionManager(){
  const [deleteId,setDeleteId]=useState("");
  const [reload,setReload]=useState(0);
  useEffect(()=>{
+  if(!dashboardReady)return;
   const controller=new AbortController();setLoading(true);setError("");
   (async()=>{try{
-   const a=await fetch("/api/instagram/accounts",{cache:"no-store",credentials:"include",signal:controller.signal}).then(r=>r.json());
-   const account=(Array.isArray(a.accounts)?a.accounts:[]).find((v:{isConnected:boolean})=>v.isConnected);
+   const account=activeDashboardAccount;
    if(!account)throw new Error("ابتدا یک پیج اینستاگرام متصل کن.");
    const response=await fetch("/api/automations?instagramAccountId="+encodeURIComponent(account.id),{cache:"no-store",credentials:"include",signal:controller.signal});
    const data=await response.json();
@@ -30,7 +33,7 @@ export default function ShareMentionManager(){
   }catch(e){if(!controller.signal.aborted)setError(e instanceof Error?e.message:"دریافت پاسخ‌ها ناموفق بود.");}
   finally{if(!controller.signal.aborted)setLoading(false);}})();
   return()=>controller.abort();
- },[reload]);
+ },[reload,dashboardReady,activeDashboardAccount?.id]);
  const filtered=useMemo(()=>items.filter(item=>title(item.triggerType).includes(query.trim())||item.messages.some(m=>(m.text||"").includes(query.trim()))),[items,query]);
  async function change(item:Item,action:"toggle"|"delete"){
   if(busy)return;setBusy(item.id);setError("");

@@ -41,6 +41,7 @@ const PublishingStoryAutomationSetup = dynamic(() => import("./PublishingStoryAu
   loading: () => <PublishingPageSkeleton view="editor" />,
 });
 import { useStorageUploadLease } from "./useStorageUploadLease";
+import { useDashboardAccountSelection } from "../DashboardAccountContext";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
 type MediaType = "IMAGE" | "VIDEO";
@@ -340,6 +341,7 @@ function MediaTile({ item, type, onRemove, ready = false, compact = false }: Med
 
 export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?: (type: PublishType) => void }) {
   const router = useRouter();
+  const {accounts:dashboardAccounts,accountId:dashboardAccountId}=useDashboardAccountSelection();
   const [accounts, setAccounts] = useState<InstagramAccount[]>(publishingAccountsCache ?? []);
   const [jobs, setJobs] = useState<Job[]>(publishingJobsCache ?? []);
   const knownJobIdsRef = useRef(new Set<string>((publishingJobsCache ?? []).filter((job) => ["SCHEDULED", "PROCESSING", "PUBLISHING"].includes(job.status)).map((job) => job.id)));
@@ -456,7 +458,8 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
         : type === "STORY"
           ? "تصویر یا ویدیوی استوری را انتخاب کن."
           : "تصویر پست را انتخاب کن.";
-  const activeInstagramAccount = accounts.find((account) => account.isConnected !== false);
+  const activeInstagramAccount = accounts.find((account) => account.id===dashboardAccountId && account.isConnected !== false)
+    ?? accounts.find((account) => account.isConnected !== false);
   const selectedAccountId = activeInstagramAccount?.id ?? "";
   const automationAccount: AutomationAccount = {
     id: selectedAccountId,
@@ -464,23 +467,11 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   };
 
   async function loadAccounts() {
-    const response = await fetch("/api/instagram/accounts", { cache: "no-store" });
-    if (!response.ok) throw new Error("دریافت اکانت‌های Instagram ناموفق بود.");
-
-    const result = await response.json();
-    const rawList = result.data ?? result.accounts ?? [];
-    const list = Array.isArray(rawList)
-      ? rawList
-        .filter((account) => account?.id)
-        .map((account) => ({
-          id: String(account.id),
-          igUserId: String(account.igUserId ?? ""),
-          igUsername: account.igUsername ?? account.username ?? null,
-          username: account.username ?? account.igUsername ?? null,
-          isConnected: account.isConnected !== false,
-        }))
-      : [];
-
+    // Accounts already arrived with the authenticated dashboard layout.
+    const list: InstagramAccount[] = dashboardAccounts.map(account => ({
+      id: account.id, igUserId: account.igUserId, igUsername: account.igUsername,
+      username: account.igUsername, isConnected: account.isConnected,
+    }));
     publishingAccountsCache = list;
     setAccounts(list);
   }
