@@ -170,6 +170,15 @@ jobs:
           npx prisma db push
           npx tsx scripts/test-durable-webhook-migration.ts
 
+      - name: Test Meta account safety, recipient opt-out and rate guards against isolated PostgreSQL and Redis
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          REDIS_DRIVER: redis
+          REDIS_URL: redis://127.0.0.1:6379
+          NODE_ENV: test
+        run: npx tsx scripts/test-meta-account-safety.ts
+
       - name: Benchmark isolated dashboard CRUD operation timings
         env:
           DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
