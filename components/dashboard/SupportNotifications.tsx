@@ -48,7 +48,9 @@ export default function SupportNotifications({ children }: { children: ReactNode
       } else if (latest && latest.id !== original && !pathRef.current.startsWith("/dashboard/tickets/" + latest.ticketId)) {
         setNotice({ count: unread, item: latest, initial: false });
       }
-      if ((reason === "event" || (!first && latest?.id !== original)) && latest) window.dispatchEvent(new Event("support:changed"));
+      // The EventSource handler broadcasts each change once, even when there
+      // is no unread item. Do not broadcast it again after the summary fetch.
+      if (reason !== "event" && !first && latest && latest.id !== original) window.dispatchEvent(new Event("support:changed"));
     } catch { /* Preserve previous unread count during network outages. */ }
     finally { requestInFlight.current = false; }
   }, []);
@@ -66,7 +68,7 @@ export default function SupportNotifications({ children }: { children: ReactNode
     if (typeof EventSource !== "undefined") {
       source = new EventSource("/api/dashboard/tickets/stream");
       source.onopen = () => { realtimeConnected = true; void load("silent"); };
-      source.addEventListener("support", () => { void load("event"); window.dispatchEvent(new Event("support:changed")); });
+      source.addEventListener("support", () => { window.dispatchEvent(new Event("support:changed")); void load("event"); });
       source.onerror = () => { realtimeConnected = false; source?.close(); source = null; };
     }
     return () => {
