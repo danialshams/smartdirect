@@ -71,4 +71,10 @@ assert.ok(editor.includes("const jobsLoadInFlightRef = useRef<Promise<void> | nu
   (editor.match(/await loadJobs\(true\)/g) || []).length >= 4 &&
   editor.includes("void loadJobs(true).catch("),
   "Publishing polls must coalesce and never lose a post-mutation, detail-return or foreground recheck");
+assert.ok(editor.includes("async function loadResources(accountId: string, signal: AbortSignal)") &&
+  editor.includes('fetch("/api/showcases" + query, { cache: "no-store", credentials: "include", signal })') &&
+  editor.includes('fetch("/api/forms" + query, { cache: "no-store", credentials: "include", signal })') &&
+  editor.includes("if (signal.aborted) return;") &&
+  editor.includes("return () => controller.abort();"),
+  "Switching Instagram account or Story reply type must abort stale form/showcase reads");
 console.log("PUBLISHING_DAIRA_SINGLE_PAGE_REGRESSION_OK");
