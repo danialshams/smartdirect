@@ -170,7 +170,7 @@ assert(commentFlow.includes('useState<"edit" | "replace">("edit")') &&
   "Comment/story edits must use independent reply content and show the current editor directly.");
 assert(liveEditor.includes('creationMode==="existing"') &&
   liveEditor.includes("ثبت پاسخ مستقل") &&
-  liveEditor.includes("/api/instagram/live-media") &&
+  !liveEditor.includes("لایو فعال {") &&
   !liveEditor.includes("مشاهده پاسخ انتخاب‌شده") &&
   !liveEditor.includes("<CompleteResponseNameField"),
   "Live responses must be independent and editable only in their own edit pages.");
