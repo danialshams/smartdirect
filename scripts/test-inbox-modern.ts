@@ -7,6 +7,15 @@ const inbox = read("app/api/instagram/inbox/route.ts");
 
 const readRoute = inbox.slice(inbox.indexOf("export async function GET("), inbox.indexOf("export async function POST("));
 assert.ok(!readRoute.includes("conversationMessage.updateMany"), "Reading conversation must not mark messages read");
+assert.ok(readRoute.includes("const needsMediaRefresh = messagesPage.some(") &&
+  readRoute.includes('["IMAGE", "VIDEO", "AUDIO", "STICKER"].includes(message.messageType)') &&
+  readRoute.includes("Boolean(message.igMessageId) && !message.mediaUrl") &&
+  readRoute.includes("needsMediaRefresh ? getValidInstagramAccessToken(account.id) : Promise.resolve(null)") &&
+  readRoute.includes("const [accessToken, lastInbound, handoff] = await Promise.all([") &&
+  readRoute.includes("getHandoffState(conversation.id)") &&
+  readRoute.includes(": messagesPage;"),
+  "Opening a text-only Inbox conversation must skip Meta token retrieval and parallelize independent reads.");
+
 assert.ok(readRoute.includes("take: 51") && readRoute.includes("skip: conversationOffset"), "Thread list must be paginated");
 assert.ok(readRoute.includes('searchParams.get("before")') && readRoute.includes('cursor: { id: cursor.id }'), "Older message cursor pagination missing");
 assert.ok(readRoute.includes('searchParams.get("focusId")') && readRoute.includes("hasNewerMessages"), "Focused result context missing");

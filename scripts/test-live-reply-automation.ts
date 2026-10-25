@@ -112,6 +112,15 @@ console.log("LIVE_AUTOMATION_VALIDATION_TEST_OK", {
   followGate: true, customizableFollowCheckLabel: true, richMediaFollowup: true, nestedForms: true, invalidInputRejected: true,
 });
 
+const liveRoute=readFileSync("app/api/live-automation/route.ts","utf8");
+assert(liveRoute.includes("select: { id: true, igUserId: true }") &&
+  liveRoute.includes("pollLiveReplySessions({ id: account.id, igUserId: account.igUserId })") &&
+  !liveRoute.includes("prisma.instagramAccount.findUnique(") &&
+  !liveRoute.includes("prisma.instagramAccount.findUniqueOrThrow(") &&
+  liveRoute.includes("userId: session.user.id") &&
+  liveRoute.includes("isConnected: true"),
+  "Live GET and POST must reuse the tenant-authorized account instead of fetching it twice.");
+
 const liveLifecycle=readFileSync("src/lib/automation/live-session-lifecycle.ts","utf8");
 const liveCron=readFileSync("app/api/cron/cleanup-live-automations/route.ts","utf8");
 const liveList=readFileSync("components/dashboard/LiveAutomationList.tsx","utf8");

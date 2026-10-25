@@ -534,33 +534,43 @@ export async function GET(request: NextRequest) {
         messagesPage = latest.slice(0, 50).reverse();
       }
 
-      const accessToken = await getValidInstagramAccessToken(account.id);
-      const refreshedMessages = await refreshConversationMediaUrls({
-        conversationId: conversation.id,
-        accountId: account.id,
-        tenantId: session.user.id,
-        accessToken,
-        messages: messagesPage,
-      });
-
-      const lastInbound = await prisma.conversationMessage.findFirst({
-        where: {
-          conversationId: conversation.id,
-          direction: "INBOUND",
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        select: {
-          createdAt: true,
-        },
-      });
+      // No Meta token is needed for an ordinary text conversation or already
+      // resolved media. Only restore missing media URLs when necessary.
+      const needsMediaRefresh = messagesPage.some(
+        message => ["IMAGE", "VIDEO", "AUDIO", "STICKER"].includes(message.messageType) &&
+          Boolean(message.igMessageId) && !message.mediaUrl,
+      );
+      // These reads are independent of the (occasionally slow) Meta media
+      // refresh, and therefore share its initial critical path.
+      const [accessToken, lastInbound, handoff] = await Promise.all([
+        needsMediaRefresh ? getValidInstagramAccessToken(account.id) : Promise.resolve(null),
+        prisma.conversationMessage.findFirst({
+          where: {
+            conversationId: conversation.id,
+            direction: "INBOUND",
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            createdAt: true,
+          },
+        }),
+        getHandoffState(conversation.id),
+      ]);
+      const refreshedMessages = accessToken
+        ? await refreshConversationMediaUrls({
+            conversationId: conversation.id,
+            accountId: account.id,
+            tenantId: session.user.id,
+            accessToken,
+            messages: messagesPage,
+          })
+        : messagesPage;
 
       const messagingWindow = getInstagramMessagingWindow(
         lastInbound?.createdAt ?? null,
       );
-
-      const handoff = await getHandoffState(conversation.id);
 
       return NextResponse.json({
         success: true,
