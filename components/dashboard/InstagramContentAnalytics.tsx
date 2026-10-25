@@ -558,12 +558,12 @@ export default function InstagramContentAnalytics() {
 
     const filteredContent =
         useMemo(() => {
-            if (!data) {
+            if (!visibleData) {
                 return [];
             }
 
             let result = [
-                ...data.content,
+                ...visibleData.content,
             ];
 
             if (
@@ -641,13 +641,13 @@ export default function InstagramContentAnalytics() {
 
             return result;
         }, [
-            data,
+            visibleData,
             filter,
             sort,
         ]);
 
     const summary =
-        data?.summary;
+        visibleData?.summary;
 
     return (
         <section
@@ -787,7 +787,7 @@ export default function InstagramContentAnalytics() {
             )}
 
             {loading &&
-                !data && (
+                !visibleData && (
                     <DashboardLoading label="در حال دریافت عملکرد محتوا..." className="min-h-48" />
                 )}
 
@@ -809,7 +809,7 @@ export default function InstagramContentAnalytics() {
                     </div>
                 )}
 
-            {data &&
+            {visibleData &&
                 summary && (
                     <>
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
