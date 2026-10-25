@@ -448,6 +448,7 @@ export default function InstagramInbox({
   const conversationListControllerRef = useRef<AbortController | null>(null);
   const loadedMoreConversationsRef = useRef(false);
   const messageFetchIdRef = useRef(0);
+  const messageFetchControllerRef = useRef<AbortController | null>(null);
   const pendingMessageFetchRef = useRef<string | null>(null);
   const activeConversationRef = useRef("");
   const previousNewestIdRef = useRef<string | null>(null);
@@ -616,6 +617,9 @@ export default function InstagramInbox({
     const key = accountId + ":" + selectedId;
     if (!options && pendingMessageFetchRef.current === key) return;
     if (!options) pendingMessageFetchRef.current = key;
+    messageFetchControllerRef.current?.abort();
+    const controller = new AbortController();
+    messageFetchControllerRef.current = controller;
     const requestId = ++messageFetchIdRef.current;
     const container = messagesScrollRef.current;
     const previousHeight = container?.scrollHeight ?? 0;
@@ -634,6 +638,7 @@ export default function InstagramInbox({
       const response = await fetch(`/api/instagram/inbox?${params.toString()}`, {
         cache: "no-store",
         headers: { Accept: "application/json" },
+        signal: controller.signal,
       });
       const result = await readApiResult(response);
       if (!response.ok || !result.success || !result.conversation) {
@@ -699,17 +704,23 @@ export default function InstagramInbox({
         void markConversationSeen(latestInbound.igMessageId || latestInbound.id);
       }
     } catch (err) {
-      if (requestId === messageFetchIdRef.current && activeConversationRef.current === key) {
+      if (!controller.signal.aborted && requestId === messageFetchIdRef.current && activeConversationRef.current === key) {
         setError(err instanceof Error ? err.message : "خطا در دریافت پیام‌ها");
       }
     } finally {
-      if (requestId === messageFetchIdRef.current) {
+      if (messageFetchControllerRef.current === controller) messageFetchControllerRef.current = null;
+      if (requestId === messageFetchIdRef.current && !controller.signal.aborted) {
         setMessagesLoading(false);
         setLoadingOlderMessages(false);
       }
       if (pendingMessageFetchRef.current === key) pendingMessageFetchRef.current = null;
     }
   }, [accountId, selectedId, markConversationSeen, mobileChatOpen]);
+
+  useEffect(() => () => {
+    messageFetchControllerRef.current?.abort();
+    pendingMessageFetchRef.current = null;
+  }, []);
 
   async function loadMoreConversations() {
     if (!accountId || loadingMoreConversations || !hasMoreConversations) return;
@@ -1229,20 +1240,21 @@ export default function InstagramInbox({
       return;
     }
     let valid = true;
+    const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setSearchingThreads(true);
       try {
         const params = new URLSearchParams({ accountId, conversationSearch: search.trim() });
-        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store" });
+        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store", signal: controller.signal });
         const result = await readApiResult(response);
-        if (valid) setSearchResults(response.ok ? result.conversations || [] : []);
+        if (valid && !controller.signal.aborted) setSearchResults(response.ok ? result.conversations || [] : []);
       } catch {
-        if (valid) setSearchResults([]);
+        if (valid && !controller.signal.aborted) setSearchResults([]);
       } finally {
-        if (valid) setSearchingThreads(false);
+        if (valid && !controller.signal.aborted) setSearchingThreads(false);
       }
     }, 300);
-    return () => { valid = false; window.clearTimeout(timer); };
+    return () => { valid = false; controller.abort(); window.clearTimeout(timer); };
   }, [accountId, search]);
 
   const filteredConversations = (search.trim() ? searchResults : conversations).filter((conversation) => {
@@ -1283,6 +1295,7 @@ export default function InstagramInbox({
       return;
     }
     let active = true;
+    const controller = new AbortController();
     const timeout = window.setTimeout(async () => {
       setConversationSearching(true);
       try {
@@ -1291,16 +1304,16 @@ export default function InstagramInbox({
           conversationId: selectedId,
           messageSearch: conversationSearchText.trim(),
         });
-        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store" });
+        const response = await fetch(`/api/instagram/inbox?${params.toString()}`, { cache: "no-store", signal: controller.signal });
         const result = await readApiResult(response);
-        if (active) setConversationMatches(response.ok ? result.matches || [] : []);
+        if (active && !controller.signal.aborted) setConversationMatches(response.ok ? result.matches || [] : []);
       } catch {
-        if (active) setConversationMatches([]);
+        if (active && !controller.signal.aborted) setConversationMatches([]);
       } finally {
-        if (active) setConversationSearching(false);
+        if (active && !controller.signal.aborted) setConversationSearching(false);
       }
     }, 320);
-    return () => { active = false; window.clearTimeout(timeout); };
+    return () => { active = false; controller.abort(); window.clearTimeout(timeout); };
   }, [accountId, selectedId, conversationSearchOpen, conversationSearchText]);
 
   async function focusSearchResult(id: string) {

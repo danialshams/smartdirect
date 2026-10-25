@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 import { dairaPalette } from "../../../lib/design-system/palette";
 import { Calendar } from "@/components/dashboard/DashboardUI";
 import { useDashboardAccountSelection } from "@/components/dashboard/DashboardAccountContext";
+import { getDashboardListSnapshot, setDashboardListSnapshot } from "@/src/lib/dashboard/list-snapshot-cache";
 
 type Preset = 7 | 30 | 90;
 type Metric = "reach" | "views" | "interactions";
@@ -353,7 +354,6 @@ export default function InsightsDashboard() {
   const fetchInsights = useCallback(async (
     id: string, days: Preset, custom: DateSelection | null, signal: AbortSignal, currentRequest: number,
   ) => {
-    setLoading(true);
     setError("");
     setWarning("");
 
@@ -363,12 +363,21 @@ export default function InsightsDashboard() {
       params.set("to", dateOnly(custom.to));
     } else params.set("days", String(days));
     const historyUrl = "/api/instagram/insights/history?" + params;
+    // A recently verified snapshot is immediately usable on a quick route
+    // revisit. Continue fetching fresh private data in the background.
+    // Include both the authorized account and date range in the key.
+    const snapshotKey = "insights-history:" + params.toString();
+    const cached = getDashboardListSnapshot<InsightsData>(snapshotKey)?.[0] ?? null;
+    setData(cached);
+    setLoading(!cached);
     const isCurrent = () => !signal.aborted && requestNumber.current === currentRequest;
 
     // Begin Meta synchronization without placing it ahead of cached DB history
     // on the critical path to the first usable chart.
     let syncPromise: Promise<string> | null = null;
-    if (!lastSync.current || lastSync.current.id !== id || Date.now() - lastSync.current.at > 5 * 60 * 1000) {
+    // An account/range snapshot under 90 seconds old does not need another
+    // costly seven-day Meta synchronization on a quick revisit.
+    if (!cached && (!lastSync.current || lastSync.current.id !== id || Date.now() - lastSync.current.at > 5 * 60 * 1000)) {
       lastSync.current = { id, at: Date.now() };
       syncPromise = (async () => {
         try {
@@ -392,10 +401,14 @@ export default function InsightsDashboard() {
       const response = await fetch(historyUrl, { cache: "no-store", credentials: "include", signal });
       const result = await response.json() as InsightsData;
       if (!response.ok || !result.success) throw new Error(result.error || "دریافت آمار ناموفق بود.");
-      if (isCurrent()) setData(result);
+      if (isCurrent()) {
+        setData(result);
+        setDashboardListSnapshot(snapshotKey, [result]);
+      }
     } catch (requestError) {
       if (isCurrent()) {
-        setData(null);
+        // A background refresh failure must not discard usable cached history.
+        if (!cached) setData(null);
         setError(requestError instanceof Error ? requestError.message : "خطا در دریافت آمار.");
       }
     } finally {
@@ -414,7 +427,10 @@ export default function InsightsDashboard() {
         try {
           const response = await fetch(historyUrl, { cache: "no-store", credentials: "include", signal });
           const result = await response.json() as InsightsData;
-          if (response.ok && result.success && isCurrent()) setData(result);
+          if (response.ok && result.success && isCurrent()) {
+            setData(result);
+            setDashboardListSnapshot(snapshotKey, [result]);
+          }
         } catch { /* Keep the already displayed, usable history. */ }
       });
     }

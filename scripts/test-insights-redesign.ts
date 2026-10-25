@@ -85,6 +85,14 @@ assert.ok(ui.includes('value == null || !Number.isFinite(value) ? "—"') &&
 assert.ok(ui.includes("lastSync.current") && ui.includes("requestNumber.current") &&
   ui.includes("controller.abort()"),
   "Switching date ranges must suppress redundant Meta sync and prevent stale response races");
+assert.ok(ui.includes('const snapshotKey = "insights-history:" + params.toString()') &&
+  ui.includes("getDashboardListSnapshot<InsightsData>(snapshotKey)?.[0]") &&
+  ui.includes("setDashboardListSnapshot(snapshotKey, [result])") &&
+  ui.includes("setLoading(!cached)") &&
+  ui.includes("if (!cached) setData(null)") &&
+  ui.includes("if (!cached && (!lastSync.current") &&
+  ui.includes("if (isCurrent()) {"),
+  "History revisits must instantly reuse account-and-range scoped data, revalidate privately, avoid unnecessary Meta sync, and ignore stale responses");
 assert.ok(history.includes("analyticsStartDate") && history.includes("const MAX_DAYS = 730;") &&
   history.includes("snapshotDate: { gte: from, lte: to }"),
   "History data contract and Meta two-year and account-creation constraints must remain intact");

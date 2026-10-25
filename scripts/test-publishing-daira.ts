@@ -56,4 +56,25 @@ assert.ok(route.includes("PublishingWithTags"),"Publishing page route should res
 assert.ok(existsSync("app/dashboard/publishing/loading.tsx"),"Create route skeleton missing");
 assert.ok(src("app/dashboard/publishing/[id]/loading.tsx").includes('view="editor"'),"Editor route skeleton missing");
 assert.ok(palette.includes("publishing: {") && palette.includes("guide: {"),"Publishing palette and guide colors should be centralized");
+assert.ok(editor.includes('const accountScopeKey = dashboardAccounts.map(account => account.id).sort().join("|")') &&
+  editor.includes('publishingJobsCacheOwner === accountScopeKey ? publishingJobsCache : null') &&
+  editor.includes('publishingJobsCacheOwner = accountScopeKey') &&
+  editor.includes('sessionStorage.getItem("smartdirect:publishing-jobs:v2:" + accountScopeKey)') &&
+  editor.includes('sessionStorage.setItem("smartdirect:publishing-jobs:v2:" + accountScopeKey') &&
+  !editor.includes('sessionStorage.getItem("smartdirect:publishing-jobs")'),
+  "Publishing revisit cache and previous-status notifications must be scoped to the authorized account set");
+assert.ok(editor.includes("const jobsLoadInFlightRef = useRef<Promise<void> | null>(null)") &&
+  editor.includes("if (jobsLoadInFlightRef.current)") &&
+  editor.includes("pendingJobsRefreshRef.current = true") &&
+  editor.includes("} while (pendingJobsRefreshRef.current)") &&
+  editor.includes("void request.then(clear, clear)") &&
+  (editor.match(/await loadJobs\(true\)/g) || []).length >= 4 &&
+  editor.includes("void loadJobs(true).catch("),
+  "Publishing polls must coalesce and never lose a post-mutation, detail-return or foreground recheck");
+assert.ok(editor.includes("async function loadResources(accountId: string, signal: AbortSignal)") &&
+  editor.includes('fetch("/api/showcases" + query, { cache: "no-store", credentials: "include", signal })') &&
+  editor.includes('fetch("/api/forms" + query, { cache: "no-store", credentials: "include", signal })') &&
+  editor.includes("if (signal.aborted) return;") &&
+  editor.includes("return () => controller.abort();"),
+  "Switching Instagram account or Story reply type must abort stale form/showcase reads");
 console.log("PUBLISHING_DAIRA_SINGLE_PAGE_REGRESSION_OK");
