@@ -520,12 +520,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       return;
     }
     
-    if (isEditing && triggerType === "COMMENT_KEYWORD" && originalMediaIds.length > 1 && !applyScope) {
-      setEditScopeIds([...originalMediaIds]);
-      setEditScopeOpen(true);
-      return;
-    }
-    if (applyScope && !applyScope.length) { setError("حداقل یک محتوا را برای ویرایش انتخاب کن."); return; }
+
     const cleanKeywords = keywords;
     const autoTitle = (triggerType === "COMMENT_KEYWORD" ? "پاسخ کامنت" : "پاسخ استوری") + " - " + (keywordMatchMode === "CONTAINS_ANY" ? "همه" : cleanKeywords.join("، ")).slice(0, 60);
     const currentMessage = finalMessage ?? message;
@@ -656,72 +651,21 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     }
 
     if (creationMode === "existing") {
-      const template = automationTemplates.find((item) => item.id === selectedTemplateId);
-      if (!template) { setError("ابتدا پاسخ قبلی را انتخاب کن."); return; }
-      if (triggerType === "COMMENT_KEYWORD" && !targetMediaIds.length) { setError("ابتدا یک محتوا انتخاب کن."); return; }
-      const copiedKeyword = triggerType === "STORY_REPLY_KEYWORD"
-        ? reuseKeywords.split(/[,،;؛\n]+/).map(value => value.trim()).filter(Boolean).join(",")
-        : template.keyword || "";
-      if (triggerType === "STORY_REPLY_KEYWORD" && !copiedKeyword) {
-        setError("برای این پاسخ مستقل، کلمات کلیدی جدید تعیین کن."); return;
-      }
-      setSaving(true);
-      setError("");
-      let createdId = "";
-      try {
-        const result = await fetch("/api/automations", {
-          method: "POST", headers: {"Content-Type":"application/json"}, credentials:"include",
-          body: JSON.stringify({
-            instagramAccountId: account.id, title: autoTitle,
-            triggerType,
-            mediaId: triggerType === "COMMENT_KEYWORD" && targetMediaIds.length === 1 ? targetMediaIds[0] : null,
-            mediaIds: triggerType === "COMMENT_KEYWORD" ? targetMediaIds : [],
-            keyword: copiedKeyword,
-            keywordMatchMode: template.keywordMatchMode === "CONTAINS_ANY" ? "CONTAINS_ANY" : "EXACT",
-            commentReplyVariants: triggerType === "COMMENT_KEYWORD" ? readPublicCommentReplies(template.commentReplyText) : undefined,
-            sendDm: triggerType === "STORY_REPLY_KEYWORD" ? true : template.sendDm !== false,
-            likeStoryReply: triggerType === "STORY_REPLY_KEYWORD" ? Boolean(template.likeStoryReply) : false,
-            requireFollow: Boolean(template.requireFollow),
-            followGateText: template.requireFollow ? template.followGateText : null,
-            followGateButtonText: template.requireFollow ? template.followGateButtonText : null,
-            isActive: true,
-          }),
+      const previous=automationTemplates.find(item=>item.id===selectedTemplateId);
+      if(!previous){setError("ابتدا پاسخ قبلی را انتخاب کن.");return;}
+      setSaving(true);setError("");
+      try{
+        const response=await fetch("/api/automations/"+encodeURIComponent(previous.id),{
+          method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify(triggerType==="COMMENT_KEYWORD"
+            ? {linkMediaOnly:true,triggerType,mediaIds:targetMediaIds,mediaId:targetMediaIds.length===1?targetMediaIds[0]:null}
+            : {isActive:true}),
         });
-        const created = await result.json();
-        if (!result.ok || !created.success || !created.data?.id) throw new Error(created.error || "ایجاد نسخه مستقل ناموفق بود.");
-        createdId = created.data.id;
-        const raw = Array.isArray(template.messages) ? template.messages : [];
-        const source = template.sendDm === false && triggerType === "COMMENT_KEYWORD" ? [] : normalizeMessages(raw);
-        const copyNested = (replies: QuickReplyDraft[]): QuickReplyDraft[] => replies.map(reply => ({
-          ...reply, id: "local_" + crypto.randomUUID(), payload: "copy_" + crypto.randomUUID(),
-          savedResponseId: null, destinationQuickReplies: copyNested(reply.destinationQuickReplies),
-        }));
-        for (const [index, entry] of source.entries()) {
-          const buttons = readSavedLinks(raw[index]).map(button => ({...button, url:normalizeExternalLink(button.url)}));
-          const response = await fetch("/api/automations/" + createdId + "/messages", {
-            method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",
-            body:JSON.stringify({
-              messageType:entry.messageType,text:entry.text||null,mediaUrl:entry.mediaUrl||null,
-              mediaId:entry.mediaId||null,showcaseId:entry.showcaseId||null,formId:entry.formId||null,
-              savedResponseId:null,order:index,linkButtons:buttons,
-            }),
-          });
-          const saved = await response.json();
-          if (!response.ok || !saved.success || !saved.data?.id) throw new Error(saved.error || "کپی پیام ناموفق بود.");
-          for (const reply of copyNested(entry.quickReplies)) {
-            const replyResponse = await fetch("/api/automations/" + createdId + "/messages/" + saved.data.id + "/quick-replies", {
-              method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",
-              body:JSON.stringify({...reply, savedResponseId:null, destinationQuickReplies:serializeQuickReplies(reply.destinationQuickReplies),nextMessageId:null}),
-            });
-            const replyResult=await replyResponse.json();
-            if (!replyResponse.ok || !replyResult.success) throw new Error(replyResult.error || "کپی گزینه‌های فرم ناموفق بود.");
-          }
-        }
+        const result=await response.json();
+        if(!response.ok||!result.success)throw new Error(result.error||"استفاده از پاسخ قبلی ناموفق بود.");
         setCompleted(true);
-      } catch (error) {
-        if (createdId) await fetch("/api/automations/" + encodeURIComponent(createdId), {method:"DELETE",credentials:"include"}).catch(()=>undefined);
-        setError(error instanceof Error ? error.message : "کپی پاسخ قبلی ناموفق بود.");
-      } finally { setSaving(false); }
+      }catch(error){setError(error instanceof Error?error.message:"ثبت پاسخ قبلی ناموفق بود.");}
+      finally{setSaving(false);}
       return;
     }
 
@@ -1086,7 +1030,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
 
         {creationMode === "existing" && !isEditing && (
           <div className="mt-5 space-y-4">
-            <div><AutomationSectionGuide>۳. پاسخ قبلی — پاسخ کامل موردنظرت را انتخاب کن؛ شرایط و مراحل آن بدون ورود دوباره اطلاعات استفاده می‌شوند.</AutomationSectionGuide></div>
+            <div><AutomationSectionGuide>۳. پاسخ قبلی — پاسخ موردنظرت را انتخاب کن و روی ایجاد بزن.</AutomationSectionGuide></div>
             <CompleteAutomationPicker
               items={automationTemplates}
               selected={automationTemplates.find((item) => item.id === selectedTemplateId) || null}
@@ -1097,15 +1041,11 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
               kind={triggerType}
               disabled={saving}
             />
-            {triggerType === "STORY_REPLY_KEYWORD" && <div className="rounded-xl border border-[var(--daira-outline)] bg-[var(--daira-glass-raised)] p-3">
-              <label className="mb-2 block text-xs font-bold text-[var(--daira-heading)]">کلمات کلیدی این پاسخ جدید</label>
-              <input value={reuseKeywords} onChange={e => setReuseKeywords(e.target.value)} aria-label="کلمات کلیدی پاسخ مستقل" placeholder="مثلاً سفارش، موجودی" className="w-full rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-3 text-base outline-none"/>
-              <p className="mt-2 text-xs text-[var(--daira-text-secondary)]">محتوای پاسخ قبلی بدون تغییر کپی می‌شود. کلمات جدید فقط مخصوص این پاسخ‌اند.</p>
-            </div>}
+            
             <button type="button" onClick={() => { void saveAutomation(); }}
-              disabled={!selectedTemplateId || loadingResources || mediaLoading || (triggerType === "COMMENT_KEYWORD" && selectedMediaCount === 0) || (triggerType === "STORY_REPLY_KEYWORD" && !reuseKeywords.trim()) || saving}
+              disabled={!selectedTemplateId || loadingResources || mediaLoading || (triggerType === "COMMENT_KEYWORD" && selectedMediaCount === 0) || saving}
               className="daira-complete-reply__select flex min-h-12 w-full items-center justify-center rounded-xl px-4 text-sm font-bold disabled:opacity-50">
-              {saving ? "در حال ثبت پاسخ..." : "ایجاد پاسخ مستقل"}
+              {saving ? "در حال ثبت پاسخ..." : "ایجاد پاسخ"}
             </button>
           </div>
         )}
@@ -1416,33 +1356,6 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
           {error && <div role="alert" className="rounded-xl border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3.5 py-3 text-xs font-medium leading-6 text-[var(--daira-error-text)]">{error}</div>}
 
 
-        <GlassModalPresence open={editScopeOpen} onEscape={() => setEditScopeOpen(false)}>
-          <div className="daira-glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditScopeOpen(false); }}>
-            <div dir="rtl" role="dialog" aria-modal="true" aria-labelledby="edit-response-scope-title" className="daira-glass-dialog flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-[26px]">
-              <div className="daira-glass-dialog__header flex items-center justify-between border-b p-4">
-                <h2 id="edit-response-scope-title" className="text-sm font-extrabold text-[var(--daira-heading)]">اعمال تغییرات پاسخ</h2>
-                <button type="button" aria-label="بستن" onClick={() => setEditScopeOpen(false)} className="daira-glass-dialog__close rounded-lg p-2"><X size={18}/></button>
-              </div>
-              <p className="px-4 pt-4 text-xs leading-6 text-[var(--daira-text-secondary)]">این پاسخ به چند محتوا متصل است. تیک محتوایی را که نباید تغییر کند بردار.</p>
-              <div className="space-y-2 overflow-y-auto p-4">
-                {originalMediaIds.map((id) => {
-                  const media = linkedMediaItems.find((item) => item.id === id);
-                  return <label key={id} className="daira-flow-glass flex min-h-16 cursor-pointer items-center gap-3 rounded-xl p-3">
-                    <input type="checkbox" checked={editScopeIds.includes(id)} onChange={(event) => setEditScopeIds((current) => event.target.checked ? [...current,id] : current.filter((item) => item !== id))} className="h-5 w-5 accent-[var(--daira-primary)]"/>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--daira-surface-hover)]">
-                      {media?.thumbnail_url || media?.media_url ? <img alt="" src={media.thumbnail_url || media.media_url || ""} className="h-full w-full object-cover"/> : <Camera size={18} className="text-[var(--daira-text-secondary)]"/>}
-                    </div>
-                    <span className="min-w-0 flex-1 truncate text-xs font-bold text-[var(--daira-heading)]">{media?.caption?.trim() || (media?.media_product_type === "REELS" ? "ریلز" : "محتوای متصل")}</span>
-                  </label>;
-                })}
-              </div>
-              <div className="daira-glass-dialog__footer flex gap-2 border-t p-4">
-                <button type="button" onClick={() => setEditScopeOpen(false)} className="daira-glass-dialog__secondary min-h-11 flex-1 rounded-xl border px-3 text-xs font-bold">انصراف</button>
-                <button type="button" disabled={!editScopeIds.length || saving} onClick={() => { setEditScopeOpen(false); void saveAutomation(undefined, editScopeIds); }} className="daira-glass-dialog__primary min-h-11 flex-1 rounded-xl px-3 text-xs font-bold disabled:opacity-50">اعمال برای {new Intl.NumberFormat("fa-IR").format(editScopeIds.length)} محتوا</button>
-              </div>
-            </div>
-          </div>
-        </GlassModalPresence>
         {triggerType === "COMMENT_KEYWORD" && mediaDialogOpen && (
           <ContentSelectionDialog
             items={mediaItems}
