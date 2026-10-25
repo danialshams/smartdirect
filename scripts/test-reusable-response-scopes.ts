@@ -250,7 +250,8 @@ const editRoute = readFileSync("app/api/automations/[id]/comment-edit/route.ts",
 assert(editRoute.includes("partitionResponseMediaScope(oldMediaIds, mediaIds)"));
 assert(editRoute.includes("const remaining = scope.untouchedIds;"));
 const pick = readFileSync("components/dashboard/AutomationCreationFlow.tsx", "utf8");
-assert(pick.includes("editScopeIds") && pick.includes("GlassModalPresence open={editScopeOpen}"));
+assert(!pick.includes("<GlassModalPresence open={editScopeOpen}") && pick.includes("linkMediaOnly:true"),
+  "Comment response editing applies to all associated media; existing replies are linked rather than copied.");
 assert(pick.includes("const copyNested =") && pick.includes('savedResponseId:null') &&
   !pick.includes('linkMediaOnly: true'),
   "Reusing a previous reply must create an independent rule with detached message references.");
