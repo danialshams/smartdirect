@@ -65,7 +65,7 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
           <div className="daira-app-content">
             {(homeVisited || isHome) && (
               <div className={isHome ? "w-full" : "hidden"} aria-hidden={!isHome} inert={!isHome}>
-                <DashboardOverview user={user} instagramAccounts={instagramAccounts} />
+                <DashboardOverview user={user} instagramAccounts={instagramAccounts} isActive={isHome} />
               </div>
             )}
             {!isHome && children}
