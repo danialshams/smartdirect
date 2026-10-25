@@ -50,7 +50,7 @@ function formatNumber(value: number) {
   return value.toLocaleString("fa-IR");
 }
 
-export default function DashboardOverview({ user, instagramAccounts }: DashboardOverviewProps) {
+export default function DashboardOverview({ user, instagramAccounts, isActive = true }: DashboardOverviewProps & { isActive?: boolean }) {
   const { accountId, isReady } = useDashboardAccountSelection();
   const activeAccount = instagramAccounts.find((account) => account.id === accountId && account.isConnected)
     ?? instagramAccounts.find((account) => account.isConnected);
@@ -71,6 +71,9 @@ export default function DashboardOverview({ user, instagramAccounts }: Dashboard
   const visibleSummaryStatus = summaryState.key === summaryKey ? summaryStatus : "loading";
 
   useEffect(() => {
+    // Keep the Home artwork mounted, but only refresh its private counters
+    // when the route is visible. Returning Home silently revalidates stale data.
+    if (!isActive) return;
     if (!activeAccountId || !summaryKey) {
       setSummaryState({ key: null, value: null });
       setSummaryStatus("unavailable");
@@ -111,7 +114,7 @@ export default function DashboardOverview({ user, instagramAccounts }: Dashboard
 
     void loadSummary();
     return () => controller.abort();
-  }, [activeAccountId, summaryKey]);
+  }, [activeAccountId, summaryKey, isActive]);
 
   if (!isReady) return <DashboardHomeSkeleton />;
 

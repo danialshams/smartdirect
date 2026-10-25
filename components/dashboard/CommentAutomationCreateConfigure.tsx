@@ -2,51 +2,69 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useDashboardAccountSelection } from "./DashboardAccountContext";
 import AutomationCreationFlow from "./AutomationCreationFlow";
 import AutomationCreationSkeleton from "./AutomationCreationSkeleton";
-
-type Account = { id: string; igUsername: string; igUserId: string; isConnected: boolean };
 
 export default function CommentAutomationCreateConfigure() {
   const params = useSearchParams();
   const mediaId = params.get("mediaId");
-  const [account, setAccount] = useState<Account | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  // The authenticated dashboard layout already verified and fetched these
+  // accounts. Avoid an extra /api/instagram/accounts round-trip before the editor.
+  const { accounts, accountId, isReady } = useDashboardAccountSelection();
+  const account = accounts.find((item) => item.id === accountId && item.isConnected)
+    ?? accounts.find((item) => item.isConnected)
+    ?? null;
+
+  // A deep-linked mediaId still needs its previous account/media validation.
+  // Guard late results when the user changes account or navigates away.
+  const validationKey = account && mediaId ? account.id + ":" + mediaId : null;
+  const [mediaValidation, setMediaValidation] = useState<{
+    key: string; valid: boolean; error: string;
+  } | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!account || !mediaId) return;
+    const key = account.id + ":" + mediaId;
+    const controller = new AbortController();
     void (async () => {
       try {
-        const accountsResponse = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include" });
-        const accountsResult = await accountsResponse.json();
-        if (!accountsResponse.ok || !accountsResult.success) throw new Error(accountsResult.error || "دریافت پیج اینستاگرام ناموفق بود.");
-        const active = (Array.isArray(accountsResult.accounts) ? accountsResult.accounts : []).find((item: Account) => item.isConnected) ?? null;
-        if (!active) throw new Error("پیج اینستاگرام متصل نیست.");
-
-        if (mediaId) {
-          const mediaResponse = await fetch("/api/instagram/media?instagramAccountId=" + encodeURIComponent(active.id), { cache: "no-store", credentials: "include" });
-          const mediaResult = await mediaResponse.json();
-          if (!mediaResponse.ok || !mediaResult.success) throw new Error(mediaResult.message || "دریافت محتوا ناموفق بود.");
-          const selected = (Array.isArray(mediaResult.data) ? mediaResult.data : []).find((item: { id: string }) => item.id === mediaId);
-          if (!selected) throw new Error("این محتوا دیگر در پیج پیدا نشد.");
+        const response = await fetch(
+          "/api/instagram/media?instagramAccountId=" + encodeURIComponent(account.id),
+          { cache: "no-store", credentials: "include", signal: controller.signal },
+        );
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || result.error || "دریافت محتوا ناموفق بود.");
         }
-
-        if (!cancelled) setAccount(active);
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "دریافت اطلاعات ناموفق بود.");
-      } finally {
-        if (!cancelled) setLoading(false);
+        const found = (Array.isArray(result.data) ? result.data : [])
+          .some((item: { id?: string }) => item.id === mediaId);
+        if (!found) throw new Error("این محتوا دیگر در پیج پیدا نشد.");
+        if (!controller.signal.aborted) setMediaValidation({ key, valid: true, error: "" });
+      } catch (error) {
+        if (!controller.signal.aborted) setMediaValidation({
+          key, valid: false,
+          error: error instanceof Error ? error.message : "دریافت اطلاعات ناموفق بود.",
+        });
       }
     })();
-    return () => { cancelled = true; };
-  }, [mediaId]);
+    return () => controller.abort();
+  }, [account?.id, mediaId]);
 
-  if (loading) return <AutomationCreationSkeleton triggerType="COMMENT_KEYWORD" />;
-  if (!account) return <div dir="rtl" className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">{error || "پیج اینستاگرام پیدا نشد."}</div>;
+  if (!isReady || (validationKey && mediaValidation?.key !== validationKey)) {
+    return <AutomationCreationSkeleton triggerType="COMMENT_KEYWORD" />;
+  }
+  if (!account || (validationKey && mediaValidation?.valid === false)) {
+    return (
+      <div dir="rtl" className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">
+        {mediaValidation?.error || "پیج اینستاگرام متصل نیست."}
+      </div>
+    );
+  }
 
   return (
     <AutomationCreationFlow
+      key={account.id}
       account={account}
       mediaId={mediaId ?? ""}
       triggerType="COMMENT_KEYWORD"
