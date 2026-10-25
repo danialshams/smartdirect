@@ -167,13 +167,13 @@ assert(commentFlow.includes('useState<"edit" | "replace">("edit")') &&
   !commentFlow.includes("ویرایش پاسخ فعلی") &&
   !commentFlow.includes("مشاهده جزئیات پاسخ فعلی") &&
   commentFlow.includes("linkMediaOnly:true"),
-  "Comment/story edits must use independent reply content and show the current editor directly.");
+  "Comment/story edits must update the existing reply on every attached media.");
 assert(liveEditor.includes('creationMode==="existing"') &&
   liveEditor.includes("ایجاد پاسخ") &&
   !liveEditor.includes("لایو فعال {") &&
   !liveEditor.includes("مشاهده پاسخ انتخاب‌شده") &&
   !liveEditor.includes("<CompleteResponseNameField"),
-  "Live responses must be independent and editable only in their own edit pages.");
+  "Live responses must reuse existing rules without extra live selection controls.");
 const directEditor = src("components/dashboard/DirectAutomationEditor.tsx");
 assert(directEditor.includes("hideLibrary") &&
   !directEditor.includes("<ResponseModeSwitcher") &&

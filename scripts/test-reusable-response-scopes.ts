@@ -252,9 +252,9 @@ assert(editRoute.includes("const remaining = scope.untouchedIds;"));
 const pick = readFileSync("components/dashboard/AutomationCreationFlow.tsx", "utf8");
 assert(!pick.includes("<GlassModalPresence open={editScopeOpen}") && pick.includes("linkMediaOnly:true"),
   "Comment response editing applies to all associated media; existing replies are linked rather than copied.");
-assert(pick.includes("const copyNested =") && pick.includes('savedResponseId:null') &&
-  !pick.includes('linkMediaOnly: true'),
-  "Reusing a previous reply must create an independent rule with detached message references.");
+assert(pick.includes("linkMediaOnly:true") &&
+  !pick.includes("const copyNested =") && !pick.includes("ایجاد پاسخ مستقل"),
+  "Choosing a previous rule must attach the existing reply to additional media.");
 const api = readFileSync("app/api/automations/[id]/route.ts", "utf8");
 assert(api.includes("isActive: Boolean") || api.includes("Boolean(isActive)"),
   "Each independent reply must still support its own activation state.");
