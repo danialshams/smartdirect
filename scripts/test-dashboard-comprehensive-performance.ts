@@ -11,6 +11,21 @@ assert(shell.includes('dynamic(() => import("./DashboardOverview")') &&
 assert(shell.includes('<DashboardOverview user={user} instagramAccounts={instagramAccounts} isActive={isHome} />'),
   "The Home retains its existing design, data props and visible-route revalidation gate");
 
+// The shared segment's loading fallback must never render a second Home or
+// shell skeleton before the destination route's own loading state.
+const dashboardLoading=file("app/dashboard/loading.tsx");
+assert(dashboardLoading.includes("export default function DashboardLoading()") &&
+  /return\\s+null\\s*;/.test(dashboardLoading) &&
+  !dashboardLoading.includes("<DashboardHomeSkeleton") &&
+  !dashboardLoading.includes('from "next/navigation"') &&
+  !dashboardLoading.includes('className="daira-app-shell"'),
+  "Dashboard segment loading fallback must stay silent; never flash generic Home chrome before a page-specific skeleton");
+assert(file("app/dashboard/comment-automation/loading.tsx").includes("AutoRepliesRouteLoading") &&
+  file("app/dashboard/story-automation/loading.tsx").includes("AutoRepliesRouteLoading") &&
+  file("app/dashboard/publishing/loading.tsx").includes('view="create"') &&
+  file("app/dashboard/comment-automation/new/loading.tsx").includes("Skeleton"),
+  "Existing route-specific skeletons must remain available without an intermediate dashboard fallback");
+
 const automationList=file("components/dashboard/AutoRepliesManager.tsx");
 const publishApi=file("app/api/instagram/publishing/route.ts");
 assert(automationList.includes('/api/instagram/publishing'+"\\u0024"+'{accountQuery}&view=automation-cards') ||
