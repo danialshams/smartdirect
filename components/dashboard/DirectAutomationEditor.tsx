@@ -6,8 +6,6 @@ import { dairaPalette } from "../../lib/design-system/palette";
 import PublishingStoryAutomationSetup, { type StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
 import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import DirectAutomationSkeleton from "./DirectAutomationSkeleton";
-import ResponseModeSwitcher from "./ResponseModeSwitcher";
-import CompleteAutomationPicker from "./CompleteAutomationPicker";
 import DirectAutomationSuccess from "./DirectAutomationSuccess";
 import { directAutomationHasChanges, responseFingerprint } from "./automation-response-compare";
 
@@ -29,9 +27,6 @@ function Guide({step,title,hint}:{step:number;title:string;hint:string}){
 export default function DirectAutomationEditor({id}:{id?:string}){
  const [account,setAccount]=useState<Account|null>(null);
  const [original,setOriginal]=useState<Automation|null>(null);
- const [previousRules,setPreviousRules]=useState<Automation[]>([]);
- const [replyMode,setReplyMode]=useState<"new"|"existing">("new");
- const [selectedPrevious,setSelectedPrevious]=useState("");
  const [keywords,setKeywords]=useState<string[]>([]);
  const [draft,setDraft]=useState("");
  const [message,setMessage]=useState<MessageDraft>(()=>createEmptyMessage());
@@ -106,7 +101,6 @@ export default function DirectAutomationEditor({id}:{id?:string}){
      setShowcases(Array.isArray(showcaseData)?showcaseData:Array.isArray(showcaseData?.data)?showcaseData.data:[]);
      setForms(Array.isArray(formData)?formData:Array.isArray(formData?.data)?formData.data:[]);
      setFormTemplates(templates);
-      setPreviousRules((Array.isArray(automationsData?.data)?automationsData.data:[]).filter((item:Automation)=>item.triggerType==="DM"&&Boolean(item.keyword?.trim())&&item.id!==existing?.id));
     }
    }catch(e){if(!controller.signal.aborted)setError(e instanceof Error?e.message:"بارگذاری ناموفق بود.");}
    finally{if(!controller.signal.aborted)setLoading(false);}
@@ -120,7 +114,6 @@ export default function DirectAutomationEditor({id}:{id?:string}){
   }
   async function save(prepared?:MessageDraft){
   if(saving||!account||(original&&!hasChanges))return;
-   if(!original&&replyMode==="existing"&&!selectedPrevious){setError("ابتدا یک پاسخ قبلی انتخاب کن.");return;}
   const entries=effectiveKeywords.slice(0,11);
   if(!entries.length||entries.length>10){setError("بین ۱ تا ۱۰ کلمه کلیدی وارد کنید.");return;}
   setSaving(true);setError("");
@@ -128,9 +121,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
    const response=await fetch("/api/direct-automation",{method:original?"PUT":"POST",credentials:"include",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({id:original?.id,expectedUpdatedAt:original?.updatedAt,
-     instagramAccountId:account.id,title:("پاسخ دایرکت - "+entries.join("، ")).slice(0,80),keyword:entries.join(","),message:!original&&replyMode==="existing"
-       ? cloneIndependentMessage(normalizeMessages(previousRules.find(rule=>rule.id===selectedPrevious)?.messages)[0]||createEmptyMessage())
-       : {...(prepared||message),savedResponseId:null}})});
+     instagramAccountId:account.id,title:("پاسخ دایرکت - "+entries.join("، ")).slice(0,80),keyword:entries.join(","),message:{...(prepared||message),savedResponseId:null}})});
    const body=await response.json();
    if(!response.ok||!body.success)throw new Error(body.error||"ذخیره پاسخ خودکار ناموفق بود.");
    setCompleted(true);
@@ -161,17 +152,9 @@ export default function DirectAutomationEditor({id}:{id?:string}){
      <p className="text-xs" style={{color:dairaPalette.text.body}}>حداکثر ۱۰ کلمه. هر کلمه فقط می‌تواند به یک پاسخ خودکار دایرکت تعلق داشته باشد.</p>
     </div>
    </section>
-    {!original && <section className="space-y-3"><ResponseModeSwitcher value={replyMode} existingAvailable={previousRules.length>0}
-      onChange={value=>{setReplyMode(value);setSelectedPrevious("");}} disabled={saving}/></section>}
     <section><Guide step={2} title="نوع پاسخ خودکار"
     hint="نوع پیام را انتخاب کن و محتوای آن را بساز. همه پاسخ‌ها از موتور پیام‌رسانی فعلی استفاده می‌کنند."/>
-    {!original&&replyMode==="existing" ? <div className="space-y-3">
-       <CompleteAutomationPicker kind="DM" items={previousRules} selected={previousRules.find(rule=>rule.id===selectedPrevious)||null}
-         onSelect={rule=>setSelectedPrevious(rule.id)} onChange={()=>setSelectedPrevious("")}
-         showcases={showcases} forms={forms} disabled={saving}/>
-       <button type="button" onClick={()=>void save()} disabled={!selectedPrevious||!keywordValid||saving}
-         className="daira-complete-reply__select min-h-12 w-full rounded-xl px-4 text-sm font-bold disabled:opacity-50">ثبت پاسخ مستقل</button>
-     </div> : <div className="rounded-2xl border bg-white p-4 sm:p-5" style={{borderColor:dairaPalette.border}}>
+    <div className="rounded-2xl border bg-white p-4 sm:p-5" style={{borderColor:dairaPalette.border}}>
      <PublishingStoryAutomationSetup key={original?.id||account.id} message={message} showcases={showcases} forms={forms}
       formTemplates={formTemplates} loadingResources={false} instagramAccountId={account.id} onUpdate={patch=>setMessage(m=>({...m,...patch}))}
       keywordValid={keywordValid} storyCreateMode storyEditMode={Boolean(original)} hideLibrary
@@ -179,7 +162,7 @@ export default function DirectAutomationEditor({id}:{id?:string}){
       disabled={saving} showFinalSave finalSaveDisabled={saving||!hasChanges} onContinue={save}
       finalSaveLabel={original?"ذخیره تغییرات":"ساخت پاسخ خودکار دایرکت"}
       finalSaveLoadingLabel="در حال ذخیره..." textPlaceholder="متنی که بعد از دریافت کلمه کلیدی ارسال می‌شود..."/>
-    </div>}
+    </div>
    </section>
    {error&&<p role="alert" className="rounded-xl border px-4 py-3 text-xs leading-6"
     style={{borderColor:dairaPalette.status.error,background:dairaPalette.background.surface,color:dairaPalette.status.error}}>{error}</p>}
