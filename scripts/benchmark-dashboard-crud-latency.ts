@@ -245,6 +245,94 @@ async function main() {
     }
     assert.equal(await prisma.instagramPublishJob.count({ where: { userId: owner.id } }), 0);
 
+    // Match the principal Prisma portions of Inbox conversation operations.
+    // No Instagram API calls, direct messages or real customer records.
+    const chatIds: string[] = [];
+    for (let i = 0; i < samples; i++) {
+      const conversation = await timed("inbox.create.conversation-with-messages", () => prisma.conversation.create({
+        data: {
+          userId: owner.id, instagramAccountId: account.id,
+          igUserId: account.igUserId,
+          participantId: "ci-inbox-" + seed + "-" + i,
+          participantUsername: "test_conversation_" + i,
+          lastMessageAt: new Date(),
+          messages: { create: [
+            { direction: "INBOUND", messageType: "TEXT", text: "Test inbox search " + i },
+            { direction: "OUTBOUND", messageType: "TEXT", text: "CI response " + i },
+          ] },
+        },
+        select: { id: true },
+      }));
+      chatIds.push(conversation.id);
+    }
+
+    for (let i = 0; i < samples; i++) {
+      const conversations = await timed("inbox.list.latest-with-unread", async () => {
+        const rows = await prisma.conversation.findMany({
+          where: { userId: owner.id, instagramAccountId: account.id },
+          orderBy: [{ lastMessageAt: "desc" }, { updatedAt: "desc" }],
+          take: 51,
+          include: {
+            messages: {
+              orderBy: { createdAt: "desc" }, take: 1,
+              select: { id: true, direction: true, messageType: true, text: true, mediaUrl: true, mediaId: true, igMessageId: true, readAt: true, seenAt: true, createdAt: true },
+            },
+            _count: { select: { messages: true } },
+          },
+        });
+        const ids = rows.map(row => row.id);
+        await Promise.all([
+          prisma.conversationMessage.groupBy({
+            by: ["conversationId"],
+            where: { conversationId: { in: ids }, direction: "INBOUND", readAt: null },
+            _count: { _all: true },
+          }),
+          prisma.conversationMessage.findMany({
+            where: { conversationId: { in: ids }, direction: "INBOUND" },
+            orderBy: { createdAt: "desc" }, distinct: ["conversationId"],
+            select: { conversationId: true, createdAt: true },
+          }),
+        ]);
+        return rows;
+      });
+      assert.equal(conversations.length, samples);
+    }
+
+    for (const id of chatIds) {
+      const messages = await timed("inbox.open.latest-messages", () => prisma.conversationMessage.findMany({
+        where: { conversationId: id },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 51,
+        select: {
+          id: true, direction: true, messageType: true, text: true,
+          mediaUrl: true, mediaId: true, igMessageId: true,
+          readAt: true, seenAt: true, createdAt: true,
+        },
+      }));
+      assert.equal(messages.length, 2);
+    }
+    for (let i = 0; i < samples; i++) {
+      const matches = await timed("inbox.search.messages", () => prisma.conversationMessage.findMany({
+        where: { conversationId: chatIds[i], text: { contains: "Test inbox search", mode: "insensitive" } },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 30, select: { id: true, text: true },
+      }));
+      assert.equal(matches.length, 1);
+    }
+    for (const id of chatIds) {
+      const result = await timed("inbox.mark-inbound-read", () => prisma.conversationMessage.updateMany({
+        where: { conversationId: id, direction: "INBOUND", readAt: null },
+        data: { readAt: new Date() },
+      }));
+      assert.equal(result.count, 1);
+    }
+    for (const id of chatIds) {
+      await timed("inbox.delete.fixture-conversation", () => prisma.conversation.delete({
+        where: { id }, select: { id: true },
+      }));
+    }
+    assert.equal(await prisma.conversation.count({ where: { instagramAccountId: account.id } }), 0);
+
     const operations = Object.fromEntries([...durations.entries()].map(([name, values]) => [name, stats(values)]));
     const report = {
       kind: "isolated-database-crud-not-end-to-end",
