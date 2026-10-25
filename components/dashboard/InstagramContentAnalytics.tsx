@@ -1,5 +1,6 @@
 "use client";
 
+import { useDashboardAccountSelection } from "@/components/dashboard/DashboardAccountContext";
 import { DashboardLoading } from "@/components/dashboard/DashboardUI"
 import { Input } from "@/components/dashboard/DashboardUI"
 
@@ -423,15 +424,19 @@ function Metric({
 }
 
 export default function InstagramContentAnalytics() {
-    const [
-        accounts,
-        setAccounts,
-    ] = useState<Account[]>([]);
-
-    const [
-        accountId,
-        setAccountId,
-    ] = useState("");
+    // The protected dashboard layout already loads and authorizes accounts.
+    // Avoid the extra /api/instagram/accounts round trip before analytics.
+    const { accounts: verifiedAccounts, accountId: selectedDashboardAccountId, isReady } = useDashboardAccountSelection();
+    const accounts = useMemo<Account[]>(() => verifiedAccounts.map(account => ({
+        id: account.id,
+        igUserId: account.igUserId,
+        username: account.igUsername,
+        isConnected: account.isConnected,
+    })), [verifiedAccounts]);
+    const [accountId, setAccountId] = useState(() =>
+        selectedDashboardAccountId ?? verifiedAccounts.find(account => account.isConnected)?.id ?? verifiedAccounts[0]?.id ?? ""
+    );
+    const loadingAccounts = !isReady;
 
     const [
         data,
@@ -444,11 +449,6 @@ export default function InstagramContentAnalytics() {
         loading,
         setLoading,
     ] = useState(false);
-
-    const [
-        loadingAccounts,
-        setLoadingAccounts,
-    ] = useState(true);
 
     const [
         error,
@@ -467,83 +467,21 @@ export default function InstagramContentAnalytics() {
         "interactions",
     );
 
-    const loadAccounts =
-        useCallback(
-            async () => {
-                try {
-                    setLoadingAccounts(
-                        true,
-                    );
-
-                    setError("");
-
-                    const response =
-                        await fetch(
-                            "/api/instagram/accounts",
-                            {
-                                cache: "no-store",
-                            },
-                        );
-
-                    const result =
-                        await response.json();
-
-                    if (
-                        !response.ok ||
-                        !result.success
-                    ) {
-                        throw new Error(
-                            result.error ||
-                            result.message ||
-                            "خطا در دریافت اکانت‌ها",
-                        );
-                    }
-
-                    const list =
-                        Array.isArray(
-                            result.accounts,
-                        )
-                            ? (result.accounts as Account[])
-                            : [];
-
-                    setAccounts(list);
-
-                    const connected =
-                        list.find(
-                            (
-                                item,
-                            ) =>
-                                item.isConnected,
-                        );
-
-                    setAccountId(
-                        connected?.id ||
-                        list[0]?.id ||
-                        "",
-                    );
-                } catch (error) {
-                    setAccounts([]);
-
-                    setAccountId("");
-
-                    setError(
-                        error instanceof Error
-                            ? error.message
-                            : "خطا در دریافت اکانت‌ها",
-                    );
-                } finally {
-                    setLoadingAccounts(
-                        false,
-                    );
-                }
-            },
-            [],
-        );
+    // A global account switch should still update this page; selecting a page
+    // locally keeps its previous behavior and does not mutate the global choice.
+    useEffect(() => {
+        const validId = selectedDashboardAccountId &&
+            accounts.some(account => account.id === selectedDashboardAccountId)
+            ? selectedDashboardAccountId
+            : accounts.find(account => account.isConnected)?.id ?? accounts[0]?.id ?? "";
+        setAccountId(validId);
+    }, [selectedDashboardAccountId, accounts]);
 
     const load =
         useCallback(
             async (
                 selectedAccountId: string,
+                signal: AbortSignal,
             ) => {
                 if (
                     !selectedAccountId
@@ -563,6 +501,7 @@ export default function InstagramContentAnalytics() {
                             )}`,
                             {
                                 cache: "no-store",
+                                signal,
                             },
                         );
 
@@ -580,10 +519,9 @@ export default function InstagramContentAnalytics() {
                         );
                     }
 
-                    setData(
-                        result as AnalyticsData,
-                    );
+                    if (!signal.aborted) setData(result as AnalyticsData);
                 } catch (error) {
+                    if (signal.aborted) return;
                     setData(null);
 
                     setError(
@@ -592,38 +530,18 @@ export default function InstagramContentAnalytics() {
                             : "خطا در دریافت عملکرد محتوا",
                     );
                 } finally {
-                    setLoading(false);
+                    if (!signal.aborted) setLoading(false);
                 }
             },
             [],
         );
 
     useEffect(() => {
-        const timer = window.setTimeout(() => {
-            void loadAccounts();
-        }, 0);
-
-        return () => {
-            window.clearTimeout(timer);
-        };
-    }, [loadAccounts]);
-
-    useEffect(() => {
-        if (!accountId) {
-            return;
-        }
-
-        const timer = window.setTimeout(() => {
-            void load(accountId);
-        }, 0);
-
-        return () => {
-            window.clearTimeout(timer);
-        };
-    }, [
-        accountId,
-        load,
-    ]);
+        if (!accountId || !isReady) return;
+        const controller = new AbortController();
+        void load(accountId, controller.signal);
+        return () => controller.abort();
+    }, [accountId, isReady, load]);
 
     const filteredContent =
         useMemo(() => {
