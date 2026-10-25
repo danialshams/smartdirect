@@ -68,4 +68,14 @@ assert(batches.includes('prepareAutomationMessages') &&
   create.includes('messages: batchMessages') &&
   publish.includes('messages: preparedMessages'),
   "Create actions must validate and persist nested responses atomically in one request.");
+const publishApi = file("app/api/instagram/publishing/route.ts");
+const validationStart = publishApi.indexOf("const [conflict, ownedCover, tracked] = await Promise.all([");
+const conflictCheck = publishApi.indexOf("if (conflict) {", validationStart);
+const coverCheck = publishApi.indexOf("if (reelOptions?.coverStorageKey && !ownedCover)", validationStart);
+const mediaCheck = publishApi.indexOf("const trackedKeys = new Set(tracked.map", validationStart);
+assert(validationStart >= 0 && conflictCheck > validationStart && coverCheck > conflictCheck &&
+  mediaCheck > coverCheck && publishApi.includes("userId: session.user.id") &&
+  publishApi.includes("expiresAt: { gt: validAt }"),
+  "Publishing must parallelize independent ownership checks without altering error precedence or media security.");
+
 console.log("DASHBOARD_PERFORMANCE_REGRESSION_OK");
