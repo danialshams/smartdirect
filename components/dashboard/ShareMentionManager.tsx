@@ -7,14 +7,17 @@ import { toast } from "sonner";
 import {AtSign,Share2,Plus,Search,Trash2,Pencil,LoaderCircle,Check} from "lucide-react";
 import {dairaPalette} from "../../lib/design-system/palette";
 import AutoRepliesSkeleton from "./AutoRepliesSkeleton";
+import { getDashboardListSnapshot, setDashboardListSnapshot } from "@/src/lib/dashboard/list-snapshot-cache";
 type Item={id:string;instagramAccountId:string;triggerType:string;mediaId:string|null;mediaIds:string|null;isActive:boolean;updatedAt:string;messages:Array<{messageType:string;text?:string|null}>};
 const title=(type:string)=>type==="STORY_MENTION"?"منشن در استوری":"اشتراک‌گذاری پست و ریلز";
 export default function ShareMentionManager(){
  const {accounts:dashboardAccounts,accountId:dashboardAccountId,isReady:dashboardReady}=useDashboardAccountSelection();
  const activeDashboardAccount=dashboardAccounts.find(a=>a.id===dashboardAccountId&&a.isConnected);
+ const listKey=activeDashboardAccount?"share-mention:"+activeDashboardAccount.id:null;
  const [accountId,setAccountId]=useState("");
- const [items,setItems]=useState<Item[]>([]);
- const [loading,setLoading]=useState(true);
+ const [items,setItems]=useState<Item[]>(()=>listKey?getDashboardListSnapshot<Item>(listKey)??[]:[]);
+ const [loadedFor,setLoadedFor]=useState<string|null>(()=>listKey&&getDashboardListSnapshot<Item>(listKey)?listKey:null);
+ const [loading,setLoading]=useState(()=>!(listKey&&getDashboardListSnapshot<Item>(listKey)));
  const [error,setError]=useState("");
  const [query,setQuery]=useState("");
  const [busy,setBusy]=useState("");
@@ -22,15 +25,23 @@ export default function ShareMentionManager(){
  const [reload,setReload]=useState(0);
  useEffect(()=>{
   if(!dashboardReady)return;
-  const controller=new AbortController();setLoading(true);setError("");
+  const controller=new AbortController();
+  const key="share-mention:"+(activeDashboardAccount?.id||"");
+  const cached=activeDashboardAccount?getDashboardListSnapshot<Item>(key):null;
+  if(cached){setItems(cached);setLoadedFor(key);setAccountId(activeDashboardAccount!.id);setLoading(false);}
+  else{setItems([]);setLoadedFor(null);setLoading(true);}
+  setError("");
   (async()=>{try{
    const account=activeDashboardAccount;
    if(!account)throw new Error("ابتدا یک پیج اینستاگرام متصل کن.");
    const response=await fetch("/api/automations?instagramAccountId="+encodeURIComponent(account.id),{cache:"no-store",credentials:"include",signal:controller.signal});
    const data=await response.json();
    if(!response.ok||!data.success)throw new Error(data.error||"دریافت پاسخ‌ها ناموفق بود.");
-   if(!controller.signal.aborted){setAccountId(account.id);setItems((Array.isArray(data.data)?data.data:[]).filter((v:Item)=>["DM_MEDIA_SHARE","STORY_MENTION"].includes(v.triggerType)));}
-  }catch(e){if(!controller.signal.aborted)setError(e instanceof Error?e.message:"دریافت پاسخ‌ها ناموفق بود.");}
+   if(!controller.signal.aborted){
+    const next=((Array.isArray(data.data)?data.data:[]) as Item[]).filter(v=>["DM_MEDIA_SHARE","STORY_MENTION"].includes(v.triggerType));
+    setDashboardListSnapshot(key,next);setAccountId(account.id);setItems(next);setLoadedFor(key);
+   }
+  }catch(e){if(!controller.signal.aborted&&!cached)setError(e instanceof Error?e.message:"دریافت پاسخ‌ها ناموفق بود.");}
   finally{if(!controller.signal.aborted)setLoading(false);}})();
   return()=>controller.abort();
  },[reload,dashboardReady,activeDashboardAccount?.id]);
@@ -45,13 +56,17 @@ export default function ShareMentionManager(){
    });
    const result=await response.json();
    if(!response.ok||!result.success)throw new Error(result.error||"ثبت تغییر ناموفق بود.");
-   setItems(list=>action==="delete"?list.filter(v=>v.id!==item.id):list.map(v=>v.id===item.id?{...v,isActive:!v.isActive}:v));
+   setItems(list=>{
+    const next=action==="delete"?list.filter(v=>v.id!==item.id):list.map(v=>v.id===item.id?{...v,isActive:!v.isActive}:v);
+    if(listKey)setDashboardListSnapshot(listKey,next);
+    return next;
+   });
    setDeleteId("");
    if(action==="toggle")toast.success(item.isActive?"پاسخ غیرفعال شد.":"پاسخ فعال شد.");
   }catch(e){const message=e instanceof Error?e.message:"ثبت تغییر ناموفق بود.";setError(message);toast.error(message);}
   finally{setBusy("");}
  }
- if(loading)return <AutoRepliesSkeleton includeCreateButton />;
+ if(loading||(dashboardReady&&Boolean(listKey)&&loadedFor!==listKey&&!error))return <AutoRepliesSkeleton includeCreateButton />;
  return <div dir="rtl" className="mx-auto w-full max-w-4xl space-y-4 py-3">
   <Link href="/dashboard/share-mention/new" dir="rtl" className="daira-leading-action flex min-h-[54px] w-full flex-row items-center justify-center gap-2 rounded-full px-4 text-sm font-bold text-white" style={{background:dairaPalette.primary.main}}><span className="flex shrink-0 items-center justify-center" aria-hidden="true"><Plus size={20}/></span><span className="whitespace-nowrap">ایجاد پاسخ جدید</span></Link>
   <>
