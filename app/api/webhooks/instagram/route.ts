@@ -1,5 +1,5 @@
 import { pickPublicCommentReply } from "@/lib/automation/comment-reply-variants";
-import { applyInboundAutomationPreference, getAutomatedMessageBlockReason, reserveRecipientAutomatedMessageBudget } from "@/lib/instagram/automated-message-policy";
+import { applyInboundAutomationPreference, getAutomatedMessageBlockReason, reserveRecipientAutomatedMessageBudget, claimFirstAutomationStopOption, AUTOMATION_STOP_QUICK_REPLY_TITLE, AUTOMATION_STOP_QUICK_REPLY_PAYLOAD } from "@/lib/instagram/automated-message-policy";
 import { createHash } from "node:crypto";
 import { verifyInstagramWebhookSignature } from "@/lib/webhook/verify-signature";
 import { after, NextRequest, NextResponse } from "next/server";
@@ -2425,18 +2425,21 @@ async function sendStoryReplyMessage({
     instagramAccountId, participantId,
   })) return false;
   if (!await reserveRecipientAutomatedMessageBudget({ instagramAccountId, participantId })) return false;
+  const releaseStopOption = replyText.trim() ? await claimFirstAutomationStopOption(instagramAccountId, participantId) : null;
   try {
     await instagramApiRequest(`/${igUserId}/messages`, {
       method: "POST",
       accessToken,
       body: {
         recipient: { id: participantId },
-        message: { text: replyText },
+        message: { text: replyText, ...(releaseStopOption ? { quick_replies: [{ content_type: "text", title: AUTOMATION_STOP_QUICK_REPLY_TITLE, payload: AUTOMATION_STOP_QUICK_REPLY_PAYLOAD }] } : {}) },
       },
       rateLimit: { instagramAccountId, operation: "MESSAGE_TEXT" },
     });
+    if (releaseStopOption) await releaseStopOption(true);
     return true;
   } catch (error) {
+    if (releaseStopOption) await releaseStopOption(false);
     console.error("Instagram Story Reply message failed:", error);
     return false;
   }
@@ -2563,18 +2566,21 @@ async function sendDirectInstagramMessage({
     instagramAccountId, participantId,
   })) return false;
   if (!await reserveRecipientAutomatedMessageBudget({ instagramAccountId, participantId })) return false;
+  const releaseStopOption = text.trim() ? await claimFirstAutomationStopOption(instagramAccountId, participantId) : null;
   try {
     await instagramApiRequest(`/${igUserId}/messages`, {
       method: "POST",
       accessToken,
       body: {
         recipient: { id: participantId },
-        message: { text },
+        message: { text: text, ...(releaseStopOption ? { quick_replies: [{ content_type: "text", title: AUTOMATION_STOP_QUICK_REPLY_TITLE, payload: AUTOMATION_STOP_QUICK_REPLY_PAYLOAD }] } : {}) },
       },
       rateLimit: { instagramAccountId, operation: "MESSAGE_TEXT" },
     });
+    if (releaseStopOption) await releaseStopOption(true);
     return true;
   } catch (error) {
+    if (releaseStopOption) await releaseStopOption(false);
     console.error("Instagram direct message failed:", error);
     return false;
   }
