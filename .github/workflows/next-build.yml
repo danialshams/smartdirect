@@ -83,6 +83,12 @@ jobs:
       - name: Verify dashboard performance and atomic save invariants
         run: npx tsx scripts/test-dashboard-performance.ts
 
+      - name: Verify dashboard route isolation and benchmark syntax
+        run: |
+          npx tsx scripts/test-dashboard-route-isolation.ts
+          node --check scripts/benchmark-dashboard-navigation.mjs
+          node --check scripts/report-dashboard-initial-js.mjs
+
       - name: Test complete Daira design system
         run: npx tsx scripts/test-daira-design-system.ts
 
@@ -117,6 +123,17 @@ jobs:
           REDIS_DRIVER: redis
           REDIS_URL: redis://127.0.0.1:6379
         run: npm run build
+
+      - name: Report estimated initial dashboard JavaScript sizes
+        run: node scripts/report-dashboard-initial-js.mjs
+
+      - name: Upload read-only JavaScript inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-javascript-inventory
+          path: performance-results/dashboard-initial-js.json
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Initialize isolated PostgreSQL schema and verify incremental inbox migration
         env:

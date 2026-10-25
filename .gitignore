@@ -46,3 +46,7 @@ next-env.d.ts
 
 # Generated Prisma Client
 src/generated/prisma/
+
+# Local authenticated performance benchmarking
+.local-auth*.json
+performance-results/
