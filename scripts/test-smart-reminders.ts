@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { reminderBlockReason, reminderWindowValidAt } from "../src/lib/automation/smart-reminder-policy";
 import { selectableForReminder, smartReminderOptionName } from "../src/lib/automation/smart-reminder-options";
 
@@ -31,6 +32,16 @@ assert.equal(selectableForReminder(candidate("COMMENT_KEYWORD", "کفش", "EXACT
 assert.equal(smartReminderOptionName(candidate("COMMENT_KEYWORD", "کفش, قیمت؛سفارش")), "پاسخ خودکار کامنت — کفش، قیمت، سفارش");
 assert.equal(smartReminderOptionName(candidate("COMMENT_KEYWORD", null, "CONTAINS_ANY")), "پاسخ خودکار کامنت — هر کامنتی");
 assert.equal(smartReminderOptionName(candidate("STORY_REPLY_KEYWORD", "قیمت")), "پاسخ خودکار استوری — قیمت");
+
+const reminderApi = readFileSync("app/api/smart-reminders/route.ts", "utf8");
+const reminderList = readFileSync("components/dashboard/SmartRemindersList.tsx", "utf8");
+const reminderEditor = readFileSync("components/dashboard/SmartReminderEditor.tsx", "utf8");
+assert(reminderApi.includes('searchParams.get("view") === "list"') &&
+  reminderApi.includes('listOnly ? Promise.resolve([]) : prisma.automation.findMany({') &&
+  reminderList.includes('/api/smart-reminders?view=list&instagramAccountId=') &&
+  reminderEditor.includes('/api/smart-reminders?instagramAccountId=') &&
+  !reminderEditor.includes('/api/smart-reminders?view=list'),
+  "Reminder lists should skip unused selector queries while create/edit keep full options.");
 
 console.log("SMART_REMINDERS_POLICY_TEST_OK", {
   twentyFourHourRule: true, noHumanAgentBypass: true, userReplyCancellation: true,
