@@ -71,3 +71,29 @@ export async function getAutomatedMessageBlockReason(input: {
     isPrivateReply: input.isPrivateReply === true,
   });
 }
+
+/**
+ * Additional product-level abuse guard, NOT a purported official Meta quota.
+ * One Instagram recipient cannot receive an unbounded burst of automated
+ * replies across different rules from the same business account.
+ * A single atomic Redis key is shared by all Vercel/worker instances.
+ */
+export async function reserveRecipientAutomatedMessageBudget(input: {
+  instagramAccountId: string;
+  participantId: string;
+}): Promise<boolean> {
+  const { createHash } = await import("node:crypto");
+  const { getRedisClient } = await import("@/lib/redis/client");
+  const hash = createHash("sha256")
+    .update(input.instagramAccountId + ":" + input.participantId)
+    .digest("hex");
+  const redis = getRedisClient();
+  const count = await redis.eval(
+    'local n = redis.call("INCR", KEYS[1]); if n == 1 then redis.call("EXPIRE", KEYS[1], tonumber(ARGV[1])) end; return n',
+    ["smartdirect:meta:recipient-message-budget:v1:" + hash],
+    ["600"],
+  ) as number;
+  // 20 outbound automated sends / recipient / 10 minutes. This limit is an
+  // application anti-spam guard and may be tuned after observing actual usage.
+  return Number(count) <= 20;
+}
