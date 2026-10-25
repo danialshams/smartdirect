@@ -47,7 +47,7 @@ async function runOne(loop, route) {
     await readyHome(page);
     // Select by exact href. The selector is based on routes read from the
     // authenticated Home, not user input.
-    const card = page.locator('a[href="' + route + '"]').first();
+    const card = page.locator('a.daira-home__tool-card[href="' + route + '"], a.daira-home__quick-card[href="' + route + '"]').first();
     if (!await card.isVisible()) {
       records.push({ loop, route, skipped: "Card not visible after hydration" });
       return;
@@ -73,6 +73,9 @@ async function runOne(loop, route) {
     }
 
     stage = "return";
+    // Clear first-visit resource entries: transfer metrics should describe
+    // only the Home revisit, never its initial image downloads.
+    await page.evaluate(() => performance.clearResourceTimings());
     const backStart = Date.now();
     await Promise.all([
       page.waitForURL(url => url.pathname === "/dashboard", { waitUntil: "commit", timeout: 10000 }),
