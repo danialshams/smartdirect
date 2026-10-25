@@ -90,6 +90,12 @@ jobs:
           node --check scripts/benchmark-dashboard-diagnostics.mjs
           node --check scripts/report-dashboard-initial-js.mjs
 
+      - name: Test scoped home revisit cache and full coverage benchmark syntax
+        run: |
+          npx tsx scripts/test-dashboard-home-revisit.ts
+          node --check scripts/benchmark-dashboard-revisits.mjs
+          node --check scripts/report-dashboard-performance-coverage.mjs
+
       - name: Test complete Daira design system
         run: npx tsx scripts/test-daira-design-system.ts
 
@@ -128,11 +134,22 @@ jobs:
       - name: Report estimated initial dashboard JavaScript sizes
         run: node scripts/report-dashboard-initial-js.mjs
 
+      - name: Inventory dashboard routes and API action coverage
+        run: node scripts/report-dashboard-performance-coverage.mjs
+
       - name: Upload read-only JavaScript inventory
         uses: actions/upload-artifact@v4
         with:
           name: dashboard-javascript-inventory
           path: performance-results/dashboard-initial-js.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Archive dashboard performance coverage inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-performance-coverage
+          path: performance-results/dashboard-performance-coverage.json
           if-no-files-found: error
           retention-days: 14
 

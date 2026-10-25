@@ -487,14 +487,10 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
       const nextItems = itemsRef.current.filter((item) => item.key !== deleteTarget.key);
       itemsRef.current = nextItems;
       setItems(nextItems);
-      try {
-        const accountResponse = await fetch("/api/instagram/accounts", { cache: "no-store", credentials: "include" });
-        const accountResult = await accountResponse.json();
-        const account = (Array.isArray(accountResult?.accounts) ? accountResult.accounts : []).find((item: { isConnected: boolean }) => item.isConnected);
-        if (account) writeAutoRepliesCache(account.id, nextItems);
-      } catch {
-        // The list remains updated in memory even if cache refresh fails.
-      }
+      // The authenticated dashboard context already resolved the selected
+      // account. Do not block delete completion on another accounts API call
+      // or accidentally update the cache of a different connected account.
+      if (activeAccount) writeAutoRepliesCache(activeAccount.id, nextItems);
       setDeleting(false);
       setClosingDelete(true);
       window.setTimeout(() => {
