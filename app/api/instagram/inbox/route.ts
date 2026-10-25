@@ -534,11 +534,16 @@ export async function GET(request: NextRequest) {
         messagesPage = latest.slice(0, 50).reverse();
       }
 
-      // These reads are independent of message media URL restoration.
-      // Resolve them alongside the Meta token rather than making every
-      // conversation open await them after the potentially slow Meta call.
+      // No Meta token is needed for an ordinary text conversation or already
+      // resolved media. Only restore missing media URLs when necessary.
+      const needsMediaRefresh = messagesPage.some(
+        message => ["IMAGE", "VIDEO", "AUDIO", "STICKER"].includes(message.messageType) &&
+          Boolean(message.igMessageId) && !message.mediaUrl,
+      );
+      // These reads are independent of the (occasionally slow) Meta media
+      // refresh, and therefore share its initial critical path.
       const [accessToken, lastInbound, handoff] = await Promise.all([
-        getValidInstagramAccessToken(account.id),
+        needsMediaRefresh ? getValidInstagramAccessToken(account.id) : Promise.resolve(null),
         prisma.conversationMessage.findFirst({
           where: {
             conversationId: conversation.id,
@@ -553,13 +558,15 @@ export async function GET(request: NextRequest) {
         }),
         getHandoffState(conversation.id),
       ]);
-      const refreshedMessages = await refreshConversationMediaUrls({
-        conversationId: conversation.id,
-        accountId: account.id,
-        tenantId: session.user.id,
-        accessToken,
-        messages: messagesPage,
-      });
+      const refreshedMessages = accessToken
+        ? await refreshConversationMediaUrls({
+            conversationId: conversation.id,
+            accountId: account.id,
+            tenantId: session.user.id,
+            accessToken,
+            messages: messagesPage,
+          })
+        : messagesPage;
 
       const messagingWindow = getInstagramMessagingWindow(
         lastInbound?.createdAt ?? null,
