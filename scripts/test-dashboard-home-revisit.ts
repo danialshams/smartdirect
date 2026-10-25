@@ -33,14 +33,24 @@ assert(automationManager.includes("writeAutoRepliesCache(activeAccount.id, nextI
   "Reply deletion must invalidate the currently selected account cache");
 
 
-// The read-only browser diagnostic must not mistake pending "load" events
-// for failed client-side route transitions or abort the whole benchmark.
+// The diagnostic must not reuse a potentially stale hydrated Home DOM
+// between samples; navigation and history observe URL changes without load.
 const revisit=readFileSync("scripts/benchmark-dashboard-revisits.mjs","utf8");
-assert(revisit.includes("waitForPath(route)"),"Benchmark must await pathname independently of load");
-assert(revisit.includes("window.location.pathname === target"),"Benchmark must poll the URL without load-event dependency");
-assert(!revisit.includes("page.waitForURL("),"Benchmark must not wait for load after SPA navigation");
-assert(revisit.includes("homeReturnArtResponses"),"Art observations should be measured only after Home return");
-assert(revisit.includes("failedAt: stage"),"Per-route failures must be reported rather than terminating the run");
-assert(revisit.includes("window.history.back()"),"Benchmark must return through native history");
+assert(revisit.includes("await context.newPage()"),"Each route must receive an isolated page");
+assert(revisit.includes('waitUntil: "commit"'),"Route timing must not await a full load event");
+assert(revisit.includes("noWaitAfter: true"),"Link clicks must not await document load");
+assert(revisit.includes("returnArtResponses"),"Track artwork events during Home return only");
+assert(revisit.includes("failedAt: stage"),"Report per-route failures and continue");
+assert(revisit.includes("window.history.back()"),"Use native history for Home return");
+
+const homeSkeleton=readFileSync("components/dashboard/DashboardHomeSkeleton.tsx","utf8");
+const overview=readFileSync("components/dashboard/DashboardOverview.tsx","utf8");
+assert(homeSkeleton.includes("Array.from({ length: 8 }"),"Home skeleton must reserve all eight live automation tiles");
+assert(homeSkeleton.includes('title="مدیریت پیج"'),"Home skeleton heading must match the real Home");
+assert(!homeSkeleton.includes('title="ابزارهای تکمیلی"'),"Do not render a removed section in Home skeleton");
+assert(overview.includes("const automationTools:"),"Validate skeleton against Home tools");
+const repliesSkeleton=readFileSync("components/dashboard/AutoRepliesSkeleton.tsx","utf8");
+assert(repliesSkeleton.includes("daira-automation-list-card"),"Automation list skeleton must match live card geometry");
+assert(repliesSkeleton.includes("h-14 w-14"),"Automation skeleton must reserve live thumbnails");
 
 console.log("DASHBOARD_HOME_REVISIT_CACHE_OK");
