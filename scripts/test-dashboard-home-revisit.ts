@@ -29,8 +29,17 @@ const api=readFileSync("app/api/dashboard/home-summary/route.ts","utf8");
 assert(api.includes('private, no-store'),"Sensitive dashboard API response must not be publicly cached");
 const automationManager=readFileSync("components/dashboard/AutoRepliesManager.tsx","utf8");
 assert(!automationManager.includes('fetch("/api/instagram/accounts"'),"Deletion must not refetch known accounts");
-assert(automationManager.includes("writeAutoRepliesCache(activeAccount.id, nextItems)"),
-  "Reply deletion must invalidate the currently selected account cache");
+assert(automationManager.includes("writeAutoRepliesCache(activeAccount.id, scope, nextItems)"),
+  "Reply deletion and toggle must refresh the current account-and-scope cache");
+assert(automationManager.includes("type ReplyScope =") &&
+  automationManager.includes("accountId}:${scope}") &&
+  automationManager.includes("readAutoRepliesCache(initialAccountId, scope)") &&
+  automationManager.includes("readAutoRepliesCache(account.id, scope)") &&
+  automationManager.includes("writeAutoRepliesCache(account.id, scope, nextItems)"),
+  "Story-only, comment-only, and combined automation responses must not overwrite each other's revisit snapshot");
+assert(automationManager.includes("const nextItems = itemsRef.current.map(entry =>") &&
+  automationManager.includes("if (activeAccount) writeAutoRepliesCache(activeAccount.id, scope, nextItems);"),
+  "A successful Story activation change must update the visible list and its scoped revisit cache");
 
 
 // The diagnostic must not reuse a potentially stale hydrated Home DOM

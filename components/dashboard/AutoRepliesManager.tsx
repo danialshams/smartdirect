@@ -10,6 +10,7 @@ import { dairaPalette } from "../../lib/design-system/palette";
 
 type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY" | "UNKNOWN";
 type TriggerType = "COMMENT_KEYWORD" | "STORY_REPLY_KEYWORD";
+type ReplyScope = "all" | "comments" | "stories";
 
 type Automation = {
   id: string;
@@ -96,12 +97,12 @@ function normalizeKeywordList(value: string | null | undefined) {
   return (value || "").split(/[,،;؛\n]+/).map((item) => item.trim()).filter(Boolean).join("، ");
 }
 
-const AUTO_REPLIES_CACHE_VERSION = 7;
+const AUTO_REPLIES_CACHE_VERSION = 8;
 const AUTO_REPLIES_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
-function readAutoRepliesCache(accountId: string): ReplyItem[] | null {
+function readAutoRepliesCache(accountId: string, scope: ReplyScope): ReplyItem[] | null {
   try {
-    const key = `smartdirect:auto-replies:v${AUTO_REPLIES_CACHE_VERSION}:${accountId}`;
+    const key = `smartdirect:auto-replies:v${AUTO_REPLIES_CACHE_VERSION}:${accountId}:${scope}`;
     const raw = window.sessionStorage.getItem(key);
     if (!raw) return null;
     const cached = JSON.parse(raw) as { savedAt?: number; items?: ReplyItem[] };
@@ -119,16 +120,16 @@ function readAutoRepliesCache(accountId: string): ReplyItem[] | null {
   }
 }
 
-function writeAutoRepliesCache(accountId: string, items: ReplyItem[]) {
+function writeAutoRepliesCache(accountId: string, scope: ReplyScope, items: ReplyItem[]) {
   try {
-    const key = `smartdirect:auto-replies:v${AUTO_REPLIES_CACHE_VERSION}:${accountId}`;
+    const key = `smartdirect:auto-replies:v${AUTO_REPLIES_CACHE_VERSION}:${accountId}:${scope}`;
     window.sessionStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), items }));
   } catch {
     // Storage can be unavailable or full; rendering must continue without it.
   }
 }
 
-export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | "comments" | "stories" }) {
+export default function AutoRepliesManager({ scope = "all" }: { scope?: ReplyScope }) {
   const initialAccountId = useDashboardAccountId();
   const dashboardAccounts = useDashboardAccounts();
   const activeAccount = dashboardAccounts.find(account => account.id === initialAccountId && account.isConnected)
@@ -167,7 +168,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
     // Restore only the account identified by the authenticated shared layout,
     // then revalidate the cached content in the background.
     if (initialAccountId) {
-      const warmItems = readAutoRepliesCache(initialAccountId);
+      const warmItems = readAutoRepliesCache(initialAccountId, scope);
       if (warmItems) {
         itemsRef.current = warmItems;
         setItems(warmItems);
@@ -192,7 +193,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           return;
         }
 
-        const cachedItems = readAutoRepliesCache(account.id);
+        const cachedItems = readAutoRepliesCache(account.id, scope);
         if (!cancelled && cachedItems) {
           itemsRef.current = cachedItems;
           setItems(cachedItems);
@@ -404,7 +405,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
           itemsRef.current = nextItems;
           setItems(nextItems);
           setError("");
-          writeAutoRepliesCache(account.id, nextItems);
+          writeAutoRepliesCache(account.id, scope, nextItems);
         }
       } catch (e) {
         if (!cancelled) {
@@ -447,13 +448,14 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || "تغییر وضعیت پاسخ ناموفق بود.");
       toast.success(active ? "پاسخ استوری غیرفعال شد." : "پاسخ استوری فعال شد.");
-      setItems(current => {
-        const next = current.map(entry => entry.title === "پاسخ خودکار استوری" && !entry.key.startsWith("publish:")
-          ? { ...entry, isActive: entry.id === item.id ? !active : (!active ? false : entry.isActive) }
-          : entry);
-        itemsRef.current = next;
-        return next;
-      });
+      const nextItems = itemsRef.current.map(entry => entry.title === "پاسخ خودکار استوری" && !entry.key.startsWith("publish:")
+        ? { ...entry, isActive: entry.id === item.id ? !active : (!active ? false : entry.isActive) }
+        : entry);
+      itemsRef.current = nextItems;
+      setItems(nextItems);
+      // A successful mutation must update the same account-and-scope snapshot
+      // so returning to Story replies never flashes an outdated switch state.
+      if (activeAccount) writeAutoRepliesCache(activeAccount.id, scope, nextItems);
     } catch (error) {
       const msg=error instanceof Error ? error.message : "تغییر وضعیت پاسخ ناموفق بود.";
       setError(msg);toast.error(msg);
@@ -494,7 +496,7 @@ export default function AutoRepliesManager({ scope = "all" }: { scope?: "all" | 
       // The authenticated dashboard context already resolved the selected
       // account. Do not block delete completion on another accounts API call
       // or accidentally update the cache of a different connected account.
-      if (activeAccount) writeAutoRepliesCache(activeAccount.id, nextItems);
+      if (activeAccount) writeAutoRepliesCache(activeAccount.id, scope, nextItems);
       setDeleting(false);
       setClosingDelete(true);
       window.setTimeout(() => {

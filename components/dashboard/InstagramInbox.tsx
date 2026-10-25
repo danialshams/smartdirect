@@ -444,6 +444,8 @@ export default function InstagramInbox({
   const inboxFrameRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const conversationFetchIdRef = useRef(0);
+  const pendingConversationListRef = useRef<string | null>(null);
+  const conversationListControllerRef = useRef<AbortController | null>(null);
   const loadedMoreConversationsRef = useRef(false);
   const messageFetchIdRef = useRef(0);
   const pendingMessageFetchRef = useRef<string | null>(null);
@@ -476,6 +478,10 @@ export default function InstagramInbox({
 
   const loadConversations = useCallback(async () => {
     if (!accountId) {
+      conversationListControllerRef.current?.abort();
+      conversationFetchIdRef.current++;
+      pendingConversationListRef.current = null;
+      conversationListControllerRef.current = null;
       setConversations([]);
       setSelectedId("");
       setMessages([]);
@@ -485,6 +491,13 @@ export default function InstagramInbox({
       return;
     }
 
+    // Do not overlap eight-second polling with a slow in-flight list fetch.
+    // Account changes take priority over obsolete requests.
+    if (pendingConversationListRef.current === accountId) return;
+    conversationListControllerRef.current?.abort();
+    const controller = new AbortController();
+    conversationListControllerRef.current = controller;
+    pendingConversationListRef.current = accountId;
     const requestId = ++conversationFetchIdRef.current;
     try {
       if (!conversations.length) setLoading(true);
@@ -493,6 +506,7 @@ export default function InstagramInbox({
         {
           cache: "no-store",
           headers: { Accept: "application/json" },
+          signal: controller.signal,
         },
       );
 
@@ -542,13 +556,22 @@ export default function InstagramInbox({
         setMobileChatOpen(savedMobileOpen);
       }
     } catch (err) {
-      if (requestId === conversationFetchIdRef.current) {
+      if (!controller.signal.aborted && requestId === conversationFetchIdRef.current) {
         setError(err instanceof Error ? err.message : "خطا در دریافت گفتگوها");
       }
     } finally {
-      if (requestId === conversationFetchIdRef.current) setLoading(false);
+      if (conversationListControllerRef.current === controller) {
+        conversationListControllerRef.current = null;
+        pendingConversationListRef.current = null;
+      }
+      if (!controller.signal.aborted && requestId === conversationFetchIdRef.current) setLoading(false);
     }
   }, [accountId]);
+
+  useEffect(() => () => {
+    conversationListControllerRef.current?.abort();
+    pendingConversationListRef.current = null;
+  }, []);
   const markConversationSeen = useCallback(
     async (inboundMarker: string) => {
       if (!accountId || !selectedId || !inboundMarker) return;
