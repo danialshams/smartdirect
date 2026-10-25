@@ -574,16 +574,24 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     }
     setJobs(nextJobs);
   }
-  async function loadResources(accountId: string) {
-    if (!accountId) return; setLoadingResources(true); try {
-      const [showcaseResponse, formResponse] = await Promise.all([fetch(`/api/showcases?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" }), fetch(`/api/forms?instagramAccountId=${encodeURIComponent(accountId)}`, { cache: "no-store" })]); const showcaseResult = await showcaseResponse.json(); const formResult = await formResponse.json(); setShowcases(
-        Array.isArray(showcaseResult)
-          ? showcaseResult
-          : Array.isArray(showcaseResult?.data)
-            ? showcaseResult.data
-            : [],
-      ); setForms(Array.isArray(formResult.data) ? formResult.data : []);
-    } finally { setLoadingResources(false); }
+  async function loadResources(accountId: string, signal: AbortSignal) {
+    setLoadingResources(true);
+    setShowcases([]);
+    setForms([]);
+    try {
+      const query = "?instagramAccountId=" + encodeURIComponent(accountId);
+      const [showcaseResponse, formResponse] = await Promise.all([
+        fetch("/api/showcases" + query, { cache: "no-store", credentials: "include", signal }),
+        fetch("/api/forms" + query, { cache: "no-store", credentials: "include", signal }),
+      ]);
+      if (!showcaseResponse.ok || !formResponse.ok) throw new Error("دریافت منابع پاسخ استوری ناموفق بود.");
+      const [showcaseResult, formResult] = await Promise.all([showcaseResponse.json(), formResponse.json()]);
+      if (signal.aborted) return;
+      setShowcases(Array.isArray(showcaseResult) ? showcaseResult : Array.isArray(showcaseResult?.data) ? showcaseResult.data : []);
+      setForms(Array.isArray(formResult?.data) ? formResult.data : []);
+    } finally {
+      if (!signal.aborted) setLoadingResources(false);
+    }
   }
   async function load() { const showBlockingLoading = cachedJobs === null; try { if (showBlockingLoading) setLoading(true); setError(""); await Promise.all([loadAccounts(), loadJobs()]); } catch (e) { setError(e instanceof Error ? e.message : "خطا در دریافت اطلاعات."); } finally { if (showBlockingLoading) setLoading(false); } }
   useEffect(() => {
@@ -710,7 +718,22 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
     return () => clearTimeout(handle);
   }, [jobs, router]);
 
-  useEffect(() => { if (selectedAccountId && automationEnabled && type === "STORY") void loadResources(selectedAccountId); }, [selectedAccountId, automationEnabled, type]);
+  useEffect(() => {
+    if (!selectedAccountId || !automationEnabled || type !== "STORY") {
+      setShowcases([]);
+      setForms([]);
+      setLoadingResources(false);
+      return;
+    }
+    const controller = new AbortController();
+    void loadResources(selectedAccountId, controller.signal).catch(() => {
+      if (!controller.signal.aborted) {
+        setShowcases([]);
+        setForms([]);
+      }
+    });
+    return () => controller.abort();
+  }, [selectedAccountId, automationEnabled, type]);
   useEffect(()=>{
     if (!automationEnabled||!selectedAccountId){setPreviousRules([]);return;}
     const controller=new AbortController();setPreviousLoading(true);setPreviousRules([]);
