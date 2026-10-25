@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LifeBuoy } from "lucide-react";
-import DashboardAccountsClient from "../../../components/dashboard/DashboardAccountsClient";
+import DashboardProfileClient from "../../../components/dashboard/DashboardProfileClient";
 import DashboardRoute from "../../../components/dashboard/DashboardRoute";
 import { DashboardPageLayout } from "../../../components/dashboard/DashboardPageLayout";
 
@@ -17,7 +17,7 @@ export default function ProfilePage() {
           </Link>
         }
       >
-        <DashboardAccountsClient mode="profile" />
+        <DashboardProfileClient />
       </DashboardPageLayout>
     </DashboardRoute>
   );
