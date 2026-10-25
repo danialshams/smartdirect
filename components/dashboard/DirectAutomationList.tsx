@@ -5,11 +5,12 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Search, Trash2, X, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { dairaPalette } from "../../lib/design-system/palette";
 import DirectAutomationSkeleton from "./DirectAutomationSkeleton";
 
 type Account = { id: string; isConnected: boolean };
-type Rule = { id: string; keyword: string | null; triggerType: string; updatedAt: string; createdAt: string; messages?: Array<{ messageType: string }> };
+type Rule = { id: string; isActive?: boolean; keyword: string | null; triggerType: string; updatedAt: string; createdAt: string; messages?: Array<{ messageType: string }> };
 const formatWords = (value: string | null) => (value || "").split(/[,،;؛\n]+/).map(word => word.trim()).filter(Boolean).join("، ");
 const formatDate = (value: string) => value ? new Date(value).toLocaleString("fa-IR-u-ca-persian", { dateStyle: "medium", timeStyle: "short" }) : "";
 const typeLabels: Record<string, string> = { TEXT: "متن", IMAGE: "عکس", VIDEO: "ویدیو", AUDIO: "وویس", SHOWCASE: "ویترین", FORM: "فرم" };
@@ -57,6 +58,17 @@ export default function DirectAutomationList() {
       (typeLabels[item.messages?.[0]?.messageType || ""] || "").includes(query));
   }, [rules, search]);
 
+  async function toggle(rule:Rule) {
+    try{
+      const response=await fetch("/api/automations/"+encodeURIComponent(rule.id),{
+        method:"PATCH",credentials:"include",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({isActive:rule.isActive===false})});
+      const data=await response.json();
+      if(!response.ok||!data.success)throw new Error(data.error||"تغییر وضعیت ناموفق بود.");
+      setRules(current=>current.map(item=>item.id===rule.id?{...item,isActive:rule.isActive===false}:item));
+      toast.success(rule.isActive===false?"پاسخ دایرکت فعال شد.":"پاسخ دایرکت غیرفعال شد.");
+    }catch(error){toast.error(error instanceof Error?error.message:"تغییر وضعیت ناموفق بود.");}
+  }
   async function remove() {
     if (!target || deleting) return;
     setDeleting(true); setError("");
@@ -123,7 +135,12 @@ export default function DirectAutomationList() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1.5">
+                    <div className="flex shrink-0 items-center gap-2">
+                      <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border border-[var(--daira-glass-rim)] px-2 text-xs font-semibold">
+                        <input type="checkbox" role="switch" className="daira-form-switch shrink-0 -scale-x-100"
+                          checked={item.isActive!==false} onChange={()=>void toggle(item)} aria-label={"فعال‌سازی پاسخ دایرکت "+formatWords(item.keyword)}/>
+                        <span>{item.isActive!==false?"فعال":"غیرفعال"}</span>
+                      </label>
                       <Link href={"/dashboard/direct-automation/" + encodeURIComponent(item.id)}
                         className="daira-reply-list-edit">
                         <span>ویرایش</span>

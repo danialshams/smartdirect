@@ -2,6 +2,7 @@
 
 import {useEffect,useMemo,useState} from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {AtSign,Share2,Plus,Search,Trash2,Pencil,LoaderCircle,Check} from "lucide-react";
 import {dairaPalette} from "../../lib/design-system/palette";
 import AutoRepliesSkeleton from "./AutoRepliesSkeleton";
@@ -43,7 +44,8 @@ export default function ShareMentionManager(){
    if(!response.ok||!result.success)throw new Error(result.error||"ثبت تغییر ناموفق بود.");
    setItems(list=>action==="delete"?list.filter(v=>v.id!==item.id):list.map(v=>v.id===item.id?{...v,isActive:!v.isActive}:v));
    setDeleteId("");
-  }catch(e){setError(e instanceof Error?e.message:"ثبت تغییر ناموفق بود.");}
+   if(action==="toggle")toast.success(item.isActive?"پاسخ غیرفعال شد.":"پاسخ فعال شد.");
+  }catch(e){const message=e instanceof Error?e.message:"ثبت تغییر ناموفق بود.";setError(message);toast.error(message);}
   finally{setBusy("");}
  }
  if(loading)return <AutoRepliesSkeleton includeCreateButton />;
@@ -66,7 +68,13 @@ export default function ShareMentionManager(){
      </div>
      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t pt-3" style={{borderColor:dairaPalette.border}}>
       
-      <div className="flex gap-2"><Link href={"/dashboard/share-mention/"+item.id} className="daira-reply-list-edit">ویرایش <Pencil size={14}/></Link>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border border-[var(--daira-glass-rim)] bg-[var(--daira-glass-raised)] px-2.5 text-xs font-semibold">
+         <input type="checkbox" role="switch" className="daira-form-switch shrink-0 -scale-x-100"
+          checked={item.isActive!==false} disabled={busy===item.id} onChange={()=>void change(item,"toggle")}
+          aria-label={"فعال‌سازی "+title(item.triggerType)}/>
+         <span>{item.isActive!==false?"فعال":"غیرفعال"}</span>
+        </label><Link href={"/dashboard/share-mention/"+item.id} className="daira-reply-list-edit">ویرایش <Pencil size={14}/></Link>
        <button type="button" disabled={busy===item.id} onClick={()=>setDeleteId(item.id)} className="daira-reply-list-delete">حذف {busy===item.id?<LoaderCircle size={14} className="animate-spin"/>:<Trash2 size={14}/>}</button></div>
      </div>
      {deleteId===item.id&&<div className="mt-3 rounded-xl bg-red-50 p-3 text-xs leading-7 text-red-700">این پاسخ حذف شود؟ <div className="mt-2 flex gap-2"><button type="button" disabled={Boolean(busy)} onClick={()=>void change(item,"delete")} className="rounded-lg bg-red-600 px-4 py-2 text-white">حذف پاسخ</button><button type="button" onClick={()=>setDeleteId("")} className="rounded-lg border bg-white px-4 py-2">انصراف</button></div></div>}
