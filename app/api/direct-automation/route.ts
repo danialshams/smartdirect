@@ -73,7 +73,7 @@ async function save(request:NextRequest,editing:boolean){
    const names=new Set(words);
    if(peers.some(p=>splitAutomationKeywords(p.keyword||"").some(w=>names.has(w))))throw new RuleError("یکی از کلمات کلیدی قبلاً برای پاسخ دیگری ثبت شده است.",409);
    const automation=current
-    ?await tx.automation.update({where:{id:current.id},data:{title,keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}})
+    ?await tx.automation.update({where:{id:current.id},data:{title,keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true}})
     :await tx.automation.create({data:{instagramAccountId,title,triggerType:"DM",keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}});
    const existing=await tx.automationMessage.findMany({where:{automationId:automation.id},orderBy:{order:"asc"},select:{id:true}});
    const fields={messageType,order:0,text:text||null,...(savedOrigin !== undefined ? { savedResponseId: savedOrigin } : {}),

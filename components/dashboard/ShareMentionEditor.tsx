@@ -141,7 +141,7 @@ export default function ShareMentionEditor({id}:{id?:string}){
     const response=await fetch("/api/share-mention",{method:original?"PUT":"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({
     id:original?.id,expectedUpdatedAt:original?.updatedAt,
     instagramAccountId:account.id,triggerType:trigger,
-    mediaIds:trigger==="DM_MEDIA_SHARE"?selected:[],isActive:true,
+    mediaIds:trigger==="DM_MEDIA_SHARE"?selected:[],isActive:original?.isActive!==false,
     message:resolved,
    })});
    const data=await response.json();
