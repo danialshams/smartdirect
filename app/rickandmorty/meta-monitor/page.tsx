@@ -10,7 +10,7 @@ const kinds:Record<string,string>={VERSION:"نسخه جدید API",NEW:"قابل
 const date=(d?:string|null)=>d?new Date(d).toLocaleDateString("fa-IR",{year:"numeric",month:"long",day:"numeric"}):"تاریخ نامشخص";
 export default function MetaMonitorPage(){
  const [data,setData]=useState<Result|null>(null),[category,setCategory]=useState(""),[unread,setUnread]=useState(false),[scope,setScope]=useState<"current"|"archive">("current"),[page,setPage]=useState(1);
- const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[translatingId,setTranslatingId]=useState<string|null>(null),[error,setError]=useState(""),[notice,setNotice]=useState("");
+ const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[translatingId,setTranslatingId]=useState<string|null>(null),[translationError,setTranslationError]=useState<Record<string,string>>({}),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const params=useMemo(()=>new URLSearchParams({page:String(page),scope,...(category?{category}:{}),...(unread?{unread:"1"}:{})}).toString(),[page,category,unread,scope]);
  const load=useCallback(async(signal?:AbortSignal)=>{
   const res=await fetch("/api/admin/meta-monitor?"+params,{cache:"no-store",signal});
@@ -33,12 +33,12 @@ export default function MetaMonitorPage(){
  };
  const translate=async(id:string)=>{
   if(translatingId)return;
-  setTranslatingId(id);setError("");
+  setTranslatingId(id);setTranslationError(v=>({...v,[id]:""}));
   try{
    const response=await fetch("/api/admin/meta-monitor/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});
    const result=await response.json();if(!response.ok)throw Error(result.message||"توضیح فارسی در دسترس نیست");
    setData(previous=>previous?{...previous,data:previous.data.map(item=>item.id===id?{...item,titleFa:result.titleFa,summaryFa:result.summaryFa}:item)}:previous);
-  }catch(e){setError(e instanceof Error?e.message:"ترجمه ناموفق بود");}finally{setTranslatingId(null);}
+  }catch(e){setTranslationError(v=>({...v,[id]:e instanceof Error?e.message:"ترجمه ناموفق بود"}));}finally{setTranslatingId(null);}
  };
  const refresh=async()=>{
   if(busy)return;setBusy(true);setError("");setNotice("");
@@ -92,7 +92,8 @@ export default function MetaMonitorPage(){
        <div className="adm-meta-translation">{n.summaryFa}</div>:
        <div className="adm-meta-translation-pending">
         <p>جزئیات معتبر این اطلاعیه هنوز به فارسی آماده نشده است. متن ناقص یا خبر دیگری به‌جای آن نمایش داده نمی‌شود.</p>
-        <AdminButton kind="secondary" disabled={!!translatingId} onClick={()=>void translate(n.id)}>{translatingId===n.id?"در حال ترجمه مستندات…":"دریافت توضیح کامل فارسی"}</AdminButton>
+        <AdminButton kind="secondary" disabled={!!translatingId} aria-busy={translatingId===n.id} onClick={()=>void translate(n.id)}>{translatingId===n.id?"در حال دریافت و ترجمه متن همین خبر…":"دریافت توضیح کامل فارسی"}</AdminButton>
+        {translationError[n.id]&&<div role="alert" className="adm-meta-translate-error"><strong>دریافت توضیح انجام نشد</strong><p>{translationError[n.id]}</p><p>هیچ مطلب قدیمی یا نامرتبطی جایگزین این خبر نمی‌شود.</p></div>}
        </div>}
      </>:<p className="adm-help">این مورد قدیمی یا بدون تاریخ معتبر است و فقط برای مراجعه به سوابق نگهداری می‌شود. دریافت توضیح جدید برای آرشیو غیرفعال است.</p>}
      <details className="adm-meta-original-details"><summary>عنوان اصلی انگلیسی</summary><div dir="ltr" className="adm-meta-original">{n.originalTitle}</div></details>

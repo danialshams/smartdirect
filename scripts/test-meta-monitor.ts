@@ -60,4 +60,13 @@ assert(metaPage.includes('setScope("archive")')&&metaPage.includes("adm-meta-rea
 assert(read("app/api/admin/meta-monitor/translate/route.ts").includes("fetchMetaArticleBody"),"Translation must fetch the selected article rather than unrelated old changelogs");
 assert(read("app/api/admin/meta-monitor/route.ts").includes("META_FRESH_DAYS"),"Meta timeline requires a recent-only filter");
 
+const newArticleCode=read("src/lib/meta-monitor/article.ts");
+assert(newArticleCode.includes("extractMetaArticleBody"),"Meta legacy blog needs article extraction without <article> or <main> tags");
+assert(read("app/rickandmorty/meta-monitor/page.tsx").includes("translationError[n.id]"),"Meta translation failures must be shown in the same notice card");
+import {extractMetaArticleBody} from "../src/lib/meta-monitor/article";
+const legacyMetaHtml="<html><head><title>Meta Developers</title></head><body><header>Other links</header><p>Retiring Access Verification for Tech Provider Apps</p><h4>Retiring Access Verification for Tech Provider Apps</h4><p>Access Verification will no longer be required in the Tech Provider onboarding flow. Developers accessing business data on behalf of clients do not submit business details separately.</p><p>The access-verification form is removed from the developer app dashboard. This requirement no longer gates API calls, although classification requirements continue.</p><footer><p>Related stories and news links</p></footer></body></html>";
+const extractedLegacy=extractMetaArticleBody(legacyMetaHtml,"Retiring Access Verification for Tech Provider Apps");
+assert(extractedLegacy.includes("Access Verification will no longer be required"),"Legacy Meta blog without article/main tags must be readable");
+assert(extractedLegacy.includes("app dashboard"),"Legacy Meta article should include meaningful details");
+assert.throws(()=>extractMetaArticleBody(legacyMetaHtml,"Unrelated WhatsApp story"),"An unrelated Meta blog article must never substitute");
 console.log("META_MONITOR_OFFICIAL_SOURCES_BADGE_DEDUP_VERSION_OK");
