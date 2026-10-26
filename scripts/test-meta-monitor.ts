@@ -60,4 +60,7 @@ assert(metaPage.includes('setScope("archive")')&&metaPage.includes("adm-meta-rea
 assert(read("app/api/admin/meta-monitor/translate/route.ts").includes("fetchMetaArticleBody"),"Translation must fetch the selected article rather than unrelated old changelogs");
 assert(read("app/api/admin/meta-monitor/route.ts").includes("META_FRESH_DAYS"),"Meta timeline requires a recent-only filter");
 
+const newArticleCode=read("src/lib/meta-monitor/article.ts");
+assert(newArticleCode.includes("extractMetaArticleBody"),"Meta legacy blog needs article extraction without <article> or <main> tags");
+assert(read("app/rickandmorty/meta-monitor/page.tsx").includes("translationError[n.id]"),"Meta translation failures must be shown in the same notice card");
 console.log("META_MONITOR_OFFICIAL_SOURCES_BADGE_DEDUP_VERSION_OK");

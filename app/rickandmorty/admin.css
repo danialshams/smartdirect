@@ -343,3 +343,5 @@ a.adm-ticket-row:hover{border-color:var(--adm-primary)}
 .adm-meta-source-collapse summary::-webkit-details-marker{display:none}
 .adm-meta-source-collapse[open] summary{padding-bottom:18px;border-bottom:1px solid var(--adm-border)}
 @media(max-width:650px){.adm-meta-view-tabs{display:flex}.adm-meta-view-tab{flex:1;justify-content:center}.adm-meta-filter-row{grid-template-columns:1fr}.adm-meta-notice{padding:19px}.adm-meta-notice-actions>.adm-btn{flex:1 1 100%}.adm-meta-readall{padding:19px}.adm-meta-readall>.adm-btn{width:100%}}
+
+.adm-meta-translate-error{width:100%;padding:14px 16px;border-radius:12px;background:var(--adm-danger-soft);border:1px solid #ffd3d9;color:var(--adm-danger);line-height:1.85}.adm-meta-translate-error>p{margin:5px 0 0;color:inherit;font-size:12px}.adm-meta-translate-error>strong{font-size:13px}
