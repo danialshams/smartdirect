@@ -492,7 +492,8 @@ async function createImageContainer(
     ? { media_type: "VIDEO", video_url: media.publicUrl, is_carousel_item: true }
     : { image_url: media.publicUrl, ...(carousel ? { is_carousel_item: true } : {}) };
   if (caption && !carousel) body.caption = caption;
-  if (!carousel && tags.length) body.user_tags = JSON.stringify(tags);
+  // Tag images in carousels on their child containers. Meta does not reliably accept user_tags on video carousel items.
+  if (tags.length && (!carousel || media.type === "IMAGE")) body.user_tags = JSON.stringify(tags);
 
   let mediaHost: string | null = null;
   try { mediaHost = new URL(media.publicUrl).hostname; } catch { /* URL validation is reported by the source probe. */ }
