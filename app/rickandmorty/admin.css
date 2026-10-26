@@ -62,3 +62,5 @@
 @media(max-width:370px){.adm-filter-grid{grid-template-columns:1fr}.adm-user-metrics{gap:3px}.adm-user-metrics>div{padding:8px 4px}}
 
 .adm-state[data-state=BLOCKED]{background:var(--daira-error-background);color:var(--daira-error-text)}
+
+.adm-bell-items{max-height:min(58dvh,500px);overflow-y:auto}.adm-bell-entry+.adm-bell-entry{border-top:1px solid var(--adm-border)}
