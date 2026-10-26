@@ -10,10 +10,10 @@ export async function GET() {
   if (!session?.user?.id) return NextResponse.json({ success: false }, { status: 401 });
 
   const subscription = await prisma.subscription.findFirst({
-    where: { userId: session.user.id, status: "ACTIVE", expiresAt: { gt: new Date() } },
-    orderBy: { expiresAt: "desc" },
+    where: { userId: session.user.id },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     select: { planKey: true, status: true, startedAt: true, expiresAt: true },
   });
 
-  return NextResponse.json({ success: true, subscription });
+  return NextResponse.json({ success: true, subscription: subscription?.status === "ACTIVE" && subscription.expiresAt > new Date() ? subscription : null });
 }

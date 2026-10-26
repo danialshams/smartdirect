@@ -1,0 +1,26 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const read=(p:string)=>readFileSync(p,"utf8");
+const pages=["app/rickandmorty/page.tsx","app/rickandmorty/loading.tsx","app/rickandmorty/users/page.tsx","app/rickandmorty/users/[id]/page.tsx","app/rickandmorty/tickets/page.tsx","app/rickandmorty/tickets/[id]/page.tsx","app/rickandmorty/tickets/bulk/page.tsx","app/rickandmorty/coupons/page.tsx","app/rickandmorty/sms/page.tsx","components/admin/AdminShell.tsx","components/admin/AdminProviders.tsx","components/admin/AdminWidgets.tsx"];
+for(const page of pages){assert(!read(page).includes("@mui"),"Admin must not import MUI: "+page);}
+const css=read("app/rickandmorty/admin.css");
+const shell=read("components/admin/AdminShell.tsx");
+assert(css.includes("var(--daira-primary)")&&css.includes("adm-bottom-nav"),"Admin mobile style must follow canonical Daira tokens");
+assert(shell.includes("adm-bottom-nav")&&shell.includes('"/api/admin/tickets/stream"'),"Mobile navigation and realtime ticket bell missing");
+assert(shell.includes('"/rickandmorty/tickets/"+summary.latest.ticketId'),"Bell must open exact ticket");
+assert(read("app/api/dashboard/tickets/route.ts").includes("publishAdminSupportChange"),"Ticket creation must signal admins");
+assert(read("app/api/dashboard/tickets/[id]/messages/route.ts").includes("publishAdminSupportChange"),"Ticket reply must signal admins");
+assert(read("app/api/admin/tickets/summary/route.ts").includes('readAt: null'),"Unread summary must count new messages");
+assert(read("app/api/admin/tickets/[id]/read/route.ts").includes("ticketMessage.updateMany"),"Read messages must be marked for admin");
+const plans=read("src/lib/admin-users.ts");
+for(const plan of ['"monthly"','"yearly"','"monthly_under_10k"'])assert(plans.includes(plan),"Missing plan "+plan);
+assert(plans.includes("verifyUnder10KPlan")&&plans.includes("followers >= 10000"),"Discounted plan must verify followers");
+assert(read("src/lib/subscription/access.ts").includes("SUBSCRIPTION_INACTIVE"),"Subscription access must be enforced");
+assert(read("src/lib/instagram/automated-message-policy.ts").includes("accessBlockFromState"),"Outgoing automation must honor account access");
+assert(read("src/lib/instagram/publishing.ts").includes("getUserAccessBlock"),"Publishing must honor account access");
+assert(read("app/api/admin/users/bulk/route.ts").includes("access-block"),"Bulk blocking missing");
+assert(read("components/admin/AdminWidgets.tsx").includes("sendAdminBulkChunks"),"Large bulk operations must use bounded chunks");
+assert(read("src/lib/sms/provider.ts").includes("return null"),"SMS must remain disabled without provider");
+assert(read("app/api/admin/sms/route.ts").includes('status:"DRAFT"'),"SMS draft must not be treated as sent");
+const auth=read("src/lib/auth.ts");assert(auth.includes("isBlocked")&&auth.includes("accessCheckedAt"),"Blocked users must be denied for existing JWTs");
+console.log("ADMIN_PANEL_MOBILE_OPERATIONS_OK");

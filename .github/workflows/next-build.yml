@@ -116,6 +116,9 @@ jobs:
       - name: Verify dashboard home badge placement and RTL icon order
         run: npx tsx scripts/test-dashboard-home-badges.ts
 
+      - name: Verify mobile admin, subscription access and realtime ticket notifications
+        run: npx tsx scripts/test-admin-panel.ts
+
       - name: Test saved media durability and Meta ID fallback
         run: npx tsx scripts/test-saved-response-durability.ts
 
