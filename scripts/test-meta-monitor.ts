@@ -35,5 +35,29 @@ const detailed=extractCandidates("<html><h2>Captions on stories published throug
 assert(detailed[0]?.description.includes("Developers can add captions"),"Meta monitor must extract actual announcement paragraphs, not only generic headings");
 const translateLib=read("src/lib/meta-monitor/translation.ts");
 assert(translateLib.includes("api.mymemory.translated.net")&&translateLib.includes("translatedText"),"Original Meta text should support actual Persian translation");
-assert(translateLib.includes("factualPersianFallback"),"Missing grounded Persian fallback for unavailable translations");
+assert(translateLib.includes("translatePublicEnglishToPersian"),"Missing source-grounded Persian translation from substantive Meta announcement text");
+import { META_FRESH_DAYS,isFreshMetaAnnouncement,NEW_VERSIONS } from "../src/lib/meta-monitor/freshness";
+assert(META_FRESH_DAYS<=60);
+assert(NEW_VERSIONS.includes("v27.0"));
+assert(!isFreshMetaAnnouncement(null,null,"UPDATE"),"Undated old changelogs must not enter current feed");
+assert(isFreshMetaAnnouncement(null,"v27.0","VERSION"),"New version must be notified");
+assert(!isFreshMetaAnnouncement(new Date("2024-01-01"),null,"NEW"),"Historic Meta items must not be shown as new");
+assert(isFreshMetaAnnouncement(new Date(),null,"NEW"),"Current dated updates remain visible");
+const adminShell=read("components/admin/AdminShell.tsx");
+assert(!adminShell.includes("بازگشت به داشبورد"),"User requested removing dashboard return button");
+const users=read("app/rickandmorty/users/page.tsx");
+const sms=read("app/rickandmorty/sms/page.tsx");
+const bulk=read("app/rickandmorty/tickets/bulk/page.tsx");
+for(const [name,s] of [["users",users],["sms",sms],["bulk",bulk]]){
+ assert(!s.includes("لغو انتخاب همه"),"Duplicate selection cancellation option remains in "+name);
+ assert(s.includes("لغو انتخاب‌ها"),"A single clear cancel-selection action is required: "+name);
+}
+const adminCss=read("app/rickandmorty/admin.css");
+assert(adminCss.includes(".adm-btn>svg,.adm-btn>span>svg{order:2"),"Button icon must render after its label in RTL");
+assert(adminCss.includes(".adm-work-section-heading"),"Workspaces must have distinct section headers");
+const metaPage=read("app/rickandmorty/meta-monitor/page.tsx");
+assert(metaPage.includes('setScope("archive")')&&metaPage.includes("adm-meta-readall"),"Old Meta updates must be archived separately; read-all must be distinct from filters");
+assert(read("app/api/admin/meta-monitor/translate/route.ts").includes("fetchMetaArticleBody"),"Translation must fetch the selected article rather than unrelated old changelogs");
+assert(read("app/api/admin/meta-monitor/route.ts").includes("META_FRESH_DAYS"),"Meta timeline requires a recent-only filter");
+
 console.log("META_MONITOR_OFFICIAL_SOURCES_BADGE_DEDUP_VERSION_OK");

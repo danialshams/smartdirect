@@ -43,5 +43,5 @@ assert(css.includes(".adm-btn>svg")&&css.includes("flex:none"),"Button icons mus
 assert(css.includes(".adm-modal-body")&&css.includes("overflow-y:auto"),"Dialogs must have internal scrolling");
 assert(css.includes(".adm-field>select")&&css.includes("background-position:left"),"Dropdowns must share RTL styling");
 assert(read("app/api/admin/meta-monitor/translate/route.ts").includes("requireAdmin"),"Meta official text translations must remain admin-only");
-assert(read("app/rickandmorty/meta-monitor/page.tsx").includes("adm-meta-content"),"Meta updates must display full fetched Persian explanations");
+assert(read("app/rickandmorty/meta-monitor/page.tsx").includes("adm-meta-translation"),"Meta updates must display substantive Persian explanations");
 console.log("ADMIN_PANEL_MOBILE_OPERATIONS_OK");
