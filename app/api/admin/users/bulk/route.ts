@@ -17,6 +17,10 @@ export async function POST(req:NextRequest) {
     results.push(...await Promise.all(batch.map(async userId=>{
       try{
         if(action==="subscription-change-plan"&&planKey==="monthly_under_10k")await verifyUnder10KPlan(userId);
+        if(action==="subscription-activate") {
+          const existing=await prisma.subscription.findFirst({where:{userId},orderBy:[{createdAt:"desc"},{id:"desc"}],select:{planKey:true}});
+          if(existing?.planKey==="monthly_under_10k")await verifyUnder10KPlan(userId);
+        }
         await prisma.$transaction(async tx=>{
           if(action==="access-block"||action==="access-unblock"){
             const blocked=action==="access-block";

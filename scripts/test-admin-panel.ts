@@ -26,6 +26,8 @@ assert(read("app/api/admin/audit/route.ts").includes("requireAdmin"),"Audit log 
 assert(read("components/admin/AdminShell.tsx").includes("summary.items.map"),"Bell must show multiple unread tickets");
 assert(read("components/admin/AdminWidgets.tsx").includes("sendAdminBulkChunks"),"Large bulk operations must use bounded chunks");
 assert(read("src/lib/sms/provider.ts").includes("return null"),"SMS must remain disabled without provider");
+assert(read("app/api/admin/sms/route.ts").includes('selection:{mode:"ids",userIds:ids}'),"SMS draft recipients must be frozen to prevent unintended future recipients");
+assert(read("app/api/admin/users/bulk/route.ts").includes('existing?.planKey==="monthly_under_10k"'),"Bulk reactivation must re-check under-10k eligibility");
 assert(read("app/api/admin/sms/route.ts").includes('status:"DRAFT"'),"SMS draft must not be treated as sent");
 const auth=read("src/lib/auth.ts");assert(auth.includes("isBlocked")&&auth.includes("accessCheckedAt"),"Blocked users must be denied for existing JWTs");
 console.log("ADMIN_PANEL_MOBILE_OPERATIONS_OK");

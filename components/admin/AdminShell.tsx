@@ -44,7 +44,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   let disposed=false, source:EventSource|null=null;
   const load=()=>{if(!disposed)void refresh();};
   load();
-  const fallback=setInterval(()=>{if(document.visibilityState==="visible")load();},8000);
+  const fallback=setInterval(()=>{if(document.visibilityState==="visible"&&(!source||source.readyState!==EventSource.OPEN))load();},3000);
   const visible=()=>{if(document.visibilityState==="visible")load();};
   document.addEventListener("visibilitychange",visible);
   window.addEventListener("admin:tickets-updated",load);
