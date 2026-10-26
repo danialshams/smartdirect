@@ -50,6 +50,19 @@ export function supportRedisUrl() {
 }
 
 export function supportChannel(userId: string) { return "sd:support:user:" + userId; }
+export const adminSupportChannel = "sd:support:admin";
+
+export async function publishAdminSupportChange(ticketId: string, messageId: string) {
+  if (!supportRealtimeEnabled()) return;
+  const redis = new Redis(supportRedisUrl(), { lazyConnect: true, connectTimeout: 1500, maxRetriesPerRequest: 1, enableOfflineQueue: false });
+  redis.on("error", () => undefined);
+  try {
+    await redis.connect();
+    await redis.publish(adminSupportChannel, JSON.stringify({ ticketId, messageId }));
+  } catch (error) {
+    console.warn("[support] admin realtime event unavailable; polling will recover", error instanceof Error ? error.message : error);
+  } finally { redis.disconnect(); }
+}
 
 export async function publishSupportChange(userId: string, ticketId: string, messageId: string) {
   if (!supportRealtimeEnabled()) return;
