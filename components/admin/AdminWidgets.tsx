@@ -1,6 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import Link from "next/link";
@@ -14,7 +13,7 @@ export function paramsFromFilters(f:Filters,page=1,pageSize=20){const p=new URLS
 export function formatDate(d?:string|null){return d?new Date(d).toLocaleDateString("fa-IR"):"—";}
 export function AdminPanel({children,className=""}:{children:ReactNode;className?:string}){return <section className={"adm-panel "+className}>{children}</section>;}
 export function AdminHeading({title,description,children}:{title:string;description?:string;children?:ReactNode}){return <div className="adm-page-heading"><div><h1>{title}</h1>{description&&<p>{description}</p>}</div>{children&&<div className="adm-heading-actions">{children}</div>}</div>;}
-export function AdminButton({children,kind="primary",className="",...rest}:ButtonHTMLAttributes<HTMLButtonElement>&{kind?:"primary"|"secondary"|"danger"|"ghost"}){return <button type="button" {...rest} className={"adm-btn adm-btn-"+kind+" "+className}>{children}</button>;}
+export function AdminButton({children,kind="primary",className="",...rest}:ButtonHTMLAttributes<HTMLButtonElement>&{kind?:"primary"|"secondary"|"danger"|"ghost"}){return <button {...rest} type={rest.type??"button"} className={"adm-btn adm-btn-"+kind+" "+className}>{children}</button>;}
 export function AdminInput({label,...rest}:InputHTMLAttributes<HTMLInputElement>&{label?:string}){return <label className="adm-field">{label&&<span>{label}</span>}<input {...rest}/></label>;}
 export function AdminSelect({label,options,...rest}:SelectHTMLAttributes<HTMLSelectElement>&{label?:string;options:{value:string;label:string}[]}){return <label className="adm-field">{label&&<span>{label}</span>}<select {...rest}>{options.map(x=><option key={x.value} value={x.value}>{x.label}</option>)}</select></label>;}
 export function AdminTextarea({label,...rest}:TextareaHTMLAttributes<HTMLTextAreaElement>&{label?:string}){return <label className="adm-field">{label&&<span>{label}</span>}<textarea {...rest}/></label>;}
@@ -23,36 +22,31 @@ export function AdminStatus({status}:{status:string}){return <span className="ad
 export function AdminSpinner(){return <div className="adm-loading" role="status">در حال بارگذاری اطلاعات…</div>;}
 export function AdminModal({title,children,onClose,actions}:{title:string;children:ReactNode;onClose:()=>void;actions?:ReactNode}){
  const [mounted,setMounted]=useState(false);
- const dialogRef=useRef<HTMLElement>(null);
- const onCloseRef=useRef(onClose);
- onCloseRef.current=onClose;
- const closeRef=useRef<HTMLButtonElement>(null);
+ const dialog=useRef<HTMLElement>(null);
+ const close=useRef(onClose);close.current=onClose;
  useEffect(()=>{
   setMounted(true);
-  const previousOverflow=document.body.style.overflow;
+  const previous=document.body.style.overflow;
   document.body.style.overflow="hidden";
-  const focusRequest=window.requestAnimationFrame(()=>closeRef.current?.focus());
-  const onKey=(event:KeyboardEvent)=>{
-   if(event.key==="Escape"){event.preventDefault();onCloseRef.current();return;}
-   if(event.key!=="Tab"||!dialogRef.current)return;
-   const focusable=Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'))
-    .filter(node=>node.getClientRects().length>0);
-   if(!focusable.length)return;
-   const first=focusable[0],last=focusable[focusable.length-1];
-   if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
-   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  const focus=window.requestAnimationFrame(()=>dialog.current?.focus());
+  const key=(event:KeyboardEvent)=>{
+   if(event.key==="Escape"){event.preventDefault();close.current();return;}
+   if(event.key!=="Tab"||!dialog.current)return;
+   const controls=Array.from(dialog.current.querySelectorAll<HTMLElement>('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href]'));
+   if(!controls.length){event.preventDefault();return;}
+   if(event.shiftKey&&document.activeElement===controls[0]){event.preventDefault();controls[controls.length-1].focus();}
+   if(!event.shiftKey&&document.activeElement===controls[controls.length-1]){event.preventDefault();controls[0].focus();}
   };
-  window.addEventListener("keydown",onKey);
-  return()=>{window.cancelAnimationFrame(focusRequest);window.removeEventListener("keydown",onKey);document.body.style.overflow=previousOverflow;};
+  document.addEventListener("keydown",key);
+  return()=>{window.cancelAnimationFrame(focus);document.removeEventListener("keydown",key);document.body.style.overflow=previous;};
  },[]);
  if(!mounted)return null;
- return createPortal(<div className="adm-modal-overlay adm-portal-root" onMouseDown={e=>{if(e.target===e.currentTarget)onClose();}}>
-  <section ref={dialogRef} className="adm-modal" role="dialog" aria-modal="true" aria-label={title} dir="rtl">
-   <div className="adm-modal-header"><h2>{title}</h2><button ref={closeRef} type="button" className="adm-icon-btn" onClick={onClose} aria-label="بستن"><X size={20}/></button></div>
-   <div className="adm-modal-body">{children}</div>
-   {actions&&<div className="adm-modal-actions">{actions}</div>}
+ return createPortal(<div className="adm-root adm-modal-portal" dir="rtl"><div className="adm-modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)close.current();}}>
+  <section ref={dialog} tabIndex={-1} className="adm-modal" role="dialog" aria-modal="true" aria-label={title}>
+   <div className="adm-modal-header"><h2>{title}</h2><button type="button" className="adm-icon-btn" onClick={()=>close.current()} aria-label="بستن"><X size={20}/></button></div>
+   <div className="adm-modal-body">{children}</div>{actions&&<div className="adm-modal-actions">{actions}</div>}
   </section>
- </div>,document.body);
+ </div></div>,document.body);
 }
 export function AdminFilters({value,onChange}:{value:Filters;onChange:(filters:Filters)=>void}){const set=(k:keyof Filters,v:string)=>onChange({...value,[k]:v});return <div className="adm-filters">
  <AdminInput aria-label="جستجوی کاربران" placeholder="نام، ایمیل یا نام پیج…" value={value.q} onChange={e=>set("q",e.target.value)}/>

@@ -10,7 +10,7 @@ const kinds:Record<string,string>={VERSION:"نسخه جدید API",NEW:"قابل
 const date=(d?:string|null)=>d?new Date(d).toLocaleString("fa-IR"):"—";
 export default function MetaMonitorPage(){
  const [data,setData]=useState<Result|null>(null),[category,setCategory]=useState(""),[unread,setUnread]=useState(false),[page,setPage]=useState(1);
- const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
+ const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[translatingId,setTranslatingId]=useState<string|null>(null),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const params=useMemo(()=>new URLSearchParams({page:String(page),...(category?{category}:{}),...(unread?{unread:"1"}:{})}).toString(),[page,category,unread]);
  const load=async(signal?:AbortSignal)=>{
   const r=await fetch("/api/admin/meta-monitor?"+params,{cache:"no-store",signal});
@@ -29,6 +29,16 @@ export default function MetaMonitorPage(){
    const j=await r.json();if(!r.ok)throw Error(j.message||"ثبت وضعیت ناموفق بود");
    await load();window.dispatchEvent(new Event("admin:meta-updated"));
   }catch(e){setError(e instanceof Error?e.message:"خطا");}finally{setBusy(false);}
+ };
+ const translate=async(id:string)=>{
+  if(translatingId)return;
+  setTranslatingId(id);setError("");
+  try{
+   const r=await fetch("/api/admin/meta-monitor/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});
+   const j=await r.json();if(!r.ok)throw Error(j.message||"دریافت متن فارسی ناموفق بود");
+   setData(v=>v?{...v,data:v.data.map(item=>item.id===id?{...item,titleFa:j.titleFa,summaryFa:j.summaryFa}:item)}:v);
+   if(j.notice)setNotice(j.notice);
+  }catch(e){setError(e instanceof Error?e.message:"ترجمه در دسترس نیست");}finally{setTranslatingId(null);}
  };
  const refresh=async()=>{
   setBusy(true);setError("");setNotice("");
@@ -66,7 +76,13 @@ export default function MetaMonitorPage(){
   {data?.data.map(n=><article key={n.id} className={"adm-panel adm-meta-notice "+(n.isRead?"":"adm-meta-notice-new")}>
    <div className="adm-ticket-row-top"><div className="adm-btn-row"><span className="adm-state" data-state={n.kind==="DEPRECATION"?"URGENT":n.kind==="VERSION"?"ACTIVE":"OPEN"}>{kinds[n.kind]||"اطلاعیه"}</span><span className="adm-help">{n.category}</span>{!n.isRead&&<span className="adm-meta-dot" aria-label="اعلان جدید"/>}</div><small className="adm-muted">{date(n.publishedAt||n.detectedAt)}</small></div>
    <h2 style={{margin:"5px 0"}}>{n.titleFa}</h2>
-   <p className="adm-help">{n.summaryFa}</p>
+   <p className="adm-meta-content">{n.summaryFa}</p>
+   {!n.summaryFa.startsWith("ترجمه فارسی متن رسمی")&&<div className="adm-meta-content-note">
+    متن کامل این اعلان هنوز ترجمه نشده است. با انتخاب گزینه زیر تلاش می‌کنیم متن واقعیِ منبع رسمی را به فارسی ترجمه کنیم.
+    <div className="adm-btn-row" style={{marginTop:9}}>
+     <AdminButton kind="secondary" disabled={!!translatingId} onClick={()=>void translate(n.id)}>{translatingId===n.id?"در حال ترجمه…":"دریافت توضیح فارسی از منبع رسمی"}</AdminButton>
+    </div>
+   </div>}
    <div className="adm-meta-original" dir="ltr">{n.originalTitle}</div>
    <div className="adm-btn-row" style={{marginTop:12}}>
     <a className="adm-btn adm-btn-secondary" href={n.sourceUrl} target="_blank" rel="noopener noreferrer" onClick={()=>{if(!n.isRead)void read(n.id);}}><ExternalLink size={16}/> مشاهده منبع رسمی</a>

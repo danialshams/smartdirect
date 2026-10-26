@@ -24,16 +24,16 @@ for(const path of pages) {
 }
 assert(widgets.includes('createPortal(')&&widgets.includes('document.body'),"Modal must render outside animated/admin content stacking context");
 assert(widgets.includes('role="dialog"')&&widgets.includes('aria-modal="true"'),"Modal must have accessible dialog semantics");
-assert(widgets.includes('onCloseRef.current()')&&widgets.includes('},[]);'),"Escape and body scroll lock must be stable across parent renders");
-assert(widgets.includes('document.body.style.overflow="hidden"')&&widgets.includes('document.body.style.overflow=previousOverflow'),"Modal must lock and restore document scrolling");
+assert(widgets.includes("close.current()")&&widgets.includes("},[]);"),"Escape and modal close callbacks must remain stable across parent renders");
+assert(widgets.includes('document.body.style.overflow="hidden"')&&widgets.includes("document.body.style.overflow=previous"),"Modal must lock and restore document scrolling");
 assert(widgets.includes('event.key!=="Tab"'),"Modal must trap keyboard focus while open");
-assert(css.includes('.adm-portal-root .adm-modal')&&css.includes('z-index:5000!important'),"Modal must stay above header/footer and inside viewport");
-assert(css.includes('.adm-portal-root .adm-modal-body')&&css.includes('min-height:0')&&css.includes('overflow-y:auto'),"Modal content must scroll inside viewport");
-assert(!css.includes('backdrop-filter:blur(')&&!css.includes('animation:adminFade .2s ease both'),"Admin must have solid, non-glass, non-transforming surfaces");
-assert(css.includes('.adm-btn > svg')&&css.includes('flex:0 0 auto')&&css.includes('gap:8px'),"Action icons require dedicated flex spacing");
+assert(css.includes('.adm-modal-portal')&&css.includes('z-index:9999'),"Modal must stay above header/footer and inside viewport");
+assert(css.includes('.adm-modal-body')&&css.includes('min-height:0')&&css.includes('overflow-y:auto'),"Modal content must scroll inside viewport");
+assert(!css.includes("backdrop-filter")&&!css.includes("animation:adminFade .2s ease both"),"Admin must have solid, non-glass, non-transforming surfaces");
+assert(css.includes('.adm-btn>svg')&&css.includes('flex:none')&&css.includes('gap:9px'),"Action icons require dedicated flex spacing");
 for(const name of ["adm-root","adm-btn-primary","adm-btn-secondary","adm-btn-danger","adm-btn-ghost","adm-panel","adm-state","adm-filter-grid","adm-bottom-nav","adm-modal-actions","adm-heading-actions"])assert(css.includes(name),"Missing shared admin style: "+name);
-for(const key of ["--daira-success-bg","--daira-warning-bg","--daira-error-background","--daira-info-bg"])assert(css.includes(key),"Status colors must use the canonical semantic palette: "+key);
+for(const key of ["--adm-success-soft","--adm-warning-soft","--adm-danger-soft","--adm-info-soft"])assert(css.includes(key),"Status colors must use the standalone semantic administration palette: "+key);
 assert(shell.includes('const activeHref=items.filter('),"Sidebar must select only the longest matching admin route");
 assert(css.includes('.adm-meta-badge')&&css.includes('.adm-meta-count-dot'),"Unread Meta counts must remain visible");
-assert(css.includes('@media (max-width:400px)')&&css.includes('@media (max-width:640px)'),"Admin UI needs small-screen responsive constraints");
+assert(css.includes('@media(max-width:390px)')&&css.includes('@media(max-width:650px)'),"Admin UI needs small-screen responsive constraints");
 console.log("ADMIN_SOLID_LAYOUT_MODALS_BUTTONS_RTL_PALETTE_OK");
