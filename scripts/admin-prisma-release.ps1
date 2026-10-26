@@ -58,8 +58,12 @@ try {
     "20261026183000_sms_campaign_drafts"
   )
   Write-Host "Checking verified production Neon migration status (credentials hidden)..."
-  $output = (& .\node_modules\.bin\prisma.cmd migrate status 2>&1 | Out-String)
-  $statusCode = $LASTEXITCODE
+  # Windows PowerShell 5 may treat Prisma stderr as a terminating error with Stop.
+  $ErrorActionPreference = "Continue"
+  try {
+    $output = (& .\node_modules\.bin\prisma.cmd migrate status 2>&1 | Out-String)
+    $statusCode = $LASTEXITCODE
+  } finally { $ErrorActionPreference = "Stop" }
   # Avoid accidentally echoing a URL or password from an unexpected error.
   if ($statusCode -eq 0 -and $output -match "up to date") {
     Write-Host "Database migrations already up to date." -ForegroundColor Green
@@ -80,8 +84,12 @@ try {
     Write-Host "Migration command failed. Database needs review before deployment." -ForegroundColor Red
     exit 1
   }
-  $finalStatus = (& .\node_modules\.bin\prisma.cmd migrate status 2>&1 | Out-String)
-  if ($LASTEXITCODE -ne 0 -or $finalStatus -notmatch 'up to date') {
+  $ErrorActionPreference = "Continue"
+  try {
+    $finalStatus = (& .\node_modules\.bin\prisma.cmd migrate status 2>&1 | Out-String)
+    $finalCode = $LASTEXITCODE
+  } finally { $ErrorActionPreference = "Stop" }
+  if ($finalCode -ne 0 -or $finalStatus -notmatch 'up to date') {
     Write-Host "Migration finished but post-check was inconclusive. Stop before merge." -ForegroundColor Red
     exit 1
   }
