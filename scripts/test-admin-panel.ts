@@ -18,6 +18,7 @@ assert(plans.includes("verifyUnder10KPlan")&&plans.includes("followers >= 10000"
 assert(read("src/lib/subscription/access.ts").includes("SUBSCRIPTION_INACTIVE"),"Subscription access must be enforced");
 assert(read("src/lib/instagram/automated-message-policy.ts").includes("accessBlockFromState"),"Outgoing automation must honor account access");
 assert(read("src/lib/instagram/publishing.ts").includes("getUserAccessBlock"),"Publishing must honor account access");
+assert(read("src/lib/instagram/publishing.ts").includes('return job;\n  }\n  const tags'),"Suspending users must preserve scheduled publishing job and media");
 assert(read("app/api/admin/users/bulk/route.ts").includes("access-block"),"Bulk blocking missing");
 assert(read("app/api/admin/users/[id]/subscription/route.ts").includes("current.status,suspendedAt:current.suspendedAt"),"Editing plan/duration must preserve suspended subscriptions");
 assert(read("app/api/admin/subscriptions/[id]/route.ts").includes("ADMIN_PLAN_KEYS"),"Subscription editing must validate allowed plans");

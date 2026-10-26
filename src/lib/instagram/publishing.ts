@@ -968,7 +968,17 @@ async function publishInstagramJobInternal(jobId: string) {
   const idempotencyLeaseToken = idempotency.leaseToken;
 
   const entitlement = await getUserAccessBlock(job.instagramAccount.userId);
-  if (entitlement) throw new Error("PUBLISHING_PAUSED_BY_ADMIN_SUBSCRIPTION_OR_ACCESS");
+  if (entitlement) {
+    // Preserve the scheduled job and stored media. Releasing the execution
+    // lease allows the scheduler to reconsider it after access is restored.
+    // Do not treat administrative suspension as an Instagram publishing failure.
+    await failPublishingExecution(
+      idempotencyKey,
+      new Error("PUBLISHING_PAUSED_BY_ADMIN_SUBSCRIPTION_OR_ACCESS"),
+      idempotencyLeaseToken,
+    );
+    return job;
+  }
   const tags = normalizeUserTags(job.userTags);
   const token = await getValidInstagramAccessToken(job.instagramAccountId);
   const tenantId = job.instagramAccount.userId;

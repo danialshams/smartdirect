@@ -16,7 +16,7 @@ export async function GET(_: Request, context: Context) {
   if (!user) return NextResponse.json({ message:"کاربر پیدا نشد" },{status:404});
   const current=user.subscriptions[0]||null;
   return NextResponse.json({ ...user, subscription: current ? {...current,effectiveStatus:effectiveStatus(current)} : null,
-    activeAutomations:user.instagramAccounts.reduce((sum,a)=>sum+a._count.automations,0) });
+    activeAutomations:user.instagramAccounts.filter(a=>a.isConnected).reduce((sum,a)=>sum+a._count.automations,0) });
 }
 export async function PATCH(req: NextRequest, context: Context) {
   const guard = await requireAdmin(); if (guard.response) return guard.response;
