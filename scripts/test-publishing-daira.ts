@@ -77,4 +77,12 @@ assert.ok(editor.includes("async function loadResources(accountId: string, signa
   editor.includes("if (signal.aborted) return;") &&
   editor.includes("return () => controller.abort();"),
   "Switching Instagram account or Story reply type must abort stale form/showcase reads");
+const publishingEngine=src("src/lib/instagram/publishing.ts");
+const publishingApi=src("app/api/instagram/publishing/route.ts");
+assert.ok(publishingEngine.includes('if (tags.length && (!carousel || media.type === "IMAGE")) body.user_tags = JSON.stringify(tags);'), "Photo carousel children must pass user_tags while regular posts retain tags");
+assert.ok(publishingEngine.includes('if (tags.length) body.user_tags = JSON.stringify(tags);'), "Reel tagging must remain enabled");
+assert.ok(publishingApi.includes('item.type === "VIDEO" && (normalizedUserTags.media[item.storageKey]?.length ?? 0) > 0'), "API must reject unsupported carousel-video tags before creating a publishing job");
+assert.ok(publishingApi.includes('Array.isArray(normalizedUserTags) && normalizedUserTags.length > 0'), "Carousel tags must be associated with a particular image, not silently ignored");
+assert.ok(editor.includes('type === "CAROUSEL" && item?.type === "VIDEO"') && editor.includes('item.storageKey === mediaKey && item.type === "VIDEO"'), "Carousel-video tags must be unavailable by button and Enter-key");
+assert.ok(publishingEngine.includes('{ x: 0.5, y: 0.5 }'), "Automatic tag coordinates must remain intact");
 console.log("PUBLISHING_DAIRA_SINGLE_PAGE_REGRESSION_OK");
