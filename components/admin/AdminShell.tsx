@@ -13,6 +13,7 @@ const items = [
   { href: "/rickandmorty/sms", label: "پیامک", icon: Smartphone },
   { href: "/rickandmorty/coupons", label: "کدهای تخفیف", icon: BadgePercent },
   { href: "/rickandmorty/monitoring", label: "سلامت سیستم", icon: Activity },
+  { href: "/rickandmorty/queue", label: "صف پردازش", icon: Activity },
   { href: "/rickandmorty/audit", label: "تاریخچه عملیات", icon: History },
 ];
 type TicketAlert = { id: string; ticketId: string; subject: string; name: string; body: string; createdAt: string };
@@ -20,7 +21,7 @@ type TicketSummary = { unreadCount: number; latest: TicketAlert | null; items: T
 const navGroups=[
  {title:"مرکز مدیریت",hrefs:["/rickandmorty","/rickandmorty/users","/rickandmorty/tickets"]},
  {title:"ارتباطات و خدمات",hrefs:["/rickandmorty/tickets/bulk","/rickandmorty/sms","/rickandmorty/coupons"]},
- {title:"گزارش و نظارت",hrefs:["/rickandmorty/meta-monitor","/rickandmorty/monitoring","/rickandmorty/audit"]}
+ {title:"گزارش و نظارت",hrefs:["/rickandmorty/meta-monitor","/rickandmorty/monitoring","/rickandmorty/queue","/rickandmorty/audit"]}
 ];
 function NavItems({ onNavigate, metaUnread }: { onNavigate?: () => void; metaUnread: number }) {
  const path=usePathname();
@@ -78,15 +79,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   return()=>{disposed=true;clearInterval(fallback);document.removeEventListener("visibilitychange",visible);window.removeEventListener("admin:tickets-updated",load);source?.close();};
  },[]);
  useEffect(()=>{setMenu(false);setBell(false);setToast(null);},[path]);
+ useEffect(()=>{if(!menu)return;const prev=document.body.style.overflow;document.body.style.overflow="hidden";const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setMenu(false);};window.addEventListener("keydown",onKey);return()=>{document.body.style.overflow=prev;window.removeEventListener("keydown",onKey);};},[menu]);
  useEffect(()=>{if(!toast)return;const id=setTimeout(()=>setToast(null),6500);return()=>clearTimeout(id);},[toast]);
  const current=items.slice().reverse().find(x=>path.startsWith(x.href))?.label||"داشبورد";
  const openTicket=(ticketId:string)=>{setBell(false);setToast(null);router.push("/rickandmorty/tickets/"+ticketId);};
  return <div className="adm-root" dir="rtl">
   <aside className="adm-sidebar"><div className="adm-brand"><div className="adm-brand-symbol">SD</div><div><strong>SmartDirect</strong><small>پنل مدیریت</small></div></div><NavItems metaUnread={metaUnread}/></aside>
-  {menu&&<div className="adm-menu-overlay" onClick={()=>setMenu(false)}><div className="adm-mobile-menu" onClick={e=>e.stopPropagation()}><div className="adm-menu-top"><strong>مدیریت SmartDirect</strong><button className="adm-icon-btn" onClick={()=>setMenu(false)} aria-label="بستن منو"><X/></button></div><NavItems metaUnread={metaUnread} onNavigate={()=>setMenu(false)}/></div></div>}
+  {menu&&<div className="adm-menu-overlay" onClick={()=>setMenu(false)}><div className="adm-mobile-menu" role="dialog" aria-modal="true" aria-label="منوی مدیریت" onClick={e=>e.stopPropagation()}><div className="adm-menu-top"><strong>مدیریت SmartDirect</strong><button className="adm-icon-btn" onClick={()=>setMenu(false)} aria-label="بستن منو"><X/></button></div><NavItems metaUnread={metaUnread} onNavigate={()=>setMenu(false)}/></div></div>}
   <div className="adm-content">
    <header className="adm-header">
-    <div className="adm-header-start"><button className="adm-icon-btn adm-mobile-only" onClick={()=>setMenu(true)} aria-label="باز کردن منو"><Menu size={22}/></button><div className="adm-header-title"><ShieldCheck size={19}/><strong>{current}</strong></div></div>
+    <div className="adm-header-start"><button className="adm-icon-btn adm-mobile-only" onClick={()=>setMenu(true)} aria-expanded={menu} aria-haspopup="dialog" aria-label="باز کردن منو"><Menu size={22}/></button><div className="adm-header-title"><ShieldCheck size={19}/><strong>{current}</strong></div></div>
     <div className="adm-header-end"><div className="adm-bell-wrap">
       <button className="adm-icon-btn adm-bell" aria-label={"اعلان‌های تیکت: "+summary.unreadCount+" پیام خوانده‌نشده"} aria-expanded={bell} onClick={()=>setBell(v=>!v)}><Bell size={21}/>{summary.unreadCount>0&&<span className="adm-bell-count">{summary.unreadCount>99?"۹۹+":summary.unreadCount.toLocaleString("fa-IR")}</span>}</button>
       {bell&&<div className="adm-bell-panel"><div className="adm-bell-heading">پیام‌های خوانده‌نشده ({summary.unreadCount.toLocaleString("fa-IR")})</div><div className="adm-bell-items">{summary.items.length?summary.items.map(item=><button key={item.id} className="adm-bell-entry" onClick={()=>openTicket(item.ticketId)}><strong>{item.subject}</strong><small>{item.name} — {item.body}</small><span>مشاهده تیکت <ChevronLeft size={14}/></span></button>):<div className="adm-muted adm-p-3">پیام جدیدی وجود ندارد.</div>}</div><Link onClick={()=>setBell(false)} href="/rickandmorty/tickets" className="adm-bell-footer">مشاهده تمام تیکت‌ها</Link></div>}

@@ -2,6 +2,7 @@
 import { useEffect,useMemo,useRef,useState } from "react";
 import Link from "next/link";
 import { Download,ShieldBan,Users, WandSparkles } from "lucide-react";
+import AdminMobileSections from "@/components/admin/AdminMobileSections";
 import { AdminAlert,AdminButton,AdminFilters,AdminHeading,AdminInput,AdminModal,AdminPagination,AdminPanel,AdminSection,AdminSelect,AdminSpinner,AdminUserCard,blankFilters,paramsFromFilters,planOptions,sendAdminBulkChunks,type Filters,type UserRow } from "@/components/admin/AdminWidgets";
 type Action="subscription-adjust"|"subscription-change-plan"|"subscription-suspend"|"subscription-activate"|"access-block"|"access-unblock";
 type Result={processed:number;succeeded:number;failed:number;results:{userId:string;success:boolean;message?:string}[]};
@@ -46,6 +47,12 @@ export default function UsersPage(){
  return <div><AdminHeading title="کاربران" description="مدیریت اشتراک، دسترسی و فعالیت هر کاربر"/>
  {error&&<AdminAlert onClose={()=>setError("")}>{error}</AdminAlert>}
  {result&&<AdminAlert kind={result.failed?"warning":"success"} onClose={()=>setResult(null)}>نتیجه عملیات: {result.succeeded} موفق، {result.failed} ناموفق از {result.processed} کاربر. {result.results.filter(x=>!x.success).slice(0,2).map(x=>x.message).join("؛ ")}</AdminAlert>}
+ <AdminMobileSections labels={["فهرست کاربران","فیلتر و عملیات"]}>
+ <AdminSection title="فهرست کاربران" description="انتخاب حساب‌ها و مدیریت مستقل یا گروهی">
+ {count>0&&<div className="adm-mobile-selection-bar"><strong>{count.toLocaleString("fa-IR")} کاربر انتخاب‌شده</strong><div className="adm-btn-row"><AdminButton onClick={()=>setModal(true)}><WandSparkles size={16}/> عملیات گروهی</AdminButton><AdminButton kind="secondary" onClick={()=>void exportCsv()}><Download size={16}/> خروجی CSV</AdminButton></div></div>}
+ {loading&&rows.length===0?<AdminSpinner/>:<div className="adm-user-grid">{rows.map(u=><AdminUserCard key={u.id} u={u} href={"/rickandmorty/users/"+u.id} selected={chosen(u.id)} onSelect={v=>toggle(u.id,v)}/>)}</div>}
+ {!loading&&rows.length===0&&<AdminPanel><p className="adm-muted">کاربری با این مشخصات پیدا نشد.</p></AdminPanel>}
+ <AdminPagination page={page} total={total} onChange={setPage}/></AdminSection>
  <AdminSection title="جست‌وجو و فیلتر" description="ابتدا کاربران مورد نظر را پیدا کنید؛ سپس عملیات را انجام دهید"><AdminPanel><AdminFilters value={filters} onChange={changeFilters}/><div className="adm-select-toolbar"><div className="adm-btn-row">
   <AdminButton kind="secondary" onClick={()=>{const ids=rows.map(x=>x.id);if(ids.every(id=>chosen(id)))ids.forEach(id=>toggle(id,false));else ids.forEach(id=>toggle(id,true));}} disabled={!rows.length}>انتخاب صفحه</AdminButton>
   {!all&&<AdminButton kind="secondary" disabled={!total} onClick={()=>{setAll(true);setSelected([]);setExcluded([]);}}>{`انتخاب همه نتایج (${total.toLocaleString("fa-IR")})`}</AdminButton>}
@@ -54,10 +61,7 @@ export default function UsersPage(){
   <AdminButton kind="secondary" onClick={()=>void exportCsv()} disabled={!count}><Download size={16}/> خروجی CSV</AdminButton>
   <AdminButton disabled={!count} onClick={()=>setModal(true)}><WandSparkles size={16}/> عملیات گروهی</AdminButton>
  </div></div></AdminPanel></AdminSection>
- <AdminSection title="فهرست کاربران" description="جزئیات هر حساب و مسیر مدیریت مستقل آن">
- {loading&&rows.length===0?<AdminSpinner/>:<div className="adm-user-grid">{rows.map(u=><AdminUserCard key={u.id} u={u} href={"/rickandmorty/users/"+u.id} selected={chosen(u.id)} onSelect={v=>toggle(u.id,v)}/>)}</div>}
- {!loading&&rows.length===0&&<AdminPanel><p className="adm-muted">کاربری با این مشخصات پیدا نشد.</p></AdminPanel>}
- <AdminPagination page={page} total={total} onChange={setPage}/></AdminSection>
+ </AdminMobileSections>
  {modal&&<AdminModal title={`عملیات گروهی (${count.toLocaleString("fa-IR")} کاربر)`} onClose={()=>!busy&&setModal(false)} actions={<><AdminButton kind="secondary" disabled={busy} onClick={()=>setModal(false)}>انصراف</AdminButton><AdminButton disabled={busy} onClick={()=>void execute()}>{busy?"در حال اجرا… "+progress:"تأیید و اجرا"}</AdminButton></>}>
   <AdminAlert kind="warning">این عملیات فقط روی کاربران انتخاب‌شده اجرا می‌شود. مسدودکردن حساب با تعلیق اشتراک تفاوت دارد.</AdminAlert>
   <AdminSelect label="نوع عملیات" value={action} onChange={e=>setAction(e.target.value as Action)} options={[{value:"subscription-adjust",label:"افزایش یا کاهش روز اشتراک"},{value:"subscription-change-plan",label:"تغییر نوع اشتراک"},{value:"subscription-suspend",label:"تعلیق اشتراک"},{value:"subscription-activate",label:"فعال‌سازی اشتراک"},{value:"access-block",label:"مسدودکردن دسترسی به حساب"},{value:"access-unblock",label:"رفع مسدودیت حساب"}]}/>
