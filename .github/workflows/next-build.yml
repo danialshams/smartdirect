@@ -119,6 +119,9 @@ jobs:
       - name: Verify mobile admin, subscription access and realtime ticket notifications
         run: npx tsx scripts/test-admin-panel.ts
 
+      - name: Test official Meta changelog monitoring, version alerts and Persian badges
+        run: npx tsx scripts/test-meta-monitor.ts
+
       - name: Test saved media durability and Meta ID fallback
         run: npx tsx scripts/test-saved-response-durability.ts
 
