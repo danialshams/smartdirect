@@ -68,3 +68,37 @@ export async function verifyUnder10KPlan(userId: string) {
     }
   }
 }
+
+// Common-case pagination stays in PostgreSQL rather than loading the whole
+// user table into a serverless function on every admin page visit.
+export async function getAdminUsersPage(filters: AdminFilters, page: number, pageSize: number) {
+  if (filters.planKey || filters.status || filters.expiryWithin) {
+    // Effective subscription means the most recently created subscription,
+    // not any historical match; preserve that invariant for advanced filters.
+    const filtered = await getAdminUsers(filters);
+    return { data: filtered.slice((page-1)*pageSize,page*pageSize), total: filtered.length };
+  }
+  const q = (filters.q || "").trim().slice(0,120);
+  const where = {
+    role: "USER" as const,
+    ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }, { instagramAccounts: { some: { igUsername: { contains: q, mode: "insensitive" as const } } } }] } : {}),
+    ...(filters.connection === "connected" ? { instagramAccounts: { some: { isConnected: true } } } : {}),
+    ...(filters.connection === "disconnected" ? { instagramAccounts: { none: { isConnected: true } } } : {}),
+    ...(filters.access === "blocked" ? { isBlocked: true } : filters.access === "allowed" ? { isBlocked: false } : {}),
+  };
+  const [total, users] = await Promise.all([
+    prisma.user.count({where}),
+    prisma.user.findMany({
+      where,orderBy:[{createdAt:"desc"},{id:"desc"}],skip:(page-1)*pageSize,take:pageSize,
+      select:{id:true,name:true,email:true,role:true,isBlocked:true,blockedReason:true,phone:true,phoneVerifiedAt:true,smsConsentAt:true,createdAt:true,
+        instagramAccounts:{where:{isConnected:true},select:{id:true,igUsername:true}},
+        subscriptions:{orderBy:[{createdAt:"desc"},{id:"desc"}],take:1,select:{id:true,planKey:true,status:true,startedAt:true,expiresAt:true,createdAt:true}}
+      }
+    })
+  ]);
+  const now=Date.now();
+  return {total,data:users.map(u=>{
+    const {subscriptions,...rest}=u;const sub=subscriptions[0]||null;
+    return {...rest,pagesCount:u.instagramAccounts.length,subscription:sub?{...sub,effectiveStatus:effectiveStatus(sub,now)}:null,effectiveStatus:effectiveStatus(sub,now)};
+  })};
+}
