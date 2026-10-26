@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChevronLeft, Headset, LayoutDashboard, Menu, MessageSquare, ShieldCheck, Ticket, Users, X, BadgePercent, Smartphone, Activity, LogOut } from "lucide-react";
-import { AdminAlert } from "./AdminWidgets";
+
 const items = [
   { href: "/rickandmorty", label: "داشبورد", icon: LayoutDashboard },
   { href: "/rickandmorty/users", label: "کاربران", icon: Users },
@@ -44,12 +44,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const fallback=setInterval(()=>{if(document.visibilityState==="visible")load();},8000);
   const visible=()=>{if(document.visibilityState==="visible")load();};
   document.addEventListener("visibilitychange",visible);
+  window.addEventListener("admin:tickets-updated",load);
   if(typeof EventSource!=="undefined"){
     source=new EventSource("/api/admin/tickets/stream");
     source.addEventListener("ticket",load);
     source.onerror=()=>{ /* polling remains active while realtime is unavailable */ };
   }
-  return()=>{disposed=true;clearInterval(fallback);document.removeEventListener("visibilitychange",visible);source?.close();};
+  return()=>{disposed=true;clearInterval(fallback);document.removeEventListener("visibilitychange",visible);window.removeEventListener("admin:tickets-updated",load);source?.close();};
  },[]);
  useEffect(()=>{setMenu(false);setBell(false);setToast(null);},[path]);
  useEffect(()=>{if(!toast)return;const id=setTimeout(()=>setToast(null),6500);return()=>clearTimeout(id);},[toast]);

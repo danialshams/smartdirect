@@ -2,7 +2,7 @@
 import { useEffect,useMemo,useRef,useState } from "react";
 import Link from "next/link";
 import { Download,ShieldBan,Users, WandSparkles } from "lucide-react";
-import { AdminAlert,AdminButton,AdminFilters,AdminHeading,AdminInput,AdminModal,AdminPagination,AdminPanel,AdminSelect,AdminSpinner,AdminUserCard,blankFilters,paramsFromFilters,planOptions,type Filters,type UserRow } from "@/components/admin/AdminWidgets";
+import { AdminAlert,AdminButton,AdminFilters,AdminHeading,AdminInput,AdminModal,AdminPagination,AdminPanel,AdminSelect,AdminSpinner,AdminUserCard,blankFilters,paramsFromFilters,planOptions,sendAdminBulkChunks,type Filters,type UserRow } from "@/components/admin/AdminWidgets";
 type Action="subscription-adjust"|"subscription-change-plan"|"subscription-suspend"|"subscription-activate"|"access-block"|"access-unblock";
 type Result={processed:number;succeeded:number;failed:number;results:{userId:string;success:boolean;message?:string}[]};
 export default function UsersPage(){
@@ -10,7 +10,7 @@ export default function UsersPage(){
  const [query,setQuery]=useState(""),[page,setPage]=useState(1),[rows,setRows]=useState<UserRow[]>([]),[total,setTotal]=useState(0),[loading,setLoading]=useState(true),[error,setError]=useState(""),[result,setResult]=useState<Result|null>(null);
  const [selected,setSelected]=useState<string[]>([]),[all,setAll]=useState(false),[excluded,setExcluded]=useState<string[]>([]);
  const [modal,setModal]=useState(false),[action,setAction]=useState<Action>("subscription-adjust"),[days,setDays]=useState("7"),[plan,setPlan]=useState("monthly"),[reason,setReason]=useState(""),[busy,setBusy]=useState(false);
- const [refresh,setRefresh]=useState(0);
+ const [refresh,setRefresh]=useState(0),[progress,setProgress]=useState("");
  useEffect(()=>{const timer=setTimeout(()=>setQuery(filters.q),320);return()=>clearTimeout(timer);},[filters.q]);
  const effective=useMemo(()=>({...filters,q:query}),[filters,query]);
  const filterKey=JSON.stringify(effective);
@@ -39,10 +39,9 @@ export default function UsersPage(){
   setBusy(true);setError("");
   try{
    const selection=all?{mode:"filtered",filters:effective,excludeUserIds:excluded}:{mode:"ids",userIds:selected};
-   const r=await fetch("/api/admin/users/bulk",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,selection,days:Number(days),planKey:plan,reason})});
-   const j=await r.json();if(!r.ok&&r.status!==207)throw Error(j.message||"عملیات ناموفق");
+   const j=await sendAdminBulkChunks({endpoint:"/api/admin/users/bulk",selection:selection as never,payload:{action,days:Number(days),planKey:plan,reason},onProgress:(done,total)=>setProgress(done.toLocaleString("fa-IR")+" از "+total.toLocaleString("fa-IR"))});
    setResult(j);setModal(false);setSelected([]);setAll(false);setExcluded([]);setRefresh(n=>n+1);
-  }catch(e){setError(e instanceof Error?e.message:"خطای عملیات");}finally{setBusy(false);}
+  }catch(e){setError(e instanceof Error?e.message:"خطای عملیات");}finally{setBusy(false);setProgress("");}
  };
  return <div><AdminHeading title="کاربران" description="مدیریت اشتراک، دسترسی و فعالیت هر کاربر"/>
  {error&&<AdminAlert onClose={()=>setError("")}>{error}</AdminAlert>}
@@ -58,7 +57,7 @@ export default function UsersPage(){
  {loading&&rows.length===0?<AdminSpinner/>:<div className="adm-user-grid">{rows.map(u=><AdminUserCard key={u.id} u={u} href={"/rickandmorty/users/"+u.id} selected={chosen(u.id)} onSelect={v=>toggle(u.id,v)}/>)}</div>}
  {!loading&&rows.length===0&&<AdminPanel><p className="adm-muted">کاربری با این مشخصات پیدا نشد.</p></AdminPanel>}
  <AdminPagination page={page} total={total} onChange={setPage}/>
- {modal&&<AdminModal title={`عملیات گروهی (${count.toLocaleString("fa-IR")} کاربر)`} onClose={()=>!busy&&setModal(false)} actions={<><AdminButton kind="secondary" disabled={busy} onClick={()=>setModal(false)}>انصراف</AdminButton><AdminButton disabled={busy} onClick={()=>void execute()}>{busy?"در حال اجرا…":"تأیید و اجرا"}</AdminButton></>}>
+ {modal&&<AdminModal title={`عملیات گروهی (${count.toLocaleString("fa-IR")} کاربر)`} onClose={()=>!busy&&setModal(false)} actions={<><AdminButton kind="secondary" disabled={busy} onClick={()=>setModal(false)}>انصراف</AdminButton><AdminButton disabled={busy} onClick={()=>void execute()}>{busy?"در حال اجرا… "+progress:"تأیید و اجرا"}</AdminButton></>}>
   <AdminAlert kind="warning">این عملیات فقط روی کاربران انتخاب‌شده اجرا می‌شود. مسدودکردن حساب با تعلیق اشتراک تفاوت دارد.</AdminAlert>
   <AdminSelect label="نوع عملیات" value={action} onChange={e=>setAction(e.target.value as Action)} options={[{value:"subscription-adjust",label:"افزایش یا کاهش روز اشتراک"},{value:"subscription-change-plan",label:"تغییر نوع اشتراک"},{value:"subscription-suspend",label:"تعلیق اشتراک"},{value:"subscription-activate",label:"فعال‌سازی اشتراک"},{value:"access-block",label:"مسدودکردن دسترسی به حساب"},{value:"access-unblock",label:"رفع مسدودیت حساب"}]}/>
   {action==="subscription-adjust"&&<AdminInput label="تغییر تعداد روز (منفی برای کاهش)" type="number" value={days} onChange={e=>setDays(e.target.value)}/>}
