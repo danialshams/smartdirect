@@ -1,72 +1,44 @@
 import { classify } from "./parser";
-
-/** Source excerpts are PUBLIC Meta documentation, never user/account data.
- * MyMemory offers a rate-limited anonymous translation API: a failed translation
- * must never be represented as a faithful Persian rendering of source text. */
-export function factualPersianFallback(title: string, body: string): string {
- const text=(title+" "+body).toLowerCase();
- if (/phone number and email quick replies disabled/i.test(title))
-  return "طبق مستندات متا، پاسخ‌های سریع با گزینه «شماره تلفن» و «ایمیل» غیرفعال شده‌اند. این تغییر برای تعاملات دایرکت و فرم‌های دریافت اطلاعات در SmartDirect اهمیت دارد.";
- if (/captions on stories published through/i.test(title))
-  return "مستندات رسمی متا به قابلیت افزودن کپشن به استوری‌هایی اشاره می‌کند که از طریق Content Publishing API منتشر می‌شوند. سازگاری آن با انتشار استوری SmartDirect باید بررسی شود.";
- if (/ordered comments for instagram ad media/i.test(title))
-  return "تغییر مستندات مربوط به کامنت‌های مرتب‌شده در رسانه‌های تبلیغاتی اینستاگرام است. لازم است جزئیات بازیابی و ترتیب کامنت‌ها در منبع رسمی بررسی شود.";
- if (/phone number|email|quick repl/i.test(text)&&/disabl|remov/i.test(text))
-  return "متا در دسترس‌بودن برخی پاسخ‌های سریع، از جمله اطلاعات تماس، را تغییر داده است. جزئیات دقیق انواع پاسخ و محدودیت‌های جدید در منبع رسمی مشخص شده‌اند.";
- if (/graph api (?:v|version )?(\d+)\.0/i.test(title)) {
-  const version=title.match(/(?:v|version )?(\d+)\.0/i)?.[1]||"جدید";
-  return "مستندات رسمی از نسخه "+version+".0 Graph API خبر می‌دهند. پیش از ارتقای SmartDirect لازم است تغییرات سازگاری، مجوزها و نقاط پایانی مربوط به اینستاگرام بررسی شوند.";
- }
- const c=classify(title,body);
- const subject=c.category==="سایر تغییرات مرتبط"?"رابط برنامه‌نویسی اینستاگرام":c.category;
- const event=c.kind==="DEPRECATION"?"حذف یا غیرفعال‌شدن بخشی از امکانات":c.kind==="LIMIT"?"تغییر محدودیت‌ها":c.kind==="NEW"?"معرفی قابلیت تازه":"به‌روزرسانی مستندات";
- return "اطلاعیه رسمی درباره "+event+" در «"+subject+"» است. برای جلوگیری از بیان جزئیات تأییدنشده، متن کامل اعلامیه را باید در منبع رسمی مطالعه کرد.";
-}
-export function safeEnglishExcerpt(text: string): string {
- return text.replace(/\s+/g," ").trim().slice(0,850);
-}
-function translateEntities(input:string):string {
- return input.replace(/&amp;/gi,"&").replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'").replace(/&lt;/gi,"<").replace(/&gt;/gi,">");
-}
+const MAX_EXCERPT=1150;
+export function safeEnglishExcerpt(text:string):string{return text.replace(/\s+/g," ").trim().slice(0,MAX_EXCERPT);}
+function unescapeTranslation(s:string){return s.replace(/&quot;/g,'"').replace(/&amp;/g,"&").replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">");}
 export async function translatePublicEnglishToPersian(input:string):Promise<string|null>{
- const trimmed=safeEnglishExcerpt(input);
- if(trimmed.length<12)return null;
- // Max 500 BYTES/request in the official MyMemory API. Stay below 400.
- const chunks:string[]=[];let rest=trimmed;
- for(let n=0;n<3&&rest.length>0;n++){
-  if(rest.length<=370){chunks.push(rest);break;}
-  let cut=rest.lastIndexOf(". ",370);
-  if(cut<110)cut=rest.lastIndexOf(" ",370);
-  if(cut<110)cut=370;
-  chunks.push(rest.slice(0,cut+1).trim());rest=rest.slice(cut+1).trim();
+ const text=safeEnglishExcerpt(input);
+ if(text.length<25)return null;
+ const parts:string[]=[];let remaining=text;
+ while(remaining.length>0&&parts.length<4){
+  if(remaining.length<=300){parts.push(remaining);break;}
+  let cut=remaining.lastIndexOf(". ",300);if(cut<110)cut=remaining.lastIndexOf(" ",300);if(cut<110)cut=299;
+  parts.push(remaining.slice(0,cut+1).trim());remaining=remaining.slice(cut+1).trim();
  }
  const translated:string[]=[];
- for(const chunk of chunks){
-  try {
+ for(const part of parts){
+  try{
    const uri=new URL("https://api.mymemory.translated.net/get");
-   uri.searchParams.set("q",chunk);uri.searchParams.set("langpair","en|fa");
-   const res=await fetch(uri,{cache:"no-store",signal:AbortSignal.timeout(4500),headers:{"Accept":"application/json"}});
+   uri.searchParams.set("q",part);uri.searchParams.set("langpair","en|fa");
+   const res=await fetch(uri,{cache:"no-store",signal:AbortSignal.timeout(4600),headers:{"Accept":"application/json"}});
    if(!res.ok)return null;
-   const raw=await res.json() as {responseStatus?:number;responseData?:{translatedText?:string}};
-   const result=translateEntities(raw.responseData?.translatedText||"").trim();
-   if(raw.responseStatus!==200||result.length<8||!/[آ-ی]/.test(result)||/MYMEMORY WARNING|QUERY LENGTH LIMIT/i.test(result))return null;
-   translated.push(result);
-  } catch{return null;}
+   const data=await res.json() as {responseStatus?:number;responseData?:{translatedText?:string}};
+   const value=unescapeTranslation(data.responseData?.translatedText||"").replace(/\s+/g," ").trim();
+   if(data.responseStatus!==200||value.length<10||!/[آ-ی]/.test(value)||/MYMEMORY WARNING|QUERY LENGTH LIMIT/i.test(value))return null;
+   translated.push(value);
+  }catch{return null;}
  }
  return translated.join(" ").trim()||null;
 }
-/** Persian rendering of the actual announcement title and excerpt, not a generic category label. */
-export async function renderFactualPersian(title:string,description:string){
+/** Do not fabricate details if Meta did not publish enough text. */
+export async function renderFactualPersian(title:string,description:string,sourceId=""){
  const excerpt=safeEnglishExcerpt(description);
- const fallback=factualPersianFallback(title,excerpt);
- const [translatedTitle,translatedBody]=await Promise.all([
-   translatePublicEnglishToPersian(title),
-   excerpt.length>18?translatePublicEnglishToPersian(excerpt):Promise.resolve(null)
- ]);
- return {
-  titleFa:translatedTitle||classify(title,description).titleFa,
-  summaryFa:translatedBody
-   ? "ترجمه فارسی متن رسمی متا: "+translatedBody+"\n\nبرداشت مرتبط با SmartDirect: "+fallback
-   : "توضیح مرتبط با SmartDirect: "+fallback+(excerpt?"\n\nمتن اصلی برای ارجاع: "+excerpt:"\n\nمتن توضیحی کافی برای ترجمه در منبع قابل دریافت نبود.")
- };
+ if(excerpt.length<85)throw Error("Official announcement does not contain enough detail to translate accurately");
+ const meta=classify(title,excerpt,sourceId);
+ const translated=await translatePublicEnglishToPersian(excerpt);
+ if(!translated||translated.length<65)throw Error("Persian translation is unavailable or too short");
+ const translatedTitle=await translatePublicEnglishToPersian(title);
+ const titleFa=translatedTitle&&translatedTitle.length>18?translatedTitle:meta.titleFa;
+ const impact=meta.category==="نسخه API"?
+  "این خبر مربوط به نسخه API است؛ پیش از ارتقا باید سازگاری تمام ابزارهای SmartDirect بررسی شود.":
+  "بخش مرتبط در SmartDirect: "+meta.category+". این اطلاعیه به‌تنهایی ثابت نمی‌کند که قابلیت در حساب توسعه‌دهنده ما فعال شده است.";
+ return {titleFa,summaryFa:"چه چیزی در مستندات Meta نوشته شده؟\n"+translated+
+ "\n\nاین تغییر به کدام بخش مربوط است؟\n"+impact+
+ "\n\nوضعیت اجرا: برای استفاده در SmartDirect نیازمند بررسی مجوزها و سازگاری فنی است."};
 }
