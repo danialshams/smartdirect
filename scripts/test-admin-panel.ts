@@ -33,4 +33,9 @@ assert(read("app/api/admin/sms/route.ts").includes('selection:{mode:"ids",userId
 assert(read("app/api/admin/users/bulk/route.ts").includes('existing?.planKey==="monthly_under_10k"'),"Bulk reactivation must re-check under-10k eligibility");
 assert(read("app/api/admin/sms/route.ts").includes('status:"DRAFT"'),"SMS draft must not be treated as sent");
 const auth=read("src/lib/auth.ts");assert(auth.includes("isBlocked")&&auth.includes("accessCheckedAt"),"Blocked users must be denied for existing JWTs");
+const release = read("scripts/admin-prisma-release.ps1");
+assert(release.includes("Compare-Object $expected $pending"), "Admin migration command must reject unexpected migrations");
+assert(release.includes("SMARTDIRECT_ADMIN_MIGRATIONS_OK"), "Migration command must verify success");
+assert(release.includes("Remove-Item Env:\\DATABASE_URL"), "Migration command must remove temporary credentials");
+
 console.log("ADMIN_PANEL_MOBILE_OPERATIONS_OK");
