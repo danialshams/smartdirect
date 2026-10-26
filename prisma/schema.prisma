@@ -13,6 +13,12 @@ model User {
   name                                                           String
   password                                                       String
   role                                                           Role                  @default(USER)
+  isBlocked                                                      Boolean               @default(false)
+  blockedAt                                                      DateTime?
+  blockedReason                                                  String?
+  phone                                                          String?
+  phoneVerifiedAt                                               DateTime?
+  smsConsentAt                                                  DateTime?
   createdAt                                                      DateTime              @default(now())
   updatedAt                                                      DateTime              @updatedAt
   comments                                                       Comment[]
@@ -627,6 +633,7 @@ model Subscription {
   updatedAt     DateTime           @updatedAt
   user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, createdAt])
   @@index([userId])
   @@index([status, expiresAt])
   @@index([expiresAt])
@@ -684,6 +691,19 @@ model TicketAttachment {
   message         TicketMessage @relation(fields: [ticketMessageId], references: [id], onDelete: Cascade)
 
   @@index([ticketMessageId])
+}
+
+model SmsCampaign {
+  id                    String   @id @default(cuid())
+  createdById           String
+  message               String
+  selection             Json
+  targetCount           Int
+  verifiedRecipientCount Int
+  status                String   @default("DRAFT")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  @@index([createdAt])
 }
 
 model Coupon {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getSupportPayload, supportAttachmentCreate, publishSupportChange } from "@/lib/support/tickets";
+import { getSupportPayload, supportAttachmentCreate, publishSupportChange, publishAdminSupportChange } from "@/lib/support/tickets";
 
 type Context = { params: Promise<{ id: string }> };
 export async function POST(request: NextRequest, context: Context) {
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest, context: Context) {
       return message;
     });
     await publishSupportChange(session.user.id, id, created.id);
+    await publishAdminSupportChange(id, created.id);
     return NextResponse.json({ success: true, id: created.id }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("[support] send message", error);

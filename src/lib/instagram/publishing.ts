@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getUserAccessBlock } from "@/lib/subscription/access";
 import { activateStoryReply } from "@/lib/automation/story-activation";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
@@ -966,6 +967,26 @@ async function publishInstagramJobInternal(jobId: string) {
   const idempotencyKey = idempotency.key;
   const idempotencyLeaseToken = idempotency.leaseToken;
 
+  const entitlement = await getUserAccessBlock(job.instagramAccount.userId);
+  if (entitlement) {
+    // Preserve the scheduled job and stored media. Releasing the execution
+    // lease allows the scheduler to reconsider it after access is restored.
+    // Do not treat administrative suspension as an Instagram publishing failure.
+    // Portable dispatch can set PROCESSING before the worker runs. Restore a
+    // pre-container scheduled job so that it stays recoverable when unblocked.
+    if (job.status === "PROCESSING" && !job.instagramContainerId && !job.instagramMediaId) {
+      await prisma.instagramPublishJob.updateMany({
+        where: { id: job.id, status: "PROCESSING", instagramContainerId: null, instagramMediaId: null },
+        data: { status: job.scheduledAt ? "SCHEDULED" : "DRAFT", errorMessage: null },
+      });
+    }
+    await failPublishingExecution(
+      idempotencyKey,
+      new Error("PUBLISHING_PAUSED_BY_ADMIN_SUBSCRIPTION_OR_ACCESS"),
+      idempotencyLeaseToken,
+    );
+    return job;
+  }
   const tags = normalizeUserTags(job.userTags);
   const token = await getValidInstagramAccessToken(job.instagramAccountId);
   const tenantId = job.instagramAccount.userId;

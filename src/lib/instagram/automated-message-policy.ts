@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { accessBlockFromState } from "@/lib/subscription/access";
 import { getInstagramMessagingWindow } from "@/lib/instagram/messaging-window";
 
 /**
@@ -134,7 +135,7 @@ export async function claimFirstAutomationStopOption(
   }
 }
 
-export type AutomatedMessageGate = "OPTED_OUT" | "NO_INBOUND_MESSAGE" | "INSTAGRAM_24H_WINDOW_CLOSED" | null;
+export type AutomatedMessageGate = "OPTED_OUT" | "NO_INBOUND_MESSAGE" | "INSTAGRAM_24H_WINDOW_CLOSED" | "ACCOUNT_BLOCKED" | "SUBSCRIPTION_INACTIVE" | null;
 
 /** Pure policy check; used by the runtime guard and regression tests. */
 export function automatedMessageBlockReason(input: {
@@ -163,11 +164,21 @@ export async function getAutomatedMessageBlockReason(input: {
     where: { instagramAccountId_participantId: {
       instagramAccountId: input.instagramAccountId, participantId: input.participantId,
     } },
-    select: { isActive: true, messages: {
+    select: { isActive: true, user: { select: { isBlocked: true, subscriptions: { orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 1, select: { status: true, expiresAt: true } } } }, messages: {
       where: { direction: "INBOUND" }, orderBy: { createdAt: "desc" },
       take: 1, select: { createdAt: true },
     } },
   });
+  if (conversation) {
+    const reason = accessBlockFromState(conversation.user);
+    if (reason) return reason;
+  } else {
+    const account = await prisma.instagramAccount.findUnique({ where: { id: input.instagramAccountId }, select: { user: { select: { isBlocked: true, subscriptions: { orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 1, select: { status: true, expiresAt: true } } } } } });
+    // Unknown account has no scoped conversation or preference; upstream account authorization rejects actual sends.
+    if (!account) return null;
+    const reason = accessBlockFromState(account.user);
+    if (reason) return reason;
+  }
   return automatedMessageBlockReason({
     active: conversation?.isActive ?? null,
     lastInboundAt: conversation?.messages[0]?.createdAt ?? null,

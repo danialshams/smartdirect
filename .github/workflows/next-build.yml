@@ -116,6 +116,9 @@ jobs:
       - name: Verify dashboard home badge placement and RTL icon order
         run: npx tsx scripts/test-dashboard-home-badges.ts
 
+      - name: Verify mobile admin, subscription access and realtime ticket notifications
+        run: npx tsx scripts/test-admin-panel.ts
+
       - name: Test saved media durability and Meta ID fallback
         run: npx tsx scripts/test-saved-response-durability.ts
 
@@ -169,6 +172,12 @@ jobs:
           # declaration; do not rewrite applied production migration history.
           npx prisma db push
           npx tsx scripts/test-durable-webhook-migration.ts
+
+      - name: Test admin database pagination, effective plans, bulk selection and account access
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+        run: npx tsx scripts/test-admin-operations-db.ts
 
       - name: Test Meta account safety, recipient opt-out and rate guards against isolated PostgreSQL and Redis
         env:

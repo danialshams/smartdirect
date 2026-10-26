@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { accessBlockFromState } from "@/lib/subscription/access";
 
 import {
   AutomationMessageType,
@@ -46,11 +47,15 @@ async function executeAutomationInternal(input: ExecuteAutomationInput) {
     where: {
       id: input.instagramAccountId,
     },
+    include: { user: { select: { isBlocked: true, subscriptions: { orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 1, select: { status: true, expiresAt: true } } } } },
   });
 
   if (!instagramAccount) {
     throw new Error("Instagram account not found");
   }
+
+  const accountBlock = accessBlockFromState(instagramAccount.user);
+  if (accountBlock) return { success: true, executed: false, reason: accountBlock };
 
   // =========================================================
   // 2. Find automation

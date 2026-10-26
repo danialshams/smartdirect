@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getSupportPayload, supportAttachmentCreate } from "@/lib/support/tickets";
+import { getSupportPayload, supportAttachmentCreate, publishAdminSupportChange } from "@/lib/support/tickets";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
       data: { userId: session.user.id, subject, category, messages: { create: { body, senderUserId: session.user.id, attachments: supportAttachmentCreate(image) } } },
       select: { id: true },
     });
+    await publishAdminSupportChange(ticket.id, "new-ticket");
     return NextResponse.json(ticket, { status: 201, headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("[Support create ticket]", error);

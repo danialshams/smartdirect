@@ -5,6 +5,7 @@ import { resolveExecutionBackend } from "@/lib/runtime/execution-backend";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserAccessBlock } from "@/lib/subscription/access";
 import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-workflow";
 import { enqueueInstagramPublishing } from "@/lib/instagram/publishing-queue";
 import { processPublishingQueueJob } from "@/lib/instagram/publishing-workflow";
@@ -194,6 +195,8 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ success: false, message: "احراز هویت انجام نشده است." }, { status: 401 });
+    const accountBlock = await getUserAccessBlock(session.user.id);
+    if (accountBlock) return NextResponse.json({ success: false, message: "اشتراک یا دسترسی این حساب فعال نیست." }, { status: 403 });
     const parsed = createSchema.safeParse(await request.json());
     if (!parsed.success) return NextResponse.json({ success: false, message: "اطلاعات ارسال‌شده معتبر نیست.", errors: parsed.error.flatten() }, { status: 400 });
     const data = parsed.data;

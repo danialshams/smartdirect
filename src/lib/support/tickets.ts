@@ -41,8 +41,9 @@ export function supportAttachmentCreate(image: SupportImage | null) {
 }
 
 export function supportRealtimeEnabled() {
-  return ["redis", "local"].includes((process.env.REDIS_DRIVER || "").toLowerCase()) &&
-    Boolean(process.env.REDIS_URL || process.env.REDIS_LOCAL_URL);
+  // Pub/Sub uses the Redis TCP URL even when the application uses Upstash REST
+  // for ordinary queue commands. REDIS_DRIVER need not be set on Vercel.
+  return Boolean(process.env.REDIS_URL?.trim() || process.env.REDIS_LOCAL_URL?.trim());
 }
 
 export function supportRedisUrl() {
@@ -50,6 +51,19 @@ export function supportRedisUrl() {
 }
 
 export function supportChannel(userId: string) { return "sd:support:user:" + userId; }
+export const adminSupportChannel = "sd:support:admin";
+
+export async function publishAdminSupportChange(ticketId: string, messageId: string) {
+  if (!supportRealtimeEnabled()) return;
+  const redis = new Redis(supportRedisUrl(), { lazyConnect: true, connectTimeout: 1500, maxRetriesPerRequest: 1, enableOfflineQueue: false });
+  redis.on("error", () => undefined);
+  try {
+    await redis.connect();
+    await redis.publish(adminSupportChannel, JSON.stringify({ ticketId, messageId }));
+  } catch (error) {
+    console.warn("[support] admin realtime event unavailable; polling will recover", error instanceof Error ? error.message : error);
+  } finally { redis.disconnect(); }
+}
 
 export async function publishSupportChange(userId: string, ticketId: string, messageId: string) {
   if (!supportRealtimeEnabled()) return;

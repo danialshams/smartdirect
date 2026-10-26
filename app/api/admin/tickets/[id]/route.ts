@@ -24,7 +24,9 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   if (!current) return NextResponse.json({ message: "تیکت پیدا نشد" }, { status: 404 });
   const status = String(body.status ?? "");
   const priority = String(body.priority ?? "");
-  const updated = await prisma.ticket.update({ where: { id }, data: { ...(status ? { status: status as never } : {}), ...(priority ? { priority: priority as never } : {}), ...(status === "CLOSED" || status === "RESOLVED" ? { closedAt: new Date() } : {}) } });
+  if (status && !["OPEN","IN_PROGRESS","WAITING_USER","RESOLVED","CLOSED"].includes(status)) return NextResponse.json({ message: "وضعیت نامعتبر است" }, { status: 400 });
+  if (priority && !["LOW","NORMAL","HIGH","URGENT"].includes(priority)) return NextResponse.json({ message: "اولویت نامعتبر است" }, { status: 400 });
+  const updated = await prisma.ticket.update({ where: { id }, data: { ...(status ? { status: status as never } : {}), ...(priority ? { priority: priority as never } : {}), ...(status ? { closedAt: status === "CLOSED" || status === "RESOLVED" ? new Date() : null } : {}) } });
   await writeAdminAudit({ actorUserId: guard.session!.user.id, action: "ticket.update", targetType: "Ticket", targetId: id, metadata: body });
   return NextResponse.json(updated);
 }
