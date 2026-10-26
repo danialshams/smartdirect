@@ -1,7 +1,7 @@
-ALTER TABLE "User" ADD COLUMN "isBlocked" BOOLEAN NOT NULL DEFAULT false;
-ALTER TABLE "User" ADD COLUMN "blockedAt" TIMESTAMP(3);
-ALTER TABLE "User" ADD COLUMN "blockedReason" TEXT;
-ALTER TABLE "User" ADD COLUMN "phone" TEXT;
-ALTER TABLE "User" ADD COLUMN "phoneVerifiedAt" TIMESTAMP(3);
-ALTER TABLE "User" ADD COLUMN "smsConsentAt" TIMESTAMP(3);
-CREATE INDEX "Subscription_userId_createdAt_idx" ON "Subscription"("userId", "createdAt");
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "isBlocked" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "blockedAt" TIMESTAMP(3);
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "blockedReason" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phone" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phoneVerifiedAt" TIMESTAMP(3);
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "smsConsentAt" TIMESTAMP(3);
+CREATE INDEX IF NOT EXISTS "Subscription_userId_createdAt_idx" ON "Subscription"("userId", "createdAt");

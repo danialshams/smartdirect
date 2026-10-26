@@ -51,7 +51,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   if(typeof EventSource!=="undefined"){
     source=new EventSource("/api/admin/tickets/stream");
     source.addEventListener("ticket",load);
-    source.onerror=()=>{ /* polling remains active while realtime is unavailable */ };
+    source.onerror=()=>{ /* Stop repeated 503 reconnects on deployments without Redis Pub/Sub. */ source?.close(); source=null; };
   }
   return()=>{disposed=true;clearInterval(fallback);document.removeEventListener("visibilitychange",visible);window.removeEventListener("admin:tickets-updated",load);source?.close();};
  },[]);

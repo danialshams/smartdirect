@@ -1,4 +1,4 @@
-CREATE TABLE "SmsCampaign" (
+CREATE TABLE IF NOT EXISTS "SmsCampaign" (
     "id" TEXT NOT NULL,
     "createdById" TEXT NOT NULL,
     "message" TEXT NOT NULL,
@@ -10,4 +10,4 @@ CREATE TABLE "SmsCampaign" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "SmsCampaign_pkey" PRIMARY KEY ("id")
 );
-CREATE INDEX "SmsCampaign_createdAt_idx" ON "SmsCampaign"("createdAt");
+CREATE INDEX IF NOT EXISTS "SmsCampaign_createdAt_idx" ON "SmsCampaign"("createdAt");
