@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import AdminProviders from "@/components/admin/AdminProviders";
+import "./admin.css";
 import { prisma } from "@/lib/prisma";
 import AdminShell from "@/components/admin/AdminShell";
 

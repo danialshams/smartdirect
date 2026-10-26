@@ -1,218 +1,76 @@
 "use client";
-
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import {
-  BadgePercent,
-  Headphones,
-  LayoutDashboard,
-  Menu as MenuIcon,
-  ShieldCheck,
-  Ticket,
-  Users,
-  X,
-} from "lucide-react";
-import {
-  AppBar,
-  Box,
-  Drawer,
-  IconButton,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-  Typography,
-} from "@mui/material";
-
+import { usePathname, useRouter } from "next/navigation";
+import { Bell, ChevronLeft, Headset, LayoutDashboard, Menu, MessageSquare, ShieldCheck, Ticket, Users, X, BadgePercent, Smartphone, Activity, LogOut } from "lucide-react";
+import { AdminAlert } from "./AdminWidgets";
 const items = [
   { href: "/rickandmorty", label: "داشبورد", icon: LayoutDashboard },
   { href: "/rickandmorty/users", label: "کاربران", icon: Users },
   { href: "/rickandmorty/tickets", label: "تیکت‌ها", icon: Ticket },
+  { href: "/rickandmorty/tickets/bulk", label: "ارسال گروهی", icon: MessageSquare },
+  { href: "/rickandmorty/sms", label: "پیامک", icon: Smartphone },
   { href: "/rickandmorty/coupons", label: "کدهای تخفیف", icon: BadgePercent },
+  { href: "/dashboard/admin/queue", label: "صف پردازش", icon: Activity },
 ];
-
-function selectedKey(pathname: string) {
-  if (pathname.startsWith("/rickandmorty/users")) return "/rickandmorty/users";
-  if (pathname.startsWith("/rickandmorty/tickets")) return "/rickandmorty/tickets";
-  if (pathname.startsWith("/rickandmorty/coupons")) return "/rickandmorty/coupons";
-  return "/rickandmorty";
+type TicketSummary = { unreadCount: number; latest: { id: string; ticketId: string; subject: string; name: string; body: string } | null };
+function NavItems({ onNavigate }: { onNavigate?: () => void }) {
+ const path = usePathname();
+ return <nav aria-label="صفحات مدیریت" className="adm-nav-list">{items.map(item => {
+  const Icon=item.icon, active=item.href==="/rickandmorty"?path===item.href:path.startsWith(item.href);
+  return <Link href={item.href} key={item.href} onClick={onNavigate} className={"adm-nav-link "+(active?"is-active":"")}><Icon size={19}/><span>{item.label}</span>{active&&<ChevronLeft size={15} className="mr-auto"/>}</Link>;
+ })}</nav>;
 }
-
-function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
-  const pathname = usePathname();
-  const active = selectedKey(pathname);
-
-  return (
-    <List disablePadding sx={{ display: "grid", gap: 0.5 }}>
-      {items.map(({ href, label, icon: Icon }) => {
-        const isActive = active === href;
-        return (
-          <ListItemButton
-            key={href}
-            component={Link}
-            href={href}
-            onClick={onNavigate}
-            selected={isActive}
-            sx={{
-              minHeight: 44,
-              borderRadius: 2,
-              px: 1.5,
-              color: isActive ? "var(--daira-primary)" : "var(--daira-text-secondary)",
-              "&.Mui-selected": { bgcolor: "var(--daira-outline-hover-bg)", color: "var(--daira-primary)" },
-              "&.Mui-selected:hover": { bgcolor: "var(--daira-outline-hover-bg)" },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 36, color: "inherit" }}>
-              <Icon size={19} />
-            </ListItemIcon>
-            <ListItemText
-              primary={label}
-              primaryTypographyProps={{ fontSize: 14, fontWeight: isActive ? 700 : 500 }}
-            />
-          </ListItemButton>
-        );
-      })}
-    </List>
-  );
-}
-
-function Brand({ compact = false }: { compact?: boolean }) {
-  return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
-      <Box
-        sx={{
-          width: compact ? 34 : 40,
-          height: compact ? 34 : 40,
-          flexShrink: 0,
-          display: "grid",
-          placeItems: "center",
-          borderRadius: 2.5,
-          bgcolor: "var(--daira-primary)",
-          color: "var(--daira-surface)",
-          fontWeight: 800,
-          fontSize: compact ? 12 : 14,
-        }}
-      >
-        S
-      </Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography fontSize={compact ? 14 : 15} fontWeight={800} noWrap>
-          SmartDirect
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "var(--daira-text-secondary)" }}>
-          <ShieldCheck size={12} />
-          <Typography fontSize={10.5} noWrap>پنل مدیریت</Typography>
-        </Box>
-      </Box>
-    </Box>
-  );
-}
-
 export default function AdminShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const currentKey = selectedKey(pathname);
-  const currentLabel = items.find((item) => item.href === currentKey)?.label ?? "داشبورد";
-
-  return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "var(--daira-surface-hover)" }}>
-      <Drawer
-        variant="permanent"
-        anchor="left"
-        sx={{
-          display: { xs: "none", lg: "block" },
-          width: 248,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: 248,
-            boxSizing: "border-box",
-            borderLeft: "1px solid var(--daira-border)",
-            borderRight: 0,
-            bgcolor: "var(--daira-surface)",
-          },
-        }}
-      >
-        <Box sx={{ height: 72, display: "flex", alignItems: "center", px: 2.5, borderBottom: "1px solid var(--daira-border)" }}>
-          <Brand />
-        </Box>
-        <Box sx={{ px: 1.5, pt: 2 }}><AdminNav /></Box>
-        <Box sx={{ position: "absolute", bottom: 16, left: 16, right: 16, p: 1.5, border: "1px solid var(--daira-border)", borderRadius: 2.5, bgcolor: "var(--daira-surface-hover)" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ width: 32, height: 32, borderRadius: "50%", display: "grid", placeItems: "center", bgcolor: "var(--daira-heading)", color: "var(--daira-surface)", fontSize: 12, fontWeight: 700 }}>A</Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography fontSize={12} fontWeight={700} noWrap>مدیر سیستم</Typography>
-              <Typography fontSize={10} color="text.secondary">ADMIN</Typography>
-            </Box>
-          </Box>
-        </Box>
-      </Drawer>
-
-      <Drawer
-        anchor="left"
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        ModalProps={{ keepMounted: true }}
-        sx={{
-          display: { xs: "block", lg: "none" },
-          "& .MuiDrawer-paper": {
-            width: { xs: "min(82vw, 300px)", sm: 320 },
-            boxSizing: "border-box",
-            borderLeft: "1px solid var(--daira-border)",
-            borderRight: 0,
-          },
-        }}
-      >
-        <Box sx={{ height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, borderBottom: "1px solid var(--daira-border)" }}>
-          <Brand compact />
-          <IconButton size="small" onClick={() => setMobileOpen(false)} aria-label="بستن منو"><X size={19} /></IconButton>
-        </Box>
-        <Box sx={{ p: 1.5 }}><AdminNav onNavigate={() => setMobileOpen(false)} /></Box>
-      </Drawer>
-
-      <Box sx={{ ml: { lg: "248px" } }}>
-        <AppBar
-          position="sticky"
-          color="inherit"
-          elevation={0}
-          sx={{
-            bgcolor: "var(--daira-surface)",
-            borderBottom: "1px solid var(--daira-border)",
-            color: "var(--daira-heading)",
-            zIndex: (theme) => theme.zIndex.drawer - 1,
-          }}
-        >
-          <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 1.25, sm: 2.5, lg: 4 }, gap: 1 }}>
-            <IconButton
-              size="small"
-              onClick={() => setMobileOpen(true)}
-              sx={{ display: { xs: "inline-flex", lg: "none" }, width: 38, height: 38 }}
-              aria-label="باز کردن منو"
-            >
-              <MenuIcon size={20} />
-            </IconButton>
-            <Typography sx={{ display: { xs: "none", sm: "block" }, fontSize: 14, fontWeight: 700, flex: 1 }}>
-              {currentLabel}
-            </Typography>
-            <Box sx={{ flex: { xs: 1, sm: 0 } }} />
-
-          </Toolbar>
-        </AppBar>
-
-        <Box
-          component="main"
-          sx={{
-            minHeight: "calc(100vh - 56px)",
-            px: { xs: 1.25, sm: 2.5, lg: 4 },
-            py: { xs: 1.5, sm: 2.5, lg: 3 },
-          }}
-        >
-          <Box sx={{ width: "100%", maxWidth: 1440, mx: "auto", animation: "adminFade .25s ease-out" }}>
-            {children}
-          </Box>
-        </Box>
-      </Box>
-    </Box>
-  );
+ const path=usePathname(), router=useRouter();
+ const [menu,setMenu]=useState(false),[bell,setBell]=useState(false),[summary,setSummary]=useState<TicketSummary>({unreadCount:0,latest:null}),[toast,setToast]=useState<TicketSummary["latest"]>(null);
+ const lastId=useRef<string|null>(null),initialized=useRef(false),requesting=useRef(false);
+ const refresh=async()=>{
+  if(requesting.current)return;
+  requesting.current=true;
+  try{
+   const res=await fetch("/api/admin/tickets/summary",{cache:"no-store"});
+   if(!res.ok)return;
+   const next=await res.json() as TicketSummary;
+   if(initialized.current&&next.latest&&next.latest.id!==lastId.current) setToast(next.latest);
+   lastId.current=next.latest?.id||null;
+   initialized.current=true;setSummary(next);
+  }catch{}finally{requesting.current=false;}
+ };
+ useEffect(()=>{
+  let disposed=false, source:EventSource|null=null;
+  const load=()=>{if(!disposed)void refresh();};
+  load();
+  const fallback=setInterval(()=>{if(document.visibilityState==="visible")load();},8000);
+  const visible=()=>{if(document.visibilityState==="visible")load();};
+  document.addEventListener("visibilitychange",visible);
+  if(typeof EventSource!=="undefined"){
+    source=new EventSource("/api/admin/tickets/stream");
+    source.addEventListener("ticket",load);
+    source.onerror=()=>{ /* polling remains active while realtime is unavailable */ };
+  }
+  return()=>{disposed=true;clearInterval(fallback);document.removeEventListener("visibilitychange",visible);source?.close();};
+ },[]);
+ useEffect(()=>{setMenu(false);setBell(false);setToast(null);},[path]);
+ useEffect(()=>{if(!toast)return;const id=setTimeout(()=>setToast(null),6500);return()=>clearTimeout(id);},[toast]);
+ const current=items.slice().reverse().find(x=>path.startsWith(x.href))?.label||"داشبورد";
+ const goLatest=()=>{if(summary.latest){setBell(false);setToast(null);router.push("/rickandmorty/tickets/"+summary.latest.ticketId);}};
+ return <div className="adm-root" dir="rtl">
+  <aside className="adm-sidebar"><div className="adm-brand"><div className="adm-brand-symbol">SD</div><div><strong>SmartDirect</strong><small>پنل مدیریت</small></div></div><NavItems/><Link href="/dashboard" className="adm-nav-link adm-sidebar-return"><LogOut size={18}/>بازگشت به داشبورد</Link></aside>
+  {menu&&<div className="adm-menu-overlay" onClick={()=>setMenu(false)}><div className="adm-mobile-menu" onClick={e=>e.stopPropagation()}><div className="adm-menu-top"><strong>مدیریت SmartDirect</strong><button className="adm-icon-btn" onClick={()=>setMenu(false)} aria-label="بستن منو"><X/></button></div><NavItems onNavigate={()=>setMenu(false)}/><Link href="/dashboard" className="adm-nav-link">بازگشت به داشبورد</Link></div></div>}
+  <div className="adm-content">
+   <header className="adm-header">
+    <div className="adm-header-start"><button className="adm-icon-btn adm-mobile-only" onClick={()=>setMenu(true)} aria-label="باز کردن منو"><Menu size={22}/></button><div className="adm-header-title"><ShieldCheck size={19}/><strong>{current}</strong></div></div>
+    <div className="adm-header-end"><div className="adm-bell-wrap">
+      <button className="adm-icon-btn adm-bell" aria-label={"اعلان‌های تیکت: "+summary.unreadCount+" پیام خوانده‌نشده"} aria-expanded={bell} onClick={()=>setBell(v=>!v)}><Bell size={21}/>{summary.unreadCount>0&&<span className="adm-bell-count">{summary.unreadCount>99?"۹۹+":summary.unreadCount.toLocaleString("fa-IR")}</span>}</button>
+      {bell&&<div className="adm-bell-panel"><div className="adm-bell-heading">اعلان‌های پشتیبانی</div>{summary.latest?<button className="adm-bell-entry" onClick={goLatest}><strong>{summary.latest.subject}</strong><small>{summary.latest.name} — {summary.latest.body}</small><span>مشاهده تیکت <ChevronLeft size={14}/></span></button>:<div className="adm-muted adm-p-3">پیام جدیدی وجود ندارد.</div>}<Link onClick={()=>setBell(false)} href="/rickandmorty/tickets" className="adm-bell-footer">مشاهده تمام تیکت‌ها</Link></div>}
+    </div></div>
+   </header>
+   {toast&&<div className="adm-ticket-toast" role="status"><button onClick={()=>{router.push("/rickandmorty/tickets/"+toast.ticketId);setToast(null);}}><Headset size={22}/><span><strong>تیکت جدید از {toast.name}</strong><small>{toast.subject}</small></span><ChevronLeft size={17}/></button><button className="adm-icon-btn" aria-label="بستن اعلان" onClick={()=>setToast(null)}><X size={17}/></button></div>}
+   <main className="adm-main">{children}</main>
+   <nav className="adm-bottom-nav" aria-label="دسترسی سریع مدیریت">
+    {items.slice(0,3).concat(items[4]).concat(items[5]).map(item=>{const Icon=item.icon;const active=item.href==="/rickandmorty"?path===item.href:path.startsWith(item.href);return <Link href={item.href} key={item.href} className={"adm-bottom-item "+(active?"is-active":"")}><Icon size={22}/><span>{item.label}</span></Link>;})}
+   </nav>
+  </div>
+ </div>;
 }

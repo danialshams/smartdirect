@@ -27,7 +27,7 @@ assert(root.includes('@import "./daira-tokens.css";'),"Shared generated token fi
 assert(!root.includes(":root {"),"No second hand-authored root palette is allowed in globals.css");
 assert(!root.includes(".dark {"),"The abandoned alternate dark palette must not override Daira tokens");
 assert(ui.includes("dairaPalette") && !ui.includes("const COLORS"),"DashboardUI must not declare a local palette");
-assert(admin.includes("dairaPalette") && dashboard.includes("dairaPalette"),"MUI themes must share the canonical palette");
+assert(admin.includes("dairaPalette") && dashboard.includes("dairaPalette"),"Admin shell and dashboard must share the canonical palette");
 assert(glass.includes(".daira-home__tool-card") && glass.includes(".daira-support__ticket"),"Customer-facing cards should use Liquid Glass");
 assert(glass.includes(".daira-support-toast") && glass.includes("[data-sonner-toast]"),"Notification surfaces should use glass");
 assert(glass.includes("prefers-reduced-transparency:reduce") && glass.includes("@supports not"),"Glass needs accessible fallback");
