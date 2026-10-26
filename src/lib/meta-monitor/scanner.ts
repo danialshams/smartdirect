@@ -21,7 +21,7 @@ export async function scanOfficialMetaSources(force = false): Promise<ScanOutcom
   for (const source of META_SOURCES) {
    const scanTime=new Date();
    try {
-    const res=await fetch(source.url,{cache:"no-store",redirect:"follow",headers:{"User-Agent":"SmartDirect-Meta-Change-Monitor/1.0","Accept":"application/rss+xml, application/xml, text/html;q=0.8"},signal:AbortSignal.timeout(7500)});
+    const res=await fetch(source.url,{cache:"no-store",redirect:"follow",headers:{"User-Agent":"SmartDirect-Meta-Change-Monitor/1.0","Accept":"application/rss+xml, application/xml, text/html;q=0.8","Accept-Language":"en-US,en;q=0.9"},signal:AbortSignal.timeout(7500)});
     if(!res.ok)throw new Error("HTTP "+res.status);
     const size=Number(res.headers.get("content-length")||"0");
     if(size>2_000_000)throw new Error("متن منبع بیش از حد بزرگ است");
@@ -30,8 +30,8 @@ export async function scanOfficialMetaSources(force = false): Promise<ScanOutcom
     if(source.format==="rss"&&!items.length)throw new Error("هیچ مطلب معتبری از RSS خوانده نشد");
     const previous=await prisma.metaMonitorSource.findUnique({where:{id:source.id},select:{initializedAt:true}});
     const bootstrap=!previous?.initializedAt;
-    const records=items.filter(item=>classify(item.title,item.description).relevant).map(item=>{
-      const match=classify(item.title,item.description);
+    const records=items.filter(item=>classify(item.title,item.description,source.id).relevant).map(item=>{
+      const match=classify(item.title,item.description,source.id);
       return {fingerprint:fingerprint(item.url,item.title),sourceId:source.id,sourceUrl:item.url,
         originalTitle:item.title.slice(0,400),titleFa:match.titleFa,summaryFa:match.summaryFa,
         category:match.category,kind:match.kind,apiVersion:match.apiVersion,

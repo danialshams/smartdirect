@@ -19,6 +19,10 @@ assert.equal(fingerprint(items[0].url,items[0].title),fingerprint(items[0].url+"
 const graph=META_SOURCES[2];
 const html='<html><h2>Graph API v27.0</h2><h3>Marketing unrelated</h3></html>';
 assert(extractCandidates(html,graph).some(x=>x.title==="Graph API v27.0"));
+assert(extractCandidates("<html><h2>Version 27.0</h2></html>",graph).some(x=>x.title==="Graph API v27.0"));
+const ig=META_SOURCES[3];
+assert(classify("Phone number and email quick replies disabled","",ig.id).relevant);
+assert(classify("Phone number and email quick replies disabled","",ig.id).kind==="DEPRECATION");
 assert.throws(()=>extractCandidates("Access Denied",graph));
 assert(read("vercel.json").includes("/api/cron/meta-monitor"));
 assert(read("components/admin/AdminShell.tsx").includes("adm-meta-count-dot"));

@@ -32,15 +32,16 @@ export function extractCandidates(raw:string,source:Source):Candidate[]{
     publishedAt:parsed&&!Number.isNaN(parsed.getTime())?parsed:null}];
   });
  }
- if(!/<html\b|<h[1-5]\b/i.test(raw))throw Error("سند رسمی قابل خواندن نیست");
- const heads=[...raw.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"").matchAll(/<h[1-4]\b[^>]*>([\s\S]*?)<\/h[1-4]>/gi)];
+ if(!/<html\b|<h[1-5]\b|^#{1,4} /im.test(raw))throw Error("سند رسمی قابل خواندن نیست");
+ const heads=[...raw.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"").matchAll(/<h[1-4]\b[^>]*>([\s\S]*?)<\/h[1-4]>/gi), ...raw.matchAll(/^#{1,4}\s+(.+)$/gm)];
  return heads.slice(0,160).flatMap(m=>{
-  const title=plain(m[1]);if(title.length<12||title.length>180)return [];
-  if(!/graph api v\d+|instagram api v\d+|deprecat|permission|messaging|publishing|insight|webhook|breaking change/i.test(title))return [];
+  const value=plain(m[1]);const title=source.id==="graph"&&/^Version\s+\d{1,2}\.0$/i.test(value)?"Graph API "+value.replace(/^Version\s+/i,"v"):value;
+  if(title.length<9||title.length>180)return [];
+  if(!/graph api v\d+|instagram api v\d+|deprecat|permission|messaging|publishing|insight|webhook|breaking change|comment|caption|stories|repl(y|ies)|mention|media/i.test(title))return [];
   return [{title,url:source.url,source:source.id,description:"",publishedAt:null}];
  }).slice(0,35);
 }
-export function classify(title:string,description=""){
+export function classify(title:string,description="",sourceId=""){
  const t=title+" "+description.slice(0,500);
  const match=title.match(/\b(?:Graph API|Instagram (?:Graph )?API)\s*(?:version\s*)?v?(\d{1,2})\.0\b/i);
  const apiVersion=match?"v"+match[1]+".0":null;
@@ -48,9 +49,10 @@ export function classify(title:string,description=""){
  const matches=CATEGORY_RULES.filter(x=>x.pattern.test(t));
  const insta=/instagram|graph api|meta business|webhook|messaging platform/i.test(t);
  const unrelated=/whatsapp|threads|horizon|quest|marketing api|facebook ads|wearables/i.test(title);
- const relevant=(version||(insta&&matches.length>0))&&!(unrelated&&!/instagram|graph api/i.test(title));
+ const fromInstagramChangelog=sourceId==="instagram";
+ const relevant=(version||(insta&&matches.length>0)||(fromInstagramChangelog&&matches.length>0))&&!(unrelated&&!/instagram|graph api/i.test(title));
  const category=version?"نسخه API":matches[0]?.name||"سایر تغییرات مرتبط";
- const kind=version?"VERSION":/deprecat|remov|sunset|retir|discontinu/i.test(t)?"DEPRECATION":/restriction|rate limit|policy|breaking change/i.test(t)?"LIMIT":/new |introduc|launch|releas|support for/i.test(title)?"NEW":"UPDATE";
+ const kind=version?"VERSION":/deprecat|remov|sunset|retir|discontinu|disabled/i.test(t)?"DEPRECATION":/restriction|rate limit|policy|breaking change/i.test(t)?"LIMIT":/new |introduc|launch|releas|support for/i.test(title)?"NEW":"UPDATE";
  const label=kind==="VERSION"?"نسخه جدید":kind==="NEW"?"قابلیت جدید":kind==="DEPRECATION"?"حذف قابلیت":kind==="LIMIT"?"تغییر محدودیت":"تغییر مستندات";
  const titleFa=version?"اطلاعیه رسمی انتشار "+apiVersion:"اعلان "+label+" درباره "+category;
  const summaryFa=version?"خبر "+apiVersion+" در مستندات رسمی Meta دیده شد. نسخه فعلی SmartDirect، v26.0 است؛ پیش از ارتقا باید جزئیات و سازگاری بررسی شود."
