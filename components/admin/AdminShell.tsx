@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, ChevronLeft, Headset, LayoutDashboard, Menu, MessageSquare, ShieldCheck, Ticket, Users, X, BadgePercent, Smartphone, Activity, LogOut } from "lucide-react";
+import { Bell, ChevronLeft, Headset, LayoutDashboard, Menu, MessageSquare, ShieldCheck, Ticket, Users, X, BadgePercent, Smartphone, Activity, LogOut, History } from "lucide-react";
 
 const items = [
   { href: "/rickandmorty", label: "داشبورد", icon: LayoutDashboard },
@@ -11,7 +11,8 @@ const items = [
   { href: "/rickandmorty/tickets/bulk", label: "ارسال گروهی", icon: MessageSquare },
   { href: "/rickandmorty/sms", label: "پیامک", icon: Smartphone },
   { href: "/rickandmorty/coupons", label: "کدهای تخفیف", icon: BadgePercent },
-  { href: "/dashboard/admin/queue", label: "صف پردازش", icon: Activity },
+  { href: "/rickandmorty/monitoring", label: "سلامت سیستم", icon: Activity },
+  { href: "/rickandmorty/audit", label: "تاریخچه عملیات", icon: History },
 ];
 type TicketSummary = { unreadCount: number; latest: { id: string; ticketId: string; subject: string; name: string; body: string } | null };
 function NavItems({ onNavigate }: { onNavigate?: () => void }) {
