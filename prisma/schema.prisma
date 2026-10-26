@@ -693,6 +693,19 @@ model TicketAttachment {
   @@index([ticketMessageId])
 }
 
+model SmsCampaign {
+  id                    String   @id @default(cuid())
+  createdById           String
+  message               String
+  selection             Json
+  targetCount           Int
+  verifiedRecipientCount Int
+  status                String   @default("DRAFT")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  @@index([createdAt])
+}
+
 model Coupon {
   id              String              @id @default(cuid())
   code            String              @unique
