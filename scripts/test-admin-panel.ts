@@ -19,6 +19,10 @@ assert(read("src/lib/subscription/access.ts").includes("SUBSCRIPTION_INACTIVE"),
 assert(read("src/lib/instagram/automated-message-policy.ts").includes("accessBlockFromState"),"Outgoing automation must honor account access");
 assert(read("src/lib/instagram/publishing.ts").includes("getUserAccessBlock"),"Publishing must honor account access");
 assert(read("app/api/admin/users/bulk/route.ts").includes("access-block"),"Bulk blocking missing");
+assert(read("app/api/admin/users/[id]/subscription/route.ts").includes("current.status,suspendedAt:current.suspendedAt"),"Editing plan/duration must preserve suspended subscriptions");
+assert(read("app/api/admin/subscriptions/[id]/route.ts").includes("ADMIN_PLAN_KEYS"),"Subscription editing must validate allowed plans");
+assert(read("app/api/admin/audit/route.ts").includes("requireAdmin"),"Audit log must be protected");
+assert(read("components/admin/AdminShell.tsx").includes("summary.items.map"),"Bell must show multiple unread tickets");
 assert(read("components/admin/AdminWidgets.tsx").includes("sendAdminBulkChunks"),"Large bulk operations must use bounded chunks");
 assert(read("src/lib/sms/provider.ts").includes("return null"),"SMS must remain disabled without provider");
 assert(read("app/api/admin/sms/route.ts").includes('status:"DRAFT"'),"SMS draft must not be treated as sent");

@@ -9,8 +9,8 @@ type Detail={id:string;name:string;email:string;isBlocked:boolean;blockedReason:
 export default function UserDetail(){
  const {id}=useParams<{id:string}>();
  const [user,setUser]=useState<Detail|null>(null),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(""),[success,setSuccess]=useState("");
- const [plan,setPlan]=useState("monthly"),[days,setDays]=useState("0"),[phone,setPhone]=useState(""),[reason,setReason]=useState("");
- const load=useCallback(async()=>{const r=await fetch("/api/admin/users/"+id,{cache:"no-store"});const j=await r.json();if(!r.ok)throw Error(j.message||"دریافت اطلاعات ناموفق بود");setUser(j);setPlan(j.subscription?.planKey==="free"?"monthly":j.subscription?.planKey||"monthly");setPhone(j.phone||"");setDays("0");},[id]);
+ const [plan,setPlan]=useState("monthly"),[days,setDays]=useState("0"),[phone,setPhone]=useState(""),[reason,setReason]=useState(""),[note,setNote]=useState(""),[autoRenew,setAutoRenew]=useState(false);
+ const load=useCallback(async()=>{const r=await fetch("/api/admin/users/"+id,{cache:"no-store"});const j=await r.json();if(!r.ok)throw Error(j.message||"دریافت اطلاعات ناموفق بود");setUser(j);setPlan(j.subscription?.planKey==="free"?"monthly":j.subscription?.planKey||"monthly");setPhone(j.phone||"");setDays("0");setNote(j.subscription?.note||"");setAutoRenew(!!j.subscription?.autoRenew);},[id]);
  useEffect(()=>{let active=true;setLoading(true);load().catch(e=>{if(active)setError(e.message);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[load]);
  const call=async(url:string,body:Record<string,unknown>,method:"PATCH"|"POST")=>{
   setBusy(true);setError("");setSuccess("");
@@ -51,6 +51,7 @@ export default function UserDetail(){
      {active&&<AdminButton disabled={busy} kind="danger" onClick={()=>{if(window.confirm("اشتراک این کاربر تعلیق شود؟"))void sub("suspend");}}>تعلیق اشتراک</AdminButton>}
      {user.subscription&&<AdminButton disabled={busy} kind="secondary" onClick={()=>{if(window.confirm("اشتراک لغو شود؟"))void sub("cancel");}}>لغو</AdminButton>}
     </div>
+    {user.subscription&&<><hr className="adm-divider"/><AdminInput label="یادداشت اشتراک (فقط مدیر)" maxLength={1000} value={note} onChange={e=>setNote(e.target.value)}/><label className="adm-btn-row adm-help" style={{margin:"12px 0"}}><input type="checkbox" checked={autoRenew} onChange={e=>setAutoRenew(e.target.checked)}/> تمدید خودکار (صرفاً تنظیم وضعیت؛ پرداخت خودکار هنوز فعال نیست)</label><AdminButton kind="secondary" disabled={busy||user.subscription.note===note&&user.subscription.autoRenew===autoRenew} onClick={()=>void call("/api/admin/subscriptions/"+user.subscription!.id,{note,autoRenew},"PATCH")}>ذخیره جزئیات اشتراک</AdminButton></>}
    </AdminPanel>
   </div>
   <AdminPanel><h2><Zap size={18} style={{display:"inline",marginLeft:8}}/>پیج‌ها و اتوماسیون‌های فعال</h2>

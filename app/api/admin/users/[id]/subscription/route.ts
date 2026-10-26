@@ -21,6 +21,7 @@ export async function POST(req:NextRequest,context:{params:Promise<{id:string}>}
     const now=new Date();
     const result=await prisma.$transaction(async tx=>{
       if(action==="create"||(!current&&["save","activate","extend"].includes(action))){
+        if(action==="create"&&current&&current.status==="ACTIVE"&&current.expiresAt>now)throw new Error("برای جلوگیری از اشتراک هم‌پوشان، ابتدا اشتراک فعلی را ویرایش کنید");
         const interval=days>0?days:selectedPlan==="yearly"?365:30;
         return tx.subscription.create({data:{userId,planKey:selectedPlan,status:"ACTIVE",source:"MANUAL",startedAt:now,expiresAt:new Date(now.getTime()+interval*86400000)}});
       }
@@ -35,7 +36,8 @@ export async function POST(req:NextRequest,context:{params:Promise<{id:string}>}
       const base=current.expiresAt>now?current.expiresAt:now;
       const expiresAt=days?new Date(base.getTime()+days*86400000):current.expiresAt;
       if(expiresAt<=now)throw new Error("تاریخ انقضا نمی‌تواند در گذشته باشد");
-      const changes={planKey:selectedPlan,expiresAt,status:days!==0?"ACTIVE" as const:current.status,suspendedAt:days!==0?null:current.suspendedAt,cancelledAt:days!==0?null:current.cancelledAt};
+      // Editing a plan or duration must not silently reverse suspension or cancellation.
+      const changes={planKey:selectedPlan,expiresAt,status:current.status,suspendedAt:current.suspendedAt,cancelledAt:current.cancelledAt};
       return tx.subscription.update({where:{id:current.id},data:changes});
     });
     await writeAdminAudit({actorUserId:guard.session!.user.id,action:"subscription."+action,targetType:"Subscription",targetId:result.id,metadata:{userId,days,planKey:result.planKey}});
