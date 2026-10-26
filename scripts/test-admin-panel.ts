@@ -5,7 +5,7 @@ const pages=["app/rickandmorty/page.tsx","app/rickandmorty/loading.tsx","app/ric
 for(const page of pages){assert(!read(page).includes("@mui"),"Admin must not import MUI: "+page);}
 const css=read("app/rickandmorty/admin.css");
 const shell=read("components/admin/AdminShell.tsx");
-assert(css.includes("var(--daira-primary)")&&css.includes("adm-bottom-nav"),"Admin mobile style must follow canonical Daira tokens");
+assert(css.includes("--adm-primary:#285dc1")&&css.includes("adm-bottom-nav")&&!css.includes("backdrop-filter"),"Admin must use an opaque independent design system, not glass surfaces");
 assert(shell.includes("adm-bottom-nav")&&shell.includes('"/api/admin/tickets/stream"'),"Mobile navigation and realtime ticket bell missing");
 assert(shell.includes('router.push("/rickandmorty/tickets/"+ticketId)')&&shell.includes('onClick={()=>openTicket(item.ticketId)}'),"Bell must open exact ticket");
 assert(read("app/api/dashboard/tickets/route.ts").includes("publishAdminSupportChange"),"Ticket creation must signal admins");
@@ -38,4 +38,10 @@ assert(release.includes("Compare-Object $expected $pending"), "Admin migration c
 assert(release.includes("SMARTDIRECT_ADMIN_MIGRATIONS_OK"), "Migration command must verify success");
 assert(release.includes("Remove-Item Env:\\DATABASE_URL"), "Migration command must remove temporary credentials");
 
+assert(read("components/admin/AdminWidgets.tsx").includes("createPortal")&&read("components/admin/AdminWidgets.tsx").includes('document.body.style.overflow="hidden"'),"Modals must be portaled out of transformed/scrolling admin containers");
+assert(css.includes(".adm-btn>svg")&&css.includes("flex:none"),"Button icons must not shrink or overlap labels");
+assert(css.includes(".adm-modal-body")&&css.includes("overflow-y:auto"),"Dialogs must have internal scrolling");
+assert(css.includes(".adm-field>select")&&css.includes("background-position:left"),"Dropdowns must share RTL styling");
+assert(read("app/api/admin/meta-monitor/translate/route.ts").includes("requireAdmin"),"Meta official text translations must remain admin-only");
+assert(read("app/rickandmorty/meta-monitor/page.tsx").includes("adm-meta-content"),"Meta updates must display full fetched Persian explanations");
 console.log("ADMIN_PANEL_MOBILE_OPERATIONS_OK");
