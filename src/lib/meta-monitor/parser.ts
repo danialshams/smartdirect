@@ -33,15 +33,16 @@ export function extractCandidates(raw:string,source:Source):Candidate[]{
   });
  }
  if(!/<html\b|<h[1-5]\b|^#{1,4} /im.test(raw))throw Error("سند رسمی قابل خواندن نیست");
- const heads=[...raw.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"").matchAll(/<h[1-4]\b[^>]*>([\s\S]*?)<\/h[1-4]>/gi), ...raw.matchAll(/^#{1,4}\s+(.+)$/gm)];
+ const cleaned=raw.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi," ").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi," ");
+ const heads=[...cleaned.matchAll(/<h[1-4]\b[^>]*>([\s\S]*?)<\/h[1-4]>/gi), ...cleaned.matchAll(/^#{1,4}\s+(.+)$/gm)];
  return heads.slice(0,160).flatMap(m=>{
   const value=plain(m[1]);const title=source.id==="graph"&&/^Version\s+\d{1,2}\.0$/i.test(value)?"Graph API "+value.replace(/^Version\s+/i,"v"):value;
   if(title.length<9||title.length>180)return [];
   if(!/graph api v\d+|instagram api v\d+|deprecat|permission|messaging|publishing|insight|webhook|breaking change|comment|caption|stories|repl(y|ies)|mention|media/i.test(title))return [];
-  const after=raw.slice((m.index||0)+m[0].length,(m.index||0)+m[0].length+2200);
-  const block=after.split(/<h[1-4]\\b[^>]*>|^#{1,4}\\s+/im)[0]
-   .replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi," ")
-   .replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style>/gi," ");
+  const after=cleaned.slice((m.index||0)+m[0].length,(m.index||0)+m[0].length+2200);
+  const block=after.split(/<h[1-4]\b[^>]*>|^#{1,4}\s+/im)[0]
+   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi," ")
+   .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi," ");
   const description=plain(block).slice(0,850);
   return [{title,url:source.url,source:source.id,description,publishedAt:null}];
  }).slice(0,35);
