@@ -19,8 +19,9 @@ type TicketAlert = { id: string; ticketId: string; subject: string; name: string
 type TicketSummary = { unreadCount: number; latest: TicketAlert | null; items: TicketAlert[] };
 function NavItems({ onNavigate, metaUnread }: { onNavigate?: () => void; metaUnread: number }) {
  const path = usePathname();
+ const activeHref=items.filter(item=>path===item.href||path.startsWith(item.href+"/")).sort((a,b)=>b.href.length-a.href.length)[0]?.href;
  return <nav aria-label="صفحات مدیریت" className="adm-nav-list">{items.map(item => {
-  const Icon=item.icon, active=item.href==="/rickandmorty"?path===item.href:path.startsWith(item.href);
+  const Icon=item.icon, active=item.href===activeHref;
   return <Link href={item.href} key={item.href} onClick={onNavigate} className={"adm-nav-link "+(active?"is-active":"")}><Icon size={19}/><span>{item.label}</span>{item.href==="/rickandmorty/meta-monitor"&&metaUnread>0&&<span className="adm-meta-badge">{metaUnread>99?"۹۹+":metaUnread.toLocaleString("fa-IR")}</span>}{active&&<ChevronLeft size={15} className="mr-auto"/>}</Link>;
  })}</nav>;
 }

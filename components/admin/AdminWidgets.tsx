@@ -24,6 +24,8 @@ export function AdminSpinner(){return <div className="adm-loading" role="status"
 export function AdminModal({title,children,onClose,actions}:{title:string;children:ReactNode;onClose:()=>void;actions?:ReactNode}){
  const [mounted,setMounted]=useState(false);
  const dialogRef=useRef<HTMLElement>(null);
+ const onCloseRef=useRef(onClose);
+ onCloseRef.current=onClose;
  const closeRef=useRef<HTMLButtonElement>(null);
  useEffect(()=>{
   setMounted(true);
@@ -31,7 +33,7 @@ export function AdminModal({title,children,onClose,actions}:{title:string;childr
   document.body.style.overflow="hidden";
   const focusRequest=window.requestAnimationFrame(()=>closeRef.current?.focus());
   const onKey=(event:KeyboardEvent)=>{
-   if(event.key==="Escape"){event.preventDefault();onClose();return;}
+   if(event.key==="Escape"){event.preventDefault();onCloseRef.current();return;}
    if(event.key!=="Tab"||!dialogRef.current)return;
    const focusable=Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'))
     .filter(node=>node.getClientRects().length>0);
@@ -42,7 +44,7 @@ export function AdminModal({title,children,onClose,actions}:{title:string;childr
   };
   window.addEventListener("keydown",onKey);
   return()=>{window.cancelAnimationFrame(focusRequest);window.removeEventListener("keydown",onKey);document.body.style.overflow=previousOverflow;};
- },[onClose]);
+ },[]);
  if(!mounted)return null;
  return createPortal(<div className="adm-modal-overlay adm-portal-root" onMouseDown={e=>{if(e.target===e.currentTarget)onClose();}}>
   <section ref={dialogRef} className="adm-modal" role="dialog" aria-modal="true" aria-label={title} dir="rtl">
