@@ -7,7 +7,7 @@ const css=read("app/rickandmorty/admin.css");
 const shell=read("components/admin/AdminShell.tsx");
 assert(css.includes("var(--daira-primary)")&&css.includes("adm-bottom-nav"),"Admin mobile style must follow canonical Daira tokens");
 assert(shell.includes("adm-bottom-nav")&&shell.includes('"/api/admin/tickets/stream"'),"Mobile navigation and realtime ticket bell missing");
-assert(shell.includes('"/rickandmorty/tickets/"+summary.latest.ticketId'),"Bell must open exact ticket");
+assert(shell.includes('router.push("/rickandmorty/tickets/"+ticketId)')&&shell.includes('onClick={()=>openTicket(item.ticketId)}'),"Bell must open exact ticket");
 assert(read("app/api/dashboard/tickets/route.ts").includes("publishAdminSupportChange"),"Ticket creation must signal admins");
 assert(read("app/api/dashboard/tickets/[id]/messages/route.ts").includes("publishAdminSupportChange"),"Ticket reply must signal admins");
 assert(read("app/api/admin/tickets/summary/route.ts").includes('readAt: null'),"Unread summary must count new messages");
