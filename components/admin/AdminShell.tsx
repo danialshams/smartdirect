@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, ChevronLeft, Headset, LayoutDashboard, Menu, MessageSquare, ShieldCheck, Ticket, Users, X, BadgePercent, Smartphone, Activity, LogOut, History, RadioTower } from "lucide-react";
+import { Bell, ChevronLeft, Headset, LayoutDashboard, Menu, MessageSquare, ShieldCheck, Ticket, Users, X, BadgePercent, Smartphone, Activity, History, RadioTower } from "lucide-react";
 
 const items = [
   { href: "/rickandmorty", label: "داشبورد", icon: LayoutDashboard },
@@ -17,13 +17,24 @@ const items = [
 ];
 type TicketAlert = { id: string; ticketId: string; subject: string; name: string; body: string; createdAt: string };
 type TicketSummary = { unreadCount: number; latest: TicketAlert | null; items: TicketAlert[] };
+const navGroups=[
+ {title:"مرکز مدیریت",hrefs:["/rickandmorty","/rickandmorty/users","/rickandmorty/tickets"]},
+ {title:"ارتباطات و خدمات",hrefs:["/rickandmorty/tickets/bulk","/rickandmorty/sms","/rickandmorty/coupons"]},
+ {title:"گزارش و نظارت",hrefs:["/rickandmorty/meta-monitor","/rickandmorty/monitoring","/rickandmorty/audit"]}
+];
 function NavItems({ onNavigate, metaUnread }: { onNavigate?: () => void; metaUnread: number }) {
- const path = usePathname();
+ const path=usePathname();
  const activeHref=items.filter(item=>path===item.href||path.startsWith(item.href+"/")).sort((a,b)=>b.href.length-a.href.length)[0]?.href;
- return <nav aria-label="صفحات مدیریت" className="adm-nav-list">{items.map(item => {
-  const Icon=item.icon, active=item.href===activeHref;
-  return <Link href={item.href} key={item.href} onClick={onNavigate} className={"adm-nav-link "+(active?"is-active":"")}><Icon size={19}/><span>{item.label}</span>{item.href==="/rickandmorty/meta-monitor"&&metaUnread>0&&<span className="adm-meta-badge">{metaUnread>99?"۹۹+":metaUnread.toLocaleString("fa-IR")}</span>}{active&&<ChevronLeft size={15} className="mr-auto"/>}</Link>;
- })}</nav>;
+ return <nav aria-label="صفحات مدیریت" className="adm-nav-list">
+  {navGroups.map(group=><div className="adm-nav-group" key={group.title}><div className="adm-nav-group-name">{group.title}</div>
+   {group.hrefs.map(href=>{const item=items.find(i=>i.href===href)!;const Icon=item.icon,active=activeHref===href;
+    return <Link href={item.href} key={href} onClick={onNavigate} aria-current={active?"page":undefined} className={"adm-nav-link "+(active?"is-active":"")}>
+     <Icon size={19}/><span>{item.label}</span>
+     {href==="/rickandmorty/meta-monitor"&&metaUnread>0&&<span className="adm-meta-badge">{metaUnread>99?"۹۹+":metaUnread.toLocaleString("fa-IR")}</span>}
+     {active&&<ChevronLeft size={15} aria-hidden="true"/>}
+    </Link>;})}
+  </div>)}
+ </nav>;
 }
 export default function AdminShell({ children }: { children: React.ReactNode }) {
  const path=usePathname(), router=useRouter();
@@ -71,8 +82,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
  const current=items.slice().reverse().find(x=>path.startsWith(x.href))?.label||"داشبورد";
  const openTicket=(ticketId:string)=>{setBell(false);setToast(null);router.push("/rickandmorty/tickets/"+ticketId);};
  return <div className="adm-root" dir="rtl">
-  <aside className="adm-sidebar"><div className="adm-brand"><div className="adm-brand-symbol">SD</div><div><strong>SmartDirect</strong><small>پنل مدیریت</small></div></div><NavItems metaUnread={metaUnread}/><Link href="/dashboard" className="adm-nav-link adm-sidebar-return"><LogOut size={18}/>بازگشت به داشبورد</Link></aside>
-  {menu&&<div className="adm-menu-overlay" onClick={()=>setMenu(false)}><div className="adm-mobile-menu" onClick={e=>e.stopPropagation()}><div className="adm-menu-top"><strong>مدیریت SmartDirect</strong><button className="adm-icon-btn" onClick={()=>setMenu(false)} aria-label="بستن منو"><X/></button></div><NavItems metaUnread={metaUnread} onNavigate={()=>setMenu(false)}/><Link href="/dashboard" className="adm-nav-link">بازگشت به داشبورد</Link></div></div>}
+  <aside className="adm-sidebar"><div className="adm-brand"><div className="adm-brand-symbol">SD</div><div><strong>SmartDirect</strong><small>پنل مدیریت</small></div></div><NavItems metaUnread={metaUnread}/></aside>
+  {menu&&<div className="adm-menu-overlay" onClick={()=>setMenu(false)}><div className="adm-mobile-menu" onClick={e=>e.stopPropagation()}><div className="adm-menu-top"><strong>مدیریت SmartDirect</strong><button className="adm-icon-btn" onClick={()=>setMenu(false)} aria-label="بستن منو"><X/></button></div><NavItems metaUnread={metaUnread} onNavigate={()=>setMenu(false)}/></div></div>}
   <div className="adm-content">
    <header className="adm-header">
     <div className="adm-header-start"><button className="adm-icon-btn adm-mobile-only" onClick={()=>setMenu(true)} aria-label="باز کردن منو"><Menu size={22}/></button><div className="adm-header-title"><ShieldCheck size={19}/><strong>{current}</strong></div></div>
