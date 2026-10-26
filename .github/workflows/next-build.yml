@@ -173,6 +173,12 @@ jobs:
           npx prisma db push
           npx tsx scripts/test-durable-webhook-migration.ts
 
+      - name: Test admin database pagination, effective plans, bulk selection and account access
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+        run: npx tsx scripts/test-admin-operations-db.ts
+
       - name: Test Meta account safety, recipient opt-out and rate guards against isolated PostgreSQL and Redis
         env:
           DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
