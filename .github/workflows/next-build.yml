@@ -119,6 +119,9 @@ jobs:
       - name: Verify mobile admin, subscription access and realtime ticket notifications
         run: npx tsx scripts/test-admin-panel.ts
 
+      - name: Validate consistent admin layouts, modal portals, buttons and semantic colors
+        run: npx tsx scripts/test-admin-visual-consistency.ts
+
       - name: Test official Meta changelog monitoring, version alerts and Persian badges
         run: npx tsx scripts/test-meta-monitor.ts
 
