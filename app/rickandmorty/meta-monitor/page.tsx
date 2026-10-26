@@ -11,7 +11,7 @@ const kinds:Record<string,string>={VERSION:"نسخه جدید API",NEW:"قابل
 const date=(d?:string|null)=>d?new Date(d).toLocaleDateString("fa-IR",{year:"numeric",month:"long",day:"numeric"}):"تاریخ نامشخص";
 export default function MetaMonitorPage(){
  const [data,setData]=useState<Result|null>(null),[category,setCategory]=useState(""),[unread,setUnread]=useState(false),[scope,setScope]=useState<"current"|"archive">("current"),[page,setPage]=useState(1);
- const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[translatingId,setTranslatingId]=useState<string|null>(null),[translationError,setTranslationError]=useState<Record<string,string>>({}),[error,setError]=useState(""),[notice,setNotice]=useState("");
+ const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[translatingId,setTranslatingId]=useState<string|null>(null),[translationError,setTranslationError]=useState<Record<string,string>>({}),[translatedNow,setTranslatedNow]=useState<string|null>(null),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const params=useMemo(()=>new URLSearchParams({page:String(page),scope,...(category?{category}:{}),...(unread?{unread:"1"}:{})}).toString(),[page,category,unread,scope]);
  const load=useCallback(async(signal?:AbortSignal)=>{
   const res=await fetch("/api/admin/meta-monitor?"+params,{cache:"no-store",signal});
@@ -39,6 +39,7 @@ export default function MetaMonitorPage(){
    const response=await fetch("/api/admin/meta-monitor/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});
    const result=await response.json();if(!response.ok)throw Error(result.message||"توضیح فارسی در دسترس نیست");
    setData(previous=>previous?{...previous,data:previous.data.map(item=>item.id===id?{...item,titleFa:result.titleFa,summaryFa:result.summaryFa}:item)}:previous);
+   setTranslatedNow(id);
   }catch(e){setTranslationError(v=>({...v,[id]:e instanceof Error?e.message:"ترجمه ناموفق بود"}));}finally{setTranslatingId(null);}
  };
  const refresh=async()=>{
@@ -81,7 +82,7 @@ export default function MetaMonitorPage(){
      <p className="adm-meta-feature"><strong>بخش مرتبط:</strong> {n.category}</p>
      {scope==="current"?<>
       {n.summaryFa.startsWith("چه چیزی در مستندات Meta")?
-       <details className="adm-meta-explanation"><summary>مشاهده توضیح فارسی این تغییر</summary><div className="adm-meta-translation">{n.summaryFa}</div></details>:
+       <details className="adm-meta-explanation" open={translatedNow===n.id}><summary>مشاهده توضیح فارسی این تغییر</summary><div className="adm-meta-translation">{n.summaryFa}</div></details>:
        <div className="adm-meta-translation-pending">
         <p>جزئیات معتبر این اطلاعیه هنوز به فارسی آماده نشده است. متن ناقص یا خبر دیگری به‌جای آن نمایش داده نمی‌شود.</p>
         <AdminButton kind="secondary" disabled={!!translatingId} aria-busy={translatingId===n.id} onClick={()=>void translate(n.id)}>{translatingId===n.id?"در حال دریافت و ترجمه متن همین خبر…":"دریافت توضیح کامل فارسی"}</AdminButton>

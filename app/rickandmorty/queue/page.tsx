@@ -32,7 +32,7 @@ export default function AdminQueuePage(){
   {success&&<AdminAlert kind="success" onClose={()=>setSuccess("")}>{success}</AdminAlert>}
   <AdminMobileSections labels={["کارهای ناموفق","وضعیت صف"]}>
    <AdminSection title="کارهای ناموفق" description="هر کار را مستقل بررسی و در صورت لزوم بازیابی کنید">
-    {loading&&!snapshot?<AdminSpinner/>:snapshot?.data.length?
+    {loading&&!snapshot?<AdminSpinner/>:!snapshot?<AdminPanel><p className="adm-muted">اطلاعات صف در دسترس نیست.</p></AdminPanel>:snapshot.data.length?
      <div className="adm-ticket-list">{snapshot.data.map(job=><AdminPanel key={job.id}>
       <div className="adm-ticket-row-top"><strong>{job.type}</strong><span className="adm-state" data-state="URGENT">ناموفق</span></div>
       <p className="adm-help" dir="ltr" style={{overflowWrap:"anywhere"}}>{job.jobId}</p>
