@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getUserAccessBlock } from "@/lib/subscription/access";
 import { activateStoryReply } from "@/lib/automation/story-activation";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
@@ -966,6 +967,8 @@ async function publishInstagramJobInternal(jobId: string) {
   const idempotencyKey = idempotency.key;
   const idempotencyLeaseToken = idempotency.leaseToken;
 
+  const entitlement = await getUserAccessBlock(job.instagramAccount.userId);
+  if (entitlement) throw new Error("PUBLISHING_PAUSED_BY_ADMIN_SUBSCRIPTION_OR_ACCESS");
   const tags = normalizeUserTags(job.userTags);
   const token = await getValidInstagramAccessToken(job.instagramAccountId);
   const tenantId = job.instagramAccount.userId;

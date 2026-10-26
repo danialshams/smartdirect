@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserAccessBlock } from "@/lib/subscription/access";
 import { storePublicCommentReplies } from "@/lib/automation/comment-reply-variants";
 import { prepareAutomationMessages } from "@/lib/automation/batch-messages";
 import { activateStoryReply } from "@/lib/automation/story-activation";
@@ -118,6 +119,8 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ success: false, error: "احراز هویت انجام نشده است" }, { status: 401 });
 
+    const accountBlock = await getUserAccessBlock(session.user.id);
+    if (accountBlock) return NextResponse.json({ success: false, error: "اشتراک یا دسترسی این حساب فعال نیست." }, { status: 403 });
     const body = await request.json();
     if (!body || typeof body !== "object") return NextResponse.json({ success: false, error: "اطلاعات ارسالی نامعتبر است" }, { status: 400 });
 
