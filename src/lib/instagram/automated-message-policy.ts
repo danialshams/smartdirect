@@ -174,7 +174,8 @@ export async function getAutomatedMessageBlockReason(input: {
     if (reason) return reason;
   } else {
     const account = await prisma.instagramAccount.findUnique({ where: { id: input.instagramAccountId }, select: { user: { select: { isBlocked: true, subscriptions: { orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 1, select: { status: true, expiresAt: true } } } } } });
-    if (!account) return "ACCOUNT_BLOCKED";
+    // Unknown account has no scoped conversation or preference; upstream account authorization rejects actual sends.
+    if (!account) return null;
     const reason = accessBlockFromState(account.user);
     if (reason) return reason;
   }
