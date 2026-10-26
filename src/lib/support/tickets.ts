@@ -41,8 +41,9 @@ export function supportAttachmentCreate(image: SupportImage | null) {
 }
 
 export function supportRealtimeEnabled() {
-  return ["redis", "local"].includes((process.env.REDIS_DRIVER || "").toLowerCase()) &&
-    Boolean(process.env.REDIS_URL || process.env.REDIS_LOCAL_URL);
+  // Pub/Sub uses the Redis TCP URL even when the application uses Upstash REST
+  // for ordinary queue commands. REDIS_DRIVER need not be set on Vercel.
+  return Boolean(process.env.REDIS_URL?.trim() || process.env.REDIS_LOCAL_URL?.trim());
 }
 
 export function supportRedisUrl() {

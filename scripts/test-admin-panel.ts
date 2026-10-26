@@ -12,6 +12,8 @@ assert(read("app/api/dashboard/tickets/route.ts").includes("publishAdminSupportC
 assert(read("app/api/dashboard/tickets/[id]/messages/route.ts").includes("publishAdminSupportChange"),"Ticket reply must signal admins");
 assert(read("app/api/admin/tickets/summary/route.ts").includes('readAt: null'),"Unread summary must count new messages");
 assert(read("app/api/admin/tickets/[id]/read/route.ts").includes("ticketMessage.updateMany"),"Read messages must be marked for admin");
+assert(!read("src/lib/support/tickets.ts").includes('["redis", "local"].includes'),"Realtime ticket delivery must work with configured Redis URLs without REDIS_DRIVER");
+assert(read("app/api/admin/tickets/[id]/messages/route.ts").includes("message.length > 5000"),"Admin ticket replies must respect server-side message limits");
 const plans=read("src/lib/admin-users.ts");
 for(const plan of ['"monthly"','"yearly"','"monthly_under_10k"'])assert(plans.includes(plan),"Missing plan "+plan);
 assert(plans.includes("verifyUnder10KPlan")&&plans.includes("followers >= 10000"),"Discounted plan must verify followers");

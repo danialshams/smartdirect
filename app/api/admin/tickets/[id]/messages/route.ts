@@ -10,7 +10,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
   const { id } = await context.params;
   const body = await req.json().catch(() => ({}));
   const message = String(body.body ?? "").trim();
-  if (!message) return NextResponse.json({ message: "متن پاسخ الزامی است" }, { status: 400 });
+  if (!message || message.length > 5000) return NextResponse.json({ message: "متن پاسخ باید بین ۱ تا ۵۰۰۰ نویسه باشد." }, { status: 400 });
 
   const ticket = await prisma.ticket.findUnique({ where: { id }, select: { id: true, userId: true } });
   if (!ticket) return NextResponse.json({ message: "تیکت پیدا نشد" }, { status: 404 });
