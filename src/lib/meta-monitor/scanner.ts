@@ -32,7 +32,8 @@ export async function scanOfficialMetaSources(force = false): Promise<ScanOutcom
     const bootstrap=!previous?.initializedAt;
     const records=items.filter(item=>classify(item.title,item.description,source.id).relevant).map(item=>{
       const match=classify(item.title,item.description,source.id);
-      return {fingerprint:fingerprint(item.url,item.title),sourceId:source.id,sourceUrl:item.url,
+      const key=match.kind==="VERSION"&&match.apiVersion?fingerprint("https://developers.facebook.com/docs/graph-api/changelog","Graph API "+match.apiVersion):fingerprint(item.url,item.title);
+      return {fingerprint:key,sourceId:source.id,sourceUrl:item.url,
         originalTitle:item.title.slice(0,400),titleFa:match.titleFa,summaryFa:match.summaryFa,
         category:match.category,kind:match.kind,apiVersion:match.apiVersion,
         publishedAt:item.publishedAt,isRead:bootstrap,readAt:bootstrap?scanTime:null};
