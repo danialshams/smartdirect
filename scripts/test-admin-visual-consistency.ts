@@ -15,7 +15,8 @@ const pages=[
  "app/rickandmorty/sms/page.tsx",
  "app/rickandmorty/monitoring/page.tsx",
  "app/rickandmorty/audit/page.tsx",
- "app/rickandmorty/meta-monitor/page.tsx"
+ "app/rickandmorty/meta-monitor/page.tsx",
+ "app/rickandmorty/queue/page.tsx"
 ];
 for(const path of pages) {
  const s=read(path);
@@ -37,3 +38,23 @@ assert(shell.includes('const activeHref=items.filter('),"Sidebar must select onl
 assert(css.includes('.adm-meta-badge')&&css.includes('.adm-meta-count-dot'),"Unread Meta counts must remain visible");
 assert(css.includes('@media(max-width:390px)')&&css.includes('@media(max-width:650px)'),"Admin UI needs small-screen responsive constraints");
 console.log("ADMIN_SOLID_LAYOUT_MODALS_BUTTONS_RTL_PALETTE_OK");
+
+const tabbedPages=[
+ "app/rickandmorty/page.tsx",
+ "app/rickandmorty/users/page.tsx",
+ "app/rickandmorty/users/[id]/page.tsx",
+ "app/rickandmorty/tickets/page.tsx",
+ "app/rickandmorty/tickets/[id]/page.tsx",
+ "app/rickandmorty/tickets/bulk/page.tsx",
+ "app/rickandmorty/sms/page.tsx",
+ "app/rickandmorty/meta-monitor/page.tsx",
+ "app/rickandmorty/monitoring/page.tsx",
+ "app/rickandmorty/queue/page.tsx"
+];
+for(const p of tabbedPages)assert(read(p).includes("AdminMobileSections"),"Mobile sections are missing from "+p);
+const tabs=read("components/admin/AdminMobileSections.tsx");
+assert(tabs.includes('role="tablist"')&&tabs.includes('role="tabpanel"')&&tabs.includes('aria-selected={active===i}'),"Mobile sections must expose accessible navigable tabs");
+assert(css.includes(".adm-mobile-menu{position:absolute;top:calc(")&&css.includes("transform-origin:top right"),"Navigation menu must unfold from its header corner, never from the bottom");
+assert(shell.includes('aria-label="منوی مدیریت"')&&shell.includes('aria-expanded={menu}'),"Corner menu must expose expanded state");
+assert(read("app/rickandmorty/monitoring/page.tsx").includes('href="/rickandmorty/queue"'),"Recovery should stay in admin navigation");
+console.log("ADMIN_ALL_MOBILE_SECTIONS_CORNER_MENU_OK");

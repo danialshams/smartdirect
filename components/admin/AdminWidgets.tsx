@@ -22,7 +22,7 @@ export function AdminSelect({label,options,...rest}:SelectHTMLAttributes<HTMLSel
 export function AdminTextarea({label,...rest}:TextareaHTMLAttributes<HTMLTextAreaElement>&{label?:string}){return <label className="adm-field">{label&&<span>{label}</span>}<textarea {...rest}/></label>;}
 export function AdminAlert({kind="error",children,onClose}:{kind?:"error"|"success"|"info"|"warning";children:ReactNode;onClose?:()=>void}){return <div className={"adm-alert adm-alert-"+kind} role="status"><span>{children}</span>{onClose&&<button onClick={onClose} aria-label="بستن"><X size={16}/></button>}</div>;}
 export function AdminStatus({status}:{status:string}){return <span className="adm-state" data-state={status}>{statusLabels[status]||status}</span>;}
-export function AdminSpinner(){return <div className="adm-loading" role="status">در حال بارگذاری اطلاعات…</div>;}
+export function AdminSpinner(){return <div className="adm-loading" role="status" aria-label="در حال بارگذاری"><span className="adm-spinner" aria-hidden="true"/></div>;}
 export function AdminModal({title,children,onClose,actions}:{title:string;children:ReactNode;onClose:()=>void;actions?:ReactNode}){
  const [mounted,setMounted]=useState(false);
  const dialog=useRef<HTMLElement>(null);

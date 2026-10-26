@@ -2,6 +2,7 @@
 import {useCallback,useEffect,useMemo,useState} from "react";
 import {BellRing,BookOpenText,Check,CheckCheck,ExternalLink,RefreshCw,Archive,CalendarClock} from "lucide-react";
 import {AdminAlert,AdminButton,AdminHeading,AdminPanel,AdminPagination,AdminSection,AdminSelect,AdminSpinner} from "@/components/admin/AdminWidgets";
+import AdminMobileSections from "@/components/admin/AdminMobileSections";
 type Notice={id:string;titleFa:string;summaryFa:string;originalTitle:string;sourceUrl:string;category:string;kind:string;apiVersion:string|null;publishedAt:string|null;detectedAt:string;isRead:boolean};
 type Source={id:string;label:string;url:string;lastCheckedAt:string|null;lastSuccessAt:string|null;lastError:string|null;lastItemCount:number};
 type Result={data:Notice[];total:number;page:number;pageSize:number;unreadCount:number;archiveCount:number;sources:Source[];run:{lastCheckedAt:string|null;lastSuccessAt:string|null;lastError:string|null}|null};
@@ -55,16 +56,7 @@ export default function MetaMonitorPage(){
   </AdminHeading>
   {error&&<AdminAlert onClose={()=>setError("")}>{error}</AdminAlert>}
   {notice&&<AdminAlert kind="success" onClose={()=>setNotice("")}>{notice}</AdminAlert>}
-  <AdminSection title="وضعیت رصد" description="آخرین دریافت از منابع رسمی Meta">
-   <AdminPanel>
-    <div className="adm-meta-stats">
-     <div><small>خبر تازه خوانده‌نشده</small><strong className="adm-meta-unread-number">{(data?.unreadCount??0).toLocaleString("fa-IR")}</strong></div>
-     <div><small>آخرین بررسی منابع</small><strong>{data?.run?.lastCheckedAt?new Date(data.run.lastCheckedAt).toLocaleString("fa-IR"):"هنوز انجام نشده"}</strong></div>
-     <div><small>مطالب قدیمی در آرشیو</small><strong>{(data?.archiveCount??0).toLocaleString("fa-IR")}</strong></div>
-    </div>
-    <p className="adm-help" style={{marginTop:18}}>منابع رسمی روزانه بررسی می‌شوند. خبرهای بدون تاریخ معتبر یا قدیمی به‌عنوان اعلان جدید نمایش داده نمی‌شوند. متن ترجمه‌شده صرفاً توضیح مستندات است و به معنی فعال‌شدن قابلیت در SmartDirect نیست.</p>
-   </AdminPanel>
-  </AdminSection>
+  <AdminMobileSections labels={["تغییرات جدید","وضعیت رصد","منابع رسمی"]}>
   <AdminSection title="اخبار و تغییرات" description="انتخاب کنید فقط خبرهای جدید را ببینید یا به آرشیو مراجعه کنید">
    <AdminPanel>
     <div className="adm-meta-view-tabs" role="group" aria-label="نوع اخبار">
@@ -89,7 +81,7 @@ export default function MetaMonitorPage(){
      <p className="adm-meta-feature"><strong>بخش مرتبط:</strong> {n.category}</p>
      {scope==="current"?<>
       {n.summaryFa.startsWith("چه چیزی در مستندات Meta")?
-       <div className="adm-meta-translation">{n.summaryFa}</div>:
+       <details className="adm-meta-explanation"><summary>مشاهده توضیح فارسی این تغییر</summary><div className="adm-meta-translation">{n.summaryFa}</div></details>:
        <div className="adm-meta-translation-pending">
         <p>جزئیات معتبر این اطلاعیه هنوز به فارسی آماده نشده است. متن ناقص یا خبر دیگری به‌جای آن نمایش داده نمی‌شود.</p>
         <AdminButton kind="secondary" disabled={!!translatingId} aria-busy={translatingId===n.id} onClick={()=>void translate(n.id)}>{translatingId===n.id?"در حال دریافت و ترجمه متن همین خبر…":"دریافت توضیح کامل فارسی"}</AdminButton>
@@ -112,6 +104,16 @@ export default function MetaMonitorPage(){
     <AdminButton kind="secondary" disabled={busy} onClick={()=>void read()}><CheckCheck size={17}/> علامت‌گذاری همه به‌عنوان خوانده‌شده</AdminButton>
    </div>}
   </AdminSection>
+  <AdminSection title="وضعیت رصد" description="آخرین دریافت از منابع رسمی Meta">
+   <AdminPanel>
+    <div className="adm-meta-stats">
+     <div><small>خبر تازه خوانده‌نشده</small><strong className="adm-meta-unread-number">{(data?.unreadCount??0).toLocaleString("fa-IR")}</strong></div>
+     <div><small>آخرین بررسی منابع</small><strong>{data?.run?.lastCheckedAt?new Date(data.run.lastCheckedAt).toLocaleString("fa-IR"):"هنوز انجام نشده"}</strong></div>
+     <div><small>مطالب قدیمی در آرشیو</small><strong>{(data?.archiveCount??0).toLocaleString("fa-IR")}</strong></div>
+    </div>
+    <p className="adm-help" style={{marginTop:18}}>منابع رسمی روزانه بررسی می‌شوند. خبرهای بدون تاریخ معتبر یا قدیمی به‌عنوان اعلان جدید نمایش داده نمی‌شوند. متن ترجمه‌شده صرفاً توضیح مستندات است و به معنی فعال‌شدن قابلیت در SmartDirect نیست.</p>
+   </AdminPanel>
+  </AdminSection>
   <AdminSection title="سلامت منابع رسمی" description="اگر دسترسی یک منبع قطع شود، وضعیت آن به‌صورت شفاف نمایش داده می‌شود">
    <AdminPanel><details className="adm-meta-source-collapse"><summary><BellRing size={18}/> مشاهده وضعیت منابع</summary>
     {data?.sources.length?data.sources.map(s=><div key={s.id} className="adm-meta-source"><div><strong>{s.label}</strong><small className="adm-help">آخرین موفقیت: {s.lastSuccessAt?new Date(s.lastSuccessAt).toLocaleString("fa-IR"):"هنوز نامشخص"}</small></div>
@@ -119,5 +121,6 @@ export default function MetaMonitorPage(){
     </div>):<p className="adm-help">هنوز منبعی بررسی نشده است.</p>}
    </details></AdminPanel>
   </AdminSection>
+  </AdminMobileSections>
  </div>;
 }
