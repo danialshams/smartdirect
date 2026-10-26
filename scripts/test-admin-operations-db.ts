@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../src/lib/prisma";
 import { getAdminUsers, getAdminUsersPage, resolveAdminSelection } from "../src/lib/admin-users";
 import { getUserAccessBlock } from "../src/lib/subscription/access";
 async function main(){
