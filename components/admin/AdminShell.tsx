@@ -2,12 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, ChevronLeft, Headset, LayoutDashboard, Menu, MessageSquare, ShieldCheck, Ticket, Users, X, BadgePercent, Smartphone, Activity, LogOut, History } from "lucide-react";
+import { Bell, ChevronLeft, Headset, LayoutDashboard, Menu, MessageSquare, ShieldCheck, Ticket, Users, X, BadgePercent, Smartphone, Activity, LogOut, History, RadioTower } from "lucide-react";
 
 const items = [
   { href: "/rickandmorty", label: "داشبورد", icon: LayoutDashboard },
   { href: "/rickandmorty/users", label: "کاربران", icon: Users },
   { href: "/rickandmorty/tickets", label: "تیکت‌ها", icon: Ticket },
+  { href: "/rickandmorty/meta-monitor", label: "تغییرات Meta", icon: RadioTower },
   { href: "/rickandmorty/tickets/bulk", label: "ارسال گروهی", icon: MessageSquare },
   { href: "/rickandmorty/sms", label: "پیامک", icon: Smartphone },
   { href: "/rickandmorty/coupons", label: "کدهای تخفیف", icon: BadgePercent },
@@ -16,17 +17,26 @@ const items = [
 ];
 type TicketAlert = { id: string; ticketId: string; subject: string; name: string; body: string; createdAt: string };
 type TicketSummary = { unreadCount: number; latest: TicketAlert | null; items: TicketAlert[] };
-function NavItems({ onNavigate }: { onNavigate?: () => void }) {
+function NavItems({ onNavigate, metaUnread }: { onNavigate?: () => void; metaUnread: number }) {
  const path = usePathname();
  return <nav aria-label="صفحات مدیریت" className="adm-nav-list">{items.map(item => {
   const Icon=item.icon, active=item.href==="/rickandmorty"?path===item.href:path.startsWith(item.href);
-  return <Link href={item.href} key={item.href} onClick={onNavigate} className={"adm-nav-link "+(active?"is-active":"")}><Icon size={19}/><span>{item.label}</span>{active&&<ChevronLeft size={15} className="mr-auto"/>}</Link>;
+  return <Link href={item.href} key={item.href} onClick={onNavigate} className={"adm-nav-link "+(active?"is-active":"")}><Icon size={19}/><span>{item.label}</span>{item.href==="/rickandmorty/meta-monitor"&&metaUnread>0&&<span className="adm-meta-badge">{metaUnread>99?"۹۹+":metaUnread.toLocaleString("fa-IR")}</span>}{active&&<ChevronLeft size={15} className="mr-auto"/>}</Link>;
  })}</nav>;
 }
 export default function AdminShell({ children }: { children: React.ReactNode }) {
  const path=usePathname(), router=useRouter();
+ const [metaUnread,setMetaUnread]=useState(0);
  const [menu,setMenu]=useState(false),[bell,setBell]=useState(false),[summary,setSummary]=useState<TicketSummary>({unreadCount:0,latest:null,items:[]}),[toast,setToast]=useState<TicketSummary["latest"]>(null);
  const lastCreated=useRef<number|null>(null),initialized=useRef(false),requesting=useRef(false);
+ useEffect(()=>{
+  let alive=true;
+  const load=async()=>{try{const r=await fetch("/api/admin/meta-monitor/summary",{cache:"no-store"});if(r.ok){const j=await r.json();if(alive)setMetaUnread(Number(j.unreadCount)||0);}}catch{}};
+  void load();const t=setInterval(()=>{if(document.visibilityState==="visible")void load();},60000);
+  const onUpdate=()=>{void load();};const onVisible=()=>{if(document.visibilityState==="visible")void load();};
+  window.addEventListener("admin:meta-updated",onUpdate);document.addEventListener("visibilitychange",onVisible);
+  return()=>{alive=false;clearInterval(t);window.removeEventListener("admin:meta-updated",onUpdate);document.removeEventListener("visibilitychange",onVisible);};
+ },[]);
  const refresh=async()=>{
   if(requesting.current)return;
   requesting.current=true;
@@ -60,8 +70,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
  const current=items.slice().reverse().find(x=>path.startsWith(x.href))?.label||"داشبورد";
  const openTicket=(ticketId:string)=>{setBell(false);setToast(null);router.push("/rickandmorty/tickets/"+ticketId);};
  return <div className="adm-root" dir="rtl">
-  <aside className="adm-sidebar"><div className="adm-brand"><div className="adm-brand-symbol">SD</div><div><strong>SmartDirect</strong><small>پنل مدیریت</small></div></div><NavItems/><Link href="/dashboard" className="adm-nav-link adm-sidebar-return"><LogOut size={18}/>بازگشت به داشبورد</Link></aside>
-  {menu&&<div className="adm-menu-overlay" onClick={()=>setMenu(false)}><div className="adm-mobile-menu" onClick={e=>e.stopPropagation()}><div className="adm-menu-top"><strong>مدیریت SmartDirect</strong><button className="adm-icon-btn" onClick={()=>setMenu(false)} aria-label="بستن منو"><X/></button></div><NavItems onNavigate={()=>setMenu(false)}/><Link href="/dashboard" className="adm-nav-link">بازگشت به داشبورد</Link></div></div>}
+  <aside className="adm-sidebar"><div className="adm-brand"><div className="adm-brand-symbol">SD</div><div><strong>SmartDirect</strong><small>پنل مدیریت</small></div></div><NavItems metaUnread={metaUnread}/><Link href="/dashboard" className="adm-nav-link adm-sidebar-return"><LogOut size={18}/>بازگشت به داشبورد</Link></aside>
+  {menu&&<div className="adm-menu-overlay" onClick={()=>setMenu(false)}><div className="adm-mobile-menu" onClick={e=>e.stopPropagation()}><div className="adm-menu-top"><strong>مدیریت SmartDirect</strong><button className="adm-icon-btn" onClick={()=>setMenu(false)} aria-label="بستن منو"><X/></button></div><NavItems metaUnread={metaUnread} onNavigate={()=>setMenu(false)}/><Link href="/dashboard" className="adm-nav-link">بازگشت به داشبورد</Link></div></div>}
   <div className="adm-content">
    <header className="adm-header">
     <div className="adm-header-start"><button className="adm-icon-btn adm-mobile-only" onClick={()=>setMenu(true)} aria-label="باز کردن منو"><Menu size={22}/></button><div className="adm-header-title"><ShieldCheck size={19}/><strong>{current}</strong></div></div>
@@ -73,7 +83,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
    {toast&&<div className="adm-ticket-toast" role="status"><button onClick={()=>{router.push("/rickandmorty/tickets/"+toast.ticketId);setToast(null);}}><Headset size={22}/><span><strong>تیکت جدید از {toast.name}</strong><small>{toast.subject}</small></span><ChevronLeft size={17}/></button><button className="adm-icon-btn" aria-label="بستن اعلان" onClick={()=>setToast(null)}><X size={17}/></button></div>}
    <main className="adm-main">{children}</main>
    <nav className="adm-bottom-nav" aria-label="دسترسی سریع مدیریت">
-    {items.slice(0,3).concat(items[4]).concat(items[5]).map(item=>{const Icon=item.icon;const active=item.href==="/rickandmorty"?path===item.href:path.startsWith(item.href);return <Link href={item.href} key={item.href} className={"adm-bottom-item "+(active?"is-active":"")}><Icon size={22}/><span>{item.label}</span></Link>;})}
+    {items.filter(item=>["/rickandmorty","/rickandmorty/users","/rickandmorty/tickets","/rickandmorty/meta-monitor","/rickandmorty/sms"].includes(item.href)).map(item=>{const Icon=item.icon;const active=item.href==="/rickandmorty"?path===item.href:path.startsWith(item.href);return <Link href={item.href} key={item.href} className={"adm-bottom-item "+(active?"is-active":"")}><span className="adm-meta-icon-holder"><Icon size={22}/>{item.href==="/rickandmorty/meta-monitor"&&metaUnread>0&&<span className="adm-meta-count-dot">{metaUnread>99?"۹۹+":metaUnread.toLocaleString("fa-IR")}</span>}</span><span>{item.label}</span></Link>;})}
    </nav>
   </div>
  </div>;
