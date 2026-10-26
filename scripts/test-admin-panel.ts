@@ -16,6 +16,7 @@ const plans=read("src/lib/admin-users.ts");
 for(const plan of ['"monthly"','"yearly"','"monthly_under_10k"'])assert(plans.includes(plan),"Missing plan "+plan);
 assert(plans.includes("verifyUnder10KPlan")&&plans.includes("followers >= 10000"),"Discounted plan must verify followers");
 assert(read("src/lib/subscription/access.ts").includes("SUBSCRIPTION_INACTIVE"),"Subscription access must be enforced");
+assert(read("src/lib/automation/smart-reminders.ts").includes("await markSkipped(deliveryId, accessReason)"),"Suspended reminders must be skipped instead of retried");
 assert(read("src/lib/instagram/automated-message-policy.ts").includes("accessBlockFromState"),"Outgoing automation must honor account access");
 assert(read("src/lib/instagram/publishing.ts").includes("getUserAccessBlock"),"Publishing must honor account access");
 assert(read("src/lib/instagram/publishing.ts").includes('return job;\n  }\n  const tags'),"Suspending users must preserve scheduled publishing job and media");

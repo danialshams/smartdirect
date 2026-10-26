@@ -3,6 +3,7 @@ import { enqueueJob } from "@/lib/queue/core";
 import { withConversationLock } from "@/lib/conversation/conversation-lock";
 import { reminderBlockReason, reminderWindowValidAt } from "./smart-reminder-policy";
 import { sendAutomationMessage } from "@/lib/automation/send-automation-message";
+import { getUserAccessBlock } from "@/lib/subscription/access";
 
 const STALE_CLAIM_MS = 10 * 60_000;
 const MAX_DELIVERY_ATTEMPTS = 4;
@@ -108,6 +109,13 @@ export async function processSmartReminder(deliveryId: string): Promise<void> {
           !delivery.rule.instagramAccount.isConnected || !delivery.conversation.isActive ||
           delivery.conversation.ConversationHandoff?.active) {
         await markSkipped(deliveryId, "RULE_ACCOUNT_OR_CONVERSATION_INACTIVE");
+        return;
+      }
+      // A reminder due during suspension must be skipped, not repeatedly
+      // retried or sent later after the account is reactivated.
+      const accessReason = await getUserAccessBlock(delivery.rule.userId);
+      if (accessReason) {
+        await markSkipped(deliveryId, accessReason);
         return;
       }
       const [anchor, lastInbound, lastOutbound] = await Promise.all([
