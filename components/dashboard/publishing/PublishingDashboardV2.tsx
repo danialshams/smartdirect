@@ -1009,6 +1009,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
   function addTagForMedia(mediaKey: string) {
     // Guard both the button and Enter-key flow until a completed upload exists.
     if (!uploadedMedia.some((item) => item.storageKey === mediaKey)) return;
+    if (type === "CAROUSEL" && uploadedMedia.some((item) => item.storageKey === mediaKey && item.type === "VIDEO")) return;
     const draft = (tagDraftByMedia[mediaKey] ?? "").trim();
     if (!draft) return;
     if (draft.includes("@")) {
@@ -1586,6 +1587,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                               ))}
                             </div>
                           )}
+                          {type === "CAROUSEL" && item?.type === "VIDEO" ? (
+                            <p className="text-xs leading-6 text-[var(--daira-text-secondary)]">تگ کاربران روی اسلاید ویدیویی با API فعلی پشتیبانی نمی‌شود.</p>
+                          ) : (
                           <div className="flex items-center gap-2">
                             {type === "CAROUSEL" && item && (
                               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[var(--daira-border)] bg-white">
@@ -1595,6 +1599,7 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
                             <input value={draft} onChange={(event) => handleTagInputChange(mediaKey, event.target.value)} onKeyDown={(event) => handleTagInputKeyDown(mediaKey, event)} placeholder="نام کاربر بدون @" maxLength={30} inputMode="text" autoCapitalize="none" spellCheck={false} className="min-w-0 flex-1 rounded-lg border border-[var(--daira-outline)] bg-white px-3 py-2.5 !text-base leading-5 text-[var(--daira-heading)] outline-none placeholder:text-xs placeholder:text-[var(--daira-text-disabled)] focus:border-[var(--daira-primary)] focus:ring-2 focus:ring-[var(--daira-primary)]/10" style={{ fontSize: "16px", lineHeight: 1.75, WebkitTextSizeAdjust: "100%" }} />
                             <Button type="button" onClick={() => addTagForMedia(mediaKey)} disabled={!item || !draft.trim()} className="shrink-0 rounded-lg !bg-[var(--daira-primary)] px-3.5 py-2.5 text-xs font-semibold text-white hover:!bg-[var(--daira-primary-hover)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:!bg-[var(--daira-border)] disabled:!text-[var(--daira-text-disabled)] disabled:opacity-100 disabled:hover:!bg-[var(--daira-border)]">افزودن</Button>
                           </div>
+                          )}
                         </div>
                       );
                     })}
