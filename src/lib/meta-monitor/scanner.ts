@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { META_SOURCES } from "./catalog";
 import { classify, extractCandidates, fingerprint } from "./parser";
 import { renderFactualPersian } from "./translation";
+import { isFreshMetaCandidate } from "./freshness";
 
 export type ScanOutcome = { checked: number; successful: number; newNotices: number; unreadCount: number; skipped?: boolean; errors: string[] };
 export async function scanOfficialMetaSources(force = false): Promise<ScanOutcome> {
@@ -17,7 +18,7 @@ export async function scanOfficialMetaSources(force = false): Promise<ScanOutcom
  });
  if (!lease.count) return {checked:0,successful:0,newNotices:0,unreadCount:await prisma.metaMonitorNotice.count({where:{isRead:false}}),skipped:true,errors:["بررسی دیگری در حال اجراست"]};
  let successful=0, newNotices=0;
- let translationBudget=2;
+ let translationBudget=1;
  const errors:string[]=[];
  try {
   for (const source of META_SOURCES) {
@@ -32,7 +33,10 @@ export async function scanOfficialMetaSources(force = false): Promise<ScanOutcom
     if(source.format==="rss"&&!items.length)throw new Error("هیچ مطلب معتبری از RSS خوانده نشد");
     const previous=await prisma.metaMonitorSource.findUnique({where:{id:source.id},select:{initializedAt:true}});
     const bootstrap=!previous?.initializedAt;
-    const candidates=items.filter(item=>classify(item.title,item.description,source.id).relevant);
+    const candidates=items.filter(item=>{
+     const meta=classify(item.title,item.description,source.id);
+     return meta.relevant && isFreshMetaCandidate(item,meta.kind,meta.apiVersion);
+    });
     const records=candidates.map(item=>{
       const match=classify(item.title,item.description,source.id);
       const key=match.kind==="VERSION"&&match.apiVersion?fingerprint("https://developers.facebook.com/docs/graph-api/changelog","Graph API "+match.apiVersion):fingerprint(item.url,item.title);
@@ -50,10 +54,12 @@ export async function scanOfficialMetaSources(force = false): Promise<ScanOutcom
         const meta=classify(item.title,item.description,source.id);
         const key=meta.kind==="VERSION"&&meta.apiVersion?fingerprint("https://developers.facebook.com/docs/graph-api/changelog","Graph API "+meta.apiVersion):fingerprint(item.url,item.title);
         const existing=await prisma.metaMonitorNotice.findUnique({where:{fingerprint:key},select:{summaryFa:true}});
-        if(existing?.summaryFa?.startsWith("ترجمه فارسی متن رسمی"))continue;
+        if(existing?.summaryFa?.startsWith("چه چیزی در مستندات Meta"))continue;
         translationBudget--;
-        const translated=await renderFactualPersian(item.title,item.description);
-        await prisma.metaMonitorNotice.updateMany({where:{fingerprint:key},data:translated});
+        try{
+         const translated=await renderFactualPersian(item.title,item.description,source.id);
+         await prisma.metaMonitorNotice.updateMany({where:{fingerprint:key},data:translated});
+        }catch{ /* A failed free translation is not a source outage; manual retry stays available. */ }
        }
       }
     }

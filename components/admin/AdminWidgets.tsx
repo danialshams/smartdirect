@@ -12,6 +12,9 @@ export const blankFilters:Filters={q:"",planKey:"",status:"",expiryWithin:"",con
 export function paramsFromFilters(f:Filters,page=1,pageSize=20){const p=new URLSearchParams({page:String(page),pageSize:String(pageSize)});Object.entries(f).forEach(([k,v])=>{if(v)p.set(k,v);});return p.toString();}
 export function formatDate(d?:string|null){return d?new Date(d).toLocaleDateString("fa-IR"):"—";}
 export function AdminPanel({children,className=""}:{children:ReactNode;className?:string}){return <section className={"adm-panel "+className}>{children}</section>;}
+export function AdminSection({title,description,children,actions,className=""}:{title:string;description?:string;children:ReactNode;actions?:ReactNode;className?:string}){
+ return <section className={"adm-work-section "+className}><div className="adm-work-section-heading"><div><h2>{title}</h2>{description&&<p>{description}</p>}</div>{actions&&<div className="adm-work-section-actions">{actions}</div>}</div>{children}</section>;
+}
 export function AdminHeading({title,description,children}:{title:string;description?:string;children?:ReactNode}){return <div className="adm-page-heading"><div><h1>{title}</h1>{description&&<p>{description}</p>}</div>{children&&<div className="adm-heading-actions">{children}</div>}</div>;}
 export function AdminButton({children,kind="primary",className="",...rest}:ButtonHTMLAttributes<HTMLButtonElement>&{kind?:"primary"|"secondary"|"danger"|"ghost"}){return <button {...rest} type={rest.type??"button"} className={"adm-btn adm-btn-"+kind+" "+className}>{children}</button>;}
 export function AdminInput({label,...rest}:InputHTMLAttributes<HTMLInputElement>&{label?:string}){return <label className="adm-field">{label&&<span>{label}</span>}<input {...rest}/></label>;}
@@ -48,15 +51,25 @@ export function AdminModal({title,children,onClose,actions}:{title:string;childr
   </section>
  </div></div>,document.body);
 }
-export function AdminFilters({value,onChange}:{value:Filters;onChange:(filters:Filters)=>void}){const set=(k:keyof Filters,v:string)=>onChange({...value,[k]:v});return <div className="adm-filters">
- <AdminInput aria-label="جستجوی کاربران" placeholder="نام، ایمیل یا نام پیج…" value={value.q} onChange={e=>set("q",e.target.value)}/>
- <div className="adm-filter-grid">
-  <AdminSelect label="نوع اشتراک" value={value.planKey} onChange={e=>set("planKey",e.target.value)} options={planOptions}/>
-  <AdminSelect label="وضعیت اشتراک" value={value.status} onChange={e=>set("status",e.target.value)} options={[{value:"",label:"همه"},{value:"ACTIVE",label:"فعال"},{value:"EXPIRED",label:"منقضی"},{value:"SUSPENDED",label:"تعلیق‌شده"},{value:"CANCELLED",label:"لغوشده"},{value:"NONE",label:"بدون اشتراک"}]}/>
-  <AdminSelect label="وضعیت پیج" value={value.connection} onChange={e=>set("connection",e.target.value)} options={[{value:"",label:"همه"},{value:"connected",label:"متصل"},{value:"disconnected",label:"بدون اتصال"}]}/>
-  <AdminSelect label="دسترسی" value={value.access} onChange={e=>set("access",e.target.value)} options={[{value:"",label:"همه"},{value:"allowed",label:"مجاز"},{value:"blocked",label:"مسدود"}]}/>
-  <AdminSelect label="مانده اعتبار" value={value.expiryWithin} onChange={e=>set("expiryWithin",e.target.value)} options={[{value:"",label:"همه"},{value:"3",label:"کمتر از ۳ روز"},{value:"7",label:"کمتر از ۷ روز"}]}/>
- </div></div>;}
+export function AdminFilters({value,onChange}:{value:Filters;onChange:(filters:Filters)=>void}){
+ const set=(k:keyof Filters,v:string)=>onChange({...value,[k]:v});
+ const advanced=Number(!!value.connection)+Number(!!value.access)+Number(!!value.expiryWithin);
+ return <div className="adm-filters">
+  <div className="adm-filter-main">
+   <AdminInput label="جست‌وجو" aria-label="جستجوی کاربران" placeholder="نام، ایمیل یا نام پیج…" value={value.q} onChange={e=>set("q",e.target.value)}/>
+   <AdminSelect label="پلن اشتراک" value={value.planKey} onChange={e=>set("planKey",e.target.value)} options={planOptions}/>
+   <AdminSelect label="وضعیت اشتراک" value={value.status} onChange={e=>set("status",e.target.value)} options={[{value:"",label:"همه وضعیت‌ها"},{value:"ACTIVE",label:"فعال"},{value:"EXPIRED",label:"منقضی"},{value:"SUSPENDED",label:"تعلیق‌شده"},{value:"CANCELLED",label:"لغوشده"},{value:"NONE",label:"بدون اشتراک"}]}/>
+  </div>
+  <details className="adm-filter-advanced" key={advanced?"active":"default"} open={advanced>0?true:undefined}>
+   <summary>فیلترهای بیشتر {advanced>0&&<span className="adm-filter-counter">{advanced.toLocaleString("fa-IR")}</span>}</summary>
+   <div className="adm-filter-grid">
+    <AdminSelect label="اتصال پیج" value={value.connection} onChange={e=>set("connection",e.target.value)} options={[{value:"",label:"همه"},{value:"connected",label:"متصل"},{value:"disconnected",label:"بدون اتصال"}]}/>
+    <AdminSelect label="دسترسی حساب" value={value.access} onChange={e=>set("access",e.target.value)} options={[{value:"",label:"همه"},{value:"allowed",label:"مجاز"},{value:"blocked",label:"مسدود"}]}/>
+    <AdminSelect label="مانده اعتبار" value={value.expiryWithin} onChange={e=>set("expiryWithin",e.target.value)} options={[{value:"",label:"همه"},{value:"3",label:"کمتر از ۳ روز"},{value:"7",label:"کمتر از ۷ روز"}]}/>
+   </div>
+  </details>
+ </div>;
+}
 export function AdminPagination({page,total,pageSize=20,onChange}:{page:number;total:number;pageSize?:number;onChange:(p:number)=>void}){const count=Math.ceil(total/pageSize);return count>1?<div className="adm-pagination"><AdminButton kind="secondary" disabled={page<=1} onClick={()=>onChange(page-1)}>قبلی</AdminButton><span>صفحه {page.toLocaleString("fa-IR")} از {count.toLocaleString("fa-IR")}</span><AdminButton kind="secondary" disabled={page>=count} onClick={()=>onChange(page+1)}>بعدی</AdminButton></div>:null;}
 export function AdminUserCard({u,selected,onSelect,href}:{u:UserRow;selected?:boolean;onSelect?:(v:boolean)=>void;href:string}){return <article className="adm-user-card">
  <div className="adm-card-head">{onSelect&&<input type="checkbox" checked={!!selected} onChange={e=>onSelect(e.target.checked)} aria-label={"انتخاب "+u.name}/>}<div className="adm-user-avatar">{u.name?.trim()?.slice(0,1)||"ک"}</div><div className="adm-user-name"><strong>{u.name||"بدون نام"}</strong><small>{u.email}</small></div><AdminStatus status={u.isBlocked?"BLOCKED":u.effectiveStatus}/></div>
