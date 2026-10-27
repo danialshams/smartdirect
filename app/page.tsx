@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft, ArrowUpLeft, BarChart3, CalendarDays, Check, CheckCircle2,
-  ChevronDown, CircleHelp, Clock3, Headphones, Instagram, Layers3, LockKeyhole,
-  Menu, MessageCircle, MessageSquareText, Play, Radio, Send, ShieldCheck,
-  Sparkles, WandSparkles, Zap,
+  ChevronDown, CircleHelp, Clock3, Instagram, Layers3, LockKeyhole,
+  Menu, MessageCircle, MessageSquareText, Play, Send, ShieldCheck, Zap,
 } from "lucide-react";
 import { LandingMotion } from "../components/landing/LandingMotion";
 import "./landing.css";
@@ -52,7 +52,7 @@ function Core({ small = false }: { small?: boolean }) {
   );
 }
 
-function Label({ index, children }: { index: string; children: React.ReactNode }) {
+function Label({ index, children }: { index: string; children: ReactNode }) {
   return <span className="dl-eyebrow"><span>{index}</span>{children}</span>;
 }
 

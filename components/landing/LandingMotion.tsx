@@ -30,6 +30,14 @@ export function LandingMotion() {
       for (let i = 0; i < sections.length; i++) {
         if (sections[i].getBoundingClientRect().top <= targetY) active = i;
       }
+      // Scene-local camera movement, without React state updates.
+      for (const section of sections) {
+        const rect = section.getBoundingClientRect();
+        if (rect.bottom < -100 || rect.top > window.innerHeight + 100) continue;
+        const local = Math.min(1, Math.max(0, (window.innerHeight - rect.top) / (window.innerHeight + rect.height)));
+        section.style.setProperty("--dl-drift", Math.round((local - 0.5) * 45) + "px");
+        section.style.setProperty("--dl-spin", Math.round((local - 0.5) * 32) + "deg");
+      }
       root.dataset.activeScene = SCENES[active];
       for (const link of links) {
         const selected = link.dataset.progressFor === SCENES[active];

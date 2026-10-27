@@ -207,3 +207,10 @@
 @media (prefers-reduced-motion: reduce) {
  .daira-landing *, .daira-landing *::before,.daira-landing *::after { animation:none!important; scroll-behavior:auto!important; transition:none!important; }
 }
+
+/* Scroll-scrubbed camera drift; variables updated only on visible scenes. */
+@media (min-width:801px) and (prefers-reduced-motion:no-preference) {
+  .dl-hero__visual { rotate:y var(--dl-spin,0deg); }
+  .dl-ecosystem__stage,.dl-automation-visual,.dl-publish-scene,.dl-glass-transition__core { translate:0 var(--dl-drift,0px); }
+  .dl-app-preview,.dl-analytics-demo,.dl-dashboard-preview { rotate:y var(--dl-spin,0deg); }
+}
