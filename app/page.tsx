@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft, ArrowUpLeft, BarChart3, CalendarDays, Check, CheckCircle2,
-  ChevronDown, CircleHelp, Clock3, Instagram, Layers3, LockKeyhole,
+  ChevronDown, CircleHelp, Clock3, Camera, Layers3, LockKeyhole,
   Menu, MessageCircle, MessageSquareText, Play, Send, ShieldCheck, Zap,
 } from "lucide-react";
 import { LandingMotion } from "../components/landing/LandingMotion";
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 const tools = [
   { title: "پاسخ به کامنت", icon: MessageCircle, art: "/dashboard-art/comment-reply.webp" },
-  { title: "پاسخ به استوری", icon: Instagram, art: "/dashboard-art/story-reply.webp" },
+  { title: "پاسخ به استوری", icon: Camera, art: "/dashboard-art/story-reply.webp" },
   { title: "پاسخ خودکار دایرکت", icon: Send, art: "/dashboard-art/direct-automation.webp" },
   { title: "صندوق دایرکت", icon: MessageSquareText, art: "/dashboard-art/inbox.webp" },
   { title: "انتشار محتوا", icon: CalendarDays, art: "/dashboard-art/publishing.webp" },
@@ -175,7 +175,7 @@ export default function Home() {
           <div className="dl-automation-visual">
             <div className="dl-connection-line" />
             <div className="dl-message dl-message--input">
-              <div className="dl-message__head"><span className="dl-avatar dl-avatar--pink">س</span><span>یک کامنت جدید</span><Instagram size={18} /></div>
+              <div className="dl-message__head"><span className="dl-avatar dl-avatar--pink">س</span><span>یک کامنت جدید</span><Camera size={18} /></div>
               <p>قیمت این محصول چنده؟</p>
               <span className="dl-message__meta"><MessageCircle size={14} /> کامنت</span>
             </div>
@@ -231,7 +231,7 @@ export default function Home() {
           <div className="dl-publish-scene" aria-label="نمونه نمای زمان‌بندی انتشار محتوا">
             <div className="dl-publish-post dl-publish-post--1"><div className="dl-post-art dl-post-art--1"><Play size={36} fill="white" /></div><span>ریلز</span></div>
             <div className="dl-publish-post dl-publish-post--2"><div className="dl-post-art dl-post-art--2"><Layers3 size={36}/></div><span>پست اسلایدی</span></div>
-            <div className="dl-publish-post dl-publish-post--3"><div className="dl-post-art dl-post-art--3"><Instagram size={36}/></div><span>استوری</span></div>
+            <div className="dl-publish-post dl-publish-post--3"><div className="dl-post-art dl-post-art--3"><Camera size={36}/></div><span>استوری</span></div>
             <div className="dl-publish-calendar"><div className="dl-publish-calendar__title"><CalendarDays size={18}/> تقویم انتشار <Clock3 size={16}/></div><div className="dl-calendar-days">{Array.from({length:21},(_,i)=><span className={i===10||i===14||i===17?"has-event":""} key={i}>{i+1}</span>)}</div><div className="dl-calendar-caption"><CheckCircle2 size={16}/> محتوای زمان‌بندی‌شده</div></div>
           </div>
         </div>
