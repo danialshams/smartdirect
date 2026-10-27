@@ -134,6 +134,9 @@ jobs:
       - name: Verify reusable reply scope, naming and regression coverage
         run: npx tsx scripts/test-reusable-response-scopes.ts
 
+      - name: Verify public Daira homepage scene and navigation contracts
+        run: npx tsx scripts/test-public-landing.ts
+
       - name: Build application
         env:
           NODE_ENV: production
