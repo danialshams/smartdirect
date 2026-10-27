@@ -35,7 +35,7 @@ const tools = [
 function Brand({ light = false }: { light?: boolean }) {
   return (
     <Link className={"dl-brand" + (light ? " dl-brand--light" : "")} href="/" aria-label="دایرا، صفحه اصلی">
-      <span className="dl-brand-mark" aria-hidden="true"><Image src="/daira-header-logo-hd.webp" alt="" width={100} height={100} sizes="42px" /></span>
+      <span className="dl-brand-mark" aria-hidden="true"><Image src="/daira-header-logo-hd.webp" alt="" width={700} height={230} sizes="42px" /></span>
       <span>دایرا</span>
     </Link>
   );
@@ -48,7 +48,7 @@ function Core({ small = false }: { small?: boolean }) {
       <div className="dl-orbit dl-orbit--two" />
       <div className="dl-orbit dl-orbit--three" />
       <div className="dl-core-glow" />
-      <div className="dl-core-body"><span>D</span><span className="dl-core-eye" /></div>
+      <div className="dl-core-body"><Image className="dl-core-brand" src="/daira-header-logo-hd.webp" alt="" width={700} height={230} sizes="(max-width: 800px) 180px, 240px" /></div>
     </div>
   );
 }

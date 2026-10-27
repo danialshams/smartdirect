@@ -35,3 +35,5 @@ assert(glClient.includes("IntersectionObserver")&&glClient.includes("else stop()
 assert(glClient.includes("saveData")&&glClient.includes("prefers-reduced-motion"),"Respect user and mobile constraints");
 assert(styles.includes(".dl-webgl-active")&&styles.includes(".dl-core"),"Progressive fallback must remain visible");
 console.log("Daira WebGL orbit lifecycle and fallback smoke PASS");
+
+assert(source.includes('className="dl-core-brand"'),"Use the approved Daira mark");
