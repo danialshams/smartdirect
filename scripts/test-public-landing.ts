@@ -46,7 +46,7 @@ assert(gpu.includes("getLogoMesh")&&gpu.includes("context.drawArrays(context.TRI
 assert(gpu.includes("logoReady")&&glClient.includes("dl-logo-ready"),"Preserve logo fallback until mesh is ready");
 assert(gpu.includes("1000/30"),"Mobile rendering must be capped");
 
-const logoMesh=readFileSync("components/landing/glLogoMesh.ts","utf8");
+
 assert(logoMesh.includes("/daira-header-logo-hd.webp"),"The 3D mesh must use approved artwork");
 assert(logoMesh.includes("pixels[i * 4 + 3]"),"Silhouette must be alpha-based");
 assert(logoMesh.includes("!visible(x, y + 1)")&&logoMesh.includes("!visible(x + 1, y)"),"The logo walls must have depth");
