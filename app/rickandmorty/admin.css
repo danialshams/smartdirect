@@ -462,3 +462,106 @@ a.adm-ticket-row:hover{border-color:var(--adm-primary)}
  .adm-page-heading .adm-heading-actions{gap:8px}
 }
 @media(prefers-reduced-motion:reduce){.adm-spinner{animation-duration:1.6s}}
+
+
+/* ADMIN INFORMATION ARCHITECTURE V2
+   Keep long labels out of body prose. Every concept gets a predictable data cell,
+   and every mutation lives in its own operation area. */
+.adm-identity{display:flex;align-items:center;gap:14px;min-width:0;padding:18px 20px;background:#fff;border:1px solid var(--adm-border);border-radius:17px;margin-bottom:18px}
+.adm-identity-avatar{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border-radius:15px;background:#eaf1ff;color:#265ab5;font-size:21px;font-weight:850}
+.adm-identity-copy{flex:1;min-width:0;display:grid;gap:2px}
+.adm-identity-copy>strong{font-size:16px;overflow-wrap:anywhere}
+.adm-identity-copy>small{color:var(--adm-muted);font-size:12px;overflow-wrap:anywhere}
+.adm-identity-aside{margin-inline-start:auto}
+.adm-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:17px}
+.adm-card-heading h3{margin:0;font-size:15px;font-weight:850}
+.adm-card-heading p{font-size:12px;color:var(--adm-muted);margin:3px 0 0}
+.adm-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--adm-border);border:1px solid var(--adm-border);border-radius:13px;overflow:hidden;margin:0}
+.adm-info-cell{display:flex;flex-direction:column;gap:4px;justify-content:center;background:#fff;min-width:0;padding:15px 16px}
+.adm-info-cell.is-wide{grid-column:1/-1}
+.adm-info-cell dt{font-size:11px;color:var(--adm-muted);font-weight:650}
+.adm-info-cell dd{font-size:13px;font-weight:750;margin:0;line-height:1.7;overflow-wrap:anywhere;unicode-bidi:plaintext}
+.adm-mini-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.adm-mini-metrics>div{display:grid;gap:5px;align-content:center;min-height:76px;padding:13px 12px;background:var(--adm-surface-soft);border:1px solid var(--adm-border);border-radius:12px}
+.adm-mini-metrics span{color:var(--adm-muted);font-size:11px}
+.adm-mini-metrics strong{font-size:19px;font-weight:850;overflow-wrap:anywhere}
+.adm-action-area{display:grid;gap:13px;padding:19px;border:1px solid var(--adm-border);border-radius:14px;background:var(--adm-surface-soft)}
+.adm-action-area.is-danger{background:#fffafa;border-color:#f2d8dc}
+.adm-action-copy{display:grid;gap:3px}.adm-action-copy strong{font-size:13px}
+.adm-action-copy p{margin:0;color:var(--adm-muted);font-size:11px;line-height:1.85}
+.adm-action-controls{display:flex;flex-wrap:wrap;align-items:end;gap:12px}
+.adm-action-controls>.adm-field{flex:1 1 185px}.adm-action-controls>.adm-btn{flex:0 1 auto}
+.adm-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.adm-form-grid .adm-field{min-width:0}
+.adm-entity-list{display:grid;gap:10px}
+.adm-entity-row{min-width:0;background:#fff;border:1px solid var(--adm-border);border-radius:13px;padding:16px;display:grid;gap:12px}
+.adm-entity-line{display:flex;justify-content:space-between;align-items:center;gap:12px;min-width:0}
+.adm-entity-title{display:grid;gap:3px;min-width:0}
+.adm-entity-title strong{font-size:13px;overflow-wrap:anywhere}
+.adm-entity-title small{color:var(--adm-muted);font-size:11px;overflow-wrap:anywhere}
+.adm-entity-aside{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.adm-entity-footer{border-top:1px solid var(--adm-border);padding-top:11px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;color:var(--adm-muted);font-size:11px}
+.adm-inline-note{font-size:11px;color:var(--adm-muted);line-height:1.8;margin:0}
+.adm-detail-stack{display:grid;gap:15px}
+.adm-detail-stack .adm-panel{margin:0}
+.adm-record-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.adm-record-grid>.adm-panel{margin:0;min-width:0}
+.adm-work-section-heading h2{font-size:17px}
+.adm-work-section .adm-panel:has(>.adm-info-grid){overflow:hidden}
+.adm-ticket-row .adm-mini-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+.adm-root .adm-btn>svg{order:2}
+.adm-root .adm-card-head{flex-wrap:nowrap}
+.adm-root .adm-user-name{overflow-wrap:anywhere}
+@media(max-width:900px){
+ .adm-section-switcher{position:relative;top:auto;z-index:1;margin:0 0 17px;padding:4px 0 9px}
+ .adm-section-tab{min-height:43px;border-radius:10px}
+ .adm-page-heading{align-items:flex-start}
+ .adm-page-heading .adm-heading-actions{flex:0 0 auto}
+ .adm-record-grid{grid-template-columns:1fr}
+ .adm-work-section{margin-top:0;margin-bottom:23px}
+ .adm-work-section-heading{margin-bottom:13px}
+ .adm-panel{box-shadow:none}
+ .adm-user-grid{grid-template-columns:1fr}
+ .adm-home-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .adm-identity{padding:14px;gap:11px}
+ .adm-identity-avatar{width:43px;height:43px;flex-basis:43px}
+ .adm-action-area{padding:15px}
+ .adm-entity-row{padding:14px}
+ .adm-modal-overlay{align-items:center}
+ .adm-modal{width:min(560px,100%);max-height:calc(100dvh - 32px);border-radius:16px}
+ .adm-meta-notice .adm-meta-feature{border-bottom:0;padding:0}
+}
+@media(max-width:650px){
+ .adm-main{padding:16px 14px calc(76px + env(safe-area-inset-bottom))}
+ .adm-page-heading{margin-bottom:17px;gap:10px}
+ .adm-page-heading h1{font-size:20px}
+ .adm-page-heading p{font-size:11px;max-width:42ch}
+ .adm-record-grid,.adm-detail-stack{gap:12px}
+ .adm-grid-2{grid-template-columns:1fr}
+ .adm-user-grid{grid-template-columns:1fr}
+ .adm-coupon-grid{grid-template-columns:1fr}
+ .adm-home-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .adm-info-cell{padding:12px 10px}
+ .adm-info-cell dt{font-size:10px}
+ .adm-info-cell dd{font-size:12px}
+ .adm-mini-metrics{gap:6px}
+ .adm-mini-metrics>div{padding:10px 8px;min-height:70px}
+ .adm-mini-metrics span{font-size:10px}
+ .adm-mini-metrics strong{font-size:16px}
+ .adm-card-heading{margin-bottom:12px}
+ .adm-action-area{gap:11px}
+ .adm-action-controls{display:grid;grid-template-columns:1fr;align-items:stretch}
+ .adm-action-controls>.adm-btn{width:100%}
+ .adm-form-grid{grid-template-columns:1fr}
+ .adm-entity-footer{align-items:flex-start}
+ .adm-entity-aside .adm-state{font-size:10px}
+ .adm-user-card{padding:15px;gap:12px}
+ .adm-root .adm-grid:not(.adm-home-stats-grid){grid-template-columns:repeat(2,minmax(0,1fr))}
+ .adm-modal-body{overflow-y:auto}
+}
+@media(max-width:390px){
+ .adm-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .adm-mini-metrics span{min-height:30px}
+ .adm-meta-stats{grid-template-columns:1fr}
+ .adm-identity-aside .adm-state{font-size:10px}
+}
