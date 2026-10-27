@@ -1,0 +1,80 @@
+"use client";
+import { useEffect, useRef } from "react";
+import type { OrbitMode, MountedOrbit } from "./glOrbits";
+export function LandingWebGL({mode}:{mode:OrbitMode}){
+  const ref=useRef<HTMLCanvasElement>(null);
+  useEffect(()=>{
+    const canvas=ref.current;
+    if(!canvas||!canvas.parentElement)return;
+    const stage=canvas.parentElement;
+    const reduce=window.matchMedia("(prefers-reduced-motion: reduce)");
+    const net=navigator as Navigator&{connection?:{saveData?:boolean}};
+    if(reduce.matches||net.connection?.saveData)return;
+    let instance:MountedOrbit|null=null,alive=true,loading=false,scrollFrame=0;
+    let observer:IntersectionObserver|undefined,resizeObserver:ResizeObserver|undefined;
+    let pointer=0;
+    function update(){
+      scrollFrame=0;
+      if(!instance)return;
+      const rect=stage.getBoundingClientRect();
+      instance.update((window.innerHeight*.5-rect.top)/Math.max(rect.height,1),pointer);
+    }
+    function onScroll(){if(!scrollFrame)scrollFrame=requestAnimationFrame(update);}
+    function onPointer(e:PointerEvent){
+      if(e.pointerType==="touch")return;
+      const rect=stage.getBoundingClientRect();
+      pointer=Math.max(-.45,Math.min(.45,((e.clientX-rect.left)/Math.max(rect.width,1)-.5)*.75));
+      onScroll();
+    }
+    async function start(){
+      if(!alive||loading||instance||reduce.matches)return;
+      loading=true;
+      try{
+        const {mountOrbit}=await import("./glOrbits");
+        if(!alive||!canvas.isConnected)return;
+        instance=mountOrbit(canvas,mode);
+        if(instance){
+          stage.classList.add("dl-webgl-active");
+          window.addEventListener("scroll",onScroll,{passive:true});
+          stage.addEventListener("pointermove",onPointer,{passive:true});
+          update();
+        }
+      }catch{/* Unavailable WebGL must never hide the server-rendered page. */}
+      finally{loading=false;}
+    }
+    function stop(){
+      instance?.dispose();instance=null;
+      stage.classList.remove("dl-webgl-active");
+      window.removeEventListener("scroll",onScroll);
+      stage.removeEventListener("pointermove",onPointer);
+    }
+    const lost=(event:Event)=>{event.preventDefault();stop();};
+    const restored=()=>{if(alive)void start();};
+    const visibility=()=>{
+      if(document.hidden)stop();
+      else {const box=stage.getBoundingClientRect();if(box.top<innerHeight&&box.bottom>0)void start();}
+    };
+    canvas.addEventListener("webglcontextlost",lost);
+    canvas.addEventListener("webglcontextrestored",restored);
+    document.addEventListener("visibilitychange",visibility);
+    if("ResizeObserver" in window){
+      resizeObserver=new ResizeObserver(()=>instance?.resize());
+      resizeObserver.observe(stage);
+    }
+    if("IntersectionObserver" in window){
+      observer=new IntersectionObserver(([entry])=>{
+        if(entry.isIntersecting)void start(); else stop();
+      },{rootMargin:"100px 0px 100px 0px"});
+      observer.observe(stage);
+    }else void start();
+    return ()=>{
+      alive=false;observer?.disconnect();resizeObserver?.disconnect();
+      document.removeEventListener("visibilitychange",visibility);
+      canvas.removeEventListener("webglcontextlost",lost);
+      canvas.removeEventListener("webglcontextrestored",restored);
+      if(scrollFrame)cancelAnimationFrame(scrollFrame);
+      stop();
+    };
+  },[mode]);
+  return <canvas ref={ref} className="dl-webgl" aria-hidden="true" tabIndex={-1}/>;
+}
