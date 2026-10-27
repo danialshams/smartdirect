@@ -23,3 +23,15 @@ assert.match(motion, /requestAnimationFrame/);
 assert.match(motion, /IntersectionObserver/);
 assert.doesNotMatch(source, /fetch\(|localStorage|sessionStorage|dangerouslySetInnerHTML/);
 console.log("Daira public homepage: scene structure, navigation, motion and safety checks PASS");
+
+const gpu=readFileSync("components/landing/glOrbits.ts","utf8");
+const glClient=readFileSync("components/landing/LandingWebGL.tsx","utf8");
+assert(source.includes('<LandingWebGL mode="hero" />'));
+assert(source.includes('<LandingWebGL mode="features" />'));
+assert(gpu.includes('getContext("webgl"'),"Use actual WebGL rather than a static video");
+assert(gpu.includes("gl.deleteBuffer")&&gpu.includes("gl.deleteProgram"),"Dispose GPU resources");
+assert(glClient.includes('await import("./glOrbits")'),"The orbital renderer must be lazy loaded");
+assert(glClient.includes("IntersectionObserver")&&glClient.includes("else stop()"),"Pause offscreen rendering");
+assert(glClient.includes("saveData")&&glClient.includes("prefers-reduced-motion"),"Respect user and mobile constraints");
+assert(styles.includes(".dl-webgl-active")&&styles.includes(".dl-core"),"Progressive fallback must remain visible");
+console.log("Daira WebGL orbit lifecycle and fallback smoke PASS");

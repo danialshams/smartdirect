@@ -8,6 +8,7 @@ import {
   Menu, MessageCircle, MessageSquareText, Play, Send, ShieldCheck, Zap,
 } from "lucide-react";
 import { LandingMotion } from "../components/landing/LandingMotion";
+import { LandingWebGL } from "../components/landing/LandingWebGL";
 import "./landing.css";
 
 export const metadata: Metadata = {
@@ -123,6 +124,7 @@ export default function Home() {
           </div>
           <div className="dl-hero__visual">
             <div className="dl-hero__halo" aria-hidden="true" />
+            <LandingWebGL mode="hero" />
             <Core />
             <div className="dl-float dl-float--one"><MessageCircle size={20} /> پاسخ به کامنت</div>
             <div className="dl-float dl-float--two"><Send size={20} /> دایرکت</div>
@@ -142,6 +144,7 @@ export default function Home() {
           </div>
           <div className="dl-ecosystem__stage">
             <div className="dl-ecosystem__rings" aria-hidden="true" />
+            <LandingWebGL mode="features" />
             <Core small />
             <div className="dl-tool-grid">
               {tools.map(({ title, icon: Icon, art }, i) => (
