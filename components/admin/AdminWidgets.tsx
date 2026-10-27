@@ -74,7 +74,7 @@ export function AdminPagination({page,total,pageSize=20,onChange}:{page:number;t
 export function AdminUserCard({u,selected,onSelect,href}:{u:UserRow;selected?:boolean;onSelect?:(v:boolean)=>void;href:string}){return <article className="adm-user-card">
  <div className="adm-card-head">{onSelect&&<input type="checkbox" checked={!!selected} onChange={e=>onSelect(e.target.checked)} aria-label={"انتخاب "+u.name}/>}<div className="adm-user-avatar">{u.name?.trim()?.slice(0,1)||"ک"}</div><div className="adm-user-name"><strong>{u.name||"بدون نام"}</strong><small>{u.email}</small></div><AdminStatus status={u.isBlocked?"BLOCKED":u.effectiveStatus}/></div>
  <div className="adm-user-metrics"><div><small>پیج متصل</small><strong>{u.pagesCount.toLocaleString("fa-IR")}</strong></div><div><small>اتوماسیون فعال</small><strong>{(u.activeAutomations??0).toLocaleString("fa-IR")}</strong></div><div><small>تیکت باز</small><strong>{(u.openTickets??0).toLocaleString("fa-IR")}</strong></div></div>
- <div className="adm-card-footer"><span>{plans[u.subscription?.planKey||""]||"بدون اشتراک"} · {formatDate(u.subscription?.expiresAt)}</span><Link href={href} className="adm-card-link">مدیریت کاربر</Link></div>
+ <div className="adm-card-footer"><div className="adm-user-sub"><small>اشتراک</small><strong>{plans[u.subscription?.planKey||""]||"بدون اشتراک"}</strong><small>انقضا: {formatDate(u.subscription?.expiresAt)}</small></div><Link href={href} className="adm-card-link">مدیریت کاربر</Link></div>
  </article>;}
 
 /** Snapshot filtered recipients once, then send bounded chunks to avoid serverless timeouts. */

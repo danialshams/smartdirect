@@ -1,6 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import {BadgePercent,Plus} from "lucide-react";
+import {AdminCardHeader,AdminInfoGrid,AdminInfo,AdminActionArea} from "@/components/admin/AdminDataView";
 import {AdminAlert,AdminButton,AdminHeading,AdminInput,AdminModal,AdminPanel,AdminSection,AdminSelect,AdminSpinner,formatDate} from "@/components/admin/AdminWidgets";
 type Coupon={id:string;code:string;discountType:string;value:string;currency:string|null;validFrom:string;expiresAt:string|null;maxUses:number|null;maxUsesPerUser:number;usageCount:number;isActive:boolean};
 export default function Coupons(){
@@ -14,7 +15,12 @@ export default function Coupons(){
  const toggle=async(c:Coupon)=>{try{const r=await fetch("/api/admin/coupons/"+c.id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({isActive:!c.isActive})});const j=await r.json();if(!r.ok)throw Error(j.message);setRows(x=>x.map(i=>i.id===c.id?j:i));}catch(e){setError(e instanceof Error?e.message:"خطا");}};
  return <div><AdminHeading title="کدهای تخفیف" description="مدیریت کدهای تخفیف اشتراک‌ها"><AdminButton onClick={()=>setOpen(true)}><Plus size={16}/> کد جدید</AdminButton></AdminHeading>
  {error&&<AdminAlert onClose={()=>setError("")}>{error}</AdminAlert>}{notice&&<AdminAlert kind="success" onClose={()=>setNotice("")}>{notice}</AdminAlert>}
- <AdminSection title="کدهای ثبت‌شده" description="هر کد به‌صورت مستقل فعال یا غیرفعال می‌شود">{loading?<AdminSpinner/>:<div className="adm-user-grid adm-coupon-grid">{rows.map(c=><AdminPanel key={c.id}><div className="adm-ticket-row-top"><strong dir="ltr">{c.code}</strong><span className="adm-state" data-state={c.isActive?"ACTIVE":"SUSPENDED"}>{c.isActive?"فعال":"غیرفعال"}</span></div><p>{c.discountType==="PERCENTAGE"?c.value+"٪":c.value+" ریال"}</p><p className="adm-help">استفاده: {c.usageCount.toLocaleString("fa-IR")}{c.maxUses?" از "+c.maxUses:""} · انقضا: {formatDate(c.expiresAt)}</p><AdminButton kind="secondary" onClick={()=>void toggle(c)}>{c.isActive?"غیرفعال‌کردن":"فعال‌کردن"}</AdminButton></AdminPanel>)}</div>}
+ <AdminSection title="کدهای ثبت‌شده" description="هر کد به‌صورت مستقل فعال یا غیرفعال می‌شود">{loading?<AdminSpinner/>:<div className="adm-user-grid adm-coupon-grid">{rows.map(c=><AdminPanel key={c.id} className="adm-coupon-card">
+ <AdminCardHeader title={c.code} aside={<span className="adm-state" data-state={c.isActive?"ACTIVE":"SUSPENDED"}>{c.isActive?"فعال":"غیرفعال"}</span>}/>
+ <div className="adm-coupon-value">{c.discountType==="PERCENTAGE"?c.value+"٪":Number(c.value).toLocaleString("fa-IR")+" ریال"}</div>
+ <AdminInfoGrid><AdminInfo label="استفاده‌شده">{c.usageCount.toLocaleString("fa-IR")}</AdminInfo><AdminInfo label="سقف استفاده">{c.maxUses?c.maxUses.toLocaleString("fa-IR"):"نامحدود"}</AdminInfo><AdminInfo label="سقف هر کاربر">{c.maxUsesPerUser.toLocaleString("fa-IR")}</AdminInfo><AdminInfo label="اعتبار تا">{formatDate(c.expiresAt)}</AdminInfo></AdminInfoGrid>
+ <div className="adm-card-actions"><AdminButton kind="secondary" onClick={()=>void toggle(c)}>{c.isActive?"غیرفعال‌کردن":"فعال‌کردن"}</AdminButton></div>
+ </AdminPanel>)}</div>}
  {!loading&&!rows.length&&<AdminPanel><BadgePercent/><p className="adm-muted">کدی وجود ندارد.</p></AdminPanel>}
  </AdminSection>
  {open&&<AdminModal title="ایجاد کد تخفیف" onClose={()=>!busy&&setOpen(false)} actions={<><AdminButton kind="secondary" onClick={()=>setOpen(false)}>انصراف</AdminButton><AdminButton disabled={busy||!code||!value} onClick={()=>void create()}>{busy?"در حال ایجاد…":"ثبت کد"}</AdminButton></>}>
