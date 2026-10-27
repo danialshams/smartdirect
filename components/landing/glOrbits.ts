@@ -62,7 +62,7 @@ function geometry(){
   return new Float32Array(a);
 }
 export function mountOrbit(canvas:HTMLCanvasElement,mode:OrbitMode):MountedOrbit|null{
-  const gl=canvas.getContext("webgl",{alpha:true,antialias:false,depth:false,stencil:false,preserveDrawingBuffer:false,powerPreference:"low-power"});
+  const gl=canvas.getContext("webgl",{alpha:true,antialias:false,depth:true,stencil:false,preserveDrawingBuffer:false,powerPreference:"low-power"});
   if(!gl||gl.isContextLost())return null;
   const context: WebGLRenderingContext = gl;
   const vs=compile(gl,gl.VERTEX_SHADER,VS),fs=compile(gl,gl.FRAGMENT_SHADER,FS);

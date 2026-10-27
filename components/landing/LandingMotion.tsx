@@ -31,13 +31,16 @@ export function LandingMotion() {
       for (let i = 0; i < sections.length; i++) {
         if (sections[i].getBoundingClientRect().top <= targetY) active = i;
       }
-      // Scene-local camera movement, without React state updates.
-      for (const section of sections) {
-        const rect = section.getBoundingClientRect();
-        if (rect.bottom < -100 || rect.top > window.innerHeight + 100) continue;
-        const local = Math.min(1, Math.max(0, (window.innerHeight - rect.top) / (window.innerHeight + rect.height)));
-        section.style.setProperty("--dl-drift", Math.round((local - 0.5) * 45) + "px");
-        section.style.setProperty("--dl-spin", Math.round((local - 0.5) * 32) + "deg");
+      // Read geometry first; write scroll-driven CSS transform variables second.
+      const layouts = sections.map(section => ({section,rect:section.getBoundingClientRect()}));
+      for(const {section,rect} of layouts){
+        if(rect.bottom < -100 || rect.top > window.innerHeight + 100)continue;
+        const local=Math.min(1,Math.max(0,(window.innerHeight-rect.top)/(window.innerHeight+rect.height)));
+        section.style.setProperty("--dl-scene",local.toFixed(3));
+        if(!reduceMotion.matches){
+          section.style.setProperty("--dl-drift",Math.round((local-.5)*45)+"px");
+          section.style.setProperty("--dl-spin",Math.round((local-.5)*32)+"deg");
+        }
       }
       root.dataset.activeScene = SCENES[active];
       for (const link of links) {
@@ -70,10 +73,16 @@ export function LandingMotion() {
     const onKeyDown = (event: KeyboardEvent) => {if(event.key==="Escape"&&mobileMenu?.open)mobileMenu.open=false;};
     mobileMenu?.addEventListener("click",onMenuClick);
     document.addEventListener("keydown",onKeyDown);
+    const onReducedChange=()=>{
+      if(reduceMotion.matches){for(const s of sections){s.style.removeProperty("--dl-drift");s.style.removeProperty("--dl-spin");}}
+      schedule();
+    };
+    reduceMotion.addEventListener("change",onReducedChange);
     sync();
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule, { passive: true });
     return () => {
+      reduceMotion.removeEventListener("change",onReducedChange);
       mobileMenu?.removeEventListener("click",onMenuClick);
       document.removeEventListener("keydown",onKeyDown);
       window.removeEventListener("scroll", schedule);
@@ -81,6 +90,7 @@ export function LandingMotion() {
       if (frame) window.cancelAnimationFrame(frame);
       observer?.disconnect();
       root.style.removeProperty("--dl-scroll");
+      for(const s of sections){s.style.removeProperty("--dl-scene");s.style.removeProperty("--dl-drift");s.style.removeProperty("--dl-spin");}
     };
   }, []);
 

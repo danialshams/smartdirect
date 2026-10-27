@@ -10,7 +10,8 @@ export function LandingWebGL({mode}:{mode:OrbitMode}){
     const activeCanvas: HTMLCanvasElement = canvas;
     const reduce=window.matchMedia("(prefers-reduced-motion: reduce)");
     const net=navigator as Navigator&{connection?:{saveData?:boolean}};
-    if(reduce.matches||net.connection?.saveData)return;
+    const constrained=navigator as Navigator&{deviceMemory?:number};
+    if(reduce.matches||net.connection?.saveData||(constrained.deviceMemory!==undefined&&constrained.deviceMemory<=2))return;
     let instance:MountedOrbit|null=null,alive=true,loading=false,visible=false,scrollFrame=0;
     let observer:IntersectionObserver|undefined,resizeObserver:ResizeObserver|undefined;
     let pointer=0;
