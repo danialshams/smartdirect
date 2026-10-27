@@ -28,13 +28,17 @@ export function LandingWebGL({mode}:{mode:OrbitMode}){
       onScroll();
     }
     async function start(){
-      if(!alive||!visible||loading||instance||reduce.matches)return;
+      if(!alive||!visible||loading||instance||reduce.matches||document.hidden)return;
       loading=true;
       try{
         const {mountOrbit}=await import("./glOrbits");
         if(!alive||!visible||!activeCanvas.isConnected)return;
         instance=mountOrbit(activeCanvas,mode);
         if(instance){
+          const mounted=instance;
+          void mounted.logoReady.then(ready=>{
+            if(ready&&alive&&visible&&instance===mounted)stage.classList.add("dl-logo-ready");
+          });
           stage.classList.add("dl-webgl-active");
           window.addEventListener("scroll",onScroll,{passive:true});
           stage.addEventListener("pointermove",onPointer,{passive:true});
@@ -46,7 +50,7 @@ export function LandingWebGL({mode}:{mode:OrbitMode}){
     function stop(){
       if(scrollFrame){cancelAnimationFrame(scrollFrame);scrollFrame=0;}
       instance?.dispose();instance=null;
-      stage.classList.remove("dl-webgl-active");
+      stage.classList.remove("dl-webgl-active","dl-logo-ready");
       window.removeEventListener("scroll",onScroll);
       stage.removeEventListener("pointermove",onPointer);
     }

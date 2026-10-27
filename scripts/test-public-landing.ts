@@ -37,3 +37,11 @@ assert(styles.includes(".dl-webgl-active")&&styles.includes(".dl-core"),"Progres
 console.log("Daira WebGL orbit lifecycle and fallback smoke PASS");
 
 assert(source.includes('className="dl-core-brand"'),"Use the approved Daira mark");
+
+const logoMesh=readFileSync("components/landing/glLogoMesh.ts","utf8");
+assert(logoMesh.includes("/daira-header-logo-hd.webp"),"3D geometry must come from approved artwork");
+assert(logoMesh.includes("pixels[i * 4 + 3]"),"3D mesh must preserve alpha silhouette");
+assert(logoMesh.includes("!visible(x, y + 1)")&&logoMesh.includes("!visible(x + 1, y)"),"Logo sides must be extruded");
+assert(gpu.includes("getLogoMesh")&&gpu.includes("context.drawArrays(context.TRIANGLES"),"WebGL must render actual 3D mesh");
+assert(gpu.includes("logoReady")&&glClient.includes("dl-logo-ready"),"Preserve logo fallback until mesh is ready");
+assert(gpu.includes("1000/30"),"Mobile rendering must be capped");

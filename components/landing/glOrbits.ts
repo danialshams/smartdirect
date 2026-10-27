@@ -1,6 +1,7 @@
 /** A tiny, lazy WebGL orbital scene; CSS remains a complete fallback. */
 export type OrbitMode = "hero" | "features";
-export type MountedOrbit = { update(scroll:number,pointer:number):void; resize():void; dispose():void };
+import { getLogoMesh } from "./glLogoMesh";
+export type MountedOrbit = { update(scroll:number,pointer:number):void; resize():void; dispose():void; logoReady:Promise<boolean> };
 const VS = [
 "precision highp float;",
 "attribute vec3 a_data;",
@@ -42,6 +43,8 @@ const FS=[
 " vec3 c=mix(vec3(.14,.4,1.),vec3(.67,.83,1.),v_tint);",
 " gl_FragColor=vec4(c,a);",
 "}"].join("\n");
+const LOGO_VS = "precision highp float;\nattribute vec3 a_pos,a_normal,a_color;\nuniform vec2 u_size;\nuniform float u_t,u_scroll,u_pointer;\nvarying vec3 v_color;\nvoid main(){\n float yaw=-.22+u_pointer*.95+u_scroll*.25+sin(u_t*.14)*.10;\n float pitch=-.13+u_scroll*.12;\n float cy=cos(yaw),sy=sin(yaw),cx=cos(pitch),sx=sin(pitch);\n vec3 p=a_pos,n=a_normal;\n p=vec3(p.x*cy+p.z*sy,p.y,-p.x*sy+p.z*cy);\n n=vec3(n.x*cy+n.z*sy,n.y,-n.x*sy+n.z*cy);\n p=vec3(p.x,p.y*cx-p.z*sx,p.y*sx+p.z*cx);\n n=vec3(n.x,n.y*cx-n.z*sx,n.y*sx+n.z*cx);\n float depth=3.5-p.z;\n float aspect=u_size.x/max(u_size.y,1.);\n vec2 position=p.xy*(3.15/max(1.5,depth));\n gl_Position=vec4(position.x/aspect,position.y,-p.z*.11,1.);\n float light=.34+.7*max(0.,dot(normalize(n),normalize(vec3(-.3,.6,.9))));\n float rim=pow(1.-abs(n.z),2.)*.18;\n v_color=clamp(a_color*light+rim*vec3(.2,.45,1.),0.,1.);\n}";
+const LOGO_FS = "precision mediump float;\nvarying vec3 v_color;\nvoid main(){gl_FragColor=vec4(v_color,1.);}";
 const SEG=192, STARS=125;
 function compile(gl:WebGLRenderingContext,kind:number,src:string) {
   const shader=gl.createShader(kind);
@@ -81,7 +84,33 @@ export function mountOrbit(canvas:HTMLCanvasElement,mode:OrbitMode):MountedOrbit
     dpr:gl.getUniformLocation(program,"u_dpr"), feature:gl.getUniformLocation(program,"u_feature")
   };
   gl.uniform1f(uniforms.feature,mode==="features"?1:0);
-  let scroll=0,pointer=0,running=true,raf=0,w=0,h=0;
+  let scroll=0,pointer=0,running=true,raf=0,w=0,h=0,lastRender=0;
+  let emblem:{program:WebGLProgram,buffer:WebGLBuffer,count:number,positions:number,normals:number,colors:number,size:WebGLUniformLocation|null,time:WebGLUniformLocation|null,scroll:WebGLUniformLocation|null,pointer:WebGLUniformLocation|null}|null=null;
+  const logoReady=(async()=>{
+    try {
+      const mesh=await getLogoMesh();
+      if(!running || context.isContextLost())return false;
+      const v=compile(context,context.VERTEX_SHADER,LOGO_VS),f=compile(context,context.FRAGMENT_SHADER,LOGO_FS);
+      if(!v||!f){if(v)context.deleteShader(v);if(f)context.deleteShader(f);return false;}
+      const pg=context.createProgram();
+      if(!pg){context.deleteShader(v);context.deleteShader(f);return false;}
+      context.attachShader(pg,v);context.attachShader(pg,f);context.linkProgram(pg);
+      context.deleteShader(v);context.deleteShader(f);
+      if(!context.getProgramParameter(pg,context.LINK_STATUS)){context.deleteProgram(pg);return false;}
+      const meshBuffer=context.createBuffer();
+      if(!meshBuffer){context.deleteProgram(pg);return false;}
+      context.bindBuffer(context.ARRAY_BUFFER,meshBuffer);
+      context.bufferData(context.ARRAY_BUFFER,mesh.vertices,context.STATIC_DRAW);
+      const positions=context.getAttribLocation(pg,"a_pos");
+      const normals=context.getAttribLocation(pg,"a_normal");
+      const colors=context.getAttribLocation(pg,"a_color");
+      if(positions<0||normals<0||colors<0){context.deleteBuffer(meshBuffer);context.deleteProgram(pg);return false;}
+      emblem={program:pg,buffer:meshBuffer,count:mesh.vertexCount,positions,normals,colors,
+        size:context.getUniformLocation(pg,"u_size"),time:context.getUniformLocation(pg,"u_t"),
+        scroll:context.getUniformLocation(pg,"u_scroll"),pointer:context.getUniformLocation(pg,"u_pointer")};
+      return true;
+    } catch {return false;}
+  })();
   const start=performance.now();
   function resize(){
     const rect=canvas.getBoundingClientRect();
@@ -93,20 +122,54 @@ export function mountOrbit(canvas:HTMLCanvasElement,mode:OrbitMode):MountedOrbit
   }
   function render(now:number){
     if(!running||context.isContextLost())return;
-    resize();context.clearColor(0,0,0,0);context.clear(context.COLOR_BUFFER_BIT);
-    context.uniform1f(uniforms.time,(now-start)*.001);
-    context.uniform1f(uniforms.scroll,scroll);context.uniform1f(uniforms.pointer,pointer);
+    raf=requestAnimationFrame(render);
+    const minInterval=(window.innerWidth<650?1000/30:1000/60);
+    if(now-lastRender<minInterval)return;
+    lastRender=now;
+    resize();context.clearColor(0,0,0,0);
+    context.clear(context.COLOR_BUFFER_BIT|context.DEPTH_BUFFER_BIT);
+    const time=(now-start)*.001;
+    // Draw real extruded logo on the same canvas/context as the orbital scene.
+    if(emblem){
+      context.useProgram(emblem.program);
+      context.bindBuffer(context.ARRAY_BUFFER,emblem.buffer);
+      context.enable(context.DEPTH_TEST);context.depthFunc(context.LEQUAL);
+      context.depthMask(true);
+      context.disable(context.BLEND);
+      const stride=9*Float32Array.BYTES_PER_ELEMENT;
+      for(const [index,offset] of [[emblem.positions,0],[emblem.normals,3],[emblem.colors,6]]){
+        context.enableVertexAttribArray(index);
+        context.vertexAttribPointer(index,3,context.FLOAT,false,stride,offset*Float32Array.BYTES_PER_ELEMENT);
+      }
+      context.uniform2f(emblem.size,w,h);
+      context.uniform1f(emblem.time,time);
+      context.uniform1f(emblem.scroll,scroll);
+      context.uniform1f(emblem.pointer,pointer);
+      context.drawArrays(context.TRIANGLES,0,emblem.count);
+      for(const index of [emblem.positions,emblem.normals,emblem.colors])context.disableVertexAttribArray(index);
+    }
+    context.useProgram(program);
+    context.bindBuffer(context.ARRAY_BUFFER,buffer);
+    context.disable(context.DEPTH_TEST);context.enable(context.BLEND);
+    context.blendFunc(context.SRC_ALPHA,context.ONE);
+    context.enableVertexAttribArray(attr);
+    context.vertexAttribPointer(attr,3,context.FLOAT,false,0,0);
+    context.uniform2f(uniforms.size,w,h);
+    context.uniform1f(uniforms.time,time);
+    context.uniform1f(uniforms.scroll,scroll);
+    context.uniform1f(uniforms.pointer,pointer);
     for(let i=0;i<3;i++)context.drawArrays(context.LINE_STRIP,i*(SEG+1),SEG+1);
     context.drawArrays(context.POINTS,3*(SEG+1),STARS);
-    raf=requestAnimationFrame(render);
   }
   resize();raf=requestAnimationFrame(render);
   return {
     update(s,p){scroll=Math.max(-1,Math.min(1,s));pointer=Math.max(-.45,Math.min(.45,p));},
-    resize,
+    resize,logoReady,
     dispose(){
       running=false;cancelAnimationFrame(raf);
-      context.disableVertexAttribArray(attr);context.deleteBuffer(buffer);context.deleteProgram(program);
+      context.disableVertexAttribArray(attr);
+      if(emblem){context.deleteBuffer(emblem.buffer);context.deleteProgram(emblem.program);emblem=null;}
+      context.deleteBuffer(buffer);context.deleteProgram(program);
       context.deleteShader(vs);context.deleteShader(fs);canvas.width=canvas.height=1;
     }
   };

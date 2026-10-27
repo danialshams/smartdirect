@@ -229,3 +229,9 @@
 .dl-core-body{isolation:isolate;background:none;border:0;box-shadow:none;overflow:visible;border-radius:0;transform:translateZ(65px) rotate(-8deg)}
 .dl-core-body::before{content:"";position:absolute;inset:0;z-index:-1;background:url("/daira-header-logo-hd.webp") no-repeat left center;background-size:auto 100%;opacity:.8;transform:translate(12px,15px);filter:brightness(.30) saturate(2) drop-shadow(0 15px 22px #0b40f3a6)}
 .dl-core-brand{display:block;width:100%;height:100%;max-width:none;object-fit:cover;object-position:left center;filter:drop-shadow(0 0 23px #3a83ffb8) drop-shadow(0 12px 16px #064ce680)}
+
+/* 3D emblem is constructed from the alpha silhouette of the approved logo. */
+.dl-logo-ready .dl-core-brand{opacity:0}
+.dl-logo-ready .dl-core-body::before{opacity:0}
+.dl-logo-ready .dl-core-body{pointer-events:none}
+.dl-logo-ready .dl-core-glow{opacity:.65}
