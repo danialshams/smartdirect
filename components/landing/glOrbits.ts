@@ -61,6 +61,7 @@ function geometry(){
 export function mountOrbit(canvas:HTMLCanvasElement,mode:OrbitMode):MountedOrbit|null{
   const gl=canvas.getContext("webgl",{alpha:true,antialias:false,depth:false,stencil:false,preserveDrawingBuffer:false,powerPreference:"low-power"});
   if(!gl||gl.isContextLost())return null;
+  const context: WebGLRenderingContext = gl;
   const vs=compile(gl,gl.VERTEX_SHADER,VS),fs=compile(gl,gl.FRAGMENT_SHADER,FS);
   if(!vs||!fs){if(vs)gl.deleteShader(vs);if(fs)gl.deleteShader(fs);return null;}
   const program=gl.createProgram();
@@ -88,15 +89,15 @@ export function mountOrbit(canvas:HTMLCanvasElement,mode:OrbitMode):MountedOrbit
     const width=Math.max(2,Math.round(rect.width*dpr)),height=Math.max(2,Math.round(rect.height*dpr));
     if(w===width&&h===height)return;
     w=width;h=height;canvas.width=width;canvas.height=height;
-    gl.viewport(0,0,width,height);gl.uniform2f(uniforms.size,width,height);gl.uniform1f(uniforms.dpr,dpr);
+    context.viewport(0,0,width,height);context.uniform2f(uniforms.size,width,height);context.uniform1f(uniforms.dpr,dpr);
   }
   function render(now:number){
-    if(!running||gl.isContextLost())return;
-    resize();gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform1f(uniforms.time,(now-start)*.001);
-    gl.uniform1f(uniforms.scroll,scroll);gl.uniform1f(uniforms.pointer,pointer);
-    for(let i=0;i<3;i++)gl.drawArrays(gl.LINE_STRIP,i*(SEG+1),SEG+1);
-    gl.drawArrays(gl.POINTS,3*(SEG+1),STARS);
+    if(!running||context.isContextLost())return;
+    resize();context.clearColor(0,0,0,0);context.clear(context.COLOR_BUFFER_BIT);
+    context.uniform1f(uniforms.time,(now-start)*.001);
+    context.uniform1f(uniforms.scroll,scroll);context.uniform1f(uniforms.pointer,pointer);
+    for(let i=0;i<3;i++)context.drawArrays(context.LINE_STRIP,i*(SEG+1),SEG+1);
+    context.drawArrays(context.POINTS,3*(SEG+1),STARS);
     raf=requestAnimationFrame(render);
   }
   resize();raf=requestAnimationFrame(render);
@@ -105,8 +106,8 @@ export function mountOrbit(canvas:HTMLCanvasElement,mode:OrbitMode):MountedOrbit
     resize,
     dispose(){
       running=false;cancelAnimationFrame(raf);
-      gl.disableVertexAttribArray(attr);gl.deleteBuffer(buffer);gl.deleteProgram(program);
-      gl.deleteShader(vs);gl.deleteShader(fs);canvas.width=canvas.height=1;
+      context.disableVertexAttribArray(attr);context.deleteBuffer(buffer);context.deleteProgram(program);
+      context.deleteShader(vs);context.deleteShader(fs);canvas.width=canvas.height=1;
     }
   };
 }

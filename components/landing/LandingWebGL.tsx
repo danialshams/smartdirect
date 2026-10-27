@@ -7,10 +7,11 @@ export function LandingWebGL({mode}:{mode:OrbitMode}){
     const canvas=ref.current;
     if(!canvas||!canvas.parentElement)return;
     const stage=canvas.parentElement;
+    const activeCanvas: HTMLCanvasElement = canvas;
     const reduce=window.matchMedia("(prefers-reduced-motion: reduce)");
     const net=navigator as Navigator&{connection?:{saveData?:boolean}};
     if(reduce.matches||net.connection?.saveData)return;
-    let instance:MountedOrbit|null=null,alive=true,loading=false,scrollFrame=0;
+    let instance:MountedOrbit|null=null,alive=true,loading=false,visible=false,scrollFrame=0;
     let observer:IntersectionObserver|undefined,resizeObserver:ResizeObserver|undefined;
     let pointer=0;
     function update(){
@@ -27,12 +28,12 @@ export function LandingWebGL({mode}:{mode:OrbitMode}){
       onScroll();
     }
     async function start(){
-      if(!alive||loading||instance||reduce.matches)return;
+      if(!alive||!visible||loading||instance||reduce.matches)return;
       loading=true;
       try{
         const {mountOrbit}=await import("./glOrbits");
-        if(!alive||!canvas.isConnected)return;
-        instance=mountOrbit(canvas,mode);
+        if(!alive||!visible||!activeCanvas.isConnected)return;
+        instance=mountOrbit(activeCanvas,mode);
         if(instance){
           stage.classList.add("dl-webgl-active");
           window.addEventListener("scroll",onScroll,{passive:true});
@@ -43,6 +44,7 @@ export function LandingWebGL({mode}:{mode:OrbitMode}){
       finally{loading=false;}
     }
     function stop(){
+      if(scrollFrame){cancelAnimationFrame(scrollFrame);scrollFrame=0;}
       instance?.dispose();instance=null;
       stage.classList.remove("dl-webgl-active");
       window.removeEventListener("scroll",onScroll);
@@ -52,8 +54,10 @@ export function LandingWebGL({mode}:{mode:OrbitMode}){
     const restored=()=>{if(alive)void start();};
     const visibility=()=>{
       if(document.hidden)stop();
-      else {const box=stage.getBoundingClientRect();if(box.top<innerHeight&&box.bottom>0)void start();}
+      else if(visible)void start();
     };
+    const onMotionChange=()=>{if(reduce.matches)stop();else if(visible)void start();};
+    reduce.addEventListener("change",onMotionChange);
     canvas.addEventListener("webglcontextlost",lost);
     canvas.addEventListener("webglcontextrestored",restored);
     document.addEventListener("visibilitychange",visibility);
@@ -63,12 +67,14 @@ export function LandingWebGL({mode}:{mode:OrbitMode}){
     }
     if("IntersectionObserver" in window){
       observer=new IntersectionObserver(([entry])=>{
-        if(entry.isIntersecting)void start(); else stop();
+        visible=entry.isIntersecting;
+        if(visible)void start(); else stop();
       },{rootMargin:"100px 0px 100px 0px"});
       observer.observe(stage);
-    }else void start();
+    }else {visible=true;void start();}
     return ()=>{
       alive=false;observer?.disconnect();resizeObserver?.disconnect();
+      reduce.removeEventListener("change",onMotionChange);
       document.removeEventListener("visibilitychange",visibility);
       canvas.removeEventListener("webglcontextlost",lost);
       canvas.removeEventListener("webglcontextrestored",restored);

@@ -14,6 +14,7 @@ export function LandingMotion() {
     if (!root) return;
     const sections = SCENES.map((id) => document.getElementById(id)).filter((x): x is HTMLElement => Boolean(x));
     const links = Array.from(document.querySelectorAll<HTMLAnchorElement>("[data-progress-for]"));
+    const mobileMenu = root.querySelector<HTMLDetailsElement>(".dl-mobile-menu");
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let frame = 0;
     let observer: IntersectionObserver | undefined;
@@ -62,10 +63,19 @@ export function LandingMotion() {
       sections.forEach((section) => observer?.observe(section));
     } else sections.forEach((section) => section.classList.add("dl-in-view"));
 
+    const onMenuClick = (event: MouseEvent) => {
+      const target=event.target;
+      if(target instanceof Element && target.closest("a") && mobileMenu?.contains(target)) mobileMenu.open=false;
+    };
+    const onKeyDown = (event: KeyboardEvent) => {if(event.key==="Escape"&&mobileMenu?.open)mobileMenu.open=false;};
+    mobileMenu?.addEventListener("click",onMenuClick);
+    document.addEventListener("keydown",onKeyDown);
     sync();
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule, { passive: true });
     return () => {
+      mobileMenu?.removeEventListener("click",onMenuClick);
+      document.removeEventListener("keydown",onKeyDown);
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
       if (frame) window.cancelAnimationFrame(frame);
