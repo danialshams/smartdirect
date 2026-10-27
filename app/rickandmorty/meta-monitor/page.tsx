@@ -79,8 +79,7 @@ export default function MetaMonitorPage(){
       <span className="adm-help"><CalendarClock size={15}/> {date(n.publishedAt)}</span>
      </div>
      <h2>{n.titleFa}</h2>
-     <p className="adm-meta-feature"><strong>بخش مرتبط:</strong> {n.category}</p>
-     {scope==="current"?<>
+      {scope==="current"?<>
       {n.summaryFa.startsWith("چه چیزی در مستندات Meta")?
        <details className="adm-meta-explanation" open={translatedNow===n.id}><summary>مشاهده توضیح فارسی این تغییر</summary><div className="adm-meta-translation">{n.summaryFa}</div></details>:
        <div className="adm-meta-translation-pending">
@@ -117,7 +116,7 @@ export default function MetaMonitorPage(){
   </AdminSection>
   <AdminSection title="سلامت منابع رسمی" description="اگر دسترسی یک منبع قطع شود، وضعیت آن به‌صورت شفاف نمایش داده می‌شود">
    <AdminPanel><details className="adm-meta-source-collapse"><summary><BellRing size={18}/> مشاهده وضعیت منابع</summary>
-    {data?.sources.length?data.sources.map(s=><div key={s.id} className="adm-meta-source"><div><strong>{s.label}</strong><small className="adm-help">آخرین موفقیت: {s.lastSuccessAt?new Date(s.lastSuccessAt).toLocaleString("fa-IR"):"هنوز نامشخص"}</small></div>
+    {data?.sources.length?data.sources.map(s=><div key={s.id} className="adm-meta-source"><div className="adm-entity-title"><strong>{s.label}</strong><small>آخرین بررسی موفق: {s.lastSuccessAt?new Date(s.lastSuccessAt).toLocaleString("fa-IR"):"نامشخص"}</small></div>
      <span className="adm-state" data-state={s.lastError?"URGENT":"ACTIVE"}>{s.lastError?"خطا در دریافت":"موفق"}</span>{s.lastError&&<p className="adm-help">{s.lastError}</p>}
     </div>):<p className="adm-help">هنوز منبعی بررسی نشده است.</p>}
    </details></AdminPanel>

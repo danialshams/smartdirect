@@ -58,3 +58,16 @@ assert(css.includes(".adm-mobile-menu{position:absolute;top:calc(")&&css.include
 assert(shell.includes('aria-label="منوی مدیریت"')&&shell.includes('aria-expanded={menu}'),"Corner menu must expose expanded state");
 assert(read("app/rickandmorty/monitoring/page.tsx").includes('href="/rickandmorty/queue"'),"Recovery should stay in admin navigation");
 console.log("ADMIN_ALL_MOBILE_SECTIONS_CORNER_MENU_OK");
+
+
+const dataView=read("components/admin/AdminDataView.tsx");
+for(const marker of ["adm-info-grid","adm-info-cell","adm-action-area","adm-entity-row","adm-mini-metrics"])assert(css.includes(marker),"New admin information pattern missing: "+marker);
+for(const primitive of ["AdminInfoGrid","AdminInfo","AdminCardHeader","AdminActionArea","AdminMetrics","AdminListItem"])assert(dataView.includes("function "+primitive),"Missing data layout primitive: "+primitive);
+const detail=read("app/rickandmorty/users/[id]/page.tsx");
+assert(detail.includes('labels={["حساب","اشتراک","پیج‌ها","پشتیبانی","سوابق"]}'),"User detail must have five distinct working areas");
+assert(detail.includes('title="ویرایش شماره"')&&detail.includes('title="دسترسی حساب"')&&detail.includes('title="تغییر پلن و اعتبار"'),"Sensitive actions and forms must have independent cards");
+assert(detail.includes('title="مشخصات"')&&detail.includes("AdminInfoGrid"),"User metadata must be in a structured data grid");
+for(const path of ["app/rickandmorty/tickets/page.tsx","app/rickandmorty/coupons/page.tsx","app/rickandmorty/sms/page.tsx","app/rickandmorty/queue/page.tsx","app/rickandmorty/audit/page.tsx","app/rickandmorty/monitoring/page.tsx"])assert(read(path).includes("AdminInfoGrid"),"Long inline metadata not separated on "+path);
+assert(tabs.includes("ArrowLeft")&&tabs.includes("ArrowRight")&&tabs.includes("Home")&&tabs.includes("End"),"Mobile tabs require keyboard navigation");
+assert(css.includes(".adm-mobile-menu{position:absolute;top:calc("),"Mobile admin menu must remain corner-anchored");
+console.log("ADMIN_V2_ALL_DATA_CARDS_OPERATIONS_SECTIONED_OK");
