@@ -565,3 +565,42 @@ a.adm-ticket-row:hover{border-color:var(--adm-primary)}
  .adm-meta-stats{grid-template-columns:1fr}
  .adm-identity-aside .adm-state{font-size:10px}
 }
+
+/* Admin v2 page-level finishing: visual controls, compact row metadata and strong card rhythm */
+.adm-check-option{display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid var(--adm-border);border-radius:12px;font-size:13px;cursor:pointer}
+.adm-check-option>span{display:grid;gap:2px}.adm-check-option small{font-size:11px;color:var(--adm-muted)}
+.adm-coupon-card{display:grid;gap:14px;align-content:start}
+.adm-coupon-card>.adm-card-heading{margin:0}
+.adm-coupon-value{font-size:25px;font-weight:900;color:var(--adm-primary)}
+.adm-card-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid var(--adm-border);margin-top:15px}
+.adm-coupon-card>.adm-card-actions{margin-top:0}
+.adm-ticket-summary{margin-top:3px}
+.adm-ticket-row-footer{display:flex;justify-content:space-between;align-items:center;color:var(--adm-muted);font-size:11px}
+.adm-ticket-settings{display:grid;gap:12px;margin-top:16px}
+.adm-shortcut-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.adm-shortcut-tile{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:69px;padding:13px 16px;border:1px solid var(--adm-border);border-radius:13px;font-weight:800;font-size:13px;background:#fff}
+.adm-shortcut-tile:hover,.adm-record-link:hover{border-color:var(--adm-primary);background:var(--adm-primary-soft)}
+.adm-shortcut-tile svg{color:var(--adm-primary)}
+.adm-row-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.adm-row-meta small{overflow-wrap:anywhere;font-size:11px;color:var(--adm-muted)}
+.adm-draft-excerpt{overflow-wrap:anywhere;white-space:pre-wrap;max-height:120px;overflow:auto}
+.adm-user-sub{display:grid;gap:1px}.adm-user-sub strong{color:var(--adm-ink);font-size:12px}.adm-user-sub small{color:var(--adm-muted);font-size:10px}
+.adm-service-card{display:grid;gap:12px;align-content:start}
+.adm-service-card>.adm-card-heading{margin:0}
+.adm-service-card>.adm-card-heading svg{color:var(--adm-primary)}
+.adm-service-status{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.adm-service-status small{color:var(--adm-muted)}
+.adm-service-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.adm-service-grid .adm-panel{margin:0}
+@media(max-width:1100px){.adm-service-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){
+ .adm-shortcut-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .adm-shortcut-tile{min-height:59px;padding:11px;font-size:12px}
+ .adm-card-actions{justify-content:stretch}
+ .adm-card-actions>.adm-btn{width:100%}
+ .adm-coupon-value{font-size:21px}
+ .adm-root .adm-service-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .adm-service-card{padding:12px}
+ .adm-service-card .adm-card-heading h3{font-size:12px}
+ .adm-service-card .adm-state{font-size:10px}
+}

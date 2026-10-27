@@ -47,13 +47,14 @@ export default function UsersPage(){
  return <div><AdminHeading title="کاربران" description="مدیریت اشتراک، دسترسی و فعالیت هر کاربر"/>
  {error&&<AdminAlert onClose={()=>setError("")}>{error}</AdminAlert>}
  {result&&<AdminAlert kind={result.failed?"warning":"success"} onClose={()=>setResult(null)}>نتیجه عملیات: {result.succeeded} موفق، {result.failed} ناموفق از {result.processed} کاربر. {result.results.filter(x=>!x.success).slice(0,2).map(x=>x.message).join("؛ ")}</AdminAlert>}
- <AdminMobileSections labels={["فهرست کاربران","فیلتر و عملیات"]}>
+ <AdminMobileSections labels={["کاربران","فیلترها","عملیات گروهی"]}>
  <AdminSection title="فهرست کاربران" description="انتخاب حساب‌ها و مدیریت مستقل یا گروهی">
  {count>0&&<div className="adm-mobile-selection-bar"><strong>{count.toLocaleString("fa-IR")} کاربر انتخاب‌شده</strong><div className="adm-btn-row"><AdminButton onClick={()=>setModal(true)}><WandSparkles size={16}/> عملیات گروهی</AdminButton><AdminButton kind="secondary" onClick={()=>void exportCsv()}><Download size={16}/> خروجی CSV</AdminButton></div></div>}
  {loading&&rows.length===0?<AdminSpinner/>:<div className="adm-user-grid">{rows.map(u=><AdminUserCard key={u.id} u={u} href={"/rickandmorty/users/"+u.id} selected={chosen(u.id)} onSelect={v=>toggle(u.id,v)}/>)}</div>}
  {!loading&&rows.length===0&&<AdminPanel><p className="adm-muted">کاربری با این مشخصات پیدا نشد.</p></AdminPanel>}
  <AdminPagination page={page} total={total} onChange={setPage}/></AdminSection>
- <AdminSection title="جست‌وجو و فیلتر" description="ابتدا کاربران مورد نظر را پیدا کنید؛ سپس عملیات را انجام دهید"><AdminPanel><AdminFilters value={filters} onChange={changeFilters}/><div className="adm-select-toolbar"><div className="adm-btn-row">
+ <AdminSection title="جست‌وجو و فیلتر" description="نمایش کاربران بر اساس اطلاعات حساب"><AdminPanel><AdminFilters value={filters} onChange={changeFilters}/></AdminPanel></AdminSection>
+ <AdminSection title="عملیات گروهی" description="کاربران را انتخاب و سپس عملیات مورد نیاز را اجرا کنید"><AdminPanel><div className="adm-select-toolbar"><div className="adm-btn-row">
   <AdminButton kind="secondary" onClick={()=>{const ids=rows.map(x=>x.id);if(ids.every(id=>chosen(id)))ids.forEach(id=>toggle(id,false));else ids.forEach(id=>toggle(id,true));}} disabled={!rows.length}>انتخاب صفحه</AdminButton>
   {!all&&<AdminButton kind="secondary" disabled={!total} onClick={()=>{setAll(true);setSelected([]);setExcluded([]);}}>{`انتخاب همه نتایج (${total.toLocaleString("fa-IR")})`}</AdminButton>}
   {count>0&&<AdminButton kind="ghost" onClick={()=>{setSelected([]);setExcluded([]);setAll(false);}}>لغو انتخاب‌ها</AdminButton>}

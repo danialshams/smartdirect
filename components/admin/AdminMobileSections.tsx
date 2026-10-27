@@ -14,7 +14,7 @@ export default function AdminMobileSections({ labels, children, initial=0 }: {
         aria-controls={key+"-panel-"+i} aria-selected={active===i}
         tabIndex={active===i?0:-1}
         className={"adm-section-tab "+(active===i?"is-active":"")}
-        onClick={()=>setActive(i)}>{labels[i]||"بخش "+(i+1).toLocaleString("fa-IR")}</button>)}
+        onClick={()=>setActive(i)} onKeyDown={event=>{if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;event.preventDefault();const next=event.key==="Home"?0:event.key==="End"?sections.length-1:(i+(event.key==="ArrowLeft"?1:-1)+sections.length)%sections.length;setActive(next);document.getElementById(key+"-tab-"+next)?.focus();}}>{labels[i]||"بخش "+(i+1).toLocaleString("fa-IR")}</button>)}
     </div>
     <div className="adm-responsive-panels">
       {sections.map((section,i)=><div key={i} id={key+"-panel-"+i}

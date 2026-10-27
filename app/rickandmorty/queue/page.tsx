@@ -1,6 +1,7 @@
 "use client";
 import { useCallback,useEffect,useState } from "react";
 import { AlertTriangle,RefreshCw,RotateCcw } from "lucide-react";
+import {AdminInfoGrid,AdminInfo} from "@/components/admin/AdminDataView";
 import AdminMobileSections from "@/components/admin/AdminMobileSections";
 import { AdminAlert,AdminButton,AdminHeading,AdminPanel,AdminSection,AdminSpinner } from "@/components/admin/AdminWidgets";
 
@@ -35,10 +36,9 @@ export default function AdminQueuePage(){
     {loading&&!snapshot?<AdminSpinner/>:!snapshot?<AdminPanel><p className="adm-muted">اطلاعات صف در دسترس نیست.</p></AdminPanel>:snapshot.data.length?
      <div className="adm-ticket-list">{snapshot.data.map(job=><AdminPanel key={job.id}>
       <div className="adm-ticket-row-top"><strong>{job.type}</strong><span className="adm-state" data-state="URGENT">ناموفق</span></div>
-      <p className="adm-help" dir="ltr" style={{overflowWrap:"anywhere"}}>{job.jobId}</p>
+      <AdminInfoGrid><AdminInfo label="شناسه کار" wide dir="ltr">{job.jobId}</AdminInfo><AdminInfo label="تلاش‌ها">{job.attempts.toLocaleString("fa-IR")} از {job.maxAttempts.toLocaleString("fa-IR")}</AdminInfo><AdminInfo label="زمان خطا">{new Date(job.failedAt).toLocaleString("fa-IR")}</AdminInfo></AdminInfoGrid>
       <details className="adm-meta-original-details"><summary>مشاهده خطای پردازش</summary><p className="adm-help" style={{overflowWrap:"anywhere"}}>{job.lastError}</p></details>
-      <div className="adm-ticket-row-top"><small className="adm-help">تلاش {job.attempts.toLocaleString("fa-IR")} از {job.maxAttempts.toLocaleString("fa-IR")} · {new Date(job.failedAt).toLocaleString("fa-IR")}</small>
-      <AdminButton kind="secondary" disabled={!!retrying} onClick={()=>void retry(job.id)}><RotateCcw size={16}/>{retrying===job.id?"در حال ثبت…":"تلاش مجدد"}</AdminButton></div>
+      <div className="adm-card-actions"><AdminButton kind="secondary" disabled={!!retrying} onClick={()=>void retry(job.id)}><RotateCcw size={16}/>{retrying===job.id?"در حال ثبت…":"تلاش مجدد"}</AdminButton></div>
      </AdminPanel>)}</div>:
      <AdminPanel><div className="adm-empty"><AlertTriangle size={26}/><strong>کار ناموفقی ثبت نشده است</strong></div></AdminPanel>}
    </AdminSection>
