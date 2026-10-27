@@ -45,3 +45,16 @@ assert(logoMesh.includes("!visible(x, y + 1)")&&logoMesh.includes("!visible(x + 
 assert(gpu.includes("getLogoMesh")&&gpu.includes("context.drawArrays(context.TRIANGLES"),"WebGL must render actual 3D mesh");
 assert(gpu.includes("logoReady")&&glClient.includes("dl-logo-ready"),"Preserve logo fallback until mesh is ready");
 assert(gpu.includes("1000/30"),"Mobile rendering must be capped");
+
+const logoMesh=readFileSync("components/landing/glLogoMesh.ts","utf8");
+assert(logoMesh.includes("/daira-header-logo-hd.webp"),"The 3D mesh must use approved artwork");
+assert(logoMesh.includes("pixels[i * 4 + 3]"),"Silhouette must be alpha-based");
+assert(logoMesh.includes("!visible(x, y + 1)")&&logoMesh.includes("!visible(x + 1, y)"),"The logo walls must have depth");
+assert(gpu.includes("getLogoMesh")&&gpu.includes("context.drawArrays(context.TRIANGLES"),"The 3D mesh must render on GPU");
+assert(gpu.includes("logoReady")&&glClient.includes("dl-logo-ready"),"Keep a static logo until 3D is ready");
+assert(motion.includes("--dl-scene")&&motion.includes("layouts = sections.map"),"Scroll must drive all stages without layout thrashing");
+assert(styles.includes('data-active-scene="workspace"'),"The light header must be readable");
+assert(styles.includes(".dl-glass-transition::after"),"Transition must track scroll");
+assert(gpu.includes("depth:true"),"Real 3D mesh requires depth buffer");
+assert(glClient.includes("deviceMemory"),"Low-memory devices need a fallback");
+console.log("Daira cinematic scroll, WebGL silhouette and mobile gates PASS");

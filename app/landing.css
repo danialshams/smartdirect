@@ -235,3 +235,33 @@
 .dl-logo-ready .dl-core-body::before{opacity:0}
 .dl-logo-ready .dl-core-body{pointer-events:none}
 .dl-logo-ready .dl-core-glow{opacity:.65}
+/* Storyboard camera offsets: GPU-composited, no layout motion. */
+@media (min-width:801px) and (prefers-reduced-motion:no-preference){
+ .dl-automation-visual .dl-message--input{translate:0 calc(var(--dl-drift,0px) * -.25)}
+ .dl-automation-visual .dl-message--output{translate:0 calc(var(--dl-drift,0px) * .25)}
+ .dl-publish-post--1{translate:0 calc(var(--dl-drift,0px) * -.5)}
+ .dl-publish-post--2{translate:0 calc(var(--dl-drift,0px) * .4)}
+ .dl-publish-post--3{translate:0 calc(var(--dl-drift,0px) * -.2)}
+ .dl-publish-calendar{translate:0 calc(var(--dl-drift,0px) * .2)}
+ .dl-glass-panels span{translate:0 calc(var(--dl-drift,0px) * -.15)}
+ .dl-dashboard-preview{translate:0 calc(var(--dl-drift,0px) * .12)}
+}
+.dl-glass-transition::after{
+ content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+ background:radial-gradient(circle at 54% 42%,#ffffff91,#ffffff44 39%,transparent 72%);
+ opacity:clamp(.1,calc(var(--dl-scene,.4)*1.1),.9);
+}
+.daira-landing[data-active-scene="workspace"] .dl-header{
+ background:rgba(250,252,255,.88);border-bottom:1px solid rgba(199,216,239,.85);
+ box-shadow:0 3px 20px #1c4d7b12;
+}
+.daira-landing[data-active-scene="workspace"] .dl-header .dl-brand,
+.daira-landing[data-active-scene="workspace"] .dl-header .dl-nav a,
+.daira-landing[data-active-scene="workspace"] .dl-header .dl-login,
+.daira-landing[data-active-scene="workspace"] .dl-header .dl-mobile-menu summary{color:#18233c}
+.daira-landing[data-active-scene="workspace"] .dl-header .dl-mobile-menu nav a{color:#fff}
+.daira-landing[data-active-scene="workspace"] .dl-progress a{color:#2f61fd}
+.daira-landing[data-active-scene="workspace"] .dl-progress i{background:#e9f0ff;border-color:#6d99ff}
+.daira-landing[data-active-scene="workspace"] .dl-progress a[aria-current] i{background:#2f61fd}
+@media (max-width:800px){.dl-glass-transition::after{opacity:.45}.dl-glass-panels span{backdrop-filter:none;-webkit-backdrop-filter:none}}
+@media (prefers-reduced-motion:reduce){.dl-glass-transition::after{opacity:.42}}
