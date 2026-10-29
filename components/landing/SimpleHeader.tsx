@@ -76,6 +76,7 @@ export function RevealOnScroll() {
       elements.forEach(el=>el.classList.add("sh-is-visible"));
       return;
     }
+    document.documentElement.classList.add("sh-animations-ready");
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry=>{
         if (entry.isIntersecting) {
@@ -85,7 +86,7 @@ export function RevealOnScroll() {
       });
     }, { threshold: 0.06, rootMargin: "0px 0px -18px 0px" });
     elements.forEach(el=>observer.observe(el));
-    return ()=>observer.disconnect();
+    return ()=>{observer.disconnect();document.documentElement.classList.remove("sh-animations-ready");};
   }, []);
   return null;
 }
