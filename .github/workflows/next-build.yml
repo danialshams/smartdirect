@@ -16,7 +16,7 @@ on:
       - "tsconfig.json"
       - ".github/workflows/**"
   push:
-    branches: [master]
+    branches: [master, feature/daira-simple-home-20261029]
     paths:
       - "app/**"
       - "components/**"
