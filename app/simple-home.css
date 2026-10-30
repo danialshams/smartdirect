@@ -737,7 +737,7 @@
   .sh-header__inner {justify-content:flex-start}
   .sh-header .sh-nav,.sh-header__actions {display:none}
   .sh-header .sh-brand {order:0;margin:0}
-  .sh-menu-toggle {order:-1;margin:0 auto 0 0;background:transparent!important;border:0!important}
+  .sh-menu-toggle {order:-1;margin:0;background:transparent!important;border:0!important}
   .sh-menu-panel {
     position:fixed;top:50%;left:50%;right:auto;z-index:120;
     width:min(385px,calc(100vw - 36px));
