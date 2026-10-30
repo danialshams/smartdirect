@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { SimpleHeader } from "../components/landing/SimpleHeader";
 import { HeroMotion } from "../components/landing/HeroMotion";
+import { LandingGlass } from "../components/landing/LandingGlass";
 import "./simple-home.css";
 
 export const metadata: Metadata = {
@@ -135,8 +136,8 @@ function DirectInboxPreview() {
         </div>
         </div>
       </div>
-      <div className="sh-inbox-float sh-inbox-float--new" data-hero-float><span className="sh-inbox-float__inner"><span className="sh-inbox-float__icon"><MessageCircle size={18}/></span><span><strong>پیام جدید</strong><small>قیمت این محصول چنده؟</small></span></span></div>
-      <div className="sh-inbox-float sh-inbox-float--sent" data-hero-float><span className="sh-inbox-float__inner"><CheckCircle2 size={18}/><strong>پاسخ خودکار آماده شد</strong></span></div>
+      <div className="sh-inbox-float sh-inbox-float--new" data-hero-float><LandingGlass className="sh-inbox-float__inner"><span className="sh-inbox-float__icon"><MessageCircle size={18}/></span><span><strong>پیام جدید</strong><small>قیمت این محصول چنده؟</small></span></LandingGlass></div>
+      <div className="sh-inbox-float sh-inbox-float--sent" data-hero-float><LandingGlass className="sh-inbox-float__inner"><CheckCircle2 size={18}/><strong>پاسخ خودکار آماده شد</strong></LandingGlass></div>
     </div>
   );
 }
@@ -164,6 +165,7 @@ function ConversationPreview() {
 export default function Home() {
   return (
     <div className="sh-site" dir="rtl" id="top">
+      <div className="sh-optics-backdrop" id="sh-optics-backdrop" aria-hidden="true"><span className="sh-optics-orb sh-optics-orb--one" /><span className="sh-optics-orb sh-optics-orb--two" /></div>
       <SimpleHeader />
       <a className="sh-skip" href="#content">رفتن به محتوای صفحه</a>
       <main id="content">
@@ -171,9 +173,9 @@ export default function Home() {
           <HeroMotion />
           <div className="sh-container sh-hero__grid">
             <div className="sh-hero__copy">
-              <span className="sh-hero__eyebrow" data-hero-entrance><Sparkles size={15} aria-hidden="true" /> مدیریت هوشمند دایرکت</span>
-              <h1 id="sh-hero-title" data-hero-entrance>دایرکت‌هات رو <span>بسپار به دایرا.</span></h1>
-              <p className="sh-hero__description" data-hero-entrance>پاسخ‌های خودکار رو تنظیم کن و گفتگوهای پیجت رو از یک پنل ساده مدیریت کن.</p>
+              <span className="sh-hero__eyebrow" data-hero-entrance><Sparkles size={15} aria-hidden="true" /> دستیار تعاملات اینستاگرام</span>
+              <h1 id="sh-hero-title" data-hero-entrance>دایرکت‌هات رو <span>با دایرا مدیریت کن.</span></h1>
+              <p className="sh-hero__description" data-hero-entrance>از پاسخ به کامنت تا صندوق دایرکت؛ همه تعاملات پیجت در یک فضای ساده و منظم.</p>
               <div className="sh-actions" data-hero-entrance>
                 <Link className="sh-button sh-button--primary" href="/login">شروع با دایرا <ArrowUpLeft size={18}/></Link>
                 <a className="sh-button sh-button--ghost" href="#features">مشاهده امکانات <ArrowLeft size={17}/></a>
