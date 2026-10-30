@@ -255,3 +255,187 @@
   .sh-site *, .sh-site *::before, .sh-site *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important}
   .sh-animations-ready .sh-reveal:not(.sh-is-visible) {opacity:1;transform:none}
 }
+
+
+/* Header and first-fold redesign: iOS-like liquid glass, not a global dashboard change. */
+.sh-header {position:sticky;top:12px;margin-top:12px;z-index:100;background:transparent;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+.sh-header__inner {
+  position:relative;isolation:isolate;min-height:68px;gap:30px;padding:8px 16px 8px 12px;
+  border:1px solid rgba(255,255,255,.75);border-radius:21px;
+  background:linear-gradient(135deg,rgba(255,255,255,.77),rgba(245,249,255,.55) 55%,rgba(255,255,255,.68));
+  -webkit-backdrop-filter:blur(25px) saturate(190%);backdrop-filter:blur(25px) saturate(190%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.35),0 14px 42px rgba(37,65,115,.095),0 2px 8px rgba(37,65,115,.04);
+}
+.sh-header__inner::before {content:"";position:absolute;inset:1px 16px auto;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);pointer-events:none}
+.sh-header .sh-brand {flex:none}
+.sh-header .sh-nav {margin-inline:auto;gap:30px}
+.sh-header .sh-nav a {font-size:12px;font-weight:800;color:var(--daira-text-secondary)}
+.sh-header .sh-nav a:hover {color:var(--daira-primary)}
+.sh-header__actions {flex:none;margin:0;gap:18px}
+.sh-header__login {padding:9px 5px;font-weight:800}
+.sh-header__start {min-height:39px;padding-inline:17px;border-radius:12px}
+.sh-menu-toggle {flex:none}
+.sh-menu-backdrop {
+  position:fixed;inset:0;z-index:110;width:100%;height:100dvh;border:0;border-radius:0;padding:0;
+  background:rgba(25,43,77,.23);-webkit-backdrop-filter:blur(0px);backdrop-filter:blur(0px);
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .38s ease,visibility .38s,-webkit-backdrop-filter .38s ease,backdrop-filter .38s ease;
+}
+.sh-menu-backdrop--open {opacity:1;visibility:visible;pointer-events:auto;-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
+.sh-menu-panel {
+  position:fixed;top:91px;right:16px;z-index:120;
+  width:min(355px,calc(100vw - 32px));max-height:calc(100dvh - 110px);overflow:auto;
+  padding:18px;gap:16px;
+  border-radius:26px;border:1px solid rgba(255,255,255,.82);
+  background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(239,245,255,.72));
+  -webkit-backdrop-filter:blur(30px) saturate(190%);backdrop-filter:blur(30px) saturate(190%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.95),0 28px 80px rgba(27,47,87,.2),0 3px 14px rgba(27,47,87,.1);
+  opacity:0;visibility:hidden;pointer-events:none;transform:translate3d(27px,-9px,0) scale(.965);
+  transform-origin:top right;transition:opacity .4s cubic-bezier(.16,1,.3,1),transform .5s cubic-bezier(.16,1,.3,1),visibility .4s;
+  will-change:transform,opacity;
+}
+.sh-menu-panel--open {opacity:1;visibility:visible;pointer-events:auto;transform:translate3d(0,0,0) scale(1)}
+.sh-menu-panel__head {padding:2px 2px 8px;font-size:14px}
+.sh-menu-panel__head button {width:35px;height:35px;border-radius:50%;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.7)}
+.sh-menu-panel nav {display:grid;gap:5px}
+.sh-menu-panel nav a {background:rgba(255,255,255,.26);border:1px solid transparent;border-radius:14px;padding:13px;font-size:13px;transition:background .2s,border-color .2s,opacity .36s,transform .42s cubic-bezier(.2,.75,.25,1)}
+.sh-menu-panel nav a:hover {background:rgba(255,255,255,.64);border-color:rgba(255,255,255,.8)}
+.sh-menu-panel:not(.sh-menu-panel--open) nav a {opacity:0;transform:translateX(10px)}
+.sh-menu-panel--open nav a {opacity:1;transform:none}
+.sh-menu-panel--open nav a:nth-child(1) {transition-delay:.06s}
+.sh-menu-panel--open nav a:nth-child(2) {transition-delay:.11s}
+.sh-menu-panel--open nav a:nth-child(3) {transition-delay:.16s}
+.sh-menu-panel__start {border-radius:14px}
+.sh-menu-panel__login {display:block;text-align:center;padding:9px;font-weight:800;font-size:12px;color:var(--daira-heading)}
+.sh-menu-panel__legal {font-size:11px;margin-top:0;border-color:rgba(130,150,190,.16);justify-content:center}
+
+/* Minimal floating inbox illustration: drawn from UI elements, no stock mockups. */
+.sh-hero {
+  position:relative;overflow:clip;
+  background:radial-gradient(ellipse 38% 48% at 18% 50%,rgba(208,227,255,.48),transparent 90%),linear-gradient(150deg,#fff 30%,var(--daira-brand-50));
+}
+.sh-hero__grid {grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:34px;min-height:620px;padding-block:64px 82px}
+.sh-hero__copy {z-index:2}
+.sh-hero__eyebrow {padding:9px 14px;background:rgba(239,245,255,.7);border-color:rgba(172,199,253,.43);font-size:11px}
+.sh-hero h1 {font-size:clamp(42px,4.2vw,63px);letter-spacing:-.9px;line-height:1.54;max-width:580px;margin-block:20px 16px}
+.sh-hero__description {font-size:15px!important;line-height:2.05!important;max-width:440px!important}
+.sh-hero .sh-actions {margin-top:29px;gap:11px}
+.sh-hero .sh-button--ghost {background:rgba(255,255,255,.7);border-color:rgba(200,213,235,.82)}
+.sh-inbox-stage {position:relative;min-width:0;padding:45px 18px 51px 38px;isolation:isolate}
+.sh-inbox-aura {position:absolute;inset:5% 4% 5% 9%;border-radius:50%;background:radial-gradient(ellipse,rgba(97,146,255,.25),rgba(210,230,255,.05) 65%,transparent 75%);filter:blur(24px);z-index:-1;pointer-events:none}
+.sh-inbox-stage__float {animation:sh-inbox-hover 8s ease-in-out infinite;will-change:transform}
+.sh-inbox-window {background:rgba(255,255,255,.96);border:1px solid rgba(218,229,246,.96);border-radius:23px;overflow:hidden;box-shadow:0 30px 75px rgba(41,73,128,.14),0 4px 18px rgba(27,58,115,.06),inset 0 1px rgba(255,255,255,.95)}
+.sh-inbox-topbar {height:52px;display:flex;justify-content:space-between;align-items:center;padding:0 17px;border-bottom:1px solid #edf1f8}
+.sh-inbox-topbrand {display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:900}
+.sh-inbox-topbrand svg {color:var(--daira-primary)}
+.sh-inbox-demo-label {font-size:10px;color:#5473a8;background:#f1f6ff;border:1px solid #e4edff;border-radius:999px;padding:6px 10px}
+.sh-inbox-body {display:grid;grid-template-columns:154px minmax(0,1fr);height:323px}
+.sh-inbox-threads {min-width:0;background:#fbfcff;border-left:1px solid #edf1f8;padding:13px 9px}
+.sh-inbox-threads__title {display:flex;align-items:center;justify-content:space-between;gap:5px;padding:0 5px 13px;font-size:11px}
+.sh-inbox-threads__title svg {color:#9ba9c0}
+.sh-inbox-thread {min-width:0;display:flex;gap:7px;align-items:center;padding:10px 7px;border-radius:11px;position:relative}
+.sh-inbox-thread--selected {background:#eff4ff}
+.sh-inbox-thread>span:nth-child(2) {display:flex;flex-direction:column;gap:5px;min-width:0}
+.sh-inbox-thread strong {font-size:10px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh-inbox-thread small {font-size:9px;color:#8b99ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh-inbox-thread i {position:absolute;left:6px;top:13px;width:6px;height:6px;background:var(--daira-primary);border-radius:50%}
+.sh-inbox-avatar {width:30px;height:30px;display:grid;place-items:center;flex:none;font-size:11px;font-weight:850;border-radius:50%}
+.sh-inbox-avatar--blue {color:#3159c9;background:#dce8ff}
+.sh-inbox-avatar--pink {color:#b85b8e;background:#ffe6f1}
+.sh-inbox-avatar--violet {color:#7f64c4;background:#ece4ff}
+.sh-inbox-chat {min-width:0;display:flex;flex-direction:column;background:#fff}
+.sh-inbox-chat__header {display:flex;gap:8px;align-items:center;height:54px;padding:9px 14px;border-bottom:1px solid #f0f3f9}
+.sh-inbox-chat__header>span:nth-child(2) {display:flex;flex-direction:column;gap:3px;min-width:0}
+.sh-inbox-chat__header strong {font-size:11px}
+.sh-inbox-chat__header small {font-size:9px;color:#94a1b6}
+.sh-inbox-chat__header>svg {margin-right:auto;color:#99a5b8}
+.sh-inbox-chat__messages {flex:1;display:flex;flex-direction:column;gap:17px;padding:14px 15px 9px}
+.sh-inbox-chat__day {align-self:center;color:#a5afc1;font-size:9px}
+.sh-chat-message {max-width:92%;display:flex;flex-direction:column;gap:6px;padding:11px 12px;font-size:11px;line-height:1.85;box-shadow:0 2px 6px rgba(32,56,105,.025)}
+.sh-chat-message small {display:inline-flex;align-items:center;gap:4px;align-self:flex-end;font-size:9px;opacity:.6;direction:ltr}
+.sh-chat-message--incoming {background:#f3f5f9;color:#344158;border-radius:13px 13px 4px 13px;align-self:flex-start}
+.sh-chat-message--outgoing {background:#e9f0ff;color:#2853b4;border-radius:13px 13px 13px 4px;align-self:flex-end}
+.sh-inbox-compose {height:43px;margin:0 12px 11px;border:1px solid #ecf0f7;background:#fbfcff;border-radius:11px;display:flex;align-items:center;justify-content:space-between;padding:5px 10px;color:#a9b3c3;font-size:10px}
+.sh-inbox-compose__send {display:grid;place-items:center;background:var(--daira-primary);color:#fff;width:29px;height:29px;border-radius:9px;transform:scaleX(-1)}
+.sh-inbox-float {position:absolute;z-index:3;pointer-events:none}
+.sh-inbox-float__inner {display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.9);-webkit-backdrop-filter:blur(19px) saturate(155%);backdrop-filter:blur(19px) saturate(155%);box-shadow:0 14px 39px rgba(51,80,130,.13),inset 0 1px rgba(255,255,255,.85);border-radius:15px;padding:10px 13px}
+.sh-inbox-float--new {top:11px;right:0}
+.sh-inbox-float--new .sh-inbox-float__inner {animation:sh-inbox-hover 6.4s ease-in-out -1.7s infinite}
+.sh-inbox-float__icon {display:grid;place-items:center;color:var(--daira-primary);background:#e6eeff;border-radius:10px;width:34px;height:34px}
+.sh-inbox-float__inner>span:last-child {display:grid;gap:3px}
+.sh-inbox-float strong {font-size:10px;font-weight:850;white-space:nowrap}
+.sh-inbox-float small {font-size:9px;color:#8492a9}
+.sh-inbox-float--sent {bottom:6px;left:0}
+.sh-inbox-float--sent .sh-inbox-float__inner {animation:sh-inbox-hover 7s ease-in-out -3s infinite}
+.sh-inbox-float--sent svg {color:#199b75}
+@keyframes sh-inbox-hover {0%,100% {transform:translate3d(0,0,0)} 50% {transform:translate3d(0,-6px,0)}}
+@media(max-width:1100px) {
+  .sh-header__inner {gap:15px}
+  .sh-header .sh-nav {gap:15px}
+  .sh-header__actions {gap:10px}
+  .sh-hero__grid {gap:12px}
+  .sh-inbox-stage {padding-left:14px;padding-right:10px}
+  .sh-inbox-body {grid-template-columns:126px minmax(0,1fr)}
+  .sh-inbox-threads {padding-inline:5px}
+}
+@media(max-width:860px) {
+  .sh-header__inner {min-height:65px;padding-inline:13px}
+  .sh-header .sh-nav,.sh-header__actions {display:none}
+  .sh-menu-toggle {display:inline-flex;order:0;margin-inline-start:auto;border:1px solid rgba(195,210,234,.6);background:rgba(255,255,255,.57);border-radius:13px}
+  .sh-menu-toggle:hover {background:rgba(255,255,255,.8)}
+  .sh-hero__grid {grid-template-columns:1fr;min-height:0;padding-block:66px 44px;gap:26px}
+  .sh-hero__copy {text-align:right}
+  .sh-hero h1 {margin-inline:0;max-width:650px}
+  .sh-hero__description {margin-inline:0!important}
+  .sh-hero .sh-actions {justify-content:flex-start}
+  .sh-inbox-stage {width:min(100%,590px);margin:auto;padding:35px 24px 45px}
+  .sh-inbox-body {grid-template-columns:154px minmax(0,1fr)}
+}
+@media(max-width:600px) {
+  .sh-header {top:10px;margin-top:10px}
+  .sh-header__inner {min-height:60px;border-radius:19px;padding-inline:10px 12px}
+  .sh-hero__grid {padding-block:48px 31px;gap:25px}
+  .sh-hero__eyebrow {padding:7px 10px;font-size:10px}
+  .sh-hero h1 {font-size:clamp(31px,8.2vw,42px);line-height:1.55;letter-spacing:-.4px;margin-block:14px 12px}
+  .sh-hero__description {font-size:13px!important;line-height:2!important}
+  .sh-hero .sh-actions {gap:9px;margin-top:23px;flex-wrap:nowrap}
+  .sh-hero .sh-actions .sh-button {font-size:11px;padding-inline:12px;min-width:0}
+  .sh-inbox-stage {padding:32px 5px 44px}
+  .sh-inbox-window {border-radius:17px}
+  .sh-inbox-topbar {height:44px;padding-inline:11px}
+  .sh-inbox-topbrand {font-size:10px}
+  .sh-inbox-topbrand svg {width:17px}
+  .sh-inbox-body {grid-template-columns:108px minmax(0,1fr);height:295px}
+  .sh-inbox-threads {padding:10px 4px}
+  .sh-inbox-threads__title {font-size:9px;padding:0 4px 10px}
+  .sh-inbox-thread {padding:8px 4px;gap:5px}
+  .sh-inbox-thread strong {font-size:9px}
+  .sh-inbox-thread small {font-size:8px}
+  .sh-inbox-avatar {width:24px;height:24px;font-size:9px}
+  .sh-inbox-chat__header {height:44px;padding:7px}
+  .sh-inbox-chat__header strong {font-size:10px}
+  .sh-inbox-chat__header>svg {width:15px}
+  .sh-inbox-chat__messages {padding:11px 8px 7px;gap:12px}
+  .sh-chat-message {font-size:10px;padding:8px;max-width:97%}
+  .sh-inbox-compose {height:38px;margin:0 7px 8px;font-size:9px;padding:4px 6px}
+  .sh-inbox-compose__send {height:26px;width:26px}
+  .sh-inbox-float__inner {padding:8px 10px}
+  .sh-inbox-float--new {top:4px;right:-2px}
+  .sh-inbox-float--sent {bottom:8px;left:0}
+  .sh-inbox-float strong {font-size:9px}
+  .sh-menu-panel {top:78px;right:16px}
+}
+@media(max-width:370px) {
+  .sh-hero h1 {font-size:30px}
+  .sh-hero .sh-actions {flex-wrap:wrap}
+  .sh-inbox-body {grid-template-columns:94px minmax(0,1fr)}
+  .sh-inbox-thread:not(.sh-inbox-thread--selected) {display:none}
+  .sh-inbox-float--new {right:0}
+}
+@media(prefers-reduced-motion:reduce) {
+  .sh-inbox-stage__float,.sh-inbox-float__inner {animation:none!important}
+  .sh-menu-panel,.sh-menu-backdrop,.sh-menu-panel nav a {transition:none!important}
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .sh-header__inner,.sh-menu-panel {background:rgba(248,251,255,.98)}
+  .sh-inbox-float__inner {background:rgba(255,255,255,.98)}
+}
