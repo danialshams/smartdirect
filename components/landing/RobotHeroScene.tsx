@@ -148,13 +148,14 @@ export function RobotHeroScene() {
               </g>
             ))}
           </g>
-          <g className="sh-robot-portrait" data-robot-assembly="portrait"
-            style={{transformOrigin:"600px 350px"}}>
+          <g data-robot-assembly="portrait">
+            <g className="sh-robot-portrait" style={{transformOrigin:"600px 350px"}}>
             <image href="/landing/daira-robot-hero.webp" x="0" y="17" width="1200" height="676"
               preserveAspectRatio="xMidYMid meet" mask="url(#dairaPortraitMask)"/>
             <g className="sh-robot-eye-dimmer" opacity="0">
               <ellipse cx="474" cy="282" rx="70" ry="66" fill="url(#dairaEyeDim)"/>
               <ellipse cx="677" cy="324" rx="60" ry="60" fill="url(#dairaEyeDim)"/>
+            </g>
             </g>
           </g>
           {cables.map((cable)=>(
