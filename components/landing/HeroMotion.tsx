@@ -8,6 +8,21 @@ import { gsap } from "gsap";
  * sides, then headline/CTA. Persistent hover is CSS-only to avoid JS loops.
  */
 export function HeroMotion() {
+  // Home is a fresh marketing entry; do not briefly restore an old scroll
+  // offset from the bottom of the page on reload/back-forward without a hash.
+  useLayoutEffect(() => {
+    if (window.location.hash) return;
+    const prior = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    const reset = () => window.scrollTo(0, 0);
+    reset();
+    window.addEventListener("pageshow", reset);
+    return () => {
+      window.removeEventListener("pageshow", reset);
+      window.history.scrollRestoration = prior;
+    };
+  }, []);
+
   useLayoutEffect(() => {
     const hero = document.querySelector<HTMLElement>(".sh-hero");
     if (!hero || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;

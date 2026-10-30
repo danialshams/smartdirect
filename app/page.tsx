@@ -8,7 +8,7 @@ import {
   MessagesSquare, Radio, Send, ShieldCheck, Sparkles,
   Search, MoreHorizontal, CheckCheck,
 } from "lucide-react";
-import { SimpleHeader, RevealOnScroll } from "../components/landing/SimpleHeader";
+import { SimpleHeader } from "../components/landing/SimpleHeader";
 import { HeroMotion } from "../components/landing/HeroMotion";
 import "./simple-home.css";
 
@@ -165,7 +165,6 @@ export default function Home() {
   return (
     <div className="sh-site" dir="rtl" id="top">
       <SimpleHeader />
-      <RevealOnScroll />
       <a className="sh-skip" href="#content">رفتن به محتوای صفحه</a>
       <main id="content">
         <section className="sh-hero" aria-labelledby="sh-hero-title">
