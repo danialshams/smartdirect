@@ -173,6 +173,8 @@ export function RobotHeroScene() {
         const path = lines[index], pulse = pulses[index];
         const length = path.getTotalLength();
         const travel = { distance: 0 };
+        const start = path.getPointAtLength(0);
+        pulse.setAttribute("transform", "translate(" + start.x + " " + start.y + ")");
         gsap.set(pulse, { opacity: 1 });
         travelling = gsap.to(travel, {
           distance: length, duration: gsap.utils.random(1.1, 1.75), ease: "none",
