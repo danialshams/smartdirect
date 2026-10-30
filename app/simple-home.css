@@ -800,3 +800,99 @@
   .sh-robot-head,.sh-robot-cable-sway,.sh-robot-node,.sh-robot-core-led {animation:none!important}
   .sh-menu-panel,.sh-menu-panel nav a {transition:none!important}
 }
+
+
+/* V5 — approved photoreal Daira robot: responsive 2.5D portrait and full mobile capabilities. */
+.sh-hero__grid {padding-block:0 34px}
+.sh-robot-scene {
+  width:min(100%,945px,calc((100svh - 235px)*1.69));
+  max-width:945px;
+  overflow:visible;
+}
+.sh-robot-world {isolation:isolate}
+.sh-robot-portrait {will-change:transform}
+.sh-robot-mobile-features {display:none}
+.sh-robot-node-anchor {z-index:3}
+.sh-robot-node {
+  background:linear-gradient(127deg,rgba(255,255,255,.94),rgba(222,240,255,.84));
+  border:1px solid rgba(255,255,255,.92);
+  box-shadow:0 8px 26px rgba(49,89,140,.14),inset 0 1px rgba(255,255,255,.86);
+}
+.sh-hero__copy {margin-top:-29px}
+@media(max-width:860px) {
+  .sh-robot-scene {width:min(100%,740px);max-width:740px;overflow:visible}
+  .sh-hero__copy {margin-top:-12px}
+}
+@media(max-width:600px) {
+  .sh-hero__grid {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"copy" "scene";
+    padding-block:15px 30px;
+    align-items:center;gap:8px;
+  }
+  .sh-hero__copy {
+    grid-area:copy;
+    margin:0;
+    width:100%;
+    padding-inline:0;
+    text-align:center;
+  }
+  .sh-hero h1 {margin:10px auto 7px;font-size:clamp(28px,7.15vw,38px)}
+  .sh-hero__description {margin-inline:auto!important;font-size:12px!important}
+  .sh-hero .sh-actions {justify-content:center;gap:9px}
+  .sh-robot-scene {
+    grid-area:scene;
+    display:flex;
+    flex-direction:column;
+    width:100%;max-width:100%;
+    height:auto;
+    min-height:0;
+    overflow:visible;
+    aspect-ratio:auto;
+    margin:2px auto 0;
+  }
+  .sh-robot-world {
+    position:relative;
+    top:auto;left:auto;
+    transform:none;
+    display:block;
+    width:100%;
+    max-width:100%;
+    height:auto;
+    aspect-ratio:1200/710;
+    overflow:visible;
+  }
+  .sh-robot-svg {position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .sh-robot-node-anchor {display:none}
+  .sh-robot-scene__caption {display:none}
+  .sh-robot-mobile-features {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    width:100%;
+    padding:4px 0 0;
+  }
+  .sh-robot-mobile-feature {
+    display:flex;align-items:center;gap:7px;
+    min-width:0;min-height:39px;
+    padding:8px 10px;
+    border:1px solid rgba(181,212,255,.53);
+    border-radius:13px;
+    background:linear-gradient(125deg,rgba(255,255,255,.95),rgba(235,245,255,.76));
+    box-shadow:0 4px 12px rgba(55,99,163,.055);
+    color:#275078;font-size:10px;font-weight:780;line-height:1.5;
+    text-align:right;
+  }
+  .sh-robot-mobile-feature svg {color:#2f61fd;flex:none}
+  .sh-robot-mobile-feature span {white-space:normal;min-width:0;overflow-wrap:anywhere}
+}
+@media(max-width:370px) {
+  .sh-robot-scene {height:auto}
+  .sh-robot-world {top:auto;left:auto;transform:none;width:100%;height:auto}
+  .sh-robot-mobile-features {gap:6px}
+  .sh-robot-mobile-feature {padding:7px;gap:5px;font-size:9px}
+}
+@media(prefers-reduced-motion:reduce) {
+  .sh-robot-portrait {will-change:auto}
+  .sh-robot-cable-sway,.sh-robot-node {animation:none!important}
+}
