@@ -16,7 +16,7 @@ on:
       - "tsconfig.json"
       - ".github/workflows/**"
   push:
-    branches: [master, "feature/daira-landing-rim-scroll-fix-20261030"]
+    branches: [master]
     paths:
       - "app/**"
       - "components/**"
