@@ -501,3 +501,119 @@
   .sh-header__inner,.sh-menu-panel {background:rgba(244,248,255,.92)}
   .sh-inbox-float__inner {background:rgba(255,255,255,.97)}
 }
+
+
+/* V3 optical hero: library owns the refraction and rim. Never stack CSS rims. */
+.sh-site {position:relative;isolation:isolate}
+.sh-optics-backdrop {
+  position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+  background:radial-gradient(circle at 23% 27%,rgba(175,213,255,.52),transparent 34%),
+    radial-gradient(circle at 81% 63%,rgba(158,151,252,.30),transparent 36%),
+    linear-gradient(140deg,#fff 8%,#f1f7ff 70%,#fff);
+}
+.sh-optics-orb {position:absolute;display:block;border-radius:50%;filter:blur(4px)}
+.sh-optics-orb--one {width:min(44vw,560px);aspect-ratio:1;top:8%;left:-12%;background:radial-gradient(circle at 35% 35%,rgba(252,255,255,.83),rgba(86,157,255,.29) 48%,transparent 74%)}
+.sh-optics-orb--two {width:min(42vw,540px);aspect-ratio:1;top:23%;right:-11%;background:radial-gradient(circle at 40% 40%,rgba(255,255,255,.85),rgba(143,165,253,.30) 47%,transparent 76%)}
+.sh-header {position:sticky;top:10px;z-index:100;margin-top:10px;isolation:unset;border:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
+.sh-header::before {content:none;display:none}
+.sh-header__frame {position:relative}
+.sh-header__glass {display:block;width:100%;border-radius:25px;box-shadow:0 14px 38px rgba(29,68,134,.105)}
+.sh-header__inner {
+  width:100%;min-height:66px;display:flex;align-items:center;gap:26px;padding:8px 17px;
+  border:0;border-radius:0;box-shadow:none;background:transparent;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+.sh-header__inner::before,.sh-header__inner::after {content:none!important;display:none!important}
+.sh-header .sh-brand,.sh-header .sh-nav,.sh-header__actions {position:relative;z-index:2}
+.sh-menu-toggle {border:0;background:rgba(255,255,255,.12);box-shadow:none}
+.sh-menu-panel {border:0;background:rgba(244,249,255,.78);box-shadow:0 21px 65px rgba(29,62,121,.18)}
+.sh-menu-panel nav a {border:0;background:rgba(255,255,255,.18)}
+.sh-menu-panel__head button {border:0}
+.sh-hero {position:relative;overflow:clip;background:transparent}
+.sh-hero__grid {
+  position:relative;z-index:1;display:grid;
+  grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);
+  grid-template-areas:"copy preview";align-items:center;
+  min-height:min(720px,calc(100svh - 96px));
+  gap:clamp(22px,3vw,52px);padding-block:30px 54px;
+}
+.sh-hero__copy {grid-area:copy;align-self:center;padding-top:0;z-index:2}
+.sh-hero__eyebrow {border:0;background:rgba(236,245,255,.7)}
+.sh-hero h1 {font-size:clamp(38px,4.1vw,61px);line-height:1.45;margin-block:16px 14px;letter-spacing:-.7px}
+.sh-hero__description {font-size:15px!important;line-height:1.95!important}
+.sh-hero .sh-actions {margin-top:22px;gap:10px}
+.sh-hero .sh-button--ghost {border:1px solid rgba(151,187,241,.3);background:rgba(255,255,255,.32)}
+.sh-inbox-stage {grid-area:preview;max-width:710px;padding:32px 25px 35px}
+.sh-inbox-perspective {transform:perspective(1400px) rotateX(4.5deg) rotateY(-8deg) rotateZ(1deg)}
+.sh-inbox-window {border:1px solid rgba(209,225,252,.66);background:rgba(255,255,255,.94);box-shadow:0 40px 76px rgba(35,73,129,.19),0 11px 22px rgba(48,94,160,.07)}
+.sh-inbox-float__inner {
+  display:flex;align-items:center;gap:9px;
+  padding:11px 14px;border:0;border-radius:19px;
+  background:transparent;box-shadow:0 14px 29px rgba(38,73,128,.13);
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+.sh-inbox-float--new .sh-inbox-float__inner,.sh-inbox-float--sent .sh-inbox-float__inner {animation:none}
+.sh-inbox-float--new {top:1px;right:0}
+.sh-inbox-float--sent {bottom:1px;left:0}
+@media(max-width:1100px) {
+  .sh-hero__grid {min-height:0;gap:14px}
+  .sh-hero__copy {padding-top:0}
+}
+@media(max-width:860px) {
+  .sh-header__inner {min-height:60px;gap:10px;padding:7px 14px}
+  .sh-header .sh-nav,.sh-header__actions {display:none}
+  .sh-menu-toggle {display:inline-flex;order:-1;margin:0;border:0;background:rgba(255,255,255,.15)}
+  .sh-header .sh-brand {order:0;margin-inline-start:auto}
+  .sh-hero__grid {
+    grid-template-columns:minmax(0,1fr);grid-template-areas:"preview" "copy";
+    min-height:0;gap:4px;padding-block:14px 32px;
+  }
+  .sh-inbox-stage {width:min(100%,580px);padding:20px 18px 25px}
+  .sh-hero__copy {text-align:right;padding-top:0}
+  .sh-hero h1 {margin-inline:0}
+  .sh-hero__description {margin-inline:0!important}
+  .sh-hero .sh-actions {justify-content:flex-start}
+  .sh-menu-panel {top:80px}
+}
+@media(max-width:600px) {
+  .sh-header {top:7px;margin-top:7px}
+  .sh-header__frame {width:calc(100% - 24px)}
+  .sh-header__glass {border-radius:20px}
+  .sh-header__inner {min-height:51px;padding:5px 10px}
+  .sh-hero__grid {padding-block:7px 23px;gap:0}
+  .sh-inbox-stage {height:clamp(245px,64vw,297px);max-width:480px;padding:15px 6px 16px}
+  .sh-inbox-stage__float {animation:none;height:100%}
+  .sh-inbox-perspective {transform:perspective(1100px) rotateX(2deg) rotateY(-3deg)}
+  .sh-inbox-window {min-height:0;border-radius:16px}
+  .sh-inbox-topbar {height:36px}
+  .sh-inbox-body {height:clamp(180px,46vw,222px)}
+  .sh-inbox-threads {padding-top:7px}
+  .sh-inbox-thread {padding-block:5px}
+  .sh-inbox-chat__header {height:38px}
+  .sh-inbox-chat__messages {gap:6px;padding-block:6px}
+  .sh-chat-message {padding:6px 8px;font-size:9px;line-height:1.55}
+  .sh-inbox-compose {height:30px;margin-bottom:5px}
+  .sh-inbox-compose__send {width:23px;height:23px}
+  .sh-inbox-float--new {top:0}
+  .sh-inbox-float--sent {bottom:0}
+  .sh-inbox-float__inner {padding:6px 9px;border-radius:14px}
+  .sh-inbox-float strong {font-size:9px}
+  .sh-inbox-float small {font-size:8px}
+  .sh-hero__eyebrow {font-size:10px;padding:5px 8px}
+  .sh-hero h1 {font-size:clamp(28px,7.6vw,38px);line-height:1.38;margin-block:9px 7px}
+  .sh-hero__description {font-size:12px!important;line-height:1.8!important}
+  .sh-hero .sh-actions {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+  .sh-hero .sh-actions .sh-button {min-height:43px;font-size:11px;padding:7px 9px}
+  .sh-menu-panel {top:72px}
+}
+@media(max-width:370px) {
+  .sh-hero h1 {font-size:27px}
+  .sh-inbox-stage {height:235px}
+  .sh-inbox-body {height:171px}
+}
+@media(prefers-reduced-motion:reduce) {
+  .sh-inbox-stage__float,.sh-inbox-float__inner {animation:none!important}
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .sh-header__glass,.sh-inbox-float__inner {background:rgba(246,250,255,.9)}
+}

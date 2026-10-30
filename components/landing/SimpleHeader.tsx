@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpLeft, Menu, X } from "lucide-react";
+import { LandingGlass } from "./LandingGlass";
 
 const links = [
   { href: "#features", label: "امکانات" },
@@ -52,11 +53,15 @@ export function SimpleHeader() {
 
   return (
     <header className="sh-header">
-      <div className="sh-container sh-header__inner">
+      <div className="sh-container sh-header__frame">
+        <LandingGlass className="sh-header__glass">
+          <div className="sh-header__inner">
         <Link href="/" className="sh-brand" aria-label="دایرا، صفحه اصلی"><Image src="/daira-header-logo-hd.webp" width={90} height={90} alt="" priority sizes="44px"/><span>دایرا</span></Link>
         <nav className="sh-nav" aria-label="ناوبری اصلی">{links.map(item=><a key={item.href} href={item.href}>{item.label}</a>)}</nav>
         <div className="sh-header__actions"><Link className="sh-header__login" href="/login">ورود به پنل</Link><Link className="sh-button sh-button--primary sh-header__start" href="/login">شروع استفاده <ArrowUpLeft size={16}/></Link></div>
         <button type="button" ref={toggle} className="sh-menu-toggle" aria-label={open ? "بستن منو" : "باز کردن منو"} aria-expanded={open} aria-controls="sh-menu-panel" onClick={() => { restoreFocus.current = true; setOpen(v => !v); }}>{open ? <X size={22}/> : <Menu size={22}/>}</button>
+          </div>
+        </LandingGlass>
       </div>
       <button type="button" className={"sh-menu-backdrop"+(open?" sh-menu-backdrop--open":"")} aria-label="بستن منو" tabIndex={open ? 0 : -1} disabled={!open} onClick={()=>setOpen(false)} />
       <div id="sh-menu-panel" className={"sh-menu-panel"+(open?" sh-menu-panel--open":"")} ref={panel} inert={!open} aria-hidden={!open}>

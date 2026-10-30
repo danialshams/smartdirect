@@ -27,17 +27,19 @@ export function HeroMotion() {
     const hero = document.querySelector<HTMLElement>(".sh-hero");
     if (!hero || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const context = gsap.context(() => {
-      gsap.timeline({ defaults: { ease: "power3.out" }, delay: 0.08 })
-        .from(".sh-inbox-stage", { autoAlpha: 0, x: -65, y: 8, duration: 0.8 })
-        .from("[data-hero-panel]", { autoAlpha: 0, x: -38, scale: 0.965, duration: 0.72 }, "-=0.5")
-        .from("[data-hero-bar]", { autoAlpha: 0, y: -12, duration: 0.4 }, "-=0.45")
-        .from("[data-hero-threads]", { autoAlpha: 0, x: 52, duration: 0.62 }, "-=0.4")
-        .from("[data-hero-chat]", { autoAlpha: 0, x: -35, duration: 0.5 }, "-=0.38")
-        .from("[data-hero-incoming]", { autoAlpha: 0, x: 55, duration: 0.54 }, "-=0.26")
-        .from("[data-hero-outgoing]", { autoAlpha: 0, x: -55, duration: 0.54 }, "-=0.28")
-        .from(".sh-inbox-float--new", { autoAlpha: 0, x: 75, y: -12, duration: 0.62 }, "-=0.33")
-        .from(".sh-inbox-float--sent", { autoAlpha: 0, x: -75, y: 12, duration: 0.62 }, "-=0.36")
-        .from("[data-hero-entrance]", { autoAlpha: 0, y: 24, duration: 0.68, stagger: 0.105 }, "-=0.42");
+      gsap.timeline({ defaults: { ease: "power3.out" }, delay: 0.04 })
+        // Keep optical backdrops visible: opacity on a glass ancestor breaks refraction.
+        .from(".sh-inbox-stage", { x: -52, y: 12, duration: 0.7 })
+        .from("[data-hero-panel]", { x: -30, scale: 0.975, duration: 0.65 }, "-=0.54")
+        // Text/CTA and product land together, rather than in two separate screens.
+        .from("[data-hero-entrance]", { y: 18, duration: 0.53, stagger: 0.055 }, "-=0.64")
+        .from("[data-hero-bar]", { y: -9, duration: 0.38 }, "-=0.56")
+        .from("[data-hero-threads]", { x: 42, duration: 0.55 }, "-=0.4")
+        .from("[data-hero-chat]", { x: -32, duration: 0.49 }, "-=0.43")
+        .from("[data-hero-incoming]", { x: 42, duration: 0.52 }, "-=0.34")
+        .from("[data-hero-outgoing]", { x: -42, duration: 0.52 }, "-=0.41")
+        .from(".sh-inbox-float--new", { x: 52, y: -9, duration: 0.56 }, "-=0.45")
+        .from(".sh-inbox-float--sent", { x: -52, y: 9, duration: 0.56 }, "-=0.5");
     }, hero);
     return () => context.revert();
   }, []);

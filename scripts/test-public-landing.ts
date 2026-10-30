@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 const page = readFileSync("app/page.tsx","utf8");
 const css = readFileSync("app/simple-home.css","utf8");
 const menu = readFileSync("components/landing/SimpleHeader.tsx","utf8");
+const lens = readFileSync("components/landing/LandingGlass.tsx","utf8");
 const tokens = readFileSync("app/daira-tokens.css","utf8");
 
 assert.match(page,/dir="rtl"/);
@@ -47,6 +48,17 @@ assert.match(motion, /prefers-reduced-motion: reduce/);
 assert.match(page, /<HeroMotion \/>/);
 assert.match(page, /<DirectInboxPreview \/>/);
 assert.match(page, /دایرکت‌هات رو/);
+assert.match(page, /id="sh-optics-backdrop"/);
+assert.match(page, /<LandingGlass className="sh-inbox-float__inner">/);
+assert.match(menu, /<LandingGlass className="sh-header__glass">/);
+assert.match(lens, /from "simple-liquid-glass"/);
+assert.match(lens, /backdropSelector="#sh-optics-backdrop"/);
+assert.match(lens, /refraction="lens"/);
+assert.match(css, /\.sh-header__inner\s*\{[\s\S]*?border:0;border-radius:0;box-shadow:none/);
+assert.match(css, /\.sh-hero__grid\s*\{[\s\S]*?grid-template-areas:"preview" "copy"/);
+assert.equal(packageJson.dependencies["simple-liquid-glass"], "5.4.0");
+assert.equal(lock.packages["node_modules/simple-liquid-glass"].version, "5.4.0");
+
 assert.match(page, /نمونه/);
 assert.match(page, /data-hero-incoming/);
 assert.match(page, /data-hero-outgoing/);
