@@ -6,11 +6,10 @@ import {
   Check, CheckCircle2, ChevronDown, CircleHelp, Clock3,
   HeartHandshake, Layers3, MessageCircle, MessageSquareText,
   MessagesSquare, Radio, Send, ShieldCheck, Sparkles,
-  Search, MoreHorizontal, CheckCheck,
 } from "lucide-react";
 import { SimpleHeader } from "../components/landing/SimpleHeader";
 import { HeroMotion } from "../components/landing/HeroMotion";
-import { LandingGlass } from "../components/landing/LandingGlass";
+import { RobotHeroScene } from "../components/landing/RobotHeroScene";
 import "./simple-home.css";
 
 export const metadata: Metadata = {
@@ -104,44 +103,6 @@ function SectionHeading({ eyebrow, title, description }: { eyebrow: string; titl
   );
 }
 
-function DirectInboxPreview() {
-  return (
-    <div className="sh-inbox-stage" aria-label="نمای نمونه از صندوق دایرکت دایرا">
-      <div className="sh-inbox-aura" aria-hidden="true" />
-      <div className="sh-inbox-depth-glow" aria-hidden="true" />
-      <div className="sh-inbox-stage__float">
-        <div className="sh-inbox-perspective" data-hero-panel>
-          <div className="sh-inbox-window">
-          <div className="sh-inbox-topbar" data-hero-bar>
-            <span className="sh-inbox-topbrand"><MessagesSquare size={19} aria-hidden="true" /> صندوق دایرکت</span>
-            <span className="sh-inbox-demo-label">نمای نمونه</span>
-          </div>
-          <div className="sh-inbox-body">
-            <div className="sh-inbox-threads" aria-hidden="true" data-hero-threads>
-              <div className="sh-inbox-threads__title"><strong>گفتگوها</strong><Search size={15} /></div>
-              <div className="sh-inbox-thread sh-inbox-thread--selected"><span className="sh-inbox-avatar sh-inbox-avatar--blue">م</span><span><strong>مشتری نمونه</strong><small>قیمت این محصول چنده؟</small></span><i aria-hidden="true" /></div>
-              <div className="sh-inbox-thread"><span className="sh-inbox-avatar sh-inbox-avatar--pink">ن</span><span><strong>نگار</strong><small>ممنون از راهنمایی‌تون</small></span></div>
-              <div className="sh-inbox-thread"><span className="sh-inbox-avatar sh-inbox-avatar--violet">س</span><span><strong>سارا</strong><small>سلام، وقت بخیر</small></span></div>
-            </div>
-            <div className="sh-inbox-chat">
-              <div className="sh-inbox-chat__header" data-hero-chat><span className="sh-inbox-avatar sh-inbox-avatar--blue">م</span><span><strong>مشتری نمونه</strong><small>گفتگوی نمایشی</small></span><MoreHorizontal size={19} aria-hidden="true" /></div>
-              <div className="sh-inbox-chat__messages">
-                <span className="sh-inbox-chat__day">امروز</span>
-                <div className="sh-chat-message sh-chat-message--incoming" data-hero-incoming>سلام، قیمت این محصول چنده؟<small>۱۰:۴۲</small></div>
-                <div className="sh-chat-message sh-chat-message--outgoing" data-hero-outgoing>سلام! اطلاعات محصول رو برات فرستادم 💙<small>۱۰:۴۲ <CheckCheck size={13} aria-hidden="true" /></small></div>
-              </div>
-              <div className="sh-inbox-compose" aria-hidden="true"><span>پیام خود را بنویسید...</span><span className="sh-inbox-compose__send"><Send size={16}/></span></div>
-            </div>
-          </div>
-        </div>
-        </div>
-      </div>
-      <div className="sh-inbox-float sh-inbox-float--new" data-hero-float><LandingGlass className="sh-inbox-float__inner"><span className="sh-inbox-float__icon"><MessageCircle size={18}/></span><span><strong>پیام جدید</strong><small>قیمت این محصول چنده؟</small></span></LandingGlass></div>
-      <div className="sh-inbox-float sh-inbox-float--sent" data-hero-float><LandingGlass className="sh-inbox-float__inner"><CheckCircle2 size={18}/><strong>پاسخ خودکار آماده شد</strong></LandingGlass></div>
-    </div>
-  );
-}
-
 function ConversationPreview() {
   return (
     <div className="sh-conversation sh-reveal" aria-label="نمونه نمایشی از پاسخ به کامنت و دایرکت">
@@ -174,14 +135,14 @@ export default function Home() {
           <div className="sh-container sh-hero__grid">
             <div className="sh-hero__copy">
               <span className="sh-hero__eyebrow" data-hero-entrance><Sparkles size={15} aria-hidden="true" /> دستیار تعاملات اینستاگرام</span>
-              <h1 id="sh-hero-title" data-hero-entrance>دایرکت‌هات رو <span>با دایرا مدیریت کن.</span></h1>
-              <p className="sh-hero__description" data-hero-entrance>از پاسخ به کامنت تا صندوق دایرکت؛ همه تعاملات پیجت در یک فضای ساده و منظم.</p>
+              <h1 id="sh-hero-title" data-hero-entrance>دایرا؛ <span>همه تعاملات در یک مدار.</span></h1>
+              <p className="sh-hero__description" data-hero-entrance>از پاسخ‌های خودکار تا صندوق دایرکت، انتشار محتوا و تحلیل پیج؛ ابزارهای دایرا دور یک هسته هوشمند جمع شده‌اند.</p>
               <div className="sh-actions" data-hero-entrance>
                 <Link className="sh-button sh-button--primary" href="/login">شروع با دایرا <ArrowUpLeft size={18}/></Link>
                 <a className="sh-button sh-button--ghost" href="#features">مشاهده امکانات <ArrowLeft size={17}/></a>
               </div>
             </div>
-            <DirectInboxPreview />
+            <RobotHeroScene />
           </div>
         </section>
 
