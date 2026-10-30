@@ -33,4 +33,34 @@ assert.doesNotMatch(menu,/fetch\(|localStorage|sessionStorage|WebGL|setInterval/
 for(const deleted of ["app/landing-light.css","components/landing/LightInteractions.tsx",
  "app/landing.css","components/landing/LandingWebGL.tsx","components/landing/LandingMotion.tsx"])
   assert.equal(existsSync(deleted),false,"Outdated landing artifact: "+deleted);
+
+const motion = readFileSync("components/landing/HeroMotion.tsx","utf8");
+const packageJson = JSON.parse(readFileSync("package.json","utf8"));
+const lock = JSON.parse(readFileSync("package-lock.json","utf8"));
+assert.equal(packageJson.dependencies.gsap, "3.14.2");
+assert.equal(lock.packages[""].dependencies.gsap, packageJson.dependencies.gsap);
+assert.equal(lock.packages["node_modules/gsap"].version, packageJson.dependencies.gsap);
+assert.match(motion, /from "gsap"/);
+assert.match(motion, /gsap\.timeline/);
+assert.match(motion, /context\.revert\(\)/);
+assert.match(motion, /prefers-reduced-motion: reduce/);
+assert.match(page, /<HeroMotion \/>/);
+assert.match(page, /<DirectInboxPreview \/>/);
+assert.match(page, /دایرکت‌هات رو/);
+assert.match(page, /نمونه/);
+assert.match(page, /data-hero-message/);
+assert.match(page, /data-hero-float/);
+assert.match(menu, /aria-expanded=\{open\}/);
+assert.match(menu, /aria-controls="sh-menu-panel"/);
+assert.match(menu, /className="sh-menu-backdrop"/);
+assert.match(menu, /aria-label="بستن منو"/);
+assert.match(menu, /onClick=\{\(\)=>setOpen\(false\)\}/);
+assert.match(css, /-webkit-backdrop-filter:blur\(25px\) saturate\(190%\)/);
+assert.match(css, /-webkit-backdrop-filter:blur\(30px\) saturate\(190%\)/);
+assert.match(css, /sh-inbox-stage__float/);
+assert.match(css, /@keyframes sh-inbox-hover/);
+assert.match(css, /sh-menu-panel--open nav a:nth-child/);
+assert.match(css, /@supports not \(\(backdrop-filter/);
+assert.doesNotMatch(motion, /setInterval|requestAnimationFrame|fetch\(/);
+
 console.log("Daira simple homepage: RTL, legal links, accessible mobile menu, canonical colors, responsive and safety checks PASS");
