@@ -61,14 +61,19 @@ assert.equal(packageJson.dependencies["simple-liquid-glass"], "5.4.0");
 assert.equal(lock.packages["node_modules/simple-liquid-glass"].version, "5.4.0");
 
 assert.match(page, /نمونه/);
-assert.match(robot, /data-robot-assembly="head"/);
+assert.match(robot, /data-robot-assembly="portrait"/);
 assert.match(robot, /data-robot-assembly="cable"/);
 assert.match(robot, /data-robot-assembly="node"/);
-assert.match(robot, /sh-robot-eye-light/);
+assert.match(robot, /sh-robot-eye-dimmer/);
 assert.match(robot, /repeat: -1/);
 assert.match(robot, /Math\.random\(\)/);
 assert.match(robot, /gsap\.delayedCall\(gsap\.utils\.random\(3\.8, 6\.2\), pulseOne\)/);
 assert.match(robot, /getPointAtLength/);
+assert.ok(existsSync("public/landing/daira-robot-hero.webp"),"Missing approved robot portrait asset");
+assert.match(robot, /href="\/landing\/daira-robot-hero.webp"/);
+assert.match(robot, /sh-robot-mobile-features/);
+assert.match(css, /grid-template-areas:"copy" "scene"/);
+assert.match(css, /\.sh-robot-mobile-features\s*\{[\s\S]*?display:grid/);
 assert.match(robot, /prefers-reduced-motion: reduce/);
 for (const id of ["comment","story","direct","mention","live","reminder","inbox","publish","insights","menu","icebreakers"]) {
   assert.ok(robot.includes('id: "' + id + '"'), "Missing robot connection: " + id);
@@ -102,4 +107,4 @@ assert.match(css, /sh-menu-panel--open nav a:nth-child/);
 assert.match(css, /@supports not \(\(backdrop-filter/);
 assert.doesNotMatch(motion, /setInterval|requestAnimationFrame|fetch\(/);
 
-console.log("Daira robot homepage: 11 feature cables, random light flows, multi-flicker eyes, centered header/menu, RTL, motion and safety checks PASS");
+console.log("Daira approved robot photo hero: optimized WebP, 2.5D float, glowing eye-flickers, 11 cables, visible mobile cards and safety checks PASS");
