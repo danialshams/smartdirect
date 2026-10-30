@@ -123,6 +123,9 @@ export function RobotHeroScene() {
     if (!stage) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    let active = true;
+    let pending: gsap.core.Tween | undefined;
+    let travelling: gsap.core.Tween | undefined;
     const ctx = gsap.context(() => {
       const groups = Array.from(stage.querySelectorAll<SVGElement | HTMLElement>("[data-robot-assembly]"));
       // Staggered scattered pieces converge into their exact final assembled geometry.
@@ -142,7 +145,7 @@ export function RobotHeroScene() {
         stagger: { each: .04, from: "random" }, ease: "power3.out", delay: .65,
       });
 
-      const eyes = stage.querySelectorAll(".sh-robot-eye-light");
+      const eyes = stage.querySelectorAll(".sh-robot-eye-light, .sh-robot-iris-glow");
       // Several short flickers, then fully lit; endlessly repeating.
       gsap.timeline({ repeat: -1, repeatDelay: 2.4, delay: 1.7 })
         .set(eyes, { opacity: .07 })
@@ -157,7 +160,11 @@ export function RobotHeroScene() {
       const pulses = Array.from(stage.querySelectorAll<SVGGElement>("[data-cable-pulse]"));
       let previous = -1;
       function pulseOne() {
-        if (!stage?.isConnected) return;
+        if (!active || !stage?.isConnected) return;
+        if (document.visibilityState === "hidden") {
+          pending = gsap.delayedCall(1.5, pulseOne);
+          return;
+        }
         let index = Math.floor(Math.random() * lines.length);
         if (index === previous) index = (index + 1 + Math.floor(Math.random() * (lines.length - 1))) % lines.length;
         previous = index;
@@ -165,7 +172,7 @@ export function RobotHeroScene() {
         const length = path.getTotalLength();
         const travel = { distance: 0 };
         gsap.set(pulse, { opacity: 1 });
-        gsap.to(travel, {
+        travelling = gsap.to(travel, {
           distance: length, duration: gsap.utils.random(1.1, 1.75), ease: "none",
           onUpdate: () => {
             const point = path.getPointAtLength(travel.distance);
@@ -174,11 +181,16 @@ export function RobotHeroScene() {
           onComplete: () => gsap.set(pulse, { opacity: 0 }),
         });
         // Independent non-synchronized light flows, approximately every five seconds.
-        gsap.delayedCall(gsap.utils.random(3.8, 6.2), pulseOne);
+        pending = gsap.delayedCall(gsap.utils.random(3.8, 6.2), pulseOne);
       }
-      gsap.delayedCall(2.8, pulseOne);
+      pending = gsap.delayedCall(2.8, pulseOne);
     }, stage);
-    return () => ctx.revert();
+    return () => {
+      active = false;
+      pending?.kill();
+      travelling?.kill();
+      ctx.revert();
+    };
   }, []);
 
   return (
