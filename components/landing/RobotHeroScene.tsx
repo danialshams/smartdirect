@@ -30,7 +30,8 @@ const cables = [
  */
 function RobotHead() {
   return (
-    <g className="sh-robot-head" data-robot-assembly="head">
+    <g data-robot-assembly="head">
+      <g className="sh-robot-head">
       <ellipse cx="611" cy="568" rx="150" ry="35" fill="#4787df" opacity=".11"/>
       <g className="sh-robot-neck" data-robot-detail>
         <path d="M552 501 L553 563 Q600 590 664 559 L670 501" fill="url(#robotNeck)" stroke="#7188af" strokeWidth="3"/>
@@ -110,6 +111,7 @@ function RobotHead() {
             <path d="M-4 0 H4" stroke="#69d9ff" strokeWidth="1.6"/>
           </g>
         ))}
+      </g>
       </g>
     </g>
   );
@@ -215,7 +217,7 @@ export function RobotHeroScene() {
           </defs>
           <circle cx="608" cy="359" r="290" fill="url(#robotHalo)"/>
           <g className="sh-robot-cables">
-            {cables.map((cable,i)=>(
+            {cables.map((cable)=>(
               <g key={cable.id} data-robot-assembly="cable" className="sh-robot-cable-assembly">
                 <g className="sh-robot-cable-sway" style={{ transformOrigin: cable.sx+"px "+cable.sy+"px", animationDuration: cable.duration+"s", animationDelay: cable.phase+"s" } as CSSProperties}>
                   <path d={cable.path} stroke="#3d658f" strokeWidth="9" strokeLinecap="round" fill="none" opacity=".12"/>
