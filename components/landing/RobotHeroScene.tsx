@@ -182,7 +182,7 @@ export function RobotHeroScene() {
             const point = path.getPointAtLength(travel.distance);
             pulse.setAttribute("transform", "translate(" + point.x + " " + point.y + ")");
           },
-          onComplete: () => gsap.set(pulse, { opacity: 0 }),
+          onComplete: () => { gsap.set(pulse, { opacity: 0 }); },
         });
         // Independent non-synchronized light flows, approximately every five seconds.
         pending = gsap.delayedCall(gsap.utils.random(3.8, 6.2), pulseOne);
