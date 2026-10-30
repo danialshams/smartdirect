@@ -6,8 +6,10 @@ import {
   Check, CheckCircle2, ChevronDown, CircleHelp, Clock3,
   HeartHandshake, Layers3, MessageCircle, MessageSquareText,
   MessagesSquare, Radio, Send, ShieldCheck, Sparkles,
+  Search, MoreHorizontal, CheckCheck,
 } from "lucide-react";
 import { SimpleHeader, RevealOnScroll } from "../components/landing/SimpleHeader";
+import { HeroMotion } from "../components/landing/HeroMotion";
 import "./simple-home.css";
 
 export const metadata: Metadata = {
@@ -101,37 +103,37 @@ function SectionHeading({ eyebrow, title, description }: { eyebrow: string; titl
   );
 }
 
-function ProductPreview() {
+function DirectInboxPreview() {
   return (
-    <div className="sh-product-stage" aria-label="پیش‌نمایش نمونه از مدیریت پاسخ خودکار دایرا">
-      <div className="sh-product-window">
-        <div className="sh-product-window__bar">
-          <span className="sh-window-brand"><span className="sh-window-dot"/>دایرا / پاسخ‌های خودکار</span>
-          <span className="sh-example-label">نمونه نمایشی</span>
-        </div>
-        <div className="sh-product-window__main">
-          <div className="sh-product-sidebar" aria-hidden="true">
-            <div className="sh-product-sidebar__selected"><MessageCircle size={17}/><span>پاسخ به کامنت</span></div>
-            <div><Send size={17}/><span>پاسخ دایرکت</span></div>
-            <div><MessagesSquare size={17}/><span>صندوق دایرکت</span></div>
-            <div><BarChart3 size={17}/><span>تحلیل پیج</span></div>
+    <div className="sh-inbox-stage" aria-label="نمای نمونه از صندوق دایرکت دایرا">
+      <div className="sh-inbox-aura" aria-hidden="true" />
+      <div className="sh-inbox-stage__float">
+        <div className="sh-inbox-window">
+          <div className="sh-inbox-topbar">
+            <span className="sh-inbox-topbrand"><MessagesSquare size={19} aria-hidden="true" /> صندوق دایرکت</span>
+            <span className="sh-inbox-demo-label">نمای نمونه</span>
           </div>
-          <div className="sh-product-content">
-            <div className="sh-product-heading"><strong>پاسخ به کامنت</strong><span className="sh-product-chip"><Check size={12}/> قانون نمونه</span></div>
-            <div className="sh-rule-box">
-              <span className="sh-rule-label">کلمه کلیدی</span>
-              <span className="sh-keyword">قیمت</span>
+          <div className="sh-inbox-body">
+            <div className="sh-inbox-threads" aria-hidden="true">
+              <div className="sh-inbox-threads__title"><strong>گفتگوها</strong><Search size={15} /></div>
+              <div className="sh-inbox-thread sh-inbox-thread--selected"><span className="sh-inbox-avatar sh-inbox-avatar--blue">م</span><span><strong>مشتری نمونه</strong><small>قیمت این محصول چنده؟</small></span><i aria-hidden="true" /></div>
+              <div className="sh-inbox-thread"><span className="sh-inbox-avatar sh-inbox-avatar--pink">ن</span><span><strong>نگار</strong><small>ممنون از راهنمایی‌تون</small></span></div>
+              <div className="sh-inbox-thread"><span className="sh-inbox-avatar sh-inbox-avatar--violet">س</span><span><strong>سارا</strong><small>سلام، وقت بخیر</small></span></div>
             </div>
-            <div className="sh-rule-box">
-              <span className="sh-rule-label">پاسخ زیر کامنت</span>
-              <div className="sh-message">سلام! جزئیات رو برات فرستادم 💙</div>
+            <div className="sh-inbox-chat">
+              <div className="sh-inbox-chat__header"><span className="sh-inbox-avatar sh-inbox-avatar--blue">م</span><span><strong>مشتری نمونه</strong><small>گفتگوی نمایشی</small></span><MoreHorizontal size={19} aria-hidden="true" /></div>
+              <div className="sh-inbox-chat__messages">
+                <span className="sh-inbox-chat__day">امروز</span>
+                <div className="sh-chat-message sh-chat-message--incoming" data-hero-message>سلام، قیمت این محصول چنده؟<small>۱۰:۴۲</small></div>
+                <div className="sh-chat-message sh-chat-message--outgoing" data-hero-message>سلام! اطلاعات محصول رو برات فرستادم 💙<small>۱۰:۴۲ <CheckCheck size={13} aria-hidden="true" /></small></div>
+              </div>
+              <div className="sh-inbox-compose" aria-hidden="true"><span>پیام خود را بنویسید...</span><span className="sh-inbox-compose__send"><Send size={16}/></span></div>
             </div>
-            <div className="sh-rule-footer"><CheckCircle2 size={16}/><span>پیش‌نمایش پاسخ تنظیم‌شده</span></div>
           </div>
         </div>
       </div>
-      <div className="sh-float-note"><span className="sh-float-note__icon"><MessageCircle size={19}/></span><span><strong>کامنت جدید</strong><small>«قیمت لطفاً»</small></span></div>
-      <div className="sh-float-mini"><CheckCircle2 size={18}/><span>پاسخ آماده است</span></div>
+      <div className="sh-inbox-float sh-inbox-float--new" data-hero-float><span className="sh-inbox-float__inner"><span className="sh-inbox-float__icon"><MessageCircle size={18}/></span><span><strong>پیام جدید</strong><small>قیمت این محصول چنده؟</small></span></span></div>
+      <div className="sh-inbox-float sh-inbox-float--sent" data-hero-float><span className="sh-inbox-float__inner"><CheckCircle2 size={18}/><strong>پاسخ خودکار آماده شد</strong></span></div>
     </div>
   );
 }
@@ -163,19 +165,19 @@ export default function Home() {
       <RevealOnScroll />
       <a className="sh-skip" href="#content">رفتن به محتوای صفحه</a>
       <main id="content">
-        <section className="sh-hero">
+        <section className="sh-hero" aria-labelledby="sh-hero-title">
+          <HeroMotion />
           <div className="sh-container sh-hero__grid">
             <div className="sh-hero__copy">
-              <span className="sh-hero__eyebrow"><Sparkles size={16}/> یک فضای ساده‌تر برای مدیریت پیج</span>
-              <h1>تعاملات پیجت را <span>راحت‌تر مدیریت کن.</span></h1>
-              <p>پاسخ به کامنت و دایرکت، انتشار محتوا و تحلیل پیج؛ ابزارهای موردنیازت در یک پنل ساده و منظم.</p>
-              <div className="sh-actions">
-                <Link className="sh-button sh-button--primary" href="/login">شروع استفاده <ArrowUpLeft size={18}/></Link>
-                <a className="sh-button sh-button--ghost" href="#features">آشنایی با امکانات <ArrowLeft size={18}/></a>
+              <span className="sh-hero__eyebrow" data-hero-entrance><Sparkles size={15} aria-hidden="true" /> مدیریت هوشمند دایرکت</span>
+              <h1 id="sh-hero-title" data-hero-entrance>دایرکت‌هات رو <span>بسپار به دایرا.</span></h1>
+              <p className="sh-hero__description" data-hero-entrance>پاسخ‌های خودکار رو تنظیم کن و گفتگوهای پیجت رو از یک پنل ساده مدیریت کن.</p>
+              <div className="sh-actions" data-hero-entrance>
+                <Link className="sh-button sh-button--primary" href="/login">شروع با دایرا <ArrowUpLeft size={18}/></Link>
+                <a className="sh-button sh-button--ghost" href="#features">مشاهده امکانات <ArrowLeft size={17}/></a>
               </div>
-              <div className="sh-hero__notes"><span><CheckCircle2 size={16}/> پاسخ طبق تنظیمات خودت</span><span><ShieldCheck size={16}/> مطابق دسترسی‌های Meta</span></div>
             </div>
-            <ProductPreview />
+            <DirectInboxPreview />
           </div>
         </section>
 
