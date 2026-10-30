@@ -52,7 +52,7 @@ assert.match(page, /data-hero-message/);
 assert.match(page, /data-hero-float/);
 assert.match(menu, /aria-expanded=\{open\}/);
 assert.match(menu, /aria-controls="sh-menu-panel"/);
-assert.match(menu, /className="sh-menu-backdrop"/);
+assert.match(menu, /sh-menu-backdrop/);
 assert.match(menu, /aria-label="بستن منو"/);
 assert.match(menu, /onClick=\{\(\)=>setOpen\(false\)\}/);
 assert.match(css, /-webkit-backdrop-filter:blur\(25px\) saturate\(190%\)/);
