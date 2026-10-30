@@ -617,3 +617,186 @@
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
   .sh-header__glass,.sh-inbox-float__inner {background:rgba(246,250,255,.9)}
 }
+
+
+/* V4: detailed connected robot constellation. Previous inbox styles are retained
+ * only for backward compatibility; the active homepage uses this scene. */
+.sh-hero {
+  background:radial-gradient(ellipse 43% 40% at 52% 39%,rgba(174,216,255,.20),transparent 91%),
+    linear-gradient(178deg,#f8fbff 0%,#fff 88%);
+}
+.sh-hero__grid {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:"scene" "copy";
+  justify-items:center;
+  align-items:start;
+  gap:0;
+  min-height:0;
+  padding-block:6px 52px;
+}
+.sh-robot-scene {
+  grid-area:scene;
+  position:relative;
+  width:min(100%,1100px);
+  aspect-ratio:1200/710;
+  isolation:isolate;
+  overflow:hidden;
+  margin-inline:auto;
+}
+.sh-robot-scene::before {
+  content:"";position:absolute;left:50%;top:49%;width:52%;aspect-ratio:1;
+  transform:translate(-50%,-50%);z-index:-1;border-radius:50%;
+  background:radial-gradient(circle,rgba(103,167,255,.14),rgba(193,220,255,.06) 52%,transparent 74%);
+  pointer-events:none;
+}
+.sh-robot-world {position:relative;width:100%;height:100%}
+.sh-robot-svg {position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible}
+.sh-robot-head {transform-origin:605px 365px;animation:sh-robot-breathe 8s ease-in-out infinite}
+.sh-robot-core-led {animation:sh-robot-core-pulse 3.7s ease-in-out infinite}
+.sh-robot-eye-light {filter:drop-shadow(0 0 7px rgba(100,227,255,.9))}
+.sh-robot-cable-sway {animation-name:sh-cable-wave;animation-timing-function:ease-in-out;animation-iteration-count:infinite}
+.sh-robot-node-anchor {
+  position:absolute;z-index:2;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  will-change:auto;
+}
+.sh-robot-node {
+  display:inline-flex;align-items:center;gap:9px;white-space:nowrap;
+  padding:10px 13px 10px 10px;
+  color:#244469;
+  font-size:12px;font-weight:850;line-height:1.5;
+  border:1px solid rgba(255,255,255,.78);
+  border-radius:17px;
+  background:linear-gradient(122deg,rgba(255,255,255,.86),rgba(222,237,255,.65));
+  box-shadow:0 10px 30px rgba(63,98,148,.10),inset 0 1px rgba(255,255,255,.82);
+  -webkit-backdrop-filter:blur(8px) saturate(140%);
+  backdrop-filter:blur(8px) saturate(140%);
+  animation:sh-node-float ease-in-out infinite;
+}
+.sh-robot-node__icon {
+  flex:none;display:grid;place-items:center;width:33px;height:33px;
+  color:#316af2;background:linear-gradient(145deg,#f3f9ff,#dbeaff);
+  border-radius:12px;box-shadow:inset 0 1px 2px rgba(255,255,255,.83);
+}
+.sh-robot-node__label {white-space:nowrap}
+.sh-robot-scene__caption {
+  position:absolute;right:50%;bottom:2.2%;transform:translateX(50%);
+  display:inline-flex;align-items:center;gap:9px;
+  color:#7699c4;font-family:inherit;font-size:10px;letter-spacing:1.3px;direction:ltr;
+  white-space:nowrap;opacity:.7;pointer-events:none;
+}
+.sh-hero__copy {
+  grid-area:copy;align-self:start;z-index:5;
+  display:flex;flex-direction:column;align-items:center;
+  width:min(100%,790px);padding:0;
+  text-align:center;
+  margin-top:-50px;
+}
+.sh-hero__eyebrow {margin-inline:auto;justify-content:center;background:rgba(231,242,255,.72);border:0}
+.sh-hero h1 {
+  max-width:780px;
+  margin-block:10px 8px;
+  font-size:clamp(36px,4.35vw,59px);
+  line-height:1.44;
+  letter-spacing:-.9px;
+}
+.sh-hero__description {
+  max-width:680px!important;margin-inline:auto!important;
+  font-size:14px!important;line-height:1.9!important;
+}
+.sh-hero .sh-actions {margin-top:16px;justify-content:center;gap:10px}
+@keyframes sh-node-float {
+  0%,100% {transform:translate3d(0,0,0) rotate(-1deg)}
+  50% {transform:translate3d(0,-9px,0) rotate(1.3deg)}
+}
+@keyframes sh-cable-wave {
+  0%,100% {transform:rotate(-.75deg) translateY(0)}
+  50% {transform:rotate(.9deg) translateY(-5px)}
+}
+@keyframes sh-robot-breathe {
+  0%,100% {transform:translateY(0) rotate(-.25deg)}
+  50% {transform:translateY(-6px) rotate(.35deg)}
+}
+@keyframes sh-robot-core-pulse {
+  0%,100% {opacity:.65;filter:drop-shadow(0 0 3px #63cbff)}
+  50% {opacity:1;filter:drop-shadow(0 0 10px #55c6ff)}
+}
+/* Logo is mathematically centered across viewport, independent of both sides. */
+.sh-header__inner {position:relative;justify-content:space-between}
+.sh-header .sh-brand {
+  position:absolute;top:50%;left:50%;right:auto;
+  margin:0;transform:translate(-50%,-50%);z-index:3;
+}
+.sh-header .sh-nav {margin:0 auto 0 0}
+.sh-menu-toggle,.sh-menu-toggle:hover,.sh-menu-toggle:focus-visible {
+  border:0!important;box-shadow:none!important;
+}
+@media(max-width:860px) {
+  .sh-header__inner {justify-content:flex-start}
+  .sh-header .sh-nav,.sh-header__actions {display:none}
+  .sh-header .sh-brand {order:0;margin:0}
+  .sh-menu-toggle {order:-1;margin:0 auto 0 0;background:transparent!important;border:0!important}
+  .sh-menu-panel {
+    position:fixed;top:50%;left:50%;right:auto;z-index:120;
+    width:min(385px,calc(100vw - 36px));
+    max-height:min(78dvh,650px);
+    opacity:0;visibility:hidden;pointer-events:none;
+    transform:translate(-50%,calc(-50% - 72px)) scale(.96);
+    transform-origin:center top;
+    transition:opacity .28s ease,transform .43s cubic-bezier(.16,1,.3,1),visibility .28s;
+  }
+  .sh-menu-panel--open {
+    opacity:1;visibility:visible;pointer-events:auto;
+    transform:translate(-50%,-50%) scale(1);
+  }
+  .sh-menu-panel:not(.sh-menu-panel--open) nav a {opacity:0;transform:translateY(-12px)}
+  .sh-menu-panel--open nav a {opacity:1;transform:translateY(0)}
+  .sh-hero__grid {grid-template-areas:"scene" "copy";padding-block:0 38px;gap:0}
+  .sh-robot-scene {width:min(100%,760px);aspect-ratio:1200/710}
+  .sh-hero__copy {text-align:center;margin-top:-22px}
+  .sh-hero h1 {margin-inline:auto}
+  .sh-hero__description {margin-inline:auto!important}
+  .sh-hero .sh-actions {justify-content:center}
+}
+@media(max-width:600px) {
+  .sh-header__inner {min-height:52px}
+  .sh-header__glass {border-radius:19px}
+  .sh-header .sh-brand img {height:34px;width:34px}
+  .sh-menu-toggle {height:39px;width:39px;border:0!important}
+  .sh-menu-toggle svg {width:24px;height:24px}
+  .sh-hero__grid {padding-block:3px 25px}
+  .sh-robot-scene {height:clamp(280px,78vw,338px);width:100%;aspect-ratio:auto;overflow:hidden}
+  .sh-robot-world {
+    position:absolute;left:50%;top:-105px;transform:translateX(-50%);
+    width:720px;height:426px;
+    max-width:none;
+  }
+  .sh-robot-node {font-size:11px;padding:7px 9px;gap:6px;border-radius:13px}
+  .sh-robot-node__icon {width:27px;height:27px;border-radius:9px}
+  .sh-robot-node__icon svg {width:15px;height:15px}
+  .sh-robot-node-anchor--comment,.sh-robot-node-anchor--story,
+  .sh-robot-node-anchor--direct,.sh-robot-node-anchor--mention,
+  .sh-robot-node-anchor--live,.sh-robot-node-anchor--reminder,
+  .sh-robot-node-anchor--inbox,.sh-robot-node-anchor--publish,
+  .sh-robot-node-anchor--insights,.sh-robot-node-anchor--menu,
+  .sh-robot-node-anchor--icebreakers {opacity:1}
+  .sh-robot-scene__caption {bottom:0;font-size:8px;letter-spacing:.8px}
+  .sh-hero__copy {width:100%;margin-top:-8px;position:relative;z-index:5}
+  .sh-hero__eyebrow {font-size:10px;padding:6px 10px}
+  .sh-hero h1 {font-size:clamp(28px,7.3vw,38px);line-height:1.4;margin-block:10px 8px}
+  .sh-hero__description {font-size:12px!important;line-height:1.85!important}
+  .sh-hero .sh-actions {grid-template-columns:1fr 1fr;display:grid;width:100%;gap:9px;margin-top:16px}
+  .sh-hero .sh-actions .sh-button {font-size:11px;min-height:45px}
+  .sh-menu-panel {top:50%;max-height:76dvh}
+}
+@media(max-width:390px) {
+  .sh-robot-world {width:680px;height:402px;top:-94px}
+  .sh-robot-scene {height:278px}
+  .sh-robot-node-anchor--comment,.sh-robot-node-anchor--inbox {opacity:.94}
+}
+@media(prefers-reduced-motion:reduce) {
+  .sh-robot-head,.sh-robot-cable-sway,.sh-robot-node,.sh-robot-core-led {animation:none!important}
+  .sh-menu-panel,.sh-menu-panel nav a {transition:none!important}
+}
