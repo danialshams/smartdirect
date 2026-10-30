@@ -107,29 +107,32 @@ function DirectInboxPreview() {
   return (
     <div className="sh-inbox-stage" aria-label="نمای نمونه از صندوق دایرکت دایرا">
       <div className="sh-inbox-aura" aria-hidden="true" />
+      <div className="sh-inbox-depth-glow" aria-hidden="true" />
       <div className="sh-inbox-stage__float">
-        <div className="sh-inbox-window">
-          <div className="sh-inbox-topbar">
+        <div className="sh-inbox-perspective" data-hero-panel>
+          <div className="sh-inbox-window">
+          <div className="sh-inbox-topbar" data-hero-bar>
             <span className="sh-inbox-topbrand"><MessagesSquare size={19} aria-hidden="true" /> صندوق دایرکت</span>
             <span className="sh-inbox-demo-label">نمای نمونه</span>
           </div>
           <div className="sh-inbox-body">
-            <div className="sh-inbox-threads" aria-hidden="true">
+            <div className="sh-inbox-threads" aria-hidden="true" data-hero-threads>
               <div className="sh-inbox-threads__title"><strong>گفتگوها</strong><Search size={15} /></div>
               <div className="sh-inbox-thread sh-inbox-thread--selected"><span className="sh-inbox-avatar sh-inbox-avatar--blue">م</span><span><strong>مشتری نمونه</strong><small>قیمت این محصول چنده؟</small></span><i aria-hidden="true" /></div>
               <div className="sh-inbox-thread"><span className="sh-inbox-avatar sh-inbox-avatar--pink">ن</span><span><strong>نگار</strong><small>ممنون از راهنمایی‌تون</small></span></div>
               <div className="sh-inbox-thread"><span className="sh-inbox-avatar sh-inbox-avatar--violet">س</span><span><strong>سارا</strong><small>سلام، وقت بخیر</small></span></div>
             </div>
             <div className="sh-inbox-chat">
-              <div className="sh-inbox-chat__header"><span className="sh-inbox-avatar sh-inbox-avatar--blue">م</span><span><strong>مشتری نمونه</strong><small>گفتگوی نمایشی</small></span><MoreHorizontal size={19} aria-hidden="true" /></div>
+              <div className="sh-inbox-chat__header" data-hero-chat><span className="sh-inbox-avatar sh-inbox-avatar--blue">م</span><span><strong>مشتری نمونه</strong><small>گفتگوی نمایشی</small></span><MoreHorizontal size={19} aria-hidden="true" /></div>
               <div className="sh-inbox-chat__messages">
                 <span className="sh-inbox-chat__day">امروز</span>
-                <div className="sh-chat-message sh-chat-message--incoming" data-hero-message>سلام، قیمت این محصول چنده؟<small>۱۰:۴۲</small></div>
-                <div className="sh-chat-message sh-chat-message--outgoing" data-hero-message>سلام! اطلاعات محصول رو برات فرستادم 💙<small>۱۰:۴۲ <CheckCheck size={13} aria-hidden="true" /></small></div>
+                <div className="sh-chat-message sh-chat-message--incoming" data-hero-incoming>سلام، قیمت این محصول چنده؟<small>۱۰:۴۲</small></div>
+                <div className="sh-chat-message sh-chat-message--outgoing" data-hero-outgoing>سلام! اطلاعات محصول رو برات فرستادم 💙<small>۱۰:۴۲ <CheckCheck size={13} aria-hidden="true" /></small></div>
               </div>
               <div className="sh-inbox-compose" aria-hidden="true"><span>پیام خود را بنویسید...</span><span className="sh-inbox-compose__send"><Send size={16}/></span></div>
             </div>
           </div>
+        </div>
         </div>
       </div>
       <div className="sh-inbox-float sh-inbox-float--new" data-hero-float><span className="sh-inbox-float__inner"><span className="sh-inbox-float__icon"><MessageCircle size={18}/></span><span><strong>پیام جدید</strong><small>قیمت این محصول چنده؟</small></span></span></div>
