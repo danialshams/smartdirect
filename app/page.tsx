@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   ArrowLeft, ArrowUpLeft, BarChart3, BellRing, CalendarDays,
   Check, ChevronDown, CircleHelp, Command, Headphones,
-  MessageCircle, MessagesSquare, MousePointer2, Radio,
+  MessageCircle, MessagesSquare,
   Send, ShieldCheck, Sparkles, WandSparkles,
 } from "lucide-react";
 import { SimpleHeader } from "../components/landing/SimpleHeader";
