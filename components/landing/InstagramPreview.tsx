@@ -1,7 +1,8 @@
+import type { ReactNode } from "react";
 import {
   ArrowRight, AtSign, BarChart3, Bookmark, CalendarDays, CheckCheck,
   ChevronLeft, Clock3, Heart, ImageIcon, Instagram, Menu, MessageCircle,
-  MoreHorizontal, Play, Radio, Search, Send, Share2, Smile,
+  MoreHorizontal, Radio, Search, Send, Smile,
 } from "lucide-react";
 import type { ShowcaseKind } from "./showcase-scenes";
 
@@ -22,7 +23,7 @@ function Profile({ title = "daira.shop", sub }: {title?:string;sub?:string}) {
     <span><strong>{title}</strong>{sub && <small>{sub}</small>}</span>
   </div>;
 }
-function Bubble({children,mine=false}:{children:React.ReactNode;mine?:boolean}) {
+function Bubble({children,mine=false}:{children:ReactNode;mine?:boolean}) {
   return <div className={"ig-bubble"+(mine?" ig-bubble--mine":"")}>{children}</div>;
 }
 function Chat({kind}:{kind:"direct"|"reminder"|"icebreaker"|"menu"}) {
