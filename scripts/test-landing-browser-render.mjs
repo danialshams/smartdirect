@@ -138,6 +138,20 @@ try {
   assert.ok(scrolled.y > 200, "Scroll test did not actually move page");
   assert.equal(scrolled.strategy,"svg");
   assert.match(scrolled.filter,/url\(/);
+  const lensesScrolled = await waitFor(async () => {
+    const count = await evaluate(`document.querySelectorAll("[data-liquid-glass]").length`);
+    return count === 2 ? count : false;
+  });
+  const backTop = await evaluate(`(() => {
+    const lens=document.querySelector(".ap-backtop__lens");
+    const glass=[...lens.children].find(el=>el.style.backdropFilter||el.style.webkitBackdropFilter);
+    return {strategy:lens.dataset.glassStrategy,
+      shadow:glass&&getComputedStyle(glass).boxShadow,
+      border:getComputedStyle(lens.querySelector(".liquid-glass-border")).display};
+  })()`);
+  assert.equal(backTop.strategy,"svg");
+  assert.equal(backTop.shadow,"none","Back-to-top has no white inset shadow");
+  assert.equal(backTop.border,"none","Back-to-top has no white gradient border");
 
   await evaluate(`document.querySelector(".ap-menu-toggle").click()`);
   await sleep(110);
@@ -150,7 +164,7 @@ try {
   assert.equal(menuMid.open,true);
   assert.equal(menuMid.clip,"none","Avoid animated clip-path repaint");
   assert.match(menuMid.overlayFilter,/blur\(3px\)/,"Backdrop blur is static");
-  assert.equal(menuMid.count,1,"Opening menu must not mount a second WebGL/SVG lens");
+  assert.equal(menuMid.count,lensesScrolled,"Opening menu must not mount an extra WebGL/SVG lens");
   await sleep(300);
   await evaluate(`document.querySelector('.ap-menu__top button').click()`);
   await sleep(350);
