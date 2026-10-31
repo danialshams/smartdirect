@@ -50,8 +50,8 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
   // independent of the optical lens ref so it can mount at any time.
   useLayoutEffect(() => {
     const ua = navigator.userAgent;
-    const webkitSnapshot = /Firefox\\/|FxiOS\\/|iPhone|iPad|iPod/.test(ua) ||
-      (/Safari\\//.test(ua) && !/Chrome\\/|Chromium\\/|Edg\\/|OPR\\//.test(ua));
+    const webkitSnapshot = /Firefox\/|FxiOS\/|iPhone|iPad|iPod/.test(ua) ||
+      (/Safari\//.test(ua) && !/Chrome\/|Chromium\/|Edg\/|OPR\//.test(ua));
     if (!webkitSnapshot) return;
 
     let active = true;
