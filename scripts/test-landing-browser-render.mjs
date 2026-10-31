@@ -137,6 +137,28 @@ try {
   assert.ok(startup.opticalMaps>=1,"Actual library displacement stages must exist");
   assert.equal(startup.oldApproximation,false);
   assert.equal(startup.ctaIcons,0,"Free Start button should remain icon-free");
+  // Temporary public-landing visual diagnostics. The user reports no visually
+  // discernible lens despite a positive filter CSS property test.
+  const opticDebug=await evaluate(`(() => {
+    const h=document.querySelector(".ap-header");
+    const g=document.querySelector(".ap-header__backdrop");
+    const panel=g.querySelector('div[style*="backdrop-filter"]');
+    const rect=g.getBoundingClientRect();
+    const hero=document.querySelector(".ap-hero");
+    const selectors=[".ap-header",".ap-header__backdrop",".ap-hero",".ap-hero__ambient",".ap-site","main"];
+    return {state:document.documentElement.dataset.dairaHero,
+      size:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},
+      filter:panel.getAttribute("style"),computedFilter:getComputedStyle(panel).backdropFilter,
+      map:g.querySelector('feImage')?.getAttribute('href')?.length,
+      layers:selectors.map(s=>{const e=document.querySelector(s),v=getComputedStyle(e);
+        return [s,v.position,v.zIndex,v.isolation,v.background,v.backgroundColor,v.filter,v.backdropFilter,v.opacity,v.overflow];}),
+      center:document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2)?.className
+    };
+  })()`);
+  console.log("DAIRA_DIAG_COMPUTED="+JSON.stringify(opticDebug));
+  const shot=(await send("Page.captureScreenshot",{format:"jpeg",quality:58,captureBeyondViewport:false})).data;
+  console.log("DAIRA_DIAG_SCREENSHOT_FIRST="+shot);
+
   // Prior regressions passed because only filter existence was tested.
   // An isolated sticky header is a backdrop root and hides all underlying
   // scrolling pixels from the genuine SVG filter. Assert actual CSS root.
@@ -242,6 +264,9 @@ try {
   assert.equal(scrolled.borderWidth,"2px","Button needs a white outer border");
   assert.match(scrolled.borderColor,/255, 255, 255/);
   assert.equal(scrolled.glassCount,2);
+  const shotScrolled=(await send("Page.captureScreenshot",{format:"jpeg",quality:58,captureBeyondViewport:false})).data;
+  console.log("DAIRA_DIAG_SCREENSHOT_SCROLLED="+shotScrolled);
+
   assert.equal(await evaluate('getComputedStyle(document.querySelector(".ap-backtop")).isolation'),"auto","Back button must not trap backdrop in an isolated stacking root");
 
   await evaluate('document.querySelector(".ap-menu-toggle").click()');
