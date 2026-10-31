@@ -96,25 +96,10 @@ html[data-daira-hero="done"] .ap-site [data-hero-assembly] {
   border:0!important;
   outline:0!important;
 }
-/* A WebGL tile which is not yet ready normally receives the library's
-   bright 50% WHITE CSS gradient. That was the all-white header on fast scroll.
-   Only while waiting for native optics, keep the live page visible through a
-   light neutral frosted surface instead. The active SVG/WebGL lens is untouched. */
-.ap-site .daira-library-glass-frame[data-glass-ready="false"]
-  .daira-library-liquid-header > div[style*="backdrop-filter"] {
-  background:rgba(255,255,255,.035)!important;
-  -webkit-backdrop-filter:blur(5px) saturate(128%)!important;
-  backdrop-filter:blur(5px) saturate(128%)!important;
-  box-shadow:none!important;
-}
-/* Keep the WebGL context alive, but do not paint an incomplete white
-   snapshot over the live CSS fallback during a section-boundary capture.
-   Library WebGL uses its first aria-hidden child as the GPU canvas holder;
-   native SVG lenses do not have that holder. */
-.ap-site .daira-library-glass-frame[data-glass-ready="false"]
-  .daira-library-liquid-header > div:first-child[aria-hidden="true"] {
-  opacity:0!important;
-}
+/* Do not replace the REAL optical material with blur(5px) or hide the
+   native GPU canvas just because an adjacent tile is being recaptured.
+   The library retains its WebGL output while the capture controller updates.
+   Only the independent fallback below covers genuinely uninitialized glass. */
 .ap-site .daira-library-glass-live-fallback {
   position:absolute;
   inset:0;
