@@ -1,129 +1,88 @@
-/** Simple Daira landing smoke checks. */
+/** Daira minimalist public landing: content, motion, navigation and mobile contract. */
 import { readFileSync, existsSync } from "node:fs";
 import assert from "node:assert/strict";
 
-const page = readFileSync("app/page.tsx","utf8");
-const css = readFileSync("app/simple-home.css","utf8");
-const menu = readFileSync("components/landing/SimpleHeader.tsx","utf8");
-const lens = readFileSync("components/landing/LandingGlass.tsx","utf8");
-const robot = readFileSync("components/landing/RobotHeroScene.tsx","utf8");
-assert.equal(existsSync("components/landing/RobotThreeModel.tsx"), false, "Three.js renderer must be removed");
-const offlineScript = readFileSync("scripts/render-daira-blender.py","utf8");
-const tokens = readFileSync("app/daira-tokens.css","utf8");
+const read=(path:string)=>readFileSync(path,"utf8");
+const page=read("app/page.tsx");
+const css=read("app/simple-home.css");
+const header=read("components/landing/SimpleHeader.tsx");
+const motion=read("components/landing/HeroMotion.tsx");
+const tokens=read("app/daira-tokens.css");
+const pkg=JSON.parse(read("package.json"));
+const lock=JSON.parse(read("package-lock.json"));
 
 assert.match(page,/dir="rtl"/);
-for(const link of ["/login","/privacy-policy","/data-deletion"])
-  assert.ok(page.includes('href="'+link+'"'),"Missing public link: "+link);
+assert.match(page,/<main id="content">/);
+assert.match(page,/aria-labelledby="sh-hero-title"/);
+assert.match(page,/<HeroMotion \/>/);
+assert.match(page,/<SimpleHeader \/>/);
+
+for(const route of ["/login","/privacy-policy","/data-deletion"])
+  assert.ok(page.includes('href="'+route+'"'),"Missing real route: "+route);
 for(const section of ["features","example","how","faq"])
-  assert.ok(page.includes('id="'+section+'"'),"Missing section: "+section);
-for(const label of ["کامنت","استوری","لایو","اشتراک‌گذاری و منشن","دایرکت","یادآوری هوشمند","منوی دایرکت","پیام شروع گفتگو","انتشار محتوا","تحلیل پیج","صندوق دایرکت"])
-  assert.ok(page.includes(label),"Missing feature: "+label);
-for(const art of ["comment-reply","direct-automation","inbox","publishing","insights","smart-reminders"])
-  assert.ok(existsSync("public/dashboard-art/"+art+".webp"),"Missing image: "+art);
-assert.match(page,/نمونه نمایشی|نمای نمونه/);
-assert.match(menu,/document.body.style.overflow/);
-assert.match(menu,/event.key === "Escape"/);
-assert.match(menu,/inert=\{!open\}/);
-assert.match(menu,/sh-menu-toggle/);
-assert.match(css,/right:16px/);
-assert.match(css,/@media\(max-width:600px\)/);
-assert.match(css,/@media\(max-width:370px\)/);
-assert.match(css, /prefers-reduced-motion:reduce/);
-assert.match(css,/var\(--daira-primary\)/);
-assert.match(css,/var\(--daira-surface\)/);
+  assert.ok(page.includes('id="'+section+'"'),"Missing marketing section: "+section);
+
+for(const label of ["کامنت","استوری","لایو","اشتراک‌گذاری","منشن","دایرکت","یادآوری هوشمند","منوی دایرکت","پیام شروع گفتگو","انتشار محتوا","تحلیل پیج","صندوق دایرکت"])
+  assert.ok(page.includes(label),"Missing existing Daira feature: "+label);
+
+for(const copy of ["شروع با دایرا","آشنایی با امکانات","شروعی ساده، در سه قدم","سؤالات متداول","نمای نمونه"])
+  assert.ok(page.includes(copy),"Missing meaningful marketing content: "+copy);
+
+assert.match(page,/const features = \[/);
+assert.match(page,/const steps = \[/);
+assert.match(page,/const faqs = \[/);
+assert.equal((page.match(/description: "/g)||[]).length>=9,true);
+
+assert.match(page,/sh-preview__window/);
+assert.match(page,/sh-preview__flow-answer/);
+assert.match(page,/sh-hero__copy/);
+assert.match(page,/sh-feature-grid/);
+assert.match(page,/sh-faq__item/);
+assert.doesNotMatch(page,/RobotHeroScene|RobotMotionPlayer|<video|<Canvas|WebGL|LandingWebGL|LandingMotion/);
+assert.doesNotMatch(page,/fetch\(|dangerouslySetInnerHTML|ثبت.نام رایگان|مشتری راضی/);
+assert.ok(existsSync("public/daira-header-logo-hd.webp"),"Brand logo required");
 assert.match(tokens,/--daira-primary: #2F61FD/);
-assert.doesNotMatch(page,/fetch\(|dangerouslySetInnerHTML|WebGL|LandingWebGL|LandingMotion|ثبت.نام رایگان|مشتری راضی/);
-assert.doesNotMatch(menu,/fetch\(|localStorage|sessionStorage|WebGL|setInterval/);
-for(const deleted of ["app/landing-light.css","components/landing/LightInteractions.tsx",
- "app/landing.css","components/landing/LandingWebGL.tsx","components/landing/LandingMotion.tsx"])
-  assert.equal(existsSync(deleted),false,"Outdated landing artifact: "+deleted);
 
-const motion = readFileSync("components/landing/HeroMotion.tsx","utf8");
-const packageJson = JSON.parse(readFileSync("package.json","utf8"));
-const lock = JSON.parse(readFileSync("package-lock.json","utf8"));
-assert.equal(packageJson.dependencies.gsap, "3.14.2");
-assert.equal(lock.packages[""].dependencies.gsap, packageJson.dependencies.gsap);
-assert.equal(lock.packages["node_modules/gsap"].version, packageJson.dependencies.gsap);
-assert.match(motion, /from "gsap"/);
-assert.match(motion, /gsap\.timeline/);
-assert.match(motion, /context\.revert\(\)/);
-assert.match(motion, /prefers-reduced-motion: reduce/);
-assert.match(page, /<HeroMotion \/>/);
-assert.match(page, /<RobotHeroScene \/>/);
-assert.match(page, /همه تعاملات در یک مدار/);
-assert.match(page, /id="sh-optics-backdrop"/);
-assert.doesNotMatch(page, /<DirectInboxPreview \/>/);
-assert.match(menu, /<LandingGlass className="sh-header__glass">/);
-assert.match(lens, /from "simple-liquid-glass"/);
-assert.match(lens, /backdropSelector="#sh-optics-backdrop"/);
-assert.match(lens, /refraction="lens"/);
-assert.match(css, /\.sh-header__inner\s*\{[\s\S]*?border:0;border-radius:0;box-shadow:none/);
-assert.match(css, /grid-template-areas:"scene" "copy"/);
-assert.equal(packageJson.dependencies["simple-liquid-glass"], "5.4.0");
-assert.equal(lock.packages["node_modules/simple-liquid-glass"].version, "5.4.0");
+assert.equal(pkg.dependencies.gsap,"3.14.2");
+assert.equal(lock.packages[""].dependencies.gsap,"3.14.2");
+assert.equal(lock.packages["node_modules/gsap"].version,"3.14.2");
+assert.match(motion,/from "gsap"/);
+assert.match(motion,/from "gsap\/ScrollTrigger"/);
+assert.match(motion,/gsap\.timeline/);
+assert.match(motion,/scrollTrigger:/);
+assert.match(motion,/context\.revert\(\)/);
+assert.match(motion,/prefers-reduced-motion: reduce/);
+assert.match(motion,/history\.scrollRestoration = "manual"/);
+assert.match(motion,/window\.addEventListener\("pageshow", reset\)/);
+assert.doesNotMatch(motion,/setInterval|fetch\(|requestAnimationFrame/);
 
-assert.match(page, /نمونه/);
-assert.match(robot, /data-robot-assembly="portrait"/);
-assert.match(robot, /data-robot-assembly="cable"/);
-assert.match(robot, /data-robot-assembly="node"/);
-assert.match(robot, /sh-robot-eye-dimmer/);
-assert.match(robot, /daira-robot-motion\.webm/);
-assert.match(robot, /daira-robot-motion\.mp4/);
-assert.match(robot, /onPlaying/);
-assert.match(robot, /autoPlay muted loop playsInline/);
-assert.doesNotMatch(robot, /RobotThreeModel|<Canvas|from "three"/);
-assert.match(offlineScript, /import bpy/);
-assert.match(offlineScript, /image = bpy\.data\.images\.load/);
-assert.match(offlineScript, /obj\.rotation_euler/);
-assert.match(css, /\.sh-robot-rendered__video--playing/);
-assert.ok(existsSync("public/landing/daira-robot-motion.webm"), "Missing Blender-rendered WebM");
-assert.ok(existsSync("public/landing/daira-robot-motion.mp4"), "Missing Blender-rendered MP4");
-assert.ok(existsSync("public/landing/daira-robot-hero.webp"), "Missing original approved poster");
-assert.match(robot, /Math\.random\(\)/);
-assert.match(robot, /gsap\.delayedCall\(gsap\.utils\.random\(3\.8,\s*6\.2\),\s*pulseOne\)/);
-assert.match(robot, /getPointAtLength/);
-assert.ok(existsSync("public/landing/daira-robot-hero.webp"),"Missing approved robot portrait asset");
-assert.doesNotMatch(robot, /href="\/landing\/daira-robot-hero.webp"/);
-assert.match(robot, /sh-robot-mobile-features/);
-assert.match(css, /grid-template-areas:"copy" "scene"/);
-assert.match(css, /\.sh-robot-mobile-features\s*\{[\s\S]*?display:grid/);
-assert.match(robot, /prefers-reduced-motion: reduce/);
-for (const id of ["comment","story","direct","mention","live","reminder","inbox","publish","insights","menu","icebreakers"]) {
-  assert.ok(robot.includes('id: "' + id + '"'), "Missing robot connection: " + id);
-}
-assert.equal((robot.match(/\{ id: "/g) || []).length, 11, "Exactly eleven dashboard features");
-assert.match(css, /@keyframes sh-cable-wave/);
-assert.match(css, /@keyframes sh-node-float/);
-assert.match(css, /\.sh-robot-3d-assembly/);
-assert.equal(packageJson.dependencies.three, undefined);
-assert.equal(packageJson.dependencies["@react-three/fiber"], undefined);
-assert.equal(packageJson.devDependencies["@types/three"], undefined);
-assert.equal(lock.packages[""].dependencies.three, undefined);
-assert.equal(lock.packages[""].dependencies["@react-three/fiber"], undefined);
-assert.match(css, /\.sh-header \.sh-brand\s*\{[\s\S]*?left:50%/);
-assert.match(css, /\.sh-menu-panel--open\s*\{[\s\S]*?translate\(-50%,-50%\)/);
-assert.match(menu, /aria-expanded=\{open\}/);
-assert.match(menu, /aria-controls="sh-menu-panel"/);
-assert.match(menu, /sh-menu-backdrop/);
-assert.match(menu, /aria-label="بستن منو"/);
-assert.match(menu, /onClick=\{\(\)=>setOpen\(false\)\}/);
-assert.match(css, /-webkit-backdrop-filter:blur\(9px\) saturate\(175%\)/);
-assert.match(css, /-webkit-backdrop-filter:blur\(16px\) saturate\(180%\)/);
-assert.match(css, /sh-inbox-stage__float/);
-assert.match(css, /sh-inbox-perspective/);
-assert.match(css, /rotateX\(4\.5deg\) rotateY\(-8deg\)/);
-assert.match(css, /grid-template-areas:"preview" "copy"/);
-assert.match(css, /\.sh-menu-toggle \{display:inline-flex;order:-1/);
-assert.match(css, /\.sh-header \.sh-brand \{order:0;margin-inline-start:auto/);
-assert.match(css, /\.sh-menu-panel::after \{content:none;display:none;\}/);
-assert.doesNotMatch(page, /<RevealOnScroll \/>/);
-assert.match(motion, /scrollRestoration = "manual"/);
-assert.match(motion, /window\.addEventListener\("pageshow", reset\)/);
-assert.match(motion, /window\.removeEventListener\("pageshow", reset\)/);
-assert.match(motion, /\.from\("\[data-hero-entrance\]"/);
-assert.match(css, /@keyframes sh-inbox-hover/);
-assert.match(css, /sh-menu-panel--open nav a:nth-child/);
-assert.match(css, /@supports not \(\(backdrop-filter/);
-assert.doesNotMatch(motion, /setInterval|requestAnimationFrame|fetch\(/);
+assert.match(header,/document\.body\.style\.overflow = "hidden"/);
+assert.match(header,/event\.key === "Escape"/);
+assert.match(header,/inert=\{!open\}/);
+assert.match(header,/aria-expanded=\{open\}/);
+assert.match(header,/aria-controls="sh-menu-panel"/);
+assert.match(header,/sh-menu-toggle/);
+assert.match(header,/sh-menu-backdrop/);
+assert.match(header,/closeButton\.current\?\.focus\(\)/);
+assert.match(header,/largeScreen|breakpoint = window\.matchMedia/);
+assert.doesNotMatch(header,/LiquidGlass|LandingGlass|fetch\(|localStorage/);
 
-console.log("Daira offline Blender hero: dual-format encoded loops, original photo fidelity, optical eye flickers, eleven cables, mobile layout and no WebGL PASS");
+assert.match(css,/\.sh-header__inner\s*\{/);
+assert.match(css,/grid-template-columns:minmax\(150px,1fr\) auto minmax\(150px,1fr\)/);
+assert.match(css,/\.sh-hero__inner\s*\{/);
+assert.match(css,/\.sh-feature-grid\s*\{/);
+assert.match(css,/\.sh-menu-panel--open\s*\{/);
+assert.match(css,/@media\(max-width:1050px\)/);
+assert.match(css,/@media\(max-width:860px\)/);
+assert.match(css,/@media\(max-width:600px\)/);
+assert.match(css,/@media\(max-width:390px\)/);
+assert.match(css,/@media\(max-width:340px\)/);
+assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+assert.match(css,/scroll-margin-top:105px/);
+assert.match(css,/--sh-blue:#2f61fd/);
+assert.match(css,/\.sh-menu-toggle \{display:flex/);
+assert.match(css,/\.sh-feature-grid \{grid-template-columns:1fr/);
+assert.match(css,/\.sh-hero__actions \{display:grid;grid-template-columns:1fr 1fr/);
+assert.doesNotMatch(css,/sh-robot-world|sh-robot-svg|sh-robot-cables|daira-robot-motion/);
+
+console.log("DAIRA minimalist landing PASS: concise content, 11 capabilities, semantic navigation, real routes, GSAP reveal, accessible mobile menu and responsive layout");
