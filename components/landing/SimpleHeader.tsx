@@ -91,7 +91,7 @@ export function SimpleHeader() {
   },[open]);
 
   return (
-    <header className="ap-header" data-landing-header>
+    <header className="ap-header" data-landing-header data-liquid-glass-ignore="">
       <LiquidGlass
         {...optics}
         radius={26}
@@ -102,8 +102,10 @@ export function SimpleHeader() {
       </LiquidGlass>
 
       {/*
-        The header's own logo, icon and CTA must not appear in its captured
-        backdrop. This prevents optical echoes and recursive-looking shadows.
+        The entire header is excluded from the scene capture. Simply ignoring
+        the inner controls lets the header shell remain a captured tile and
+        creates a recursive-looking ghost in Safari as the snapshot updates.
+        Lenses still refract the real page sections scrolling behind the header.
       */}
       <div className="ap-shell ap-header__inner" data-liquid-glass-ignore="">
         <button
