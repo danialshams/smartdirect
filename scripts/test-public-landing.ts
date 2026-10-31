@@ -47,9 +47,9 @@ assert.doesNotMatch(interactions,/LiquidGlass|simple-liquid-glass/);
 assert.match(optics,/prepareOpticalMaps/);
 assert.match(optics,/import LiquidGlass from "simple-liquid-glass"/);
 assert.match(optics,/renderer: "svg"/);
-assert.match(optics,/displacementScale: 24/);
+assert.match(optics,/displacementScale: 30/);
 assert.match(optics,/displacementScale: 17/);
-assert.ok(optics.includes('glassColor: "rgba(255,255,255,.065)"'));
+assert.ok(optics.includes('glassColor: "rgba(255,255,255,.028)"'));
 assert.ok(optics.includes('glassColor: "rgba(255,255,255,.17)"'));
 assert.ok(!optics.includes('background: "rgba(255,255,255,0)"'));
 
