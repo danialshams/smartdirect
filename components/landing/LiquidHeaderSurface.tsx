@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { LiveOpticalSurface, prepareOpticalMaps } from "./LiveOptics";
+import { LiveOpticalSurface } from "./LiveOptics";
 
 /**
  * A new, independent optical material for the landing header.
@@ -35,7 +35,6 @@ export function LiquidHeaderSurface() {
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(updateLighting);
     };
-    prepareOpticalMaps();
     const ua = navigator.userAgent;
     const blink = /(?:Chrome|Chromium|Edg|OPR)\//.test(ua)
       && !/(?:CriOS|FxiOS|EdgiOS)\//.test(ua)
@@ -56,11 +55,7 @@ export function LiquidHeaderSurface() {
       data-liquid-header={mode}
       aria-hidden="true"
     >
-      {mode === "mirror" ? (
-        <LiveOpticalSurface variant="header" className="ap-liquid-header__fallback" />
-      ) : (
-        <span className="ap-liquid-header__refraction" />
-      )}
+      <LiveOpticalSurface variant="header" className="ap-liquid-header__lens" />
       <span className="ap-liquid-header__volume" />
       <span className="ap-liquid-header__edge" />
       <span className="ap-liquid-header__glint" />
