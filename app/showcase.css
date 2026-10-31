@@ -36,21 +36,35 @@
   transition:background-color .2s,color .2s;
 }
 .ap-menu-toggle:hover {background:rgba(102,148,234,.12)!important;color:#2359d5}
-.ap-header__login-glass {
-  justify-self:end;display:grid!important;place-items:center;
-  min-height:42px;border:0!important;border-radius:999px!important;
-  background:transparent!important;
-  box-shadow:0 5px 16px rgba(29,85,219,.16)!important;
+.ap-header__login-holder {
+  position:relative;justify-self:end;isolation:isolate;
+  display:grid;place-items:center;
+  min-height:41px;min-width:118px;max-width:144px;
+  overflow:hidden;border-radius:999px;
+  background:linear-gradient(145deg,rgba(61,125,251,.95),rgba(36,85,213,.95));
+  box-shadow:0 7px 19px rgba(39,91,216,.25);
+}
+.ap-header__login-lens {
+  position:absolute!important;inset:0!important;z-index:0;
+  width:100%!important;height:100%!important;min-height:0!important;
+  margin:0!important;padding:0!important;border:0!important;
+  border-radius:999px!important;overflow:hidden!important;
+  background:transparent!important;box-shadow:none!important;
+}
+.ap-header__login-fill {width:100%;height:100%;display:block}
+.ap-header__login-holder::after {
+  content:"";position:absolute;inset:0;border-radius:inherit;z-index:1;pointer-events:none;
+  background:linear-gradient(155deg,rgba(255,255,255,.22),transparent 42%);
 }
 .ap-header__panel-login {
-  position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  min-height:42px;padding:9px 17px;border-radius:999px;white-space:nowrap;
+  position:relative;z-index:2;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:41px;width:100%;padding:9px 16px;border-radius:999px;white-space:nowrap;
   font-size:12px;font-weight:750;color:#fff!important;
-  text-shadow:0 1px 1px rgba(11,49,121,.18);
-  background:rgba(45,101,232,.18);
-  transition:background .2s;
+  text-shadow:0 1px 1px rgba(11,49,121,.20);
+  background:transparent!important;
+  transition:background-color .2s;
 }
-.ap-header__panel-login:hover {color:#fff!important;background:rgba(48,105,239,.33)}
+.ap-header__panel-login:hover {color:#fff!important;background:rgba(11,40,116,.11)!important}
 
 /* High-contrast, right-anchored menu: still refracts at the edges. */
 .ap-menu-overlay {
@@ -203,7 +217,7 @@
   .ap-menu-toggle {width:39px;height:39px}
   .ap-header__panel-login {font-size:10px;min-height:37px;padding:8px 11px;gap:4px}
   .ap-header__panel-login svg {width:13px;height:13px}
-  .ap-header__login-glass {min-height:37px}
+  .ap-header__login-holder {min-height:37px;min-width:105px}
   .ap-menu {top:79px;right:12px;width:min(360px,calc(100vw - 24px));max-height:calc(100dvh - 91px)}
   .ap-menu__content {padding:16px}
   .ap-menu__nav .ap-menu__item {font-size:12px;min-height:43px}
