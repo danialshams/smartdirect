@@ -116,6 +116,17 @@ html[data-daira-hero="done"] .ap-site .ap-hero__word {
   border:0!important;
   outline:0!important;
 }
+/* A WebGL tile which is not yet ready normally receives the library's
+   bright 50% WHITE CSS gradient. That was the all-white header on fast scroll.
+   Only while waiting for native optics, keep the live page visible through a
+   light neutral frosted surface instead. The active SVG/WebGL lens is untouched. */
+.ap-site .daira-library-glass-frame[data-glass-ready="false"]
+  .daira-library-liquid-header > div[style*="backdrop-filter"] {
+  background:rgba(255,255,255,.035)!important;
+  -webkit-backdrop-filter:blur(5px) saturate(128%)!important;
+  backdrop-filter:blur(5px) saturate(128%)!important;
+  box-shadow:none!important;
+}
 .ap-site .daira-library-glass-live-fallback {
   position:absolute;
   inset:0;
