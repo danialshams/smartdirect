@@ -1,19 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useRef, type ReactNode } from "react";
-import { LiquidGlassScene } from "simple-liquid-glass/backdrop";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { LiquidGlassScene, createLiquidGlassBackdrop } from "simple-liquid-glass/backdrop";
+
+type Capture = ReturnType<typeof createLiquidGlassBackdrop>;
+const CaptureContext = createContext<Capture | null>(null);
+export const useLandingGlassCapture = () => useContext(CaptureContext);
 
 /**
- * On iOS/Safari the library captures real HTML sections once and repaints
- * their cached pixels at each animation frame as the page scrolls. A tile
- * which failed image/font capture is marked failed by the library and will
- * stay blank until its DOM is invalidated again.
+ * The stock scene binding resets its WebGL engine to PENDING whenever the
+ * upcoming HTML section has not been captured yet. In fast iPhone scrolling,
+ * that DESTROYS and recreates the GPU canvas between section boundaries.
  *
- * Recover a failed tile at most twice, well outside the active scroll.
- * Do not refresh every frame: it would synchronously rasterize HTML and cause
- * the exact delayed/white reflections this page is fixing.
+ * Register the library's exact same capture engine as an explicit
+ * backdropRef, keeping its WebGL renderer mounted while missing snapshots
+ * are filled in. A transparent, live CSS fallback hides capture gaps.
+ *
+ * Chromium still uses the existing native SVG path, unchanged. The standard
+ * scene DOM wrapper remains for source structure / compatibility but does
+ * not register a second canvas when an explicit source is supplied.
  */
 export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
+  const root = useRef<HTMLDivElement>(null);
+  const [capture, setCapture] = useState<Capture | null>(null);
   const retries = useRef(new WeakMap<HTMLElement, number>());
   const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
 
@@ -22,17 +31,29 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
     const count = retries.current.get(section) ?? 0;
     if (count >= 2) return;
     retries.current.set(section, count + 1);
-
     const retry = () => {
       timers.current.delete(timer);
-      if (!section.isConnected) return;
-      // The scene observes section mutations and will re-attempt a failed
-      // capture on the next idle frame, keeping its last good pixels.
-      section.setAttribute("data-daira-glass-retry", String(count + 1));
+      if (section.isConnected) section.setAttribute("data-daira-glass-retry", String(count + 1));
     };
     const timer = setTimeout(retry, count === 0 ? 900 : 2800);
     timers.current.add(timer);
   }, []);
+
+  useLayoutEffect(() => {
+    const element = root.current;
+    if (!element) return;
+    const ua = navigator.userAgent;
+    const webkitSnapshot = /Firefox\/|FxiOS\/|iPhone|iPad|iPod/.test(ua) ||
+      (/Safari\//.test(ua) && !/Chrome\/|Chromium\/|Edg\/|OPR\//.test(ua));
+    if (!webkitSnapshot) return;
+    const source = createLiquidGlassBackdrop(element, {
+      maxCacheBytes: 64 * 1024 * 1024, onCaptureError
+    });
+    setCapture(source);
+    return () => {
+      source.destroy();
+    };
+  }, [onCaptureError]);
 
   useEffect(() => () => {
     for (const timer of timers.current) clearTimeout(timer);
@@ -40,14 +61,17 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <LiquidGlassScene
-      className="ap-site"
-      id="top"
-      dir="rtl"
-      maxCacheBytes={64 * 1024 * 1024}
-      onCaptureError={onCaptureError}
-    >
-      {children}
-    </LiquidGlassScene>
+    <CaptureContext.Provider value={capture}>
+      <LiquidGlassScene
+        ref={root}
+        className="ap-site"
+        id="top"
+        dir="rtl"
+        maxCacheBytes={64 * 1024 * 1024}
+        onCaptureError={onCaptureError}
+      >
+        {children}
+      </LiquidGlassScene>
+    </CaptureContext.Provider>
   );
 }
