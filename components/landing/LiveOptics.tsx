@@ -167,11 +167,11 @@ export function LiveOpticalSurface({ className, variant }: Props) {
       if (!raf) raf = requestAnimationFrame(updateScrollTransform);
     };
 
-    prepareOpticalMaps();
     if (isNative()) {
       // Do not show a half-initialized filtered layer during hydration.
       requestAnimationFrame(() => { if (active) setMode("native"); });
     } else {
+      prepareOpticalMaps();
       const prepare = async () => {
         // Build the entire visual source before showing any refracted pixels.
         await Promise.all([
@@ -232,7 +232,7 @@ export function LiveOpticalSurface({ className, variant }: Props) {
     return (
       <LiquidGlass
         {...options}
-        radius={variant === "header" ? 26 : 999}
+        radius={variant === "header" ? 26 : 28}
         className={`ap-native-liquid ap-native-liquid--${variant} ${className}`}
         style={{position:"absolute",inset:0,pointerEvents:"none"}}
         aria-hidden="true"
