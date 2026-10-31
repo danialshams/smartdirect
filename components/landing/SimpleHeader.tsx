@@ -25,31 +25,67 @@ const glassProps = {
   refraction:"lens" as const,
   lensProfile:"loupe" as const,
   lensOptions:{
-    strength:.23,
-    depth:.58,
-    curvature:.62,
-    bend:.77,
-    bendWidth:.22,
-    sheen:1.65,
+    strength:.11,
+    depth:.34,
+    curvature:.55,
+    bend:.55,
+    bendWidth:.18,
+    sheen:1.32,
     sheenWidth:6.5,
     sheenAngle:-34,
-    specular:2.15,
-    glow:.13,
-    glowSpread:.55,
-    glowFalloff:1.7,
+    specular:1.65,
+    glow:.09,
+    glowSpread:.48,
+    glowFalloff:1.6,
     brightness:0,
   },
-  quality:"extreme" as const,
+  quality:"high" as const,
   mobileFallback:"svg" as const,
-  // No frosted shader: glass is clear, refraction is what creates its look.
   frost:0,
   blur:0,
-  saturation:130,
-  dispersion:58,
-  scale:200,
-  aberrationIntensity:.38,
-  glassColor:"rgba(255,255,255,0.032)",
+  saturation:120,
+  dispersion:24,
+  scale:156,
+  aberrationIntensity:.16,
+  glassColor:"rgba(255,255,255,0.026)",
   background:"rgba(255,255,255,0.012)",
+};
+
+/** A smaller, clearer displacement on the large menu preserves typography.
+ * Edge bending and specular highlights still make it a real glass lens.
+ */
+const menuGlassProps = {
+  ...glassProps,
+  lensOptions:{
+    ...glassProps.lensOptions,
+    strength:.045,
+    depth:.24,
+    curvature:.43,
+    bend:.47,
+    bendWidth:.12,
+    sheen:1.25,
+    specular:1.55,
+  },
+  dispersion:15,
+  aberrationIntensity:.08,
+  scale:106,
+  glassColor:"rgba(255,255,255,0.055)",
+};
+
+/** The small circular control can afford stronger optical curvature. */
+const toggleGlassProps = {
+  ...glassProps,
+  lensOptions:{
+    ...glassProps.lensOptions,
+    strength:.17,
+    depth:.52,
+    curvature:.68,
+    bend:.63,
+    specular:1.95,
+  },
+  dispersion:32,
+  aberrationIntensity:.23,
+  scale:181,
 };
 
 /**
@@ -58,11 +94,28 @@ const glassProps = {
  */
 export function SimpleHeader() {
   const [open,setOpen]=useState(false);
+  const [menuOnDark,setMenuOnDark]=useState(false);
   const toggleRef=useRef<HTMLButtonElement>(null);
   const closeRef=useRef<HTMLButtonElement>(null);
   const menuRef=useRef<HTMLElement>(null);
   const returnFocus=useRef(true);
   const closeOnNavigate=()=>{returnFocus.current=false;setOpen(false);};
+
+  // Keep text legible when a clear refracting menu sits over a dark scene.
+  // Sampling before opening avoids selecting the modal or its overlay.
+  useEffect(()=>{
+    const update=()=>{
+      const underlying=document.elementFromPoint(window.innerWidth/2,Math.min(115,window.innerHeight-1));
+      setMenuOnDark(Boolean(underlying?.closest(".ap-showcase-scene--midnight,.ap-showcase-scene--violet")));
+    };
+    update();
+    window.addEventListener("scroll",update,{passive:true});
+    window.addEventListener("resize",update);
+    return ()=>{
+      window.removeEventListener("scroll",update);
+      window.removeEventListener("resize",update);
+    };
+  },[]);
 
   useEffect(()=>{
     if(!open)return;
@@ -96,7 +149,7 @@ export function SimpleHeader() {
       </LiquidGlass>
       <div className="ap-shell ap-header__inner">
         <div className="ap-menu-toggle__holder">
-          <LiquidGlass {...glassProps} radius={24} className="ap-menu-toggle__glass"
+          <LiquidGlass {...toggleGlassProps} radius={24} className="ap-menu-toggle__glass"
             liquid="flow" liquidSpeed={0.75} liquidScale={0.38}>
             <button ref={toggleRef} className="ap-menu-toggle" type="button"
               aria-label={open?"بستن منو":"باز کردن منو"}
@@ -120,11 +173,10 @@ export function SimpleHeader() {
         aria-label="بستن منو" onClick={()=>setOpen(false)}/>
 
       <aside id="ap-menu" ref={menuRef}
-        className={"ap-menu"+(open?" ap-menu--open":"")}
+        className={"ap-menu"+(open?" ap-menu--open":"")+(menuOnDark?" ap-menu--dark":"")}
         role="dialog" aria-label="منوی اصلی دایرا"
         aria-modal={open?true:undefined} aria-hidden={!open} inert={!open}>
-        <LiquidGlass {...glassProps} radius={28} className="ap-menu__liquid"
-          liquid="wobble" liquidSpeed={0.46} liquidScale={0.28}>
+        <LiquidGlass {...menuGlassProps} radius={28} className="ap-menu__liquid">
           <div className="ap-menu__content">
             <div className="ap-menu__top">
               <strong>دایرا</strong>
