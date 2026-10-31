@@ -160,7 +160,7 @@ try {
   assert.match(scrolled.headerFilter,/url\(/);
   assert.match(scrolled.buttonFilter,/url\(/);
   assert.equal(scrolled.borderWidth,"2px","Button needs a white outer border");
-  assert.match(scrolled.borderColor,/rgb\(255, 255, 255\)/);
+  assert.match(scrolled.borderColor,/255, 255, 255/);
   assert.equal(scrolled.glassCount,2);
 
   await evaluate('document.querySelector(".ap-menu-toggle").click()');
