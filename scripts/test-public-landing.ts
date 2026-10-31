@@ -11,6 +11,9 @@ const root=read("components/landing/LandingGlassBackdrop.tsx");
 const optics=read("components/landing/LiveOptics.tsx");
 const interactions=read("components/landing/LandingInteractions.tsx");
 const css=read("app/landing-optics-v2.css");
+const hero=read("components/landing/HeroAssembly.tsx");
+const showcaseStyles=read("app/showcase.css");
+const polish=read("app/landing-polish.css");
 
 for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />",
   '<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'",
@@ -77,6 +80,17 @@ assert.doesNotMatch(page,/ArrowUpLeft/);
 assert.match(page,/رایگان شروع کن\s*<\/Link>/);
 assert.match(css,/@keyframes daira-word-assemble/);
 assert.match(css,/animation:daira-word-assemble/);
+assert.match(page,/<HeroAssembly \/>/);
+assert.match(page,/dataset\.dairaHero='pending'/);
+assert.match(hero,/document\.fonts\.ready/);
+assert.match(hero,/dataset\.dairaHero = "play"/);
+assert.match(css,/data-daira-hero="pending"/);
+assert.match(css,/data-daira-hero="play"/);
+assert.match(css,/1\.26s cubic-bezier/);
+assert.match(css,/--word-x:175px/);
+assert.match(showcaseStyles,/z-index:100;isolation:auto/);
+assert.match(polish,/overflow:visible;isolation:auto/);
+assert.doesNotMatch(polish,/ap-header__backdrop\{filter:none!important;isolation:isolate/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.doesNotMatch(css,/border:[^;]*solid\s+white|setInterval/);
 

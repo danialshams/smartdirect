@@ -112,29 +112,56 @@
 }
 .ap-site .ap-backtop__action svg {filter:none!important;stroke:currentColor!important}
 
-/* Pure CSS word assembly, executed by the compositor rather than a JS
- * timeline. No animation-frame JS, blur, expensive layer masks or recurring
- * snapshots. Individual Persian words preserve their joined letters. */
+/* Deterministic, clearly scattered words that assemble after the fonts load.
+   An inline pre-hydration guard sets pending; a tiny client controller starts
+   CSS-only motion after first paint, so visitors actually see the assembly. */
 .ap-site .ap-hero__word {
   display:inline-block;
   white-space:pre;
-  animation:daira-word-assemble .64s cubic-bezier(.16,.85,.26,1) both;
+  transform-origin:50% 50%;
+  animation:none;
   will-change:auto;
-  transform-origin:center center;
 }
-.ap-site .ap-hero__word:nth-child(1){--word-x:29px;--word-y:-9px;animation-delay:0ms}
-.ap-site .ap-hero__word:nth-child(2){--word-x:-24px;--word-y:12px;animation-delay:25ms}
-.ap-site .ap-hero__word:nth-child(3){--word-x:23px;--word-y:-12px;animation-delay:48ms}
-.ap-site .ap-hero__word:nth-child(4){--word-x:-21px;--word-y:10px;animation-delay:17ms}
-.ap-site .ap-hero__word:nth-child(5){--word-x:26px;--word-y:-9px;animation-delay:31ms}
-.ap-site .ap-hero__word:nth-child(6){--word-x:-20px;--word-y:9px;animation-delay:49ms}
-.ap-site .ap-hero__word:nth-child(7){--word-x:27px;--word-y:-10px;animation-delay:67ms}
+.ap-site .ap-hero__word:nth-child(1){--word-x:175px;--word-y:-102px;--word-r:-7deg;--word-delay:0ms}
+.ap-site .ap-hero__word:nth-child(2){--word-x:-158px;--word-y:84px;--word-r:6deg;--word-delay:40ms}
+.ap-site .ap-hero__word:nth-child(3){--word-x:138px;--word-y:118px;--word-r:-5deg;--word-delay:80ms}
+.ap-site .ap-hero__word:nth-child(4){--word-x:-174px;--word-y:-106px;--word-r:5deg;--word-delay:25ms}
+.ap-site .ap-hero__word:nth-child(5){--word-x:198px;--word-y:-74px;--word-r:-7deg;--word-delay:65ms}
+.ap-site .ap-hero__word:nth-child(6){--word-x:-186px;--word-y:96px;--word-r:7deg;--word-delay:20ms}
+.ap-site .ap-hero__word:nth-child(7){--word-x:120px;--word-y:-91px;--word-r:-5deg;--word-delay:110ms}
+html[data-daira-hero="pending"] .ap-site .ap-hero__word {
+  opacity:.32;
+  transform:translate3d(var(--word-x),var(--word-y),0) rotate(var(--word-r)) scale(.88);
+}
+html[data-daira-hero="play"] .ap-site .ap-hero__word {
+  animation:daira-word-assemble 1.26s cubic-bezier(.16,.76,.19,1) both;
+  animation-delay:var(--word-delay);
+}
+html[data-daira-hero="done"] .ap-site .ap-hero__word {
+  opacity:1;
+  transform:none;
+  animation:none;
+}
 @keyframes daira-word-assemble {
-  0% { transform:translate3d(var(--word-x),var(--word-y),0);opacity:.48 }
-  100% { transform:translate3d(0,0,0);opacity:1 }
+  0% {opacity:.32;transform:translate3d(var(--word-x),var(--word-y),0) rotate(var(--word-r)) scale(.88)}
+  66% {opacity:1}
+  100% {opacity:1;transform:translate3d(0,0,0) rotate(0deg) scale(1)}
+}
+@media(max-width:600px) {
+  .ap-site .ap-hero__word:nth-child(1){--word-x:91px;--word-y:-87px}
+  .ap-site .ap-hero__word:nth-child(2){--word-x:-84px;--word-y:61px}
+  .ap-site .ap-hero__word:nth-child(3){--word-x:69px;--word-y:78px}
+  .ap-site .ap-hero__word:nth-child(4){--word-x:-83px;--word-y:-75px}
+  .ap-site .ap-hero__word:nth-child(5){--word-x:96px;--word-y:-61px}
+  .ap-site .ap-hero__word:nth-child(6){--word-x:-103px;--word-y:70px}
+  .ap-site .ap-hero__word:nth-child(7){--word-x:75px;--word-y:-64px}
 }
 @media(prefers-reduced-motion:reduce) {
-  .ap-site .ap-hero__word{animation:none!important;opacity:1!important;transform:none!important}
+  html[data-daira-hero] .ap-site .ap-hero__word {
+    opacity:1!important;
+    transform:none!important;
+    animation:none!important;
+  }
   .ap-optical-native,.ap-optical-mirror{transition:none!important}
 }
 

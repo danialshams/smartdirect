@@ -42,11 +42,12 @@ const liquidLens = {
   scale: 135,
   reveal: "ready" as const,
 };
+/** Optical curvature, no blue wash over the header. */
 const headerLens = {
   ...liquidLens,
-  frost: .035,
-  blur: .35,
-  glassColor: "rgba(241,249,255,.035)",
+  frost: 0,
+  blur: .28,
+  glassColor: "rgba(255,255,255,.009)",
   lensOptions: {
     strength: .22, depth: .72, curvature: .61, bend: .36, bendWidth: .18,
     sheen: .78, sheenWidth: 3.5, specular: .95, glow: .06, brightness: 0,

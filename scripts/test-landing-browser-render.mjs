@@ -137,6 +137,86 @@ try {
   assert.ok(startup.opticalMaps>=1,"Actual library displacement stages must exist");
   assert.equal(startup.oldApproximation,false);
   assert.equal(startup.ctaIcons,0,"Free Start button should remain icon-free");
+  // Prior regressions passed because only filter existence was tested.
+  // An isolated sticky header is a backdrop root and hides all underlying
+  // scrolling pixels from the genuine SVG filter. Assert actual CSS root.
+  const roots=await evaluate(`(() => ({
+    header:getComputedStyle(document.querySelector(".ap-header")).isolation,
+    lens:getComputedStyle(document.querySelector(".ap-header__backdrop")).isolation,
+    blueFill:getComputedStyle(document.querySelector(".ap-header__backdrop > div[style*='backdrop-filter']")).backgroundColor
+  }))()`);
+  assert.equal(roots.header,"auto","An isolated sticky header prevents sampling the scrolling page");
+  assert.equal(roots.lens,"auto","A nested isolated lens also traps the backdrop");
+  assert.ok(!roots.blueFill.includes("241, 249, 255"),"Header must not have a blue tint");
+
+  // The animation must only START when fonts and hydration have finished, so
+  // it is visibly scattered on actual first load, unlike a 640ms CSS animation
+  // that usually finishes before a visitor can see it.
+  await waitFor(async()=>(await evaluate("document.documentElement.dataset.dairaHero"))==="play");
+  const hero=await evaluate(`(() => {
+    const word=document.querySelector("[data-hero-word]");
+    const style=getComputedStyle(word);
+    return {name:style.animationName,duration:style.animationDuration,
+      spread:parseFloat(style.getPropertyValue("--word-x"))};
+  })()`);
+  assert.match(hero.name,/daira-word-assemble/);
+  assert.ok(parseFloat(hero.duration)>=1.0,"Headline must assemble visibly rather than instantly");
+  assert.ok(Math.abs(hero.spread)>=100,"Words must actually start scattered");
+
+  // Contrast fixture under the header catches regressions where an SVG
+  // backdrop-filter reports a valid URL but has no visual pixels to sample.
+  await evaluate(`(() => {
+    const stripe=document.createElement("div");
+    stripe.id="daira-ci-refraction-stripes";
+    stripe.style.cssText="position:fixed;left:12px;right:12px;top:7px;height:62px;z-index:1;pointer-events:none;background:repeating-linear-gradient(90deg,#101827 0px,#101827 9px,#f5f8ff 9px,#f5f8ff 18px)";
+    document.querySelector(".ap-site").appendChild(stripe);
+  })()`);
+  await sleep(260);
+  const withGlass=(await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false})).data;
+  await evaluate(`(() => {
+    const style=document.createElement("style");
+    style.id="daira-ci-disable-refraction";
+    style.textContent='.ap-header__backdrop > div[style*="backdrop-filter"]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}';
+    document.head.appendChild(style);
+  })()`);
+  await sleep(140);
+  const withoutGlass=(await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false})).data;
+  const diff=await evaluate(`(async () => {
+    const decode=async data=>{
+      const bytes=Uint8Array.from(atob(data),c=>c.charCodeAt(0));
+      const bitmap=await createImageBitmap(new Blob([bytes],{type:"image/png"}));
+      const canvas=document.createElement("canvas");
+      canvas.width=bitmap.width;canvas.height=bitmap.height;
+      const ctx=canvas.getContext("2d",{willReadFrequently:true});
+      ctx.drawImage(bitmap,0,0);
+      return {width:canvas.width,height:canvas.height,pixels:ctx.getImageData(0,0,canvas.width,canvas.height).data};
+    };
+    const a=await decode("${withGlass}");
+    const b=await decode("${withoutGlass}");
+    const rect=document.querySelector(".ap-header__backdrop").getBoundingClientRect();
+    const scale=a.width/innerWidth;
+    const left=Math.floor((rect.left+23)*scale);
+    const right=Math.floor((rect.right-23)*scale);
+    const top=Math.floor((rect.top+14)*scale);
+    const bottom=Math.floor((rect.bottom-14)*scale);
+    let total=0,samples=0;
+    for(let y=top;y<bottom;y+=2)for(let x=left;x<right;x+=2){
+      const i=(y*a.width+x)*4;
+      total+=Math.abs(a.pixels[i]-b.pixels[i])
+        +Math.abs(a.pixels[i+1]-b.pixels[i+1])
+        +Math.abs(a.pixels[i+2]-b.pixels[i+2]);
+      samples++;
+    }
+    return {meanRGBDifference:total/(samples*3),samples};
+  })()`);
+  console.log("DAIRA LIVE OPTICAL PIXEL DELTA",JSON.stringify(diff));
+  assert.ok(diff.meanRGBDifference>1.4,
+    "SVG glass must VISIBLY refract stripe pixels, not merely report an enabled filter");
+  await evaluate(`(() => {
+    document.getElementById("daira-ci-disable-refraction")?.remove();
+    document.getElementById("daira-ci-refraction-stripes")?.remove();
+  })()`);
+
 
   await evaluate('window.scrollTo({top:1250,behavior:"instant"})');
   await waitFor(async()=>await evaluate('window.scrollY>600'));
@@ -162,6 +242,7 @@ try {
   assert.equal(scrolled.borderWidth,"2px","Button needs a white outer border");
   assert.match(scrolled.borderColor,/255, 255, 255/);
   assert.equal(scrolled.glassCount,2);
+  assert.equal(await evaluate('getComputedStyle(document.querySelector(".ap-backtop")).isolation'),"auto","Back button must not trap backdrop in an isolated stacking root");
 
   await evaluate('document.querySelector(".ap-menu-toggle").click()');
   await sleep(110);

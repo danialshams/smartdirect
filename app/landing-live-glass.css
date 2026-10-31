@@ -23,7 +23,7 @@
 }
 .ap-site .ap-header__backdrop > div[style*="backdrop-filter"],
 .ap-site .ap-backtop__lens > div[style*="backdrop-filter"] {
-  background:rgba(255,255,255,.008)!important;
+  /* Only remove the unwanted painted rim; never replace optical tint. */
   box-shadow:none!important;
 }
 .ap-site .ap-backtop,
