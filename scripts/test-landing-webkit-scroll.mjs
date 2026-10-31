@@ -71,7 +71,8 @@ try {
       revisionNodes:document.querySelectorAll("[data-daira-glass-viewport-revision]").length,
       strategy:lens?.dataset.glassStrategy,
       ready:frame?.dataset.glassReady,
-      nativeCanvas:!!lens?.querySelector("canvas[data-liquid-glass-webgl]"),
+      nativeCanvas:!!lens?.querySelector("canvas[data-liquid-glass-webgl]") ||
+        !!lens?.parentElement?.querySelector("canvas[data-liquid-glass-scene]"),
       opticalFilter:optical ? getComputedStyle(optical).backdropFilter : null,
       edgeShadow:getComputedStyle(frame).boxShadow,
       clip:getComputedStyle(frame).overflow,
@@ -96,7 +97,8 @@ try {
     const optical=lens?.querySelector(':scope > div[style*="backdrop-filter"]');
     return {
       y:scrollY, strategy:lens?.dataset.glassStrategy,
-      nativeCanvas:!!lens?.querySelector("canvas[data-liquid-glass-webgl]"),
+      nativeCanvas:!!lens?.querySelector("canvas[data-liquid-glass-webgl]") ||
+        !!lens?.parentElement?.querySelector("canvas[data-liquid-glass-scene]"),
       filter:optical ? getComputedStyle(optical).backdropFilter : null,
       captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0),
       revisions:document.querySelectorAll("[data-daira-glass-viewport-revision]").length
