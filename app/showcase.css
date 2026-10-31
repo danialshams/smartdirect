@@ -3,7 +3,7 @@
 
 /* One liquid optical header. Controls are separate from its captured backdrop. */
 .ap-header {
-  position:sticky;top:0;z-index:100;isolation:isolate;
+  position:sticky;top:0;z-index:100;isolation:auto;
   height:76px;background:transparent!important;border:0!important;
   box-shadow:none!important;-webkit-backdrop-filter:none!important;
   backdrop-filter:none!important;
