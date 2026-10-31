@@ -1,14 +1,16 @@
-/** Daira minimal landing contract: 11 static introductions, real nonrecursive glass. */
+/** Public Daira landing regression contract: Bento, menu, accessibility and motion. */
 import { readFileSync, existsSync } from "node:fs";
 import assert from "node:assert/strict";
 const read=(path:string)=>readFileSync(path,"utf8");
 const page=read("app/page.tsx");
 const header=read("components/landing/SimpleHeader.tsx");
 const features=read("components/landing/FeatureShowcase.tsx");
-const data=read("components/landing/showcase-scenes.ts");
+const scenes=read("components/landing/showcase-scenes.ts");
 const glass=read("components/landing/LandingGlassBackdrop.tsx");
 const hero=read("components/landing/HeroMotion.tsx");
+const interactions=read("components/landing/LandingInteractions.tsx");
 const css=read("app/showcase.css");
+const refresh=read("app/landing-refresh.css");
 const baseCss=read("app/simple-home.css");
 const pkg=JSON.parse(read("package.json"));
 const lock=JSON.parse(read("package-lock.json"));
@@ -16,86 +18,71 @@ const lock=JSON.parse(read("package-lock.json"));
 assert.equal(pkg.dependencies.gsap,"3.14.2");
 assert.equal(pkg.dependencies["simple-liquid-glass"],"5.4.0");
 assert.equal(lock.packages["node_modules/simple-liquid-glass"].version,"5.4.0");
-assert.match(page,/<LandingGlassBackdrop>/);
-assert.match(page,/<SimpleHeader \/>/);
-assert.match(page,/<FeatureShowcase \/>/);
-assert.match(page,/<main id="content">/);
-assert.match(page,/<HeroMotion \/>/);
-assert.match(page,/initialScrollGuard/);
-assert.match(page,/history\.scrollRestoration='manual'/);
-assert.match(page,/جایگاه مجوزهای آینده/);
-assert.match(page,/در آینده/);
-assert.doesNotMatch(page,/ap-close|همین‌قدر ساده|بیشتر ببین|RobotHeroScene|<video/);
+for (const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />","<HeroMotion />",'<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'","جایگاه مجوزهای آینده","در آینده","مدیریت کل پیجت رو بسپار به دایرا","رایگان شروع کن"])
+  assert.ok(page.includes(item),"Missing homepage contract: "+item);
+assert.doesNotMatch(page,/ورود به پنل|بازگشت به بالا|ap-hero__subtitle|RobotHeroScene|<video/);
+assert.match(page,/ap-hero__cta/);
+assert.match(page,/heroWords\.map/);
+assert.match(page,/data-hero-word/);
+assert.match(page,/data-hero-fragment/);
+assert.match(page,/data-reveal/);
 for(const url of ["/login","/privacy-policy","/terms","/data-deletion","/contact","/about"])
- assert.ok(page.includes('href:"'+url+'"')||page.includes('href="'+url+'"'),"Missing destination "+url);
+  assert.ok(page.includes('href:"'+url+'"') || page.includes('href="'+url+'"'),"Missing link "+url);
 for(const route of ["terms","about","contact"])
- assert.ok(existsSync("app/"+route+"/page.tsx"),"Missing public route "+route);
+  assert.ok(existsSync("app/"+route+"/page.tsx"),"Missing public route "+route);
 
 assert.match(features,/id="features"/);
-assert.match(features,/ap-showcase__intro/);
-assert.match(features,/showcaseScenes\.map/);
-assert.match(features,/className="ap-feature"/);
-assert.match(features,/<article/);
-assert.match(features,/item\.title/);
-assert.match(features,/item\.tagline/);
-assert.match(features,/item\.Icon/);
-assert.doesNotMatch(features,/"use client"|from "gsap"|ScrollTrigger|IntersectionObserver|repeat:-1|setInterval|useEffect|<video\\b|ap-demo|ap-showcase-scene/);
-assert.equal((data.match(/no: "([۰-۹]+)"/g)||[]).length,11);
+assert.match(features,/ap-bento/);
+assert.match(features,/ap-bento__card--responses/);
+assert.match(features,/ap-bento__card--inbox/);
+assert.match(features,/ap-bento__card--publishing/);
+assert.match(features,/ap-bento__card--insights/);
+assert.match(features,/responseFeatures\.map/);
+assert.match(features,/showcaseScenes\.filter/);
+assert.match(features,/data-reveal/);
+assert.match(features,/role="img"/);
+assert.doesNotMatch(features,/use client|ScrollTrigger|setInterval|<video\b/);
+assert.equal((scenes.match(/no: "([۰-۹]+)"/g)||[]).length,11);
 for(const id of ["comment","story","direct","share","live","reminder","inbox","publishing","insights","menu","icebreaker"])
- assert.ok(data.includes('id: "'+id+'"'),"Missing real dashboard capability "+id);
-for(const label of [
- "پاسخ به کامنت","پاسخ به استوری","پاسخ خودکار دایرکت",
- "اشتراک‌گذاری و منشن","پاسخ به لایو","یادآوری هوشمند",
- "صندوق دایرکت","انتشار محتوا","آنالیز پیج","منوی دایرکت","پیام شروع گفتگو",
-])assert.ok(data.includes(label),"Missing Daira feature "+label);
-assert.doesNotMatch(data,/keyword:|outcome:|inputLabel:|response:/);
+  assert.ok(scenes.includes('id: "'+id+'"'),"Missing capability: "+id);
 
 assert.match(glass,/LiquidGlassScene/);
 assert.match(glass,/maxCacheBytes/);
 assert.match(header,/import LiquidGlass from "simple-liquid-glass"/);
 assert.match(header,/refraction:"lens"/);
-assert.match(header,/frost:0/);
-assert.match(header,/blur:0/);
 assert.match(header,/quality:"standard"/);
-assert.match(header,/borderColor:"rgba\(255,255,255,0\)"/);
-assert.match(header,/<header className="ap-header" data-landing-header data-liquid-glass-ignore=""/);
 assert.match(header,/data-liquid-glass-ignore=""/);
-assert.match(header,/blueOptics/);
-assert.match(header,/ap-header__login-holder/);
-assert.match(header,/ap-header__login-lens/);
-assert.match(header,/\{open && <LiquidGlass/);
 assert.match(header,/aria-expanded=\{open\}/);
 assert.match(header,/aria-controls="ap-menu"/);
 assert.match(header,/inert=\{!open\}/);
 assert.match(header,/event\.key==="Escape"/);
 assert.match(header,/returnFocus\.current/);
-assert.doesNotMatch(header,/setMenuOnDark|window\.addEventListener\("scroll"|elementFromPoint|liquid="flow"|ap-menu-toggle__glass/);
-for(const item of ["امکانات","حفظ حریم خصوصی","قوانین و مقررات","حذف اطلاعات","ارتباط با ما","درباره ما"])
- assert.ok(header.includes(item),"Missing navigation item "+item);
+assert.match(header,/hasOpened/);
+assert.match(header,/\{hasOpened && <LiquidGlass/);
+assert.match(header,/ap-menu-toggle__glyphs/);
+assert.doesNotMatch(header,/window\.addEventListener\("scroll"|elementFromPoint|setMenuOnDark/);
+assert.match(hero,/gsap\.timeline/);
+assert.match(hero,/data-hero-word/);
+assert.match(hero,/data-hero-fragment/);
+assert.match(hero,/prefers-reduced-motion: reduce/);
+assert.match(interactions,/IntersectionObserver/);
+assert.match(interactions,/requestAnimationFrame/);
+assert.match(interactions,/passive: true/);
+assert.match(interactions,/window\.scrollTo/);
+assert.match(interactions,/ap-backtop/);
+assert.match(interactions,/prefers-reduced-motion: reduce/);
 
-assert.match(css,/\.ap-showcase__list/);
-assert.match(css,/\.ap-feature__number/);
-assert.match(css,/\.ap-menu__content/);
-assert.match(css,/\.ap-header__login-holder/);
-assert.match(css,/\.ap-header__login-lens/);
-assert.match(css,/\.ap-menu--open \.ap-menu__nav \.ap-menu__item/);
 assert.match(css,/\.ap-header__backdrop \{/);
 assert.match(css,/\.ap-site > main,/);
 assert.match(css,/\.ap-site > \.ap-footer/);
 assert.match(css,/overflow:clip/);
-assert.match(css,/box-shadow:none!important/);
 assert.match(css,/border:0!important/);
-assert.match(css,/@media\(max-width:800px\)/);
-assert.match(css,/@media\(max-width:600px\)/);
-assert.match(css,/@media\(max-width:360px\)/);
-assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-assert.doesNotMatch(css,/\.ap-demo|\.ap-showcase-scene|@keyframes ap-(halo|orbit|theme)-drift/);
-assert.doesNotMatch(css,/backdrop-filter:blur/);
 assert.match(baseCss,/font-family:"DairaVazir"/);
 assert.match(baseCss,/Vazir-Regular\.woff2/);
-assert.match(hero,/gsap\.timeline/);
-assert.doesNotMatch(hero,/autoAlpha:0/);
-assert.match(hero,/opacity:.92/);
-assert.match(css,/background:linear-gradient\(135deg,rgba\(50,117,250,.86\),rgba\(25,77,210,.91\)\)/);
-assert.match(hero,/prefers-reduced-motion: reduce/);
-console.log("DAIRA landing PASS: 11 static intros; borderless single optical header; blue glass login; no recursive reflections, scroll listeners, infinite demos or video; six accessible nav links.");
+for(const style of [".ap-bento",".ap-bento__card--responses",".ap-menu-overlay--open",".ap-hero__cta::before",".ap-footer__halo",".ap-backtop--visible","@media(max-width:600px)","@media(prefers-reduced-motion:reduce)"])
+  assert.ok(refresh.includes(style),"Missing landing style "+style);
+assert.match(refresh,/@keyframes ap-light-orbit/);
+assert.match(refresh,/backdrop-filter:blur\(11px\)/);
+assert.match(refresh,/visibility 0s linear/);
+assert.doesNotMatch(refresh,/\.ap-demo|\.ap-showcase-scene|setInterval/);
+console.log("DAIRA landing PASS: grouped 11 features in 4 Bento previews; one-shot Persian GSAP hero; liquid menu entrance/exit and matte backdrop; glowing CTA; halo footer and accessible scroll-to-top.");
