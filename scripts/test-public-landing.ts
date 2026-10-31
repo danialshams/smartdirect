@@ -1,11 +1,10 @@
-/** Daira public landing regression: 11 real mini-UI motions, optical glass and links. */
-import { readFileSync,existsSync } from "node:fs";
+/** Daira minimal landing contract: 11 static introductions, real nonrecursive glass. */
+import { readFileSync, existsSync } from "node:fs";
 import assert from "node:assert/strict";
-
 const read=(path:string)=>readFileSync(path,"utf8");
 const page=read("app/page.tsx");
 const header=read("components/landing/SimpleHeader.tsx");
-const scene=read("components/landing/FeatureShowcase.tsx");
+const features=read("components/landing/FeatureShowcase.tsx");
 const data=read("components/landing/showcase-scenes.ts");
 const glass=read("components/landing/LandingGlassBackdrop.tsx");
 const hero=read("components/landing/HeroMotion.tsx");
@@ -16,114 +15,87 @@ const lock=JSON.parse(read("package-lock.json"));
 
 assert.equal(pkg.dependencies.gsap,"3.14.2");
 assert.equal(pkg.dependencies["simple-liquid-glass"],"5.4.0");
-assert.equal(lock.packages["node_modules/gsap"].version,"3.14.2");
 assert.equal(lock.packages["node_modules/simple-liquid-glass"].version,"5.4.0");
-
 assert.match(page,/<LandingGlassBackdrop>/);
 assert.match(page,/<SimpleHeader \/>/);
 assert.match(page,/<FeatureShowcase \/>/);
-assert.match(page,/<HeroMotion \/>/);
 assert.match(page,/<main id="content">/);
-assert.match(page,/<h1 id="ap-hero-title">/);
-assert.match(page,/history\.scrollRestoration='manual'/);
+assert.match(page,/<HeroMotion \/>/);
 assert.match(page,/initialScrollGuard/);
-assert.match(page,/pageshow/);
-assert.doesNotMatch(page,/ap-close|همین‌قدر ساده|بیشتر ببین|RobotHeroScene|DashboardPreview|<video|<Canvas/);
-for(const url of ["/login","/privacy-policy","/terms","/data-deletion","/contact","/about"]){
-  assert.ok(page.includes('href:"'+url+'"')||page.includes('href="'+url+'"'),"Missing landing URL: "+url);
-}
+assert.match(page,/history\.scrollRestoration='manual'/);
+assert.match(page,/جایگاه مجوزهای آینده/);
+assert.match(page,/در آینده/);
+assert.doesNotMatch(page,/ap-close|همین‌قدر ساده|بیشتر ببین|RobotHeroScene|<video/);
+for(const url of ["/login","/privacy-policy","/terms","/data-deletion","/contact","/about"])
+ assert.ok(page.includes('href:"'+url+'"')||page.includes('href="'+url+'"'),"Missing destination "+url);
+for(const route of ["terms","about","contact"])
+ assert.ok(existsSync("app/"+route+"/page.tsx"),"Missing public route "+route);
 
-assert.match(glass,/import \{ LiquidGlassScene \} from "simple-liquid-glass\/backdrop"/);
-assert.match(glass,/<LiquidGlassScene/);
+assert.match(features,/id="features"/);
+assert.match(features,/ap-showcase__intro/);
+assert.match(features,/showcaseScenes\.map/);
+assert.match(features,/className="ap-feature"/);
+assert.match(features,/<article/);
+assert.match(features,/item\.title/);
+assert.match(features,/item\.tagline/);
+assert.match(features,/item\.Icon/);
+assert.doesNotMatch(features,/"use client"|from "gsap"|ScrollTrigger|IntersectionObserver|repeat:-1|setInterval|useEffect|<video\\b|ap-demo|ap-showcase-scene/);
+assert.equal((data.match(/no: "([۰-۹]+)"/g)||[]).length,11);
+for(const id of ["comment","story","direct","share","live","reminder","inbox","publishing","insights","menu","icebreaker"])
+ assert.ok(data.includes('id: "'+id+'"'),"Missing real dashboard capability "+id);
+for(const label of [
+ "پاسخ به کامنت","پاسخ به استوری","پاسخ خودکار دایرکت",
+ "اشتراک‌گذاری و منشن","پاسخ به لایو","یادآوری هوشمند",
+ "صندوق دایرکت","انتشار محتوا","آنالیز پیج","منوی دایرکت","پیام شروع گفتگو",
+])assert.ok(data.includes(label),"Missing Daira feature "+label);
+assert.doesNotMatch(data,/keyword:|outcome:|inputLabel:|response:/);
+
+assert.match(glass,/LiquidGlassScene/);
 assert.match(glass,/maxCacheBytes/);
 assert.match(header,/import LiquidGlass from "simple-liquid-glass"/);
 assert.match(header,/refraction:"lens"/);
-assert.match(header,/lensProfile:"loupe"/);
 assert.match(header,/frost:0/);
 assert.match(header,/blur:0/);
-assert.match(header,/lensOptions:\{/);
-assert.match(header,/curvature:.55/);
-assert.match(header,/bend:.55/);
-assert.match(header,/specular:1.65/);
-assert.match(header,/liquid="flow"/);
-assert.match(header,/const menuGlassProps = \{/);
-assert.match(header,/const toggleGlassProps = \{/);
-assert.match(header,/menuOnDark/);
-assert.match(css,/\.ap-menu--dark \.ap-menu__content/);
-assert.match(css,/\.ap-menu__content \{[^\n]*background:rgba\(245,249,255,.015\)/);
-assert.doesNotMatch(css,/backdrop-filter:blur\(3px\)/);
-assert.match(header,/blur:0/);
-assert.match(header,/mobileFallback:"svg"/);
-assert.match(header,/ap-header__backdrop/);
-assert.match(header,/ap-menu-toggle__glass/);
-assert.match(header,/ap-menu__liquid/);
-assert.match(header,/onClick=\{\(\)=>setOpen\(false\)\}/);
-assert.match(header,/event\.key==="Escape"/);
-assert.match(header,/inert=\{!open\}/);
+assert.match(header,/quality:"standard"/);
+assert.match(header,/borderColor:"rgba\(255,255,255,0\)"/);
+assert.match(header,/<header className="ap-header" data-landing-header data-liquid-glass-ignore=""/);
+assert.match(header,/data-liquid-glass-ignore=""/);
+assert.match(header,/blueOptics/);
+assert.match(header,/ap-header__login-holder/);
+assert.match(header,/ap-header__login-lens/);
+assert.match(header,/\{open && <LiquidGlass/);
 assert.match(header,/aria-expanded=\{open\}/);
+assert.match(header,/aria-controls="ap-menu"/);
+assert.match(header,/inert=\{!open\}/);
+assert.match(header,/event\.key==="Escape"/);
 assert.match(header,/returnFocus\.current/);
+assert.doesNotMatch(header,/setMenuOnDark|window\.addEventListener\("scroll"|elementFromPoint|liquid="flow"|ap-menu-toggle__glass/);
+for(const item of ["امکانات","حفظ حریم خصوصی","قوانین و مقررات","حذف اطلاعات","ارتباط با ما","درباره ما"])
+ assert.ok(header.includes(item),"Missing navigation item "+item);
+
+assert.match(css,/\.ap-showcase__list/);
+assert.match(css,/\.ap-feature__number/);
+assert.match(css,/\.ap-menu__content/);
+assert.match(css,/\.ap-header__login-holder/);
+assert.match(css,/\.ap-header__login-lens/);
 assert.match(css,/\.ap-menu--open \.ap-menu__nav \.ap-menu__item/);
-assert.match(css,/transition-delay:calc\(115ms \+ var\(--enter-index\) \* 70ms\)/);
-assert.match(css,/right:max\(15px,env\(safe-area-inset-right\)\)/);
-assert.match(css,/\.ap-header__panel-login/);
-
-const ids=[
-  "comment","story","direct","share","live","reminder",
-  "inbox","publishing","insights","menu","icebreaker",
-] as const;
-assert.equal((data.match(/no: "([۰-۹]+)"/g)||[]).length,11,"11 dashboard tools expected");
-for(const id of ids) {
-  assert.ok(data.includes('id: "'+id+'"'),"Missing showcase tool: "+id);
-  assert.ok(scene.includes('case "'+id+'"'),"Missing dedicated animated interface: "+id);
-}
-for(const required of [
- "پاسخ به کامنت","پاسخ به استوری","پاسخ خودکار دایرکت",
- "اشتراک‌گذاری و منشن","پاسخ به لایو","یادآوری هوشمند",
- "صندوق دایرکت","انتشار محتوا","آنالیز پیج","منوی دایرکت","پیام شروع گفتگو"
-]) assert.ok(data.includes(required),"Missing real dashboard feature: "+required);
-for(const label of ["امکانات","حفظ حریم خصوصی","قوانین و مقررات","حذف اطلاعات","ارتباط با ما","درباره ما"])
-  assert.ok(header.includes(label),"Missing requested exact menu label: "+label);
-for(const route of ["terms","about","contact"])
-  assert.ok(existsSync("app/"+route+"/page.tsx"),"Missing real public link destination: "+route);
-
-assert.match(scene,/gsap\.registerPlugin\(ScrollTrigger, TextPlugin\)/);
-assert.match(scene,/repeat:-1/);
-assert.match(scene,/trigger:root/);
-assert.match(scene,/onEnter:enter/);
-assert.match(scene,/onLeave:leave/);
-assert.match(scene,/onEnterBack:enter/);
-assert.match(scene,/onLeaveBack:leave/);
-assert.match(scene,/activeDemo/);
-assert.match(scene,/activeDemo\.stop\(\)/);
-assert.match(scene,/document\.hidden/);
-assert.match(scene,/timeline\.pause\(0\)/);
-assert.match(scene,/text:\{value:scene\.keyword\}/);
-assert.match(scene,/data-assemble/);
-assert.match(scene,/data-demo-cursor/);
-assert.match(scene,/data-demo-action/);
-assert.match(scene,/data-demo-result/);
-assert.match(scene,/aria-label=\{"نمایش خودکار مراحل "/);
-assert.match(scene,/بدون اجرای عملیات واقعی/);
-assert.doesNotMatch(scene,/<video|<canvas|<img|fetch\(|XMLHttpRequest|localStorage/);
-assert.match(css, /\.ap-showcase-scene--midnight/);
-assert.match(css, /\.ap-showcase-scene--violet/);
-assert.match(css, /\.ap-showcase-scene--ice/);
-assert.match(css, /\.ap-showcase-scene--pearl/);
-assert.match(css, /\.ap-showcase-scene--lilac/);
-assert.match(css, /\.ap-showcase-scene--mint/);
-assert.match(css,/\.ap-showcase-scene\.is-playing/);
-assert.match(css,/@media\(max-width:900px\)/);
+assert.match(css,/\.ap-header__backdrop \{/);
+assert.match(css,/\.ap-site > main,/);
+assert.match(css,/\.ap-site > \.ap-footer/);
+assert.match(css,/overflow:clip/);
+assert.match(css,/box-shadow:none!important/);
+assert.match(css,/border:0!important/);
 assert.match(css,/@media\(max-width:800px\)/);
 assert.match(css,/@media\(max-width:600px\)/);
 assert.match(css,/@media\(max-width:360px\)/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+assert.doesNotMatch(css,/\.ap-demo|\.ap-showcase-scene|@keyframes ap-(halo|orbit|theme)-drift/);
+assert.doesNotMatch(css,/backdrop-filter:blur/);
 assert.match(baseCss,/font-family:"DairaVazir"/);
 assert.match(baseCss,/Vazir-Regular\.woff2/);
 assert.match(hero,/gsap\.timeline/);
+assert.doesNotMatch(hero,/autoAlpha:0/);
+assert.match(hero,/opacity:.92/);
+assert.match(css,/background:linear-gradient\(135deg,rgba\(50,117,250,.86\),rgba\(25,77,210,.91\)\)/);
 assert.match(hero,/prefers-reduced-motion: reduce/);
-assert.doesNotMatch(hero,/\.ap-story|history\.scrollRestoration/);
-assert.match(page,/جایگاه مجوزهای آینده/);
-assert.match(page,/در آینده/);
-assert.doesNotMatch(page,/Meta Verified|تأیید شده توسط متا/);
-
-console.log("Daira landing PASS: 11 distinct self-playing GSAP interfaces, true LiquidGlassScene optics, right 6-link staggered menu, prepaint scroll guard, legal routes and responsive themes");
+console.log("DAIRA landing PASS: 11 static intros; borderless single optical header; blue glass login; no recursive reflections, scroll listeners, infinite demos or video; six accessible nav links.");
