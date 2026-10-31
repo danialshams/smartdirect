@@ -35,6 +35,7 @@ for(const route of ["terms","about","contact"])
 assert.match(root,/LiquidGlassScene/);
 assert.match(root,/maxCacheBytes/);
 assert.match(root,/onCaptureError/);
+assert.ok(page.includes("dataset.sceneCaptureStable='true'"),"WebKit scene should be stabilized before hydration");
 assert.match(root,/data-daira-glass-retry/);
 assert.match(root,/count >= 2/);
 assert.ok(root.includes("maxCacheBytes={64 * 1024 * 1024}"));
