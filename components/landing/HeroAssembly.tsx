@@ -16,6 +16,7 @@ export function HeroAssembly() {
 
     if (reduced || !title || !lastWord) {
       html.dataset.dairaHero = "done";
+      title?.removeAttribute("data-liquid-glass-ignore");
       return;
     }
 
