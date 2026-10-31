@@ -125,18 +125,58 @@ try {
       sceneCount:document.querySelectorAll('[data-liquid-glass-scene]').length,
       opticalMaps:root.querySelectorAll('feDisplacementMap').length,
       oldApproximation:!!root.querySelector('.ap-optical-native'),
-      ctaIcons:document.querySelector(".ap-hero__cta")?.querySelectorAll("svg").length
+      ctaIcons:document.querySelector(".ap-hero__cta")?.querySelectorAll("svg").length,
+      materialColor:getComputedStyle(optical).backgroundColor,
+      displacementScales:[...root.querySelectorAll("feDisplacementMap")].map(x=>Number(x.getAttribute("scale")))
     };
   })()`));
   assert.equal(startup.strategy,"svg","Use genuine SVG LiquidGlass optical renderer");
   assert.match(startup.filter,/url\(/,"Liquid lens must refract LIVE backdrop pixels");
   assert.equal(startup.shadow,"none","Do not draw an unwanted internal rim");
+  const depth=await evaluate(`(() => {
+    const root=document.querySelector(".ap-header__backdrop");
+    return {shadow:getComputedStyle(root).boxShadow,
+      specular:getComputedStyle(root,"::after").backgroundImage};
+  })()`);
+  assert.ok(depth.shadow!=="none" && depth.shadow.includes("24, 44, 69"),"Soft neutral depth shadow must be present");
+  assert.match(depth.specular,/radial-gradient/,"Curved neutral reflection must be visible on white");
   assert.equal(startup.border,"0px","No white outline on header");
   assert.equal(startup.glassCount,1,"Exactly one native glass instance before scroll");
   assert.equal(startup.sceneCount,0,"No heavy HTML snapshot scene");
   assert.ok(startup.opticalMaps>=1,"Actual library displacement stages must exist");
   assert.equal(startup.oldApproximation,false);
   assert.equal(startup.ctaIcons,0,"Free Start button should remain icon-free");
+  const materialAlpha=Number(startup.materialColor.split(",").at(-1)?.replace(")","").trim());
+  console.log("DAIRA MATERIAL",JSON.stringify({color:startup.materialColor,alpha:materialAlpha,scales:startup.displacementScales}));
+  assert.ok(materialAlpha>.018 && materialAlpha<.06,
+    "The REAL library material must be translucent neutral glass, not transparent or opaque");
+  assert.ok(Math.max(...startup.displacementScales) <= 38,
+    "Too much displacement samples white space beyond the 62px high header");
+  assert.ok(Math.max(...startup.displacementScales) >= 12,
+    "Refraction must be visible rather than a no-op");
+
+  // Temporary public-landing visual diagnostics. The user reports no visually
+  // discernible lens despite a positive filter CSS property test.
+  const opticDebug=await evaluate(`(() => {
+    const h=document.querySelector(".ap-header");
+    const g=document.querySelector(".ap-header__backdrop");
+    const panel=g.querySelector('div[style*="backdrop-filter"]');
+    const rect=g.getBoundingClientRect();
+    const hero=document.querySelector(".ap-hero");
+    const selectors=[".ap-header",".ap-header__backdrop",".ap-hero",".ap-hero__ambient",".ap-site","main"];
+    return {state:document.documentElement.dataset.dairaHero,
+      size:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},
+      filter:panel.getAttribute("style"),computedFilter:getComputedStyle(panel).backdropFilter,
+      map:g.querySelector('feImage')?.getAttribute('href')?.length,
+      layers:selectors.map(s=>{const e=document.querySelector(s),v=getComputedStyle(e);
+        return [s,v.position,v.zIndex,v.isolation,v.background,v.backgroundColor,v.filter,v.backdropFilter,v.opacity,v.overflow];}),
+      center:document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2)?.className
+    };
+  })()`);
+  console.log("DAIRA_DIAG_COMPUTED="+JSON.stringify(opticDebug));
+  const shot=(await send("Page.captureScreenshot",{format:"jpeg",quality:58,captureBeyondViewport:false})).data;
+  console.log("DAIRA_DIAG_SCREENSHOT_FIRST="+shot);
+
   // Prior regressions passed because only filter existence was tested.
   // An isolated sticky header is a backdrop root and hides all underlying
   // scrolling pixels from the genuine SVG filter. Assert actual CSS root.
@@ -242,6 +282,11 @@ try {
   assert.equal(scrolled.borderWidth,"2px","Button needs a white outer border");
   assert.match(scrolled.borderColor,/255, 255, 255/);
   assert.equal(scrolled.glassCount,2);
+  // Ensure scroll-reveal content has settled before judging optical clarity.
+  await sleep(900);
+  const shotScrolled=(await send("Page.captureScreenshot",{format:"jpeg",quality:62,captureBeyondViewport:false})).data;
+  console.log("DAIRA_DIAG_SCREENSHOT_SCROLLED="+shotScrolled);
+
   assert.equal(await evaluate('getComputedStyle(document.querySelector(".ap-backtop")).isolation'),"auto","Back button must not trap backdrop in an isolated stacking root");
 
   await evaluate('document.querySelector(".ap-menu-toggle").click()');

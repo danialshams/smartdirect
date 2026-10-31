@@ -47,6 +47,13 @@ assert.doesNotMatch(interactions,/LiquidGlass|simple-liquid-glass/);
 assert.match(optics,/prepareOpticalMaps/);
 assert.match(optics,/import LiquidGlass from "simple-liquid-glass"/);
 assert.match(optics,/renderer: "svg"/);
+assert.match(optics,/displacementScale: 30/);
+assert.match(optics,/displacementScale: 17/);
+assert.ok(optics.includes('glassColor: "rgba(255,255,255,.028)"'));
+assert.ok(optics.includes('glassColor: "rgba(255,255,255,.17)"'));
+assert.ok(!optics.includes('background: "rgba(255,255,255,0)"'));
+
+
 assert.match(optics,/webglScene: "off"/);
 assert.match(optics,/lensProfile: "player"/);
 assert.match(optics,/className=\{\`ap-native-liquid/);
@@ -70,8 +77,10 @@ assert.match(css,/\.ap-optical-surface\[data-optics-mode="native"\]/);
 assert.match(css,/-webkit-backdrop-filter:saturate\(138%\) contrast\(105%\) url/);
 assert.match(css,/filter:url\("#daira-optical-displacement"\)/);
 assert.match(css,/box-shadow:none!important/);
+assert.ok(css.includes(".ap-backtop::after"),"Keep the user-requested white back-to-top outline");
+assert.ok(!css.includes("rgba(122,186,255,.20)"),"No synthetic blue halo");
+
 assert.match(css,/\.ap-native-liquid > \.liquid-glass-border/);
-assert.match(css,/\.ap-backtop::after/);
 assert.match(css,/border:2px solid rgba\(255,255,255,\.98\)/);
 assert.match(css,/saturate\(138%\) contrast\(105%\)/);
 assert.match(css,/blur\(2\.4px\)/);
