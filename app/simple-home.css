@@ -260,7 +260,7 @@
 @media(max-width:1050px) {
   .ap-hero h1 {font-size:clamp(48px,6.7vw,76px)}
   .ap-story h2 {font-size:clamp(45px,6.3vw,72px)}
-  .ap-shell {width:min(100% - 60px,980px)}
+  .ap-shell {width:min(980px,calc(100% - 60px))}
 }
 @media(max-width:800px) {
   .ap-header {height:62px}
