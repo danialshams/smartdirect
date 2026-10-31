@@ -56,8 +56,8 @@ function Screw({ position, size = .026, rotation = [0,0,0] }: {
 function Eye({ side, material }: { side: -1 | 1; material: MeshStandardMaterial }) {
   const x = side * .465;
   return (
-    <group position={[x,.405,1.055]} rotation={[0,side * -.105,0]}>
-      <mesh position={[0,0,.025]}>
+    <group position={[x,.405,1.32]} rotation={[0,side * -.105,0]}>
+      <mesh position={[0,0,.025]} rotation={[Math.PI/2,0,0]}>
         <cylinderGeometry args={[.317,.317,.075,64]}/>
         <meshStandardMaterial color="#0b1a2e" metalness={.62} roughness={.17}/>
       </mesh>
@@ -238,7 +238,7 @@ function RobotSculpture({ reduceMotion }: { reduceMotion:boolean }) {
         <sphereGeometry args={[1,32,16]}/>
         <meshPhysicalMaterial color="#e8f1fc" metalness={.12} roughness={.2} clearcoat={1}/>
       </mesh>
-      <Wire points={[[-.24,-.43,1.16],[-.13,-.47,1.195],[0,-.485,1.205],[.13,-.47,1.195],[.24,-.43,1.16]]} radius={.015} color="#142c47"/>
+      <Wire points={[[-.24,-.43,1.26],[-.13,-.47,1.29],[0,-.485,1.305],[.13,-.47,1.29],[.24,-.43,1.26]]} radius={.015} color="#142c47"/>
       <Wire points={[[-.27,.92,1.03],[0,.949,1.14],[.27,.92,1.03]]} radius={.012} color="#90d8ff" luminous/>
       <Wire points={[[-.77,-.18,1.004],[-.72,-.35,1.02],[-.62,-.48,1.0]]} radius={.014} color="#2088ff" luminous/>
       <Wire points={[[.77,-.18,1.004],[.72,-.35,1.02],[.62,-.48,1.0]]} radius={.014} color="#2088ff" luminous/>
