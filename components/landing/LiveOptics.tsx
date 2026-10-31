@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import LiquidGlass from "simple-liquid-glass";
 
 /**
  * Native CSS/SVG backdrop refraction in Chromium; for WebKit/Gecko render a
@@ -17,6 +18,51 @@ type OpticalMode = "pending" | "native" | "mirror";
 type Props = { className: string; variant: "header" | "backtop" };
 
 const docSelector = ":scope > main, :scope > section.ap-showcase-capture, :scope > footer.ap-footer";
+
+/**
+ * Restore the actual library's optical lens on Chromium. Its native SVG
+ * renderer reads live pixels behind the element: no capture queue and no
+ * cached snapshot. The previous handwritten feDisplacementMap was a flat
+ * approximation that looked transparent rather than liquid.
+ */
+const liquidLens = {
+  renderer: "svg" as const,
+  effectMode: "svg" as const,
+  webglScene: "off" as const,
+  refraction: "lens" as const,
+  optics: "native" as const,
+  lensProfile: "player" as const,
+  quality: "standard" as const,
+  border: 0,
+  borderColor: "rgba(255,255,255,0)",
+  background: "rgba(255,255,255,0)",
+  saturation: 135,
+  dispersion: 7,
+  aberrationIntensity: .07,
+  scale: 135,
+  reveal: "ready" as const,
+};
+const headerLens = {
+  ...liquidLens,
+  frost: .035,
+  blur: .35,
+  glassColor: "rgba(241,249,255,.035)",
+  lensOptions: {
+    strength: .22, depth: .72, curvature: .61, bend: .36, bendWidth: .18,
+    sheen: .78, sheenWidth: 3.5, specular: .95, glow: .06, brightness: 0,
+  },
+};
+const buttonLens = {
+  ...liquidLens,
+  frost: .10,
+  blur: 1.3,
+  glassColor: "rgba(234,244,255,.15)",
+  lensOptions: {
+    strength: .20, depth: .74, curvature: .58, bend: .43, bendWidth: .17,
+    sheen: .55, sheenWidth: 2.5, specular: .84, glow: .08, brightness: 0,
+  },
+};
+
 const isNative = () => {
   const ua = navigator.userAgent;
   // SVG filters are supported as backdrop filters in Blink, not WebKit/Gecko.
@@ -121,11 +167,11 @@ export function LiveOpticalSurface({ className, variant }: Props) {
       if (!raf) raf = requestAnimationFrame(updateScrollTransform);
     };
 
-    prepareOpticalMaps();
     if (isNative()) {
       // Do not show a half-initialized filtered layer during hydration.
       requestAnimationFrame(() => { if (active) setMode("native"); });
     } else {
+      prepareOpticalMaps();
       const prepare = async () => {
         // Build the entire visual source before showing any refracted pixels.
         await Promise.all([
@@ -180,6 +226,19 @@ export function LiveOpticalSurface({ className, variant }: Props) {
       mirror?.remove();
     };
   }, []);
+
+  if (mode === "native") {
+    const options = variant === "header" ? headerLens : buttonLens;
+    return (
+      <LiquidGlass
+        {...options}
+        radius={variant === "header" ? 26 : 28}
+        className={`ap-native-liquid ap-native-liquid--${variant} ${className}`}
+        style={{position:"absolute",inset:0,pointerEvents:"none"}}
+        aria-hidden="true"
+      />
+    );
+  }
 
   return (
     <div ref={surface} className={`ap-optical-surface ap-optical-surface--${variant} ${className}`} data-optics-mode={mode} aria-hidden="true">

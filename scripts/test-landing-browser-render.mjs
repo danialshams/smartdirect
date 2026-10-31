@@ -109,56 +109,59 @@ try {
   await send("Runtime.enable");
   await send("Page.enable");
 
-  // Native Chromium must render the LIVE backdrop without capture queues.
-  await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop")?.dataset.opticsMode')) === "native");
-  const startup = await waitFor(async () => await evaluate(`(() => {
-    const s = document.querySelector(".ap-header__backdrop");
-    const pane=s?.querySelector(".ap-optical-native");
-    if (!s || !pane) return null;
+  // The restored library must draw its real analytical SVG lens — not the
+  // old CSS-only transparent imitation — and keep it live during scrolling.
+  await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop")?.dataset.glassStrategy')) === "svg");
+  const startup=await waitFor(async()=>await evaluate(`(() => {
+    const root=document.querySelector(".ap-header__backdrop");
+    const optical=root?.querySelector('div[style*="backdrop-filter"]');
+    if(!root||!optical)return null;
     return {
-      mode:s.dataset.opticsMode,
-      filter:pane ? getComputedStyle(pane).backdropFilter : "MISSING_NATIVE_NODE: "+s.outerHTML.slice(0,650),
-      border:getComputedStyle(s).borderTopWidth,
-      shadow:getComputedStyle(s).boxShadow,
-      libraryInstances:document.querySelectorAll("[data-liquid-glass]").length,
-      sceneInstances:document.querySelectorAll("[data-liquid-glass-scene]").length,
-      words:document.querySelectorAll("[data-hero-word]").length,
-      headerMapReady:document.getElementById("daira-header-map")?.getAttribute("data-map-prepared"),
-      backtopMapReady:document.getElementById("daira-backtop-map")?.getAttribute("data-map-prepared"),
-      ctaIconCount:document.querySelector(".ap-hero__cta")?.querySelectorAll("svg").length
+      strategy:root.dataset.glassStrategy,
+      filter:getComputedStyle(optical).backdropFilter,
+      shadow:getComputedStyle(optical).boxShadow,
+      border:getComputedStyle(root).borderTopWidth,
+      glassCount:document.querySelectorAll('[data-liquid-glass]').length,
+      sceneCount:document.querySelectorAll('[data-liquid-glass-scene]').length,
+      opticalMaps:root.querySelectorAll('feDisplacementMap').length,
+      oldApproximation:!!root.querySelector('.ap-optical-native'),
+      ctaIcons:document.querySelector(".ap-hero__cta")?.querySelectorAll("svg").length
     };
   })()`));
-  assert.equal(startup.mode, "native");
-  assert.match(startup.filter,/url\(/,"Native lens must sample live page pixels");
-  assert.equal(startup.border,"0px");
-  assert.equal(startup.shadow,"none");
-  assert.equal(startup.libraryInstances,0);
-  assert.equal(startup.sceneInstances,0);
-  assert.equal(startup.words,7);
-  assert.equal(startup.headerMapReady,"true","Lens distortion map must be generated before glass appears");
-  assert.equal(startup.backtopMapReady,"true");
-  assert.equal(startup.ctaIconCount,0,"Free Start CTA must be text only");
-  console.log("NATIVE OPTICS DOM READY",JSON.stringify(startup));
+  assert.equal(startup.strategy,"svg","Use genuine SVG LiquidGlass optical renderer");
+  assert.match(startup.filter,/url\(/,"Liquid lens must refract LIVE backdrop pixels");
+  assert.equal(startup.shadow,"none","Do not draw an unwanted internal rim");
+  assert.equal(startup.border,"0px","No white outline on header");
+  assert.equal(startup.glassCount,1,"Exactly one native glass instance before scroll");
+  assert.equal(startup.sceneCount,0,"No heavy HTML snapshot scene");
+  assert.ok(startup.opticalMaps>=1,"Actual library displacement stages must exist");
+  assert.equal(startup.oldApproximation,false);
+  assert.equal(startup.ctaIcons,0,"Free Start button should remain icon-free");
 
-  // Refraction must remain active across previously uncaptured sections.
   await evaluate('window.scrollTo({top:1250,behavior:"instant"})');
-  await waitFor(async () => await evaluate('window.scrollY>600'));
-  await waitFor(async () => (await evaluate('document.querySelector(".ap-backtop__lens")?.dataset.opticsMode')) === "native");
-  const scroll = await evaluate(`(() => ({
-    header:document.querySelector(".ap-header__backdrop").dataset.opticsMode,
-    button:document.querySelector(".ap-backtop__lens")?.dataset.opticsMode,
-    filter:getComputedStyle(document.querySelector(".ap-header__backdrop .ap-optical-native")).backdropFilter,
-    buttonBorder:getComputedStyle(document.querySelector(".ap-backtop__lens")).borderWidth,
-    buttonShadow:getComputedStyle(document.querySelector(".ap-backtop__lens")).boxShadow,
-    buttonFilter:getComputedStyle(document.querySelector(".ap-backtop__lens .ap-optical-native")).backdropFilter
-  }))()`);
-  assert.equal(scroll.header,"native");
-  assert.equal(scroll.button,"native");
-  assert.match(scroll.filter,/url\(/);
-  assert.equal(scroll.buttonBorder,"0px");
-  assert.equal(scroll.buttonShadow,"none");
-  assert.match(scroll.buttonFilter,/blur\(2\.4px\)/);
-  assert.match(scroll.buttonFilter,/daira-optical-backtop/);
+  await waitFor(async()=>await evaluate('window.scrollY>600'));
+  await waitFor(async()=>(await evaluate('document.querySelector(".ap-backtop__lens")?.dataset.glassStrategy'))==="svg");
+  const scrolled=await evaluate(`(() => {
+    const h=document.querySelector(".ap-header__backdrop");
+    const b=document.querySelector(".ap-backtop__lens");
+    const overlay=document.querySelector(".ap-backtop");
+    return {
+      headerStrategy:h.dataset.glassStrategy,
+      buttonStrategy:b.dataset.glassStrategy,
+      headerFilter:getComputedStyle(h.querySelector('div[style*="backdrop-filter"]')).backdropFilter,
+      buttonFilter:getComputedStyle(b.querySelector('div[style*="backdrop-filter"]')).backdropFilter,
+      borderWidth:getComputedStyle(overlay,"::after").borderTopWidth,
+      borderColor:getComputedStyle(overlay,"::after").borderTopColor,
+      glassCount:document.querySelectorAll('[data-liquid-glass]').length
+    };
+  })()`);
+  assert.equal(scrolled.headerStrategy,"svg");
+  assert.equal(scrolled.buttonStrategy,"svg");
+  assert.match(scrolled.headerFilter,/url\(/);
+  assert.match(scrolled.buttonFilter,/url\(/);
+  assert.equal(scrolled.borderWidth,"2px","Button needs a white outer border");
+  assert.match(scrolled.borderColor,/255, 255, 255/);
+  assert.equal(scrolled.glassCount,2);
 
   await evaluate('document.querySelector(".ap-menu-toggle").click()');
   await sleep(110);
@@ -168,13 +171,13 @@ try {
       open:menu.classList.contains("ap-menu--open"),
       clip:getComputedStyle(menu).clipPath,
       filter:getComputedStyle(overlay).backdropFilter,
-      libraryCount:document.querySelectorAll("[data-liquid-glass]").length
+      count:document.querySelectorAll('[data-liquid-glass]').length
     };
   })()`);
   assert.equal(mid.open,true);
   assert.equal(mid.clip,"none");
   assert.match(mid.filter,/blur\(3px\)/);
-  assert.equal(mid.libraryCount,0);
+  assert.equal(mid.count,2,"Opening menu must not create an extra lens");
   await sleep(310);
   await evaluate('document.querySelector(".ap-menu__top button").click()');
   await sleep(340);
@@ -206,7 +209,7 @@ try {
   await evaluate('window.scrollTo({top:1350,behavior:"instant"})');
   await waitFor(async () => !!(await evaluate('document.querySelector(".ap-header__backdrop .ap-optical-document")?.style.transform.includes("-1350px")')));
   assert.equal(await evaluate('document.querySelector(".ap-header__backdrop").dataset.opticsMode'),"mirror");
-  console.log("DAIRA BROWSER PASS: live Chromium SVG backdrop, no white borders or snapshot scenes, lightweight menu, full-page prewarmed mirror visible only after readiness and tracking scroll.");
+  console.log("DAIRA BROWSER PASS: genuine SVG LiquidGlass refraction tracks live scroll, intentional white back-to-top border, no heavy scene or menu lens, prewarmed Firefox fallback.");
 } finally {
   try {socket?.close();} catch {}
   if (chrome && chrome.exitCode === null) {

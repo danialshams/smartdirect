@@ -137,3 +137,47 @@
   .ap-site .ap-hero__word{animation:none!important;opacity:1!important;transform:none!important}
   .ap-optical-native,.ap-optical-mirror{transition:none!important}
 }
+
+/* Genuine SVG Liquid Glass renderer on Chromium/Edge. Unlike the previous
+   homemade overlay, these native optical surfaces use the package's real
+   curved-lens displacement field and live backdrop sampling. */
+.ap-site .ap-header__backdrop.ap-native-liquid,
+.ap-site .ap-backtop__lens.ap-native-liquid {
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  filter:none!important;
+  opacity:1;
+}
+.ap-site .ap-header__backdrop.ap-native-liquid {
+  border-radius:26px!important;
+}
+.ap-site .ap-backtop__lens.ap-native-liquid {
+  border-radius:50%!important;
+}
+.ap-site .ap-native-liquid > .liquid-glass-border {
+  display:none!important;
+}
+.ap-site .ap-native-liquid > div[style*="backdrop-filter"] {
+  box-shadow:none!important;
+}
+.ap-site .ap-native-liquid > div[style*="backdrop-filter"] > svg {
+  pointer-events:none;
+}
+
+/* The requested WHITE stroke belongs to the outer circular control, not to
+   the optical material (which must remain continuous across its surface). */
+.ap-site .ap-backtop::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:4;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.98);
+  box-shadow:0 0 0 1px rgba(65,116,222,.16),0 3px 13px rgba(36,89,188,.12);
+  pointer-events:none;
+}
+.ap-site .ap-backtop:not(.ap-backtop--visible)::after {
+  opacity:0;
+}
