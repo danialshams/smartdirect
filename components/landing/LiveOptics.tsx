@@ -35,8 +35,9 @@ const liquidLens = {
   quality: "standard" as const,
   border: 0,
   borderColor: "rgba(255,255,255,0)",
-  background: "rgba(255,255,255,0)",
-  saturation: 135,
+  // Do NOT supply background: in this library it forces the *inner*
+  // glass material background to transparent and ignores glassColor.
+  saturation: 112,
   dispersion: 7,
   aberrationIntensity: .07,
   scale: 135,
@@ -45,22 +46,27 @@ const liquidLens = {
 /** Optical curvature, no blue wash over the header. */
 const headerLens = {
   ...liquidLens,
-  frost: 0,
-  blur: .28,
-  glassColor: "rgba(255,255,255,.009)",
+  // The former scale implied ~93px of sampling for a 62px high header,
+  // mostly pulling white outside the content. Keep the actual lens optical
+  // displacement smaller than the material height, even on wide screens.
+  displacementScale: 24,
+  frost: .06,
+  blur: .22,
+  glassColor: "rgba(255,255,255,.065)",
   lensOptions: {
-    strength: .22, depth: .72, curvature: .61, bend: .36, bendWidth: .18,
-    sheen: .78, sheenWidth: 3.5, specular: .95, glow: .06, brightness: 0,
+    strength: .18, depth: .76, curvature: .72, bend: .44, bendWidth: .22,
+    sheen: 1.22, sheenWidth: 4.2, specular: 1.32, glow: .10, brightness: 0,
   },
 };
 const buttonLens = {
   ...liquidLens,
-  frost: .10,
-  blur: 1.3,
-  glassColor: "rgba(234,244,255,.15)",
+  displacementScale: 17,
+  frost: .13,
+  blur: 1.2,
+  glassColor: "rgba(255,255,255,.17)",
   lensOptions: {
-    strength: .20, depth: .74, curvature: .58, bend: .43, bendWidth: .17,
-    sheen: .55, sheenWidth: 2.5, specular: .84, glow: .08, brightness: 0,
+    strength: .17, depth: .72, curvature: .62, bend: .4, bendWidth: .2,
+    sheen: 1.0, sheenWidth: 2.7, specular: 1.12, glow: .08, brightness: 0,
   },
 };
 
