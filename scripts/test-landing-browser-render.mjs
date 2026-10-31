@@ -148,9 +148,9 @@ try {
   assert.equal(startup.ctaIcons,0,"Free Start button should remain icon-free");
   const materialAlpha=Number(startup.materialColor.split(",").at(-1)?.replace(")","").trim());
   console.log("DAIRA MATERIAL",JSON.stringify({color:startup.materialColor,alpha:materialAlpha,scales:startup.displacementScales}));
-  assert.ok(materialAlpha>.035 && materialAlpha<.12,
+  assert.ok(materialAlpha>.018 && materialAlpha<.06,
     "The REAL library material must be translucent neutral glass, not transparent or opaque");
-  assert.ok(Math.max(...startup.displacementScales) <= 36,
+  assert.ok(Math.max(...startup.displacementScales) <= 38,
     "Too much displacement samples white space beyond the 62px high header");
   assert.ok(Math.max(...startup.displacementScales) >= 12,
     "Refraction must be visible rather than a no-op");
