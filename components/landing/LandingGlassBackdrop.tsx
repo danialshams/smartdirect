@@ -46,6 +46,50 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
     timers.current.set(section, timer);
   }, []);
 
+  // Safari/Firefox need a shared canvas source. Keep this initialization
+  // independent of the optical lens ref so it can mount at any time.
+  useLayoutEffect(() => {
+    const ua = navigator.userAgent;
+    const webkitSnapshot = /Firefox\\/|FxiOS\\/|iPhone|iPad|iPod/.test(ua) ||
+      (/Safari\\//.test(ua) && !/Chrome\\/|Chromium\\/|Edg\\/|OPR\\//.test(ua));
+    if (!webkitSnapshot) return;
+
+    let active = true;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    let source: Capture | undefined;
+    let attempts = 0;
+    const connect = () => {
+      if (!active || source) return;
+      // LiquidGlassScene forwards the DOM root from its own layout effect.
+      // If hydration defers that ref, retry rather than leaving backdropRef
+      // unbound for the lifetime of the page.
+      const element = root.current ??
+        document.querySelector<HTMLElement>(".ap-site[data-liquid-glass-scene]");
+      if (!element || !element.isConnected) {
+        retry = setTimeout(connect, Math.min(500, 70 + 40 * attempts++));
+        return;
+      }
+      try {
+        source = createLiquidGlassBackdrop(element, {
+          maxCacheBytes: 64 * 1024 * 1024, onCaptureError
+        });
+        element.dataset.dairaGlassCaptureController = "active";
+        setCapture(source);
+      } catch {
+        // Recover from a transient scene initialization/DOM measurement
+        // failure without forcing full-page snapshots on scroll.
+        source = undefined;
+        retry = setTimeout(connect, Math.min(1800, 180 * 2 ** Math.min(attempts++, 4)));
+      }
+    };
+    connect();
+    return () => {
+      active = false;
+      if (retry !== undefined) clearTimeout(retry);
+      source?.destroy();
+    };
+  }, [onCaptureError]);
+
   // The official capture engine already composites its cached section tiles
   // at requestAnimationFrame speed using the current scroll geometry, and
   // observes actual DOM/image/font changes automatically.
