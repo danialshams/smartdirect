@@ -153,7 +153,11 @@ try {
   })()`);
   assert.equal(glassShell.shell,true,"Fallback and lens must share the exact geometry");
   assert.equal(glassShell.ready,"true","On Chromium the native live lens must be ready");
-  assert.ok(Number(glassShell.fallback)<.35,"Live fallback must be fading out immediately as the SVG lens becomes ready");
+  await waitFor(async()=>await evaluate(
+    'getComputedStyle(document.querySelector(".daira-library-glass-live-fallback")).opacity==="0"'
+  ),1800);
+  assert.equal(await evaluate('document.querySelector(".daira-library-glass-frame").dataset.glassReady'),"true",
+    "The real SVG filter must be ready before fallback disappears");
   assert.ok(Math.abs(glassShell.rect.width-glassShell.lensRect.width)<1,
     "The edge and middle must be one continuous surface");
 
