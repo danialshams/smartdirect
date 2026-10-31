@@ -109,7 +109,7 @@ function FeatureScene({ scene }: {scene:ShowcaseScene}) {
         .set(input,{text:""},0)
         .set(result,{autoAlpha:0,y:15},0)
         .set(progress,{scaleX:0,transformOrigin:"right center"},0)
-        .fromTo(pieces,{autoAlpha:0,scale:.87,x:(i)=>i%2===0?52:-48,y:(i)=>i%3===0?48:-26,rotate:(i)=>i%2?3:-3},
+        .fromTo(pieces,{autoAlpha:0,scale:.87,x:(i:number)=>i%2===0?52:-48,y:(i:number)=>i%3===0?48:-26,rotate:(i:number)=>i%2?3:-3},
           {autoAlpha:1,scale:1,x:0,y:0,rotate:0,duration:.8,stagger:.105},0)
         .fromTo(cursor,{autoAlpha:0,x:75,y:-30},{autoAlpha:1,x:0,y:0,duration:.55,ease:"power2.out"},1.02)
         .to(input,{text:{value:scene.keyword},duration:Math.min(2.0,Math.max(.75,scene.keyword.length*.06)),ease:"none"},1.2)
@@ -119,7 +119,7 @@ function FeatureScene({ scene }: {scene:ShowcaseScene}) {
         .to(cursor,{autoAlpha:0,duration:.22},3.75)
         .to(progress,{scaleX:1,duration:5.4,ease:"none"},0)
         .to({}, {duration:1.18},4.30)
-        .to(pieces,{autoAlpha:0,x:(i)=>i%2===0?-42:45,y:20,scale:.94,duration:.54,stagger:.045},5.35)
+        .to(pieces,{autoAlpha:0,x:(i:number)=>i%2===0?-42:45,y:20,scale:.94,duration:.54,stagger:.045},5.35)
         .to(result,{autoAlpha:0,duration:.32},5.45);
 
       const enter=()=>{
