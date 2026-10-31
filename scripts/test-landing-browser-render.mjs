@@ -132,27 +132,28 @@ try {
   })()`));
   assert.equal(startup.strategy,"svg","Use genuine SVG LiquidGlass optical renderer");
   assert.match(startup.filter,/url\(/,"Liquid lens must refract LIVE backdrop pixels");
-  assert.equal(startup.shadow,"none","Do not draw an unwanted internal rim");
+  assert.match(startup.shadow,/inset/,"Original loupe requires physical edge lighting, not a flat transparent layer");
   const depth=await evaluate(`(() => {
     const root=document.querySelector(".ap-header__backdrop");
     return {shadow:getComputedStyle(root).boxShadow,
       specular:getComputedStyle(root,"::after").backgroundImage};
   })()`);
-  assert.ok(depth.shadow!=="none" && depth.shadow.includes("24, 44, 69"),"Soft neutral depth shadow must be present");
-  assert.match(depth.specular,/radial-gradient/,"Curved neutral reflection must be visible on white");
+  assert.ok(depth.shadow!=="none","Soft neutral depth shadow must be present");
+  assert.equal(depth.specular,"none","Do not replace physical loupe highlights with a synthetic white overlay");
   assert.equal(startup.border,"0px","No white outline on header");
   assert.equal(startup.glassCount,1,"Exactly one native glass instance before scroll");
   assert.equal(startup.sceneCount,0,"No heavy HTML snapshot scene");
   assert.ok(startup.opticalMaps>=1,"Actual library displacement stages must exist");
+  assert.match(startup.shadow,/rgba/);
   assert.equal(startup.oldApproximation,false);
   assert.equal(startup.ctaIcons,0,"Free Start button should remain icon-free");
   const materialAlpha=Number(startup.materialColor.split(",").at(-1)?.replace(")","").trim());
   console.log("DAIRA MATERIAL",JSON.stringify({color:startup.materialColor,alpha:materialAlpha,scales:startup.displacementScales}));
-  assert.ok(materialAlpha>.018 && materialAlpha<.06,
+  assert.ok(materialAlpha>.025 && materialAlpha<.08,
     "The REAL library material must be translucent neutral glass, not transparent or opaque");
   assert.ok(Math.max(...startup.displacementScales) <= 38,
     "Too much displacement samples white space beyond the 62px high header");
-  assert.ok(Math.max(...startup.displacementScales) >= 12,
+  assert.ok(Math.max(...startup.displacementScales) >= 26,
     "Refraction must be visible rather than a no-op");
 
   // Temporary public-landing visual diagnostics. The user reports no visually
@@ -260,28 +261,32 @@ try {
 
   await evaluate('window.scrollTo({top:1250,behavior:"instant"})');
   await waitFor(async()=>await evaluate('window.scrollY>600'));
-  await waitFor(async()=>(await evaluate('document.querySelector(".ap-backtop__lens")?.dataset.glassStrategy'))==="svg");
+  await waitFor(async()=>await evaluate('!!document.querySelector(".ap-backtop__blue-blur")'));
   const scrolled=await evaluate(`(() => {
     const h=document.querySelector(".ap-header__backdrop");
-    const b=document.querySelector(".ap-backtop__lens");
+    const b=document.querySelector(".ap-backtop__blue-blur");
+    const action=document.querySelector(".ap-backtop__action");
     const overlay=document.querySelector(".ap-backtop");
     return {
       headerStrategy:h.dataset.glassStrategy,
-      buttonStrategy:b.dataset.glassStrategy,
       headerFilter:getComputedStyle(h.querySelector('div[style*="backdrop-filter"]')).backdropFilter,
-      buttonFilter:getComputedStyle(b.querySelector('div[style*="backdrop-filter"]')).backdropFilter,
+      buttonColor:getComputedStyle(b).backgroundImage,
+      buttonBlur:getComputedStyle(b).backdropFilter,
+      arrowColor:getComputedStyle(action).color,
+      svgStroke:getComputedStyle(action.querySelector("svg")).stroke,
       borderWidth:getComputedStyle(overlay,"::after").borderTopWidth,
-      borderColor:getComputedStyle(overlay,"::after").borderTopColor,
+      borderContent:getComputedStyle(overlay,"::after").content,
       glassCount:document.querySelectorAll('[data-liquid-glass]').length
     };
   })()`);
   assert.equal(scrolled.headerStrategy,"svg");
-  assert.equal(scrolled.buttonStrategy,"svg");
   assert.match(scrolled.headerFilter,/url\(/);
-  assert.match(scrolled.buttonFilter,/url\(/);
-  assert.equal(scrolled.borderWidth,"2px","Button needs a white outer border");
-  assert.match(scrolled.borderColor,/255, 255, 255/);
-  assert.equal(scrolled.glassCount,2);
+  assert.match(scrolled.buttonColor,/linear-gradient/);
+  assert.match(scrolled.buttonBlur,/blur\(9px\)/);
+  assert.equal(scrolled.arrowColor,"rgb(255, 255, 255)");
+  assert.equal(scrolled.svgStroke,"rgb(255, 255, 255)");
+  assert.equal(scrolled.borderContent,"none","Blue blurred button must have NO white border overlay");
+  assert.equal(scrolled.glassCount,1,"Only the header needs an optical lens");
   // Ensure scroll-reveal content has settled before judging optical clarity.
   await sleep(900);
   const shotScrolled=(await send("Page.captureScreenshot",{format:"jpeg",quality:62,captureBeyondViewport:false})).data;
@@ -303,7 +308,7 @@ try {
   assert.equal(mid.open,true);
   assert.equal(mid.clip,"none");
   assert.match(mid.filter,/blur\(3px\)/);
-  assert.equal(mid.count,2,"Opening menu must not create an extra lens");
+  assert.equal(mid.count,1,"Opening menu must not create an extra lens");
   await sleep(310);
   await evaluate('document.querySelector(".ap-menu__top button").click()');
   await sleep(340);
@@ -335,7 +340,7 @@ try {
   await evaluate('window.scrollTo({top:1350,behavior:"instant"})');
   await waitFor(async () => !!(await evaluate('document.querySelector(".ap-header__backdrop .ap-optical-document")?.style.transform.includes("-1350px")')));
   assert.equal(await evaluate('document.querySelector(".ap-header__backdrop").dataset.opticsMode'),"mirror");
-  console.log("DAIRA BROWSER PASS: genuine SVG LiquidGlass refraction tracks live scroll, intentional white back-to-top border, no heavy scene or menu lens, prewarmed Firefox fallback.");
+  console.log("DAIRA BROWSER PASS: original loupe SVG refraction with native edge lighting, blue borderless blurred back-to-top, no heavy scene or menu lens, prewarmed Firefox fallback.");
 } finally {
   try {socket?.close();} catch {}
   if (chrome && chrome.exitCode === null) {
