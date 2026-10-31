@@ -35,7 +35,8 @@ async function shot(name){
     return {url:location.href,scroll:scrollY,viewport:[innerWidth,innerHeight],
       header:{box:h?.getBoundingClientRect().toJSON(),backdrop:getComputedStyle(h).backdropFilter,
         opacity:getComputedStyle(h).opacity,filter:getComputedStyle(h).filter},
-      lens:{mode:b?.dataset.glassStrategy || b?.dataset.opticsMode,
+      lens:{mode:b?.dataset.liquidHeader||b?.dataset.glassStrategy||b?.dataset.opticsMode,
+        curvedGlint:b&&getComputedStyle(b.querySelector(".ap-liquid-header__glint")).backgroundImage,
         background:b&&getComputedStyle(b).backgroundColor,
         opticalFilter:o&&getComputedStyle(o).backdropFilter,
         displacement:b&&[...b.querySelectorAll("feDisplacementMap")].map(x=>x.getAttribute("scale"))}};
@@ -79,7 +80,7 @@ try{
   await until(async()=>evaluate("window.scrollY>650"));
   await wait(700);
   await shot("mobile_scrolled");
-  console.log("LIVE_AUDIT_SUCCESS");
+  console.log("LIVE_AUDIT_SUCCESS_POST_RELEASE_PR182");
 }catch(e){console.error("LIVE_AUDIT_FAILED",e);process.exitCode=1;}
 finally {try{socket?.close();}catch{}try{browser?.kill("SIGKILL");}catch{}
   if(dir)await rm(dir,{recursive:true,force:true}).catch(()=>{});}
