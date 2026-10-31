@@ -17,15 +17,15 @@ const menuItems = [
 
 /**
  * Shared optical presets: soft edge curvature on the wide header prevents\n * an exaggerated rim and low-quality single-pass refraction keeps scroll smooth.
- * Borders are disabled at the component level, not only via CSS.
+ * Specular and sheen on the large lenses were painting a bright inner rim,\n * which looked like a separate border despite CSS border:0.
  */
 const optics = {
   refraction:"lens" as const,
   lensProfile:"material" as const,
   lensOptions:{
-    strength:.066,depth:.16,curvature:.22,bend:.18,bendWidth:.31,
-    sheen:.85,sheenWidth:3.2,sheenAngle:-25,specular:1.0,
-    glow:.025,glowSpread:.24,glowFalloff:2.1,brightness:0,
+    strength:.082,depth:.12,curvature:.12,bend:.10,bendWidth:.45,
+    sheen:0,sheenWidth:0,sheenAngle:-25,specular:0,
+    glow:0,glowSpread:0,glowFalloff:2.1,brightness:0,
   },
   quality:"low" as const,
   mobileFallback:"svg" as const,
@@ -36,13 +36,13 @@ const optics = {
   dispersion:7,
   aberrationIntensity:.045,
   borderColor:"rgba(255,255,255,0)",
-  glassColor:"rgba(255,255,255,.035)",
+  glassColor:"rgba(255,255,255,.018)",
   background:"rgba(255,255,255,.01)",
 };
 
 const menuOptics = {
   ...optics,
-  lensOptions:{...optics.lensOptions,strength:.09,depth:.23,curvature:.3,bend:.27,sheen:1.2,specular:1.3},
+  lensOptions:{...optics.lensOptions,strength:.095,depth:.18,curvature:.22,bend:.16,sheen:.25,specular:.28},
   quality:"standard" as const,
   scale:112,dispersion:5,aberrationIntensity:.045,
   glassColor:"rgba(255,255,255,.09)",
@@ -52,7 +52,7 @@ const menuOptics = {
 
 const blueOptics = {
   ...optics,
-  lensOptions:{...optics.lensOptions,strength:.11,curvature:.37,specular:1.35},
+  lensOptions:{...optics.lensOptions,strength:.11,curvature:.2,specular:.18},
   glassColor:"rgba(36,100,243,.45)",
   background:"rgba(36,100,243,.65)",
   scale:128,
@@ -60,7 +60,6 @@ const blueOptics = {
 
 export function SimpleHeader() {
   const [open,setOpen]=useState(false);
-  const [hasOpened,setHasOpened]=useState(false);
   const toggleRef=useRef<HTMLButtonElement>(null);
   const closeRef=useRef<HTMLButtonElement>(null);
   const menuRef=useRef<HTMLElement>(null);
@@ -119,7 +118,7 @@ export function SimpleHeader() {
           aria-label={open?"بستن منو":"باز کردن منو"}
           aria-controls="ap-menu"
           aria-expanded={open}
-          onClick={()=>{returnFocus.current=true;setHasOpened(true);setOpen(value=>!value);}}
+          onClick={()=>{returnFocus.current=true;setOpen(value=>!value);}}
         >
           <span className={"ap-menu-toggle__glyphs"+(open?" ap-menu-toggle__glyphs--open":"")} aria-hidden="true">
             <Menu size={21} className="ap-menu-toggle__hamburger"/>
@@ -168,7 +167,7 @@ export function SimpleHeader() {
         inert={!open}
         data-liquid-glass-ignore=""
       >
-        {hasOpened && <LiquidGlass {...menuOptics} radius={28} className="ap-menu__liquid">
+        <LiquidGlass {...menuOptics} radius={28} className="ap-menu__liquid">
           <div className="ap-menu__content">
             <div className="ap-menu__top">
               <strong>دایرا</strong>
@@ -191,7 +190,7 @@ export function SimpleHeader() {
               ))}
             </nav>
           </div>
-        </LiquidGlass>}
+        </LiquidGlass>
       </aside>
     </header>
   );
