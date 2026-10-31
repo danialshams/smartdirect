@@ -81,6 +81,8 @@ assert.match(scene,/onEnter:enter/);
 assert.match(scene,/onLeave:leave/);
 assert.match(scene,/onEnterBack:enter/);
 assert.match(scene,/onLeaveBack:leave/);
+assert.match(scene,/activeDemo/);
+assert.match(scene,/activeDemo\.stop\(\)/);
 assert.match(scene,/document\.hidden/);
 assert.match(scene,/timeline\.pause\(0\)/);
 assert.match(scene,/text:\{value:scene\.keyword\}/);
