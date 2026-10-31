@@ -34,6 +34,9 @@ for(const route of ["terms","about","contact"])
 
 assert.match(root,/LiquidGlassScene/);
 assert.match(root,/maxCacheBytes/);
+assert.match(root,/onCaptureError/);
+assert.match(root,/data-daira-glass-retry/);
+assert.match(root,/count >= 2/);
 assert.ok(root.includes("maxCacheBytes={64 * 1024 * 1024}"));
 assert.ok(page.includes('import "./landing-fixes.css";'));
 assert.ok(landingFixes.includes(".daira-library-liquid-header > .liquid-glass-border"));
