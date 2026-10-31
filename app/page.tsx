@@ -33,7 +33,7 @@ export const metadata:Metadata = {
 /* Pre-hydration scroll reset avoids showing the old navy section before the
    first paint. Back/forward navigation is unaffected; regular reload starts
    at the hero even if the previous URL had a section hash. */
-const initialScrollGuard = "(function(){document.documentElement.dataset.dairaHero='pending';try{var n=performance.getEntriesByType('navigation')[0];var reload=n&&n.type==='reload';if(reload&&location.hash){history.replaceState(null,'',location.pathname+location.search);}if(reload||!location.hash){history.scrollRestoration='manual';scrollTo(0,0);addEventListener('pageshow',function(){if(!location.hash)scrollTo(0,0);},{once:true});}}catch(e){}})();";
+const initialScrollGuard = "(function(){document.documentElement.dataset.dairaHero='pending';try{var ua=navigator.userAgent;var webglScene=/Firefox\\/|FxiOS\\/|iPhone|iPad|iPod/.test(ua)||(/Safari\\//.test(ua)&&!/Chrome\\/|Chromium\\/|Edg\\/|OPR\\//.test(ua));if(webglScene){var root=document.querySelector('.ap-site');if(root)root.dataset.sceneCaptureStable='true';}var n=performance.getEntriesByType('navigation')[0];var reload=n&&n.type==='reload';if(reload&&location.hash){history.replaceState(null,'',location.pathname+location.search);}if(reload||!location.hash){history.scrollRestoration='manual';scrollTo(0,0);addEventListener('pageshow',function(){if(!location.hash)scrollTo(0,0);},{once:true});}}catch(e){}})();";
 
 const heroWords=["مدیریت","کل","پیجت","رو","بسپار","به","دایرا"];
 
