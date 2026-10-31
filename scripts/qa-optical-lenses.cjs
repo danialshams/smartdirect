@@ -48,6 +48,12 @@ fs.mkdirSync(out, { recursive: true });
       await page.waitForTimeout(800);
       await page.locator(".ap-menu-toggle").click();
       await page.waitForTimeout(900);
+      const darkState=await page.evaluate(()=>({
+        detected:document.querySelector(".ap-menu")?.classList.contains("ap-menu--dark"),
+        color:getComputedStyle(document.querySelector(".ap-menu__item")).color,
+      }));
+      console.log("DARK_MENU_CONTRAST",browserName,size.name,darkState);
+      if(!darkState.detected)throw Error(browserName+" "+size.name+" failed to detect navy feature background");
       await page.screenshot({path:path.join(out,browserName+"-"+size.name+"-dark-menu.jpg"),type:"jpeg",quality:82});
       if(initial.overflow>2)throw Error(browserName+" "+size.name+" horizontal overflow "+JSON.stringify(initial));
       if(!menu.open || menu.links!==6||menu.rightGap<8||menu.rightGap>32)throw Error(browserName+" "+size.name+" menu geometry "+JSON.stringify(menu));
