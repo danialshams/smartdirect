@@ -77,9 +77,10 @@ assert.match(css,/\.ap-optical-surface\[data-optics-mode="native"\]/);
 assert.match(css,/-webkit-backdrop-filter:saturate\(138%\) contrast\(105%\) url/);
 assert.match(css,/filter:url\("#daira-optical-displacement"\)/);
 assert.match(css,/box-shadow:none!important/);
+assert.ok(css.includes(".ap-backtop::after"),"Keep the user-requested white back-to-top outline");
+assert.ok(!css.includes("rgba(122,186,255,.20)"),"No synthetic blue halo");
+
 assert.match(css,/\.ap-native-liquid > \.liquid-glass-border/);
-assert.match(css,/\\.ap-backtop::after/);
-assert.doesNotMatch(css,/rgba\\(122,186,255,\\.20\\)/);
 assert.match(css,/border:2px solid rgba\(255,255,255,\.98\)/);
 assert.match(css,/saturate\(138%\) contrast\(105%\)/);
 assert.match(css,/blur\(2\.4px\)/);
