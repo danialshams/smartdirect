@@ -129,7 +129,7 @@ try {
     };
   })()`));
   assert.equal(startup.strategy,"svg","Use genuine SVG LiquidGlass optical renderer");
-  assert.match(startup.filter,/url\\(/,"Liquid lens must refract LIVE backdrop pixels");
+  assert.match(startup.filter,/url\(/,"Liquid lens must refract LIVE backdrop pixels");
   assert.equal(startup.shadow,"none","Do not draw an unwanted internal rim");
   assert.equal(startup.border,"0px","No white outline on header");
   assert.equal(startup.glassCount,1,"Exactly one native glass instance before scroll");
@@ -157,10 +157,10 @@ try {
   })()`);
   assert.equal(scrolled.headerStrategy,"svg");
   assert.equal(scrolled.buttonStrategy,"svg");
-  assert.match(scrolled.headerFilter,/url\\(/);
-  assert.match(scrolled.buttonFilter,/url\\(/);
+  assert.match(scrolled.headerFilter,/url\(/);
+  assert.match(scrolled.buttonFilter,/url\(/);
   assert.equal(scrolled.borderWidth,"2px","Button needs a white outer border");
-  assert.match(scrolled.borderColor,/rgb\\(255, 255, 255\\)/);
+  assert.match(scrolled.borderColor,/rgb\(255, 255, 255\)/);
   assert.equal(scrolled.glassCount,2);
 
   await evaluate('document.querySelector(".ap-menu-toggle").click()');
@@ -176,7 +176,7 @@ try {
   })()`);
   assert.equal(mid.open,true);
   assert.equal(mid.clip,"none");
-  assert.match(mid.filter,/blur\\(3px\\)/);
+  assert.match(mid.filter,/blur\(3px\)/);
   assert.equal(mid.count,2,"Opening menu must not create an extra lens");
   await sleep(310);
   await evaluate('document.querySelector(".ap-menu__top button").click()');
