@@ -58,21 +58,53 @@ try {
     return samples;
   });
   console.log("WEBKIT_SCROLL_FRAMES="+JSON.stringify(frames));
-  // The scroll-settled revalidation must target the visible section, not
-  // invalidate every cached image or restart the GPU renderer.
-  await page.waitForTimeout(420);
-  const settled = await page.evaluate(() => ({
-    y:scrollY,
-    revisionNodes:document.querySelectorAll("[data-daira-glass-viewport-revision]").length,
-    strategy:document.querySelector(".daira-library-liquid-header")?.dataset.glassStrategy,
-    edgeShadow:getComputedStyle(document.querySelector(".daira-library-glass-frame")).boxShadow,
-    clip:getComputedStyle(document.querySelector(".daira-library-glass-frame")).overflow
-  }));
+  // A real WebKit regression: do not generate new HTML snapshots merely
+  // because the user scrolled across static page sections. The official
+  // canvas must remain active and track scroll positions itself.
+  await page.waitForTimeout(620);
+  const settled = await page.evaluate(() => {
+    const lens=document.querySelector(".daira-library-liquid-header");
+    const optical=lens?.querySelector(':scope > div[style*="backdrop-filter"]');
+    const frame=document.querySelector(".daira-library-glass-frame");
+    return {
+      y:scrollY,
+      revisionNodes:document.querySelectorAll("[data-daira-glass-viewport-revision]").length,
+      strategy:lens?.dataset.glassStrategy,
+      ready:frame?.dataset.glassReady,
+      nativeCanvas:!!lens?.querySelector("canvas[data-liquid-glass-webgl]"),
+      opticalFilter:optical ? getComputedStyle(optical).backdropFilter : null,
+      edgeShadow:getComputedStyle(frame).boxShadow,
+      clip:getComputedStyle(frame).overflow,
+      captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0)
+    };
+  });
   console.log("WEBKIT_SETTLED_CAPTURE="+JSON.stringify(settled));
-  if (settled.revisionNodes < 1) throw Error("Visible Safari section was never revalidated on scroll settle");
-  if (settled.strategy !== "webgl") throw Error("Refresh reset the WebGL renderer");
+  if (settled.revisionNodes !== 0) throw Error("Scrolling must not invalidate static cached captures");
+  if (settled.strategy !== "webgl" || !settled.nativeCanvas) {
+    throw Error("Native WebGL renderer or its GPU presentation was lost");
+  }
   if (settled.edgeShadow !== "none" || settled.clip !== "hidden") {
     throw Error("Visible white rim must be clipped without an outer shadow");
+  }
+  if (settled.captures < 2) throw Error("No real scene tiles captured during scroll");
+  // Revisiting a previously captured region must preserve optical rendering
+  // without replacing the GPU canvas with the old 5px frosted material.
+  await page.evaluate(() => window.scrollTo({top:0,behavior:"instant"}));
+  await page.waitForTimeout(420);
+  const revisited=await page.evaluate(() => {
+    const lens=document.querySelector(".daira-library-liquid-header");
+    const optical=lens?.querySelector(':scope > div[style*="backdrop-filter"]');
+    return {
+      y:scrollY, strategy:lens?.dataset.glassStrategy,
+      nativeCanvas:!!lens?.querySelector("canvas[data-liquid-glass-webgl]"),
+      filter:optical ? getComputedStyle(optical).backdropFilter : null,
+      captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0),
+      revisions:document.querySelectorAll("[data-daira-glass-viewport-revision]").length
+    };
+  });
+  console.log("WEBKIT_REVISIT="+JSON.stringify(revisited));
+  if (revisited.strategy!=="webgl" || !revisited.nativeCanvas || revisited.revisions) {
+    throw Error("Backtracking must retain the same real WebGL renderer");
   }
 
   const snapshot = await page.screenshot({type:"jpeg",quality:54});
