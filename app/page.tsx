@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpLeft, BadgeCheck, Check, ShieldCheck } from "lucide-react";
@@ -28,6 +29,7 @@ export const metadata:Metadata = {
 const initialScrollGuard = "(function(){try{var n=performance.getEntriesByType('navigation')[0];var reload=n&&n.type==='reload';if(reload&&location.hash){history.replaceState(null,'',location.pathname+location.search);}if(reload||!location.hash){history.scrollRestoration='manual';scrollTo(0,0);addEventListener('pageshow',function(){if(!location.hash)scrollTo(0,0);},{once:true});}}catch(e){}})();";
 
 const heroFragments=["د","ا","ی","ر","ا","پ","ی","ج","ت","م","د","ی","ر","ی","ت"];
+const heroWords=["مدیریت","کل","پیجت","رو","بسپار","به","دایرا"];
 
 const footerLinks=[
   {label:"امکانات",href:"#features"},
@@ -50,9 +52,11 @@ export default function Home() {
           <div className="ap-hero__ambient" aria-hidden="true"/>
           <div className="ap-shell ap-hero__content">
             <div className="ap-hero__fragments" aria-hidden="true">
-              {heroFragments.map((letter,index)=><span key={index} data-hero-fragment style={{"--fragment-index":index} as React.CSSProperties}>{letter}</span>)}
+              {heroFragments.map((letter,index)=><span key={index} data-hero-fragment style={{"--fragment-index":index} as CSSProperties}>{letter}</span>)}
             </div>
-            <h1 id="ap-hero-title" data-hero-assembly>مدیریت کل پیجت رو بسپار به دایرا</h1>
+            <h1 id="ap-hero-title" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly>
+              {heroWords.map((word,index)=><span className="ap-hero__word" data-hero-word key={word}>{word}{index<heroWords.length-1?" ":""}</span>)}
+            </h1>
             <div className="ap-hero__actions" data-hero-cta>
               <Link className="ap-button ap-button--solid ap-hero__cta" href="/login">
                 رایگان شروع کن <ArrowUpLeft size={18} aria-hidden="true"/>
