@@ -1,0 +1,61 @@
+name: One-off Daira real robot Blender asset build
+
+on:
+  push:
+    branches: [feature/daira-robot-3d-motion-clips-20261031]
+    paths:
+      - "scripts/render-daira-robot-character.py"
+      - ".github/workflows/daira-robot-character-once.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daira-robot-real-model-once
+  cancel-in-progress: false
+
+jobs:
+  render-original-3d-robot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 48
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Install Blender and ffmpeg on build runner, never in browser
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq blender ffmpeg
+          blender --version | head -3
+      - name: Render 6 distinct real mechanical robot 3D movement sequences
+        run: |
+          mkdir -p /tmp/daira-robot-frames
+          blender --background -t 3 --python scripts/render-daira-robot-character.py -- /tmp/daira-robot-frames
+          for clip in idle-front turn-left turn-right tilt-head blink-glow micro-scan; do
+            test "$(find "/tmp/daira-robot-frames/$clip" -name 'frame-*.png' | wc -l)" -ge 40
+            echo "Rendered $clip"
+          done
+      - name: Encode compressed H264 clips and original front-facing still
+        run: |
+          mkdir -p public/landing/robot
+          for clip in idle-front turn-left turn-right tilt-head blink-glow micro-scan; do
+            ffmpeg -hide_banner -loglevel error -y -framerate 18 -i "/tmp/daira-robot-frames/$clip/frame-%03d.png" -an -c:v libx264 -preset medium -crf 27 -pix_fmt yuv420p -movflags +faststart "public/landing/robot/$clip.mp4"
+            test -s "public/landing/robot/$clip.mp4"
+            test "$(stat -c%s "public/landing/robot/$clip.mp4")" -lt 3100000
+            echo "3D $clip $(stat -c%s "public/landing/robot/$clip.mp4") bytes"
+          done
+          ffmpeg -hide_banner -loglevel error -y -i /tmp/daira-robot-frames/idle-front/frame-000.png -frames:v 1 -c:v libwebp -quality 83 public/landing/robot/front.webp
+          test -s public/landing/robot/front.webp
+          ffmpeg -hide_banner -loglevel error -y -i /tmp/daira-robot-frames/idle-front/frame-000.png -i /tmp/daira-robot-frames/turn-left/frame-027.png -i /tmp/daira-robot-frames/turn-right/frame-027.png -filter_complex "hstack=inputs=3,scale=1260:-2" -frames:v 1 -q:v 4 public/landing/robot/preview-contact.jpg
+          test -s public/landing/robot/preview-contact.jpg
+          for clip in idle-front turn-left turn-right tilt-head blink-glow micro-scan; do
+            ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 "public/landing/robot/$clip.mp4"
+          done
+      - name: Commit offline Blender renders on isolated feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/landing/robot/
+          git diff --cached --quiet && { echo "Render assets were not created"; exit 1; }
+          git commit -m "Render 6 full 3D robot motion clips and preview from original Blender mesh"
+          git push origin HEAD:feature/daira-robot-3d-motion-clips-20261031
