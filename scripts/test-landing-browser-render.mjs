@@ -122,7 +122,10 @@ try {
       shadow:getComputedStyle(s).boxShadow,
       libraryInstances:document.querySelectorAll("[data-liquid-glass]").length,
       sceneInstances:document.querySelectorAll("[data-liquid-glass-scene]").length,
-      words:document.querySelectorAll("[data-hero-word]").length
+      words:document.querySelectorAll("[data-hero-word]").length,
+      headerMapReady:document.getElementById("daira-header-map")?.getAttribute("data-map-prepared"),
+      backtopMapReady:document.getElementById("daira-backtop-map")?.getAttribute("data-map-prepared"),
+      ctaIconCount:document.querySelector(".ap-hero__cta")?.querySelectorAll("svg").length
     };
   })()`));
   assert.equal(startup.mode, "native");
@@ -132,6 +135,9 @@ try {
   assert.equal(startup.libraryInstances,0);
   assert.equal(startup.sceneInstances,0);
   assert.equal(startup.words,7);
+  assert.equal(startup.headerMapReady,"true","Lens distortion map must be generated before glass appears");
+  assert.equal(startup.backtopMapReady,"true");
+  assert.equal(startup.ctaIconCount,0,"Free Start CTA must be text only");
   console.log("NATIVE OPTICS DOM READY",JSON.stringify(startup));
 
   // Refraction must remain active across previously uncaptured sections.
@@ -143,13 +149,16 @@ try {
     button:document.querySelector(".ap-backtop__lens")?.dataset.opticsMode,
     filter:getComputedStyle(document.querySelector(".ap-header__backdrop .ap-optical-native")).backdropFilter,
     buttonBorder:getComputedStyle(document.querySelector(".ap-backtop__lens")).borderWidth,
-    buttonShadow:getComputedStyle(document.querySelector(".ap-backtop__lens")).boxShadow
+    buttonShadow:getComputedStyle(document.querySelector(".ap-backtop__lens")).boxShadow,
+    buttonFilter:getComputedStyle(document.querySelector(".ap-backtop__lens .ap-optical-native")).backdropFilter
   }))()`);
   assert.equal(scroll.header,"native");
   assert.equal(scroll.button,"native");
   assert.match(scroll.filter,/url\(/);
   assert.equal(scroll.buttonBorder,"0px");
   assert.equal(scroll.buttonShadow,"none");
+  assert.match(scroll.buttonFilter,/blur\(2\.4px\)/);
+  assert.match(scroll.buttonFilter,/daira-optical-backtop/);
 
   await evaluate('document.querySelector(".ap-menu-toggle").click()');
   await sleep(110);

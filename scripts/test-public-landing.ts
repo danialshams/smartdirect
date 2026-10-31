@@ -41,7 +41,10 @@ assert.match(interactions,/passive:true/);
 assert.match(interactions,/ChevronUp/);
 assert.doesNotMatch(interactions,/LiquidGlass|simple-liquid-glass/);
 
-assert.match(optics,/feTurbulence/);
+assert.match(optics,/prepareOpticalMaps/);
+assert.match(optics,/daira-header-map/);
+assert.match(optics,/daira-backtop-map/);
+assert.match(optics,/canvas\.toDataURL\("image\/png"\)/);
 assert.match(optics,/feDisplacementMap/);
 assert.match(optics,/CSS\.supports\("backdrop-filter"/);
 assert.match(optics,/requestAnimationFrame/);
@@ -56,9 +59,14 @@ assert.doesNotMatch(optics,/html-to-image|toSvg\(|html2canvas|WebGLRenderingCont
 
 assert.match(css,/\.ap-optical-surface\[data-optics-mode="mirror"\]/);
 assert.match(css,/\.ap-optical-surface\[data-optics-mode="native"\]/);
-assert.match(css,/-webkit-backdrop-filter:saturate\(118%\) url/);
+assert.match(css,/-webkit-backdrop-filter:saturate\(138%\) contrast\(105%\) url/);
 assert.match(css,/filter:url\("#daira-optical-displacement"\)/);
 assert.match(css,/box-shadow:none!important/);
+assert.match(css,/saturate\(138%\) contrast\(105%\)/);
+assert.match(css,/blur\(2\.4px\)/);
+assert.match(css,/daira-optical-backtop/);
+assert.doesNotMatch(page,/ArrowUpLeft/);
+assert.match(page,/رایگان شروع کن\s*<\/Link>/);
 assert.match(css,/@keyframes daira-word-assemble/);
 assert.match(css,/animation:daira-word-assemble/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);

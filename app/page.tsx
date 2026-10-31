@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpLeft, BadgeCheck, Check, ShieldCheck } from "lucide-react";
+import { BadgeCheck, Check, ShieldCheck } from "lucide-react";
 import { LandingGlassBackdrop } from "../components/landing/LandingGlassBackdrop";
 import { SimpleHeader } from "../components/landing/SimpleHeader";
 import { LandingInteractions } from "../components/landing/LandingInteractions";
@@ -58,7 +58,7 @@ export default function Home() {
             </h1>
             <div className="ap-hero__actions" data-hero-cta>
               <Link className="ap-button ap-button--solid ap-hero__cta" href="/login">
-                رایگان شروع کن <ArrowUpLeft size={18} aria-hidden="true"/>
+                رایگان شروع کن
               </Link>
             </div>
           </div>
