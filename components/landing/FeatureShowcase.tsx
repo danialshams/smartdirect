@@ -12,6 +12,9 @@ import { showcaseScenes, type ShowcaseScene } from "./showcase-scenes";
 
 gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
+// A central-scene handoff prevents neighboring scenes from running together.
+let activeDemo: {id:string; stop:()=>void} | null = null;
+
 /** Every element here is live HTML/SVG, not a video, gif or screenshot. */
 function PreviewContext({ scene }: {scene:ShowcaseScene}) {
   switch(scene.id) {
@@ -122,16 +125,19 @@ function FeatureScene({ scene }: {scene:ShowcaseScene}) {
         .to(pieces,{autoAlpha:0,x:(i:number)=>i%2===0?-42:45,y:20,scale:.94,duration:.54,stagger:.045},5.35)
         .to(result,{autoAlpha:0,duration:.32},5.45);
 
-      const enter=()=>{
-        if(document.hidden||running)return;
-        running=true;
-        root.classList.add("is-playing");
-        timeline.restart();
-      };
       const leave=()=>{
         running=false;
+        if(activeDemo?.id===scene.id) activeDemo=null;
         root.classList.remove("is-playing");
         timeline.pause(0);
+      };
+      const enter=()=>{
+        if(document.hidden||running)return;
+        if(activeDemo && activeDemo.id!==scene.id) activeDemo.stop();
+        running=true;
+        activeDemo={id:scene.id,stop:leave};
+        root.classList.add("is-playing");
+        timeline.restart();
       };
       const trigger=ScrollTrigger.create({
         trigger:root,
@@ -145,6 +151,7 @@ function FeatureScene({ scene }: {scene:ShowcaseScene}) {
       const onVis=()=>{if(document.hidden)timeline.pause();else if(running)timeline.resume();};
       document.addEventListener("visibilitychange",onVis);
       return ()=>{
+        if(activeDemo?.id===scene.id) activeDemo=null;
         root.classList.remove("is-playing");
         document.removeEventListener("visibilitychange",onVis);
         trigger.kill();
