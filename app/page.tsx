@@ -46,7 +46,7 @@ export default function Home() {
     <LandingGlassBackdrop>
       <script dangerouslySetInnerHTML={{__html:initialScrollGuard}} />
       <SimpleHeader />
-      <a className="ap-skip" href="#content">رفتن به محتوای صفحه</a>
+      <a className="ap-skip" data-liquid-glass-ignore="" href="#content">رفتن به محتوای صفحه</a>
       <HeroMotion />
       <main id="content">
         <section className="ap-hero" aria-labelledby="ap-hero-title">
@@ -63,8 +63,10 @@ export default function Home() {
           </div>
         </section>
 
-        <FeatureShowcase />
       </main>
+
+      {/* Separate clipped rows must be direct scene children for fast WebGL captures. */}
+      <FeatureShowcase />
 
       <footer className="ap-footer ap-footer--extended">
         <div className="ap-footer__halo" aria-hidden="true"/>
