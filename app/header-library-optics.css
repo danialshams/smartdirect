@@ -2,7 +2,7 @@
  * Only geometry belongs to the site. All optical material, specular highlights,
  * edge refraction and chromatic aberration belong to simple-liquid-glass.
  *
- * Do NOT target .liquid-glass-border or the package's inner backdrop-filter div.
+ * Do NOT override any internal library material, rim, or filter elements.
  * The old accumulated overrides removed those exact light-catching layers.
  */
 .ap-site .ap-header[data-landing-header] {
