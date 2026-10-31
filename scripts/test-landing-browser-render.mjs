@@ -132,20 +132,38 @@ try {
   })()`));
   assert.equal(startup.strategy,"svg","Use the real library native SVG lens, not a handmade filter");
   assert.match(startup.filter,/url\(/,"Liquid lens must refract LIVE backdrop pixels");
-  assert.match(startup.shadow,/inset/,"Real glass volume must catch light, not be flat transparent acrylic");
+  assert.equal(startup.shadow,"none","Secondary white inset shadow must not paint an acrylic perimeter");
   const depth=await evaluate(`(() => {
     const root=document.querySelector(".daira-library-liquid-header");
     const inner=root.querySelector(':scope > div[style*="backdrop-filter"]');
     const border=root.querySelector(".liquid-glass-border");
     return {shadow:getComputedStyle(inner).boxShadow, borderDisplay:border&&getComputedStyle(border).display};
   })()`);
-  assert.match(depth.shadow,/inset/,"Library specular rim must not be suppressed by CSS");
-  assert.equal(depth.borderDisplay,"block","Library refraction rim must be visible");
+  assert.equal(depth.shadow,"none","Bright white inner CSS rim must be removed without touching real refraction");
+  assert.equal(depth.borderDisplay,"none","Extra white border gradient is decorative, not the actual lens");
   assert.equal(startup.border,"0px","No white outline on header");
   assert.equal(startup.glassCount,1,"Exactly one native glass instance before scroll");
+  const glassShell=await evaluate(`(() => {
+    const shell=document.querySelector(".daira-library-glass-frame");
+    const layer=shell?.querySelector(".daira-library-glass-live-fallback");
+    const lens=shell?.querySelector(".daira-library-liquid-header");
+    return {shell:!!shell, ready:shell?.dataset.glassReady,
+      fallback:getComputedStyle(layer).opacity, rect:shell?.getBoundingClientRect().toJSON(),
+      lensRect:lens?.getBoundingClientRect().toJSON()};
+  })()`);
+  assert.equal(glassShell.shell,true,"Fallback and lens must share the exact geometry");
+  assert.equal(glassShell.ready,"true","On Chromium the native live lens must be ready");
+  await waitFor(async()=>await evaluate(
+    'getComputedStyle(document.querySelector(".daira-library-glass-live-fallback")).opacity==="0"'
+  ),1800);
+  assert.equal(await evaluate('document.querySelector(".daira-library-glass-frame").dataset.glassReady'),"true",
+    "The real SVG filter must be ready before fallback disappears");
+  assert.ok(Math.abs(glassShell.rect.width-glassShell.lensRect.width)<1,
+    "The edge and middle must be one continuous surface");
+
   assert.equal(startup.sceneCount,1,"iOS Safari must have official WebGL scene source");
   assert.ok(startup.opticalMaps>=1,"Actual library displacement stages must exist");
-  assert.match(startup.shadow,/rgba/);
+  assert.equal(startup.shadow,"none");
   assert.equal(startup.oldApproximation,false);
   assert.equal(startup.ctaIcons,0,"Free Start button should remain icon-free");
   const materialAlpha=Number(startup.materialColor.split(",").at(-1)?.replace(")","").trim());
@@ -282,6 +300,27 @@ try {
   })()`);
 
 
+  // Exercise 24 consecutive *animation frames* with scrolling, rather than
+  // one static after-scroll screenshot. Chrome SVG must sample live pixels
+  // without pausing or switching to opaque CSS during the travel.
+  const scrollingFrames=await evaluate(`(async()=>{
+    const lens=document.querySelector(".daira-library-liquid-header");
+    const samples=[];
+    for(let i=0;i<24;i++){
+      await new Promise(resolve=>requestAnimationFrame(resolve));
+      window.scrollBy(0,36);
+      samples.push({y:scrollY,mode:lens.dataset.glassStrategy,
+        filter:getComputedStyle(lens.querySelector(':scope > div[style*="backdrop-filter"]')).backdropFilter});
+    }
+    return samples;
+  })()`);
+  assert.ok(scrollingFrames.at(-1).y-scrollingFrames[0].y>700,
+    "Continuous-frame test must move through actual content");
+  assert.ok(scrollingFrames.every(frame=>frame.mode==="svg"&&frame.filter.includes("url(")),
+    "The true optical filter must remain active on every scrolled animation frame");
+  console.log("DAIRA LIVE FRAME SCROLL PASS",JSON.stringify({frames:scrollingFrames.length,
+    first:scrollingFrames[0].y,last:scrollingFrames.at(-1).y}));
+  await evaluate('window.scrollTo({top:0,behavior:"instant"})');
   await evaluate('window.scrollTo({top:1250,behavior:"instant"})');
   await waitFor(async()=>await evaluate('window.scrollY>600'));
   await waitFor(async()=>await evaluate('!!document.querySelector(".ap-backtop__blue-blur")'));

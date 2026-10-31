@@ -7,9 +7,9 @@
    around an otherwise clear lens. Soften ONLY that decorative optical rim.
    Never hide it or disable the actual inner SVG/WebGL refractor. */
 .ap-site .daira-library-liquid-header > .liquid-glass-border {
-  display: block !important;
-  opacity: .43 !important;
-  pointer-events: none !important;
+  /* The package's purely decorative rim is the persistent white ring.
+     It is NOT the real refractive SVG/WebGL surface. */
+  display: none !important;
 }
 
 /* Back to top: truly see some of the scrolling page THROUGH the blue chip.
@@ -84,4 +84,88 @@ html[data-daira-hero="done"] .ap-site .ap-hero__word {
     animation: none !important;
     will-change: auto !important;
   }
+}
+
+
+/* One neutral, geometry-only shell. The lens's real displacement and caustic
+   shader remain unmodified, but the library's separate inset WHITE box-shadow
+   and gradient rim no longer paint an acrylic ring at the edges. */
+.ap-site .daira-library-glass-frame {
+  position:absolute;
+  z-index:0;
+  inset:7px 12px;
+  pointer-events:none;
+  border-radius:26px;
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  isolation:auto;
+}
+.ap-site .daira-library-glass-frame .daira-library-liquid-header {
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  border-radius:inherit!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+.ap-site .daira-library-glass-frame .daira-library-liquid-header > div[style*="backdrop-filter"] {
+  /* Actual SVG filter / native WebGL canvas remains enabled! */
+  box-shadow:none!important;
+  border:0!important;
+  outline:0!important;
+}
+/* A WebGL tile which is not yet ready normally receives the library's
+   bright 50% WHITE CSS gradient. That was the all-white header on fast scroll.
+   Only while waiting for native optics, keep the live page visible through a
+   light neutral frosted surface instead. The active SVG/WebGL lens is untouched. */
+.ap-site .daira-library-glass-frame[data-glass-ready="false"]
+  .daira-library-liquid-header > div[style*="backdrop-filter"] {
+  background:rgba(255,255,255,.035)!important;
+  -webkit-backdrop-filter:blur(5px) saturate(128%)!important;
+  backdrop-filter:blur(5px) saturate(128%)!important;
+  box-shadow:none!important;
+}
+/* Keep the WebGL context alive, but do not paint an incomplete white
+   snapshot over the live CSS fallback during a section-boundary capture.
+   Library WebGL uses its first aria-hidden child as the GPU canvas holder;
+   native SVG lenses do not have that holder. */
+.ap-site .daira-library-glass-frame[data-glass-ready="false"]
+  .daira-library-liquid-header > div:first-child[aria-hidden="true"] {
+  opacity:0!important;
+}
+.ap-site .daira-library-glass-live-fallback {
+  position:absolute;
+  inset:0;
+  z-index:0;
+  border-radius:inherit;
+  background:rgba(255,255,255,.035);
+  -webkit-backdrop-filter:blur(5px) saturate(128%);
+  backdrop-filter:blur(5px) saturate(128%);
+  opacity:1;
+  /* Do not linger above the SVG/WebGL frame once its optics become ready. */
+  transition:none;
+}
+.ap-site .daira-library-glass-frame[data-glass-ready="true"] .daira-library-glass-live-fallback {
+  opacity:0;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+@media(max-width:600px) {
+  .ap-site .daira-library-glass-frame {inset:5px 9px;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .ap-site .daira-library-glass-live-fallback {transition:none;}
+}
+
+/* In WebKit the HTML scene is a set of cached tiles, not a video of the DOM.
+   Many IntersectionObserver reveal mutations would invalidate those tiles
+   DURING scrolling and leave blank white pixels until capture finishes.
+   Keep all reveal content painted immediately on this WebGL-only path. */
+.ap-site[data-scene-capture-stable="true"] [data-reveal] {
+  opacity:1!important;
+  transform:none!important;
+  transition:none!important;
+  will-change:auto!important;
 }
