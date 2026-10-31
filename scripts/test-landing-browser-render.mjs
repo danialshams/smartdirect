@@ -157,7 +157,7 @@ try {
   assert.match(scroll.filter,/url\(/);
   assert.equal(scroll.buttonBorder,"0px");
   assert.equal(scroll.buttonShadow,"none");
-  assert.match(scroll.buttonFilter,/blur\\(2\\.4px\\)/);
+  assert.match(scroll.buttonFilter,/blur\(2\.4px\)/);
   assert.match(scroll.buttonFilter,/daira-optical-backtop/);
 
   await evaluate('document.querySelector(".ap-menu-toggle").click()');
