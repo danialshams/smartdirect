@@ -47,7 +47,7 @@
   transition:color .25s,background .25s;
 }
 .ap-header__panel-login:hover {color:#245ce9!important;background:rgba(255,255,255,.15)}
-.ap-menu-overlay {z-index:108;background:rgba(15,24,43,.20);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.ap-menu-overlay {z-index:108;background:rgba(15,24,43,.15);-webkit-backdrop-filter:none;backdrop-filter:none}
 .ap-menu {
   box-sizing:border-box;position:fixed;z-index:110;
   top:89px;right:max(15px,env(safe-area-inset-right));left:auto;
