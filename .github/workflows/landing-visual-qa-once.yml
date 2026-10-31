@@ -1,0 +1,46 @@
+name: Temporary Daira landing browser QA
+
+on:
+  push:
+    branches: [feature/apple-style-minimal-vazir-landing-20261031]
+    paths:
+      - .github/workflows/landing-visual-qa-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  take-screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - name: Install existing app and isolated Playwright for screenshot QA
+        run: |
+          npm ci --no-audit --no-fund
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.0
+          npx playwright install --with-deps chromium
+      - name: Check real page at desktop, mobile and narrow phone widths
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          npm run dev -- --hostname 127.0.0.1 --port 3000 > /tmp/daira-next-dev.log 2>&1 &
+          PID=$!
+          trap "kill $PID || true" EXIT
+          for i in $(seq 1 60); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:3000/; then break; fi
+            sleep 2
+          done
+          curl --fail --silent --output /dev/null http://127.0.0.1:3000/
+          node scripts/qa-landing-visual.cjs
+      - name: Save reviewable screenshot outputs to isolated feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/qa/apple-*.jpg public/qa/story-*.jpg public/qa/layout-report.json
+          git commit -m "Temporary visual QA: inspect Apple-style landing at desktop and mobile widths"
+          git push origin HEAD:feature/apple-style-minimal-vazir-landing-20261031
