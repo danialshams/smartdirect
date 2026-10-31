@@ -1,7 +1,7 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useLayoutEffect, useRef } from "react";
+import { RobotMotionPlayer } from "./RobotMotionPlayer";
 import type { CSSProperties } from "react";
 import { gsap } from "gsap";
 import {
@@ -27,7 +27,6 @@ const cables = [
 /** Assemble eleven features around an offline Blender-rendered camera-mapped 3D motion loop. */
 export function RobotHeroScene() {
   const stageRef = useRef<HTMLDivElement>(null);
-  const [videoPlaying, setVideoPlaying] = useState(false);
 
   useLayoutEffect(() => {
     const stage = stageRef.current;
@@ -49,16 +48,6 @@ export function RobotHeroScene() {
         ease:"expo.out",
         delay:.12,
       });
-
-      const dimmers=stage.querySelectorAll<SVGElement>(".sh-robot-eye-dimmer");
-      gsap.timeline({ repeat:-1, repeatDelay:2.0, delay:1.5 })
-        .set(dimmers,{opacity:.93})
-        .to(dimmers,{opacity:.08,duration:.08})
-        .to(dimmers,{opacity:.98,duration:.07})
-        .to(dimmers,{opacity:.03,duration:.12})
-        .to(dimmers,{opacity:.84,duration:.09})
-        .to(dimmers,{opacity:0,duration:.22,ease:"power2.out"})
-        .to({}, {duration:1.75});
 
       const paths=Array.from(stage.querySelectorAll<SVGPathElement>("[data-cable-path]"));
       const pulses=Array.from(stage.querySelectorAll<SVGGElement>("[data-cable-pulse]"));
@@ -94,7 +83,7 @@ export function RobotHeroScene() {
 
   return (
     <div ref={stageRef} className="sh-robot-scene"
-      aria-label="ربات دایرا با حرکت سه‌بعدی از پیش رندرشده، چشم‌های چشمک‌زن و یازده قابلیت متصل با سیم‌های نورانی">
+      aria-label="ربات مدل‌سازی‌شده دایرا با شش حرکت واقعی سه‌بعدی و ترتیب تصادفی، و یازده قابلیت متصل">
       <div className="sh-robot-world">
         <svg className="sh-robot-svg" viewBox="0 0 1200 710" role="img"
           aria-label="کابل‌های ارتباطی متصل به امکانات دایرا"
@@ -130,35 +119,7 @@ export function RobotHeroScene() {
           ))}
         </svg>
         <div className="sh-robot-3d-assembly" data-robot-assembly="portrait">
-          <div className="sh-robot-rendered">
-            <Image src="/landing/daira-robot-hero.webp" alt="" fill
-              priority sizes="(max-width:600px) 100vw, (max-width:860px) 520px, 650px"
-              className="sh-robot-rendered__poster" />
-            <video
-              className={"sh-robot-rendered__video" + (videoPlaying ? " sh-robot-rendered__video--playing" : "")}
-              autoPlay muted loop playsInline preload="metadata"
-              aria-hidden="true"
-              onPlaying={()=>setVideoPlaying(true)}
-              onPause={()=>setVideoPlaying(false)}
-              onError={()=>setVideoPlaying(false)}>
-              <source src="/landing/daira-robot-motion.webm" type="video/webm" />
-              <source src="/landing/daira-robot-motion.mp4" type="video/mp4" />
-            </video>
-            <svg className="sh-robot-rendered__eyes" viewBox="0 0 1000 563" aria-hidden="true">
-              <defs>
-                <radialGradient id="sh-eye-optical-dim">
-                  <stop offset="0" stopColor="#06192f" stopOpacity=".99"/>
-                  <stop offset=".53" stopColor="#091d35" stopOpacity=".95"/>
-                  <stop offset=".76" stopColor="#0c274a" stopOpacity=".68"/>
-                  <stop offset="1" stopColor="#081b31" stopOpacity="0"/>
-                </radialGradient>
-              </defs>
-              <g className="sh-robot-eye-dimmer" opacity="0">
-                <ellipse cx="381" cy="222" rx="66" ry="61" fill="url(#sh-eye-optical-dim)"/>
-                <ellipse cx="565" cy="262" rx="57" ry="55" fill="url(#sh-eye-optical-dim)"/>
-              </g>
-            </svg>
-          </div>
+          <RobotMotionPlayer />
         </div>
         {cables.map((cable)=>{
           const Icon=cable.Icon;
