@@ -2,7 +2,7 @@
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { useLandingGlassCapture } from "./LandingGlassBackdrop";
-import LiquidGlass, { type LiquidGlassHandle, type RenderingDiagnostics } from "simple-liquid-glass";
+import LiquidGlass, { type RenderingDiagnostics } from "simple-liquid-glass";
 
 /**
  * The header is ONE native optical lens from simple-liquid-glass 5.4.
@@ -46,45 +46,30 @@ const optics = {
 
 export function LiquidHeaderSurface() {
   const capture = useLandingGlassCapture();
-  const panelRef = useRef<LiquidGlassHandle>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLCanvasElement | null>(null);
   const [sourceBound, setSourceBound] = useState(false);
   const [captureReady, setCaptureReady] = useState(false);
   const [strategy, setStrategy] = useState("pending");
 
   useLayoutEffect(() => {
-    if (!capture) return;
+    // Bind the stable frame, NOT the library's deferred inner optical ref.
+    // React has committed this frame before a layout effect runs, whereas the
+    // LiquidGlass root can appear later (reveal/hydration). The old one-shot
+    // inner ref lookup could fail permanently, leaving the renderer in
+    // missing-backdrop blur mode even though a valid scene was available.
+    const frame = frameRef.current;
+    if (!capture || !frame) return;
     let active = true;
-    let retry: ReturnType<typeof setTimeout> | undefined;
-    let registration: ReturnType<typeof capture.register> | undefined;
-    let attempts = 0;
-
-    // The library may defer mounting its real optical root until after the
-    // initial hydration/reveal gate. A one-shot ref lookup can therefore miss
-    // it and leave Safari permanently in "missing-backdrop" blur mode.
-    // Resolve the actual element before binding the explicit canvas source,
-    // and keep retrying at a bounded cadence if the element mounts later.
-    const attach = () => {
-      if (!active) return;
-      const element = panelRef.current?.element;
-      if (!element || !element.isConnected) {
-        const delay = Math.min(500, 70 + Math.min(attempts++, 12) * 35);
-        retry = setTimeout(attach, delay);
-        return;
-      }
-      registration = capture.register(element, nextReady => {
-        if (active) setCaptureReady(previous => previous === nextReady ? previous : nextReady);
-      });
-      backdropRef.current = registration.canvas;
-      setSourceBound(true);
-    };
-    attach();
-
+    const registration = capture.register(frame, nextReady => {
+      if (active) setCaptureReady(previous => previous === nextReady ? previous : nextReady);
+    });
+    backdropRef.current = registration.canvas;
+    setSourceBound(true);
     return () => {
       active = false;
-      if (retry !== undefined) clearTimeout(retry);
       backdropRef.current = null;
-      registration?.release();
+      registration.release();
     };
   }, [capture]);
 
@@ -95,14 +80,13 @@ export function LiquidHeaderSurface() {
   const ready = opticalReady && (!capture || captureReady);
 
   return (
-    <div className="daira-library-glass-frame"
+    <div ref={frameRef} className="daira-library-glass-frame"
       data-glass-ready={ready ? "true" : "false"}
       data-optical-strategy={strategy}
       data-optical-source-bound={sourceBound ? "true" : "false"}>
       <span className="daira-library-glass-live-fallback" aria-hidden="true" />
       <LiquidGlass
         {...optics}
-        ref={panelRef}
         backdropRef={backdropRef}
         radius={26}
         onDiagnosticsChange={onDiagnosticsChange}
