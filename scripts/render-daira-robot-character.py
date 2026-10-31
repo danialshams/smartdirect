@@ -64,11 +64,15 @@ def mat(name,color,metal=.0,rough=.27,emission=None,energy=0.0):
     bs.inputs["Base Color"].default_value=(*color,1)
     bs.inputs["Metallic"].default_value=metal
     bs.inputs["Roughness"].default_value=rough
-    bs.inputs["Coat Weight"].default_value=.35
-    bs.inputs["Coat Roughness"].default_value=.13
+    coat=bs.inputs.get("Coat Weight") or bs.inputs.get("Clearcoat")
+    coat_rough=bs.inputs.get("Coat Roughness") or bs.inputs.get("Clearcoat Roughness")
+    if coat:coat.default_value=.35
+    if coat_rough:coat_rough.default_value=.13
     if emission:
-        bs.inputs["Emission Color"].default_value=(*emission,1)
-        bs.inputs["Emission Strength"].default_value=energy
+        em_col=bs.inputs.get("Emission Color") or bs.inputs.get("Emission")
+        em_strength=bs.inputs.get("Emission Strength")
+        if em_col: em_col.default_value=(*emission,1)
+        if em_strength: em_strength.default_value=energy
     return material
 
 ceramic=mat("Ceramic white pearl | clear-coated",(.83,.905,1.0),.21,.16)
@@ -98,7 +102,7 @@ def attach(obj,material,root=head_root,bevel=0):
         mod=obj.modifiers.new("Micro-machined beveled edges","BEVEL")
         mod.width=bevel
         mod.segments=3
-        mod.affect="EDGES" if hasattr(mod,"affect") else None
+        if hasattr(mod,"affect"):mod.affect="EDGES"
         obj.modifiers.new("Weighted bevel normals","WEIGHTED_NORMAL")
     return obj
 
