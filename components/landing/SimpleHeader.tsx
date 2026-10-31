@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import LiquidGlass from "simple-liquid-glass";
+import { LiveOpticalSurface } from "./LiveOptics";
 import { ArrowUpLeft, Menu, X } from "lucide-react";
 
 const menuItems = [
@@ -15,32 +15,7 @@ const menuItems = [
   { href:"/about", label:"درباره ما" },
 ] as const;
 
-/**
- * Shared optical presets: soft edge curvature on the wide header prevents\n * an exaggerated rim and low-quality single-pass refraction keeps scroll smooth.
- * Specular and sheen on the large lenses were painting a bright inner rim,\n * which looked like a separate border despite CSS border:0.
- */
-const optics = {
-  renderer:"svg" as const,
-  refraction:"lens" as const,
-  lensProfile:"material" as const,
-  lensOptions:{
-    strength:.17,depth:.48,curvature:.43,bend:.23,bendWidth:.22,
-    sheen:0,sheenWidth:0,sheenAngle:-25,specular:0,
-    glow:0,glowSpread:0,glowFalloff:2.1,brightness:0,
-  },
-  quality:"standard" as const,
-  mobileFallback:"svg" as const,
-  frost:0,
-  blur:0,
-  scale:108,
-  saturation:110,
-  dispersion:7,
-  aberrationIntensity:.045,
-  borderColor:"rgba(255,255,255,0)",
-  glassColor:"rgba(255,255,255,.018)",
-  background:"rgba(255,255,255,.01)",
-};
-
+/** The menu uses a single prepainted surface. Only the header refracts. */
 export function SimpleHeader() {
   const [open,setOpen]=useState(false);
   const toggleRef=useRef<HTMLButtonElement>(null);
@@ -78,14 +53,7 @@ export function SimpleHeader() {
 
   return (
     <header className="ap-header" data-landing-header data-liquid-glass-ignore="">
-      <LiquidGlass
-        {...optics}
-        radius={26}
-        className="ap-header__backdrop"
-        style={{position:"absolute",inset:0,pointerEvents:"none"}}
-      >
-        <span className="ap-header__lens-fill" aria-hidden="true"/>
-      </LiquidGlass>
+      <LiveOpticalSurface variant="header" className="ap-header__backdrop" />
 
       {/*
         The entire header is excluded from the scene capture. Simply ignoring
