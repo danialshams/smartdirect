@@ -66,7 +66,10 @@ export function LiveOpticalSurface({ className, variant }: Props) {
     } else {
       const prepare = async () => {
         // Build the entire visual source before showing any refracted pixels.
-        await Promise.all([\n          Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 1200))]),\n          new Promise(resolve => setTimeout(resolve, 790)), // after CSS hero assembly\n        ]);
+        await Promise.all([
+          Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 1200))]),
+          new Promise(resolve => setTimeout(resolve, 790)), // after CSS hero assembly
+        ]);
         if (!active || !windowRef.current || !surface.current) return;
         const site = document.querySelector<HTMLElement>(".ap-site");
         if (!site) return;
