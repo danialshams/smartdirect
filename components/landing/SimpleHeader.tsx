@@ -27,7 +27,7 @@ const optics = {
     sheen:1.12,sheenWidth:7,sheenAngle:-30,specular:1.35,
     glow:.08,glowSpread:.4,glowFalloff:1.6,brightness:0,
   },
-  quality:"balanced" as const,
+  quality:"standard" as const,
   mobileFallback:"svg" as const,
   frost:0,
   blur:0,
