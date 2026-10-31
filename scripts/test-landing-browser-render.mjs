@@ -172,7 +172,10 @@ try {
   console.log("DAIRA BROWSER PASS: real native SVG refraction while scrolling; no inner white rim; menu opens/closes without GPU lenses or animated backdrop-filter.");
 } finally {
   try {socket?.close();} catch {}
-  if (chrome && chrome.exitCode === null) chrome.kill("SIGTERM");
+  if (chrome && chrome.exitCode === null) {
+    chrome.kill("SIGTERM");
+    await Promise.race([once(chrome,"exit").catch(()=>{}),sleep(1200)]);
+  }
   if (server && server.exitCode === null) server.kill("SIGTERM");
-  if (profile) await rm(profile,{recursive:true,force:true});
+  if (profile) await rm(profile,{recursive:true,force:true}).catch(()=>{});
 }
