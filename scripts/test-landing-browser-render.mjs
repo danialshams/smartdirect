@@ -111,7 +111,7 @@ try {
 
   // The restored library must draw its real analytical SVG lens — not the
   // old CSS-only transparent imitation — and keep it live during scrolling.
-  await waitFor(async () => (await evaluate('document.querySelector(".daira-library-liquid-header")?.dataset.glassStrategy')) === "native");
+  await waitFor(async () => (await evaluate('document.querySelector(".daira-library-liquid-header")?.dataset.glassStrategy')) === "svg");
   const startup=await waitFor(async()=>await evaluate(`(() => {
     const root=document.querySelector(".daira-library-liquid-header");
     const optical=root?.querySelector(':scope > div[style*="backdrop-filter"]');
