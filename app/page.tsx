@@ -16,7 +16,7 @@ import "./landing-polish.css";
 import "./landing-refraction-fix.css";
 import "./landing-live-glass.css";
 import "./landing-optics-v2.css";
-import "./liquid-header.css";
+import "./header-library-optics.css";
 
 export const metadata:Metadata = {
   title:"دایرا | همه تعاملات پیجت، در یک فضای ساده",

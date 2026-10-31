@@ -1,0 +1,37 @@
+/*
+ * Only geometry belongs to the site. All optical material, specular highlights,
+ * edge refraction and chromatic aberration belong to simple-liquid-glass.
+ *
+ * Do NOT override any internal library material, rim, or filter elements.
+ * The old accumulated overrides removed those exact light-catching layers.
+ */
+.ap-site .ap-header[data-landing-header] {
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  isolation: auto !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+.ap-site .daira-library-liquid-header {
+  position: absolute !important;
+  inset: 7px 12px !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  z-index: 0 !important;
+  border-radius: 26px !important;
+  /* Optical shadows and curved rims are painted by the library, not CSS. */
+  pointer-events: none !important;
+}
+.ap-site .ap-header__inner {
+  position: relative;
+  z-index: 2;
+}
+@media (max-width: 600px) {
+  .ap-site .daira-library-liquid-header {
+    inset: 5px 9px !important;
+    border-radius: 26px !important;
+  }
+}
