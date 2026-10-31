@@ -275,7 +275,9 @@ try {
   assert.equal(scrolled.borderWidth,"2px","Button needs a white outer border");
   assert.match(scrolled.borderColor,/255, 255, 255/);
   assert.equal(scrolled.glassCount,2);
-  const shotScrolled=(await send("Page.captureScreenshot",{format:"jpeg",quality:58,captureBeyondViewport:false})).data;
+  // Ensure scroll-reveal content has settled before judging optical clarity.
+  await sleep(900);
+  const shotScrolled=(await send("Page.captureScreenshot",{format:"jpeg",quality:62,captureBeyondViewport:false})).data;
   console.log("DAIRA_DIAG_SCREENSHOT_SCROLLED="+shotScrolled);
 
   assert.equal(await evaluate('getComputedStyle(document.querySelector(".ap-backtop")).isolation'),"auto","Back button must not trap backdrop in an isolated stacking root");
