@@ -47,7 +47,7 @@ try {
     for (let i=0; i<75; i++) {
       await new Promise(resolve => requestAnimationFrame(resolve));
       window.scrollBy(0, 28);
-      if (i % 5 === 0) samples.push({
+      samples.push({
         y: scrollY,
         strategy: panel.dataset.glassStrategy,
         reason: panel.dataset.glassReason,
