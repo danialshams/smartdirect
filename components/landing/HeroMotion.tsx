@@ -2,14 +2,12 @@
 
 import { useLayoutEffect } from "react";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-/**
- * The robot manages its own multi-part assembly. The copy arrives alongside it,
- * without hiding the refraction surface or breaking reduced-motion preferences.
- */
+gsap.registerPlugin(ScrollTrigger);
+
+/** Subtle entrance animations without hiding the SSR page or requiring WebGL. */
 export function HeroMotion() {
-  // Home is a fresh marketing entry; do not briefly restore an old scroll
-  // offset from the bottom of the page on reload/back-forward without a hash.
   useLayoutEffect(() => {
     if (window.location.hash) return;
     const prior = window.history.scrollRestoration;
@@ -24,13 +22,29 @@ export function HeroMotion() {
   }, []);
 
   useLayoutEffect(() => {
-    const hero = document.querySelector<HTMLElement>(".sh-hero");
-    if (!hero || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const context = gsap.context(() => {
-      // The robot owns the scattered assembly timeline. Copy enters in parallel.
-      gsap.timeline({ defaults: { ease: "power3.out" }, delay: 0.16 })
-        .from("[data-hero-entrance]", { y: 19, duration: 0.75, stagger: 0.09 }, 0);
-    }, hero);
+      gsap.timeline({ defaults: { ease: "power3.out" }, delay: .12 })
+        .from("[data-hero-entrance]", {
+          y: 24, autoAlpha: 0, duration: .83, stagger: .10, clearProps: "all",
+        }, 0);
+
+      gsap.utils.toArray<HTMLElement>(".sh-reveal").forEach(el => {
+        gsap.fromTo(el, { y: 28, autoAlpha: 0 }, {
+          y: 0, autoAlpha: 1, duration: .8, ease: "power2.out",
+          clearProps: "all",
+          scrollTrigger: { trigger: el, start: "top 93%", once: true },
+        });
+      });
+
+      gsap.to(".sh-preview__float--one", {
+        y: -8, duration: 3.8, repeat: -1, yoyo: true, ease: "sine.inOut",
+      });
+      gsap.to(".sh-preview__float--two", {
+        y: 7, duration: 4.7, repeat: -1, yoyo: true, ease: "sine.inOut",
+      });
+    });
+
     return () => context.revert();
   }, []);
 
