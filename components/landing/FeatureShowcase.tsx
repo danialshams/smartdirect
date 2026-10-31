@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Instagram } from "lucide-react";
+import { Camera } from "lucide-react";
 import { showcaseScenes } from "./showcase-scenes";
 import { InstagramPreview } from "./InstagramPreview";
 
@@ -15,7 +15,7 @@ export function FeatureShowcase() {
     <section id="features" className="ap-showcase ap-social-showcase" aria-labelledby="ap-features-title">
       <div className="ap-shell ap-showcase__inner">
         <div className="ap-showcase__intro" data-reveal>
-          <span className="ap-showcase__eyebrow"><Instagram size={17} aria-hidden="true"/> امکانات دایرا</span>
+          <span className="ap-showcase__eyebrow"><Camera size={17} aria-hidden="true"/> امکانات دایرا</span>
           <h2 id="ap-features-title" data-reveal>از یک پیام ساده، تا مدیریت کل پیج</h2>
           <p data-reveal>هر قابلیت، در محیطی آشنا شبیه اینستاگرام.</p>
         </div>
