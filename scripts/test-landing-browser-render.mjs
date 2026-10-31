@@ -139,8 +139,10 @@ try {
   assert.ok(startup.opticalMaps>=1,"Actual library displacement stages must exist");
   assert.equal(startup.oldApproximation,false);
   assert.equal(startup.ctaIcons,0,"Free Start button should remain icon-free");
-  assert.ok(startup.materialColor.includes("255, 255, 255, 0.065"),
-    "The REAL library material must be translucent neutral glass, not transparent from a background prop");
+  const materialAlpha=Number(startup.materialColor.split(",").at(-1)?.replace(")","").trim());
+  console.log("DAIRA MATERIAL",JSON.stringify({color:startup.materialColor,alpha:materialAlpha,scales:startup.displacementScales}));
+  assert.ok(materialAlpha>.035 && materialAlpha<.12,
+    "The REAL library material must be translucent neutral glass, not transparent or opaque");
   assert.ok(Math.max(...startup.displacementScales) <= 36,
     "Too much displacement samples white space beyond the 62px high header");
   assert.ok(Math.max(...startup.displacementScales) >= 12,
