@@ -112,6 +112,19 @@ try {
   // The restored library must draw its real analytical SVG lens — not the
   // old CSS-only transparent imitation — and keep it live during scrolling.
   await waitFor(async () => (await evaluate('document.querySelector(".daira-library-liquid-header")?.dataset.glassStrategy')) === "svg");
+  // The library reports its SVG strategy before the parent React frame has
+  // committed data-glass-ready=true. Until then CSS intentionally shows a
+  // neutral live blur; asserting URL refraction in that transient frame makes
+  // the smoke test timing-dependent on runner speed. Wait for the real optical
+  // layer itself, not just diagnostics, and fail if it never becomes ready.
+  await waitFor(async () => await evaluate(`(() => {
+    const frame=document.querySelector(".daira-library-glass-frame");
+    const lens=document.querySelector(".daira-library-liquid-header");
+    const optical=lens?.querySelector(':scope > div[style*="backdrop-filter"]');
+    return frame?.dataset.glassReady==="true" &&
+      lens?.dataset.glassStrategy==="svg" &&
+      !!optical && getComputedStyle(optical).backdropFilter.includes("url(");
+  })()`), 12000);
   const startup=await waitFor(async()=>await evaluate(`(() => {
     const root=document.querySelector(".daira-library-liquid-header");
     const optical=root?.querySelector(':scope > div[style*="backdrop-filter"]');
