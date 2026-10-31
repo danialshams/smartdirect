@@ -34,7 +34,7 @@ bpy.ops.object.select_all(action="SELECT")
 bpy.ops.object.delete(use_global=False)
 scene=bpy.context.scene
 scene.render.engine="CYCLES"
-scene.cycles.samples=7
+scene.cycles.samples=9
 scene.cycles.use_denoising=False
 scene.render.resolution_x=WIDTH
 scene.render.resolution_y=HEIGHT
@@ -48,13 +48,13 @@ scene.render.threads=3
 scene.render.film_transparent=False
 scene.view_settings.view_transform="Standard"
 scene.view_settings.look="Medium High Contrast"
-scene.view_settings.exposure=0
+scene.view_settings.exposure=-.72
 scene.view_settings.gamma=1
 world=bpy.data.worlds.new("Daira | clean light studio")
 scene.world=world
 world.use_nodes=True
 world.node_tree.nodes.get("Background").inputs["Color"].default_value=(0.965, 0.986, 1.0, 1)
-world.node_tree.nodes.get("Background").inputs["Strength"].default_value=.85
+world.node_tree.nodes.get("Background").inputs["Strength"].default_value=.48
 
 def mat(name,color,metal=.0,rough=.27,emission=None,energy=0.0):
     material=bpy.data.materials.new(name)
@@ -75,17 +75,17 @@ def mat(name,color,metal=.0,rough=.27,emission=None,energy=0.0):
         if em_strength: em_strength.default_value=energy
     return material
 
-ceramic=mat("Ceramic white pearl | clear-coated",(.83,.905,1.0),.21,.16)
-ceramic_light=mat("Raised ceramic highlights",(.98,.995,1),.12,.14)
-ceramic_dim=mat("Plate shadow ceramic",(.54,.68,.84),.46,.26)
-chrome=mat("Brushed satin aluminum",(.56,.68,.83),.88,.23)
+ceramic=mat("Ceramic white pearl | clear-coated",(.61,.73,.87),.28,.26)
+ceramic_light=mat("Raised ceramic highlights",(.77,.86,.96),.19,.23)
+ceramic_dim=mat("Plate shadow ceramic",(.32,.47,.64),.55,.29)
+chrome=mat("Brushed satin aluminum",(.39,.51,.68),.88,.26)
 chrome_dark=mat("Polished gunmetal",(.11,.19,.30),.9,.20)
 rubber=mat("Ribbed graphite polymer",(.023,.048,.087),.35,.36)
 visor=mat("Curved onyx glass visor",(.015,.035,.085),.62,.07)
 visor_edge=mat("Visor blue-metal gasket",(.22,.41,.65),.85,.17)
 iris=mat("Optical deep iris",(.009,.030,.086),.76,.085)
-light=mat("Optic cyan glow",(.31,.86,1),.22,.14,(.04,.57,1),3.8)
-light_soft=mat("Daira accent light",(.30,.75,1),.33,.16,(.018,.29,1),1.7)
+light=mat("Optic cyan glow",(.17,.59,.89),.22,.14,(.018,.38,.82),1.9)
+light_soft=mat("Daira accent light",(.22,.61,.91),.33,.16,(.016,.18,.72),.85)
 pupil=mat("Pupil camera lens",(.001,.012,.033),.86,.055)
 speck=mat("Specular catch light",(.95,1,1),.04,.13,(.38,.89,1),.25)
 vent=mat("Precision vent shadow",(.055,.12,.21),.65,.36)
@@ -159,6 +159,46 @@ ell("06 | ceramic forehead upper eyebrow",(0,-.55,1.15),(1.015,.35,.24),ceramic_
 ell("07 | jaw chin protective mechanical shell",(0,-.58,-.27),(.89,.48,.39),ceramic)
 ell("08 | inset chin beveled plate",(0,-.74,-.42),(.67,.31,.18),ceramic_light)
 ell("09 | central face graphite seam",(0,-.69,-.40),(.55,.37,.078),rubber)
+
+
+# Fine engraved gaskets and distinct armor panel subdivisions add the
+# mechanical definition lost in earlier washed-out white test renders.
+pipe("Front helmet central crown seam",[
+    (0,-.64,1.52),(.12,-.73,1.47),(.24,-.76,1.40)],.012,chrome_dark)
+pipe("Crown left radial bevel",[
+    (-.13,-.65,1.49),(-.39,-.68,1.44),(-.64,-.58,1.31),
+    (-.83,-.45,1.15)],.013,chrome_dark)
+pipe("Crown right radial bevel",[
+    (.13,-.65,1.49),(.39,-.68,1.44),(.64,-.58,1.31),
+    (.83,-.45,1.15)],.013,chrome_dark)
+pipe("Visor upper precise rim",[
+    (-.88,-.76,1.04),(-.60,-.93,1.145),(0,-1.028,1.18),
+    (.60,-.93,1.145),(.88,-.76,1.04)],.018,chrome_dark)
+pipe("Visor lower machined gasket",[
+    (-.91,-.78,.11),(-.65,-1.02,-.05),(0,-1.14,-.09),
+    (.65,-1.02,-.05),(.91,-.78,.11)],.017,chrome)
+for sign in (-1,1):
+    for i in range(6):
+        # Brushed-metal guide slots around the temple armor.
+        z=1.18-.07*i
+        pipe("Micro-line engraved brow %d"%i,[
+            (sign*.73,-.70,z),(sign*.80,-.65,z-.018),
+            (sign*.85,-.55,z-.04)],.005,chrome_dark)
+    for i in range(5):
+        y=-.34+i*.10
+        box("Ribbed posterior temple engine",(
+            sign*1.13,y,.94),(.035,.059,.045),chrome_dark,bev=.006)
+    for i in range(6):
+        angle=i*math.pi/3
+        x=sign*(.85+math.cos(angle)*.05)
+        z=-.3+math.sin(angle)*.075
+        ell("Exposed titanium plate rivet",(x,-.75,z),
+            (.018,.012,.018),chrome_dark,segments=12,rings=8)
+# A metal grille under the dark visor renders as actual cutout-like fins.
+for i in range(9):
+    x=(i-4)*.052
+    box("Central mouthpiece grille fin",(x,-.983,-.498),(.014,.014,.045),
+        vent,bev=.003)
 
 # Layered mechanical cheek plates, ear shells, engraved micro-gaskets.
 for sign in (-1,1):
@@ -268,10 +308,10 @@ def area(name,location,power,size,color,target=(0,0,.2)):
     obj.data.color=color
     direction=Vector(target)-obj.location
     obj.rotation_euler=direction.to_track_quat("-Z","Y").to_euler()
-area("Large softbox upper left",(-3.6,-4.2,5.1),660,4.2,(1,1,1))
-area("Cool panoramic fill",(3.3,-4.0,2.3),420,3.4,(.62,.79,1))
-area("Bright satin edge highlight",(1.2,2.8,4.8),620,2.7,(.48,.75,1))
-area("Opposite bevel rim",(-2.8,1.4,1.5),370,2.9,(1,1,1))
+area("Large softbox upper left",(-3.6,-4.2,5.1),230,4.2,(1,1,1))
+area("Cool panoramic fill",(3.3,-4.0,2.3),150,3.4,(.62,.79,1))
+area("Bright satin edge highlight",(1.2,2.8,4.8),210,2.7,(.48,.75,1))
+area("Opposite bevel rim",(-2.8,1.4,1.5),120,2.9,(1,1,1))
 
 bpy.ops.object.camera_add(location=(0,-7.8,.20))
 camera=bpy.context.object
@@ -300,8 +340,8 @@ for clip, frames in CLIPS.items():
         pitch=0
         roll=0
         bob=.013*math.sin(2*math.pi*t)*e
-        left_eye=3.8
-        right_eye=3.8
+        left_eye=1.9
+        right_eye=1.9
         if clip=="idle-front":
             yaw=.016*e*math.sin(2*math.pi*t)
             pitch=.018*e
@@ -320,8 +360,8 @@ for clip, frames in CLIPS.items():
         elif clip=="blink-glow":
             pulse=math.sin(math.pi*6*t)**16
             flash=e*(.92 if pulse>.35 else .10)
-            left_eye=max(.04,3.8*(1-flash))
-            right_eye=max(.05,3.8*(1-flash*.93))
+            left_eye=max(.04,1.9*(1-flash))
+            right_eye=max(.05,1.9*(1-flash*.93))
             pitch=-.06*e
         elif clip=="micro-scan":
             yaw=.13*e*math.sin(2*math.pi*t)
@@ -330,7 +370,7 @@ for clip, frames in CLIPS.items():
         head_root.rotation_euler=(pitch,roll,yaw)
         head_root.location=(0,0,bob)
         light.node_tree.nodes.get("Principled BSDF").inputs["Emission Strength"].default_value=left_eye
-        light_soft.node_tree.nodes.get("Principled BSDF").inputs["Emission Strength"].default_value=1.7*(.65+.35*(left_eye/3.8))
+        light_soft.node_tree.nodes.get("Principled BSDF").inputs["Emission Strength"].default_value= .85*(.65+.35*(left_eye/1.9))
         scene.frame_set(frame+1)
         scene.render.filepath=os.path.join(dest,"frame-%03d.png"%frame)
         bpy.ops.render.render(write_still=True)
