@@ -49,11 +49,25 @@
   border-radius:inherit;
   pointer-events:none;
 }
-.ap-site .ap-liquid-header__refraction {
-  z-index:0;
-  background:rgba(255,255,255,.065);
-  -webkit-backdrop-filter:contrast(1.045) saturate(148%) url("#daira-optical-displacement");
-  backdrop-filter:contrast(1.045) saturate(148%) url("#daira-optical-displacement");
+/* Reuse the proven analytical SVG lens from simple-liquid-glass.
+   It bends the *live* backdrop; the independently rebuilt layers above it
+   create physical curved light that the old flat capsule lacked. */
+.ap-site .ap-liquid-header__lens {
+  position:absolute!important;
+  inset:0!important;
+  z-index:0!important;
+  border-radius:inherit!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+.ap-site .ap-liquid-header__lens > .liquid-glass-border {
+  display:none!important;
+}
+.ap-site .ap-liquid-header__lens > div[style*="backdrop-filter"] {
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
 }
 /* Shaded curved volume: translucent in the middle, thick at the sidewalls. */
 .ap-site .ap-liquid-header__volume {
@@ -89,12 +103,13 @@
   -webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   mask-composite:exclude;
-  opacity:.76;
+  opacity:.56;
+  filter:blur(1.2px);
 }
 /* Soft asymmetrical curved specular light, not a rectangular white stroke. */
 .ap-site .ap-liquid-header__glint {
   z-index:3;
-  opacity:.88;
+  opacity:.78;
   transform:translate3d(var(--liquid-light-x,0px),var(--liquid-light-y,0px),0);
   background:
     radial-gradient(ellipse 12% 148% at 1% -21%,
@@ -106,7 +121,7 @@
     radial-gradient(ellipse 37% 17% at 75% 100%,
       rgba(255,255,255,.34),transparent 95%);
 }
-.ap-site .ap-liquid-header__fallback {
+.ap-site .ap-liquid-header__lens.ap-optical-surface {
   position:absolute!important;inset:0!important;
   z-index:0!important;border-radius:inherit!important;
 }
