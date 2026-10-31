@@ -25,6 +25,67 @@ const isNative = () => {
     && CSS.supports("backdrop-filter", "url(#daira-optical-displacement)");
 };
 
+/**
+ * A real 2D displacement field, baked just once for each lens geometry.
+ * R/G encode X/Y offsets (neutral = 128). The old random turbulence only
+ * produced a barely perceptible uniform haze, not curved refraction.
+ * Here light is bent towards the interior of the surface near every edge,
+ * with a tiny non-repeating wave through the center.
+ */
+let mapsPrepared = false;
+function prepareOpticalMaps() {
+  if (mapsPrepared) return;
+  for (const lens of [
+    { id: "daira-header-map", width: 640, height: 88, edge: 17, shape: "rect" },
+    { id: "daira-backtop-map", width: 96, height: 96, edge: 20, shape: "circle" },
+  ] as const) {
+    const image = document.getElementById(lens.id);
+    if (!image) return; // Definitions mount with the landing root.
+    const canvas = document.createElement("canvas");
+    canvas.width = lens.width;
+    canvas.height = lens.height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+    const bitmap = ctx.createImageData(lens.width, lens.height);
+    const pixels = bitmap.data;
+    for (let y = 0; y < lens.height; y++) {
+      for (let x = 0; x < lens.width; x++) {
+        const u = (x + .5) / lens.width;
+        const v = (y + .5) / lens.height;
+        let vx: number;
+        let vy: number;
+        if (lens.shape === "circle") {
+          const dx = u * 2 - 1;
+          const dy = v * 2 - 1;
+          const radius = Math.hypot(dx, dy);
+          const edge = Math.pow(Math.max(0, 1 - Math.abs(1 - radius) / .42), 1.7);
+          vx = radius > 0 ? (-dx / radius) * edge : 0;
+          vy = radius > 0 ? (-dy / radius) * edge : 0;
+        } else {
+          const left = x;
+          const right = lens.width - 1 - x;
+          const top = y;
+          const bottom = lens.height - 1 - y;
+          const edgeX = Math.pow(Math.max(0, 1 - Math.min(left, right) / 39), 1.8);
+          const edgeY = Math.pow(Math.max(0, 1 - Math.min(top, bottom) / lens.edge), 1.8);
+          vx = (left < right ? 1 : -1) * edgeX;
+          vy = (top < bottom ? 1 : -1) * edgeY;
+        }
+        const flow = Math.sin(u * 12 + v * 7) * Math.cos(v * 11 - u * 4);
+        const i = (y * lens.width + x) * 4;
+        pixels[i] = Math.max(0, Math.min(255, Math.round(128 + vx * 97 + flow * 7)));
+        pixels[i + 1] = Math.max(0, Math.min(255, Math.round(128 + vy * 97 - flow * 6)));
+        pixels[i + 2] = 128;
+        pixels[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(bitmap, 0, 0);
+    image.setAttribute("href", canvas.toDataURL("image/png"));
+    image.setAttribute("data-map-prepared", "true");
+  }
+  mapsPrepared = true;
+}
+
 const twoFrames = () => new Promise<void>(resolve => {
   requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
 });
@@ -60,6 +121,7 @@ export function LiveOpticalSurface({ className, variant }: Props) {
       if (!raf) raf = requestAnimationFrame(updateScrollTransform);
     };
 
+    prepareOpticalMaps();
     if (isNative()) {
       // Do not show a half-initialized filtered layer during hydration.
       requestAnimationFrame(() => { if (active) setMode("native"); });
@@ -133,9 +195,13 @@ export function LiveOpticsDefinitions() {
   return (
     <svg className="ap-optical-definitions" width="0" height="0" focusable="false" aria-hidden="true">
       <defs>
-        <filter id="daira-optical-displacement" x="-6%" y="-30%" width="112%" height="160%" colorInterpolationFilters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.008 0.018" numOctaves="1" seed="8" result="daira-noise" />
-          <feDisplacementMap in="SourceGraphic" in2="daira-noise" scale="14" xChannelSelector="R" yChannelSelector="G" />
+        <filter id="daira-optical-displacement" x="-4%" y="-26%" width="108%" height="152%" colorInterpolationFilters="sRGB">
+          <feImage id="daira-header-map" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="lens-field" />
+          <feDisplacementMap in="SourceGraphic" in2="lens-field" scale="36" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <filter id="daira-optical-backtop" x="-8%" y="-8%" width="116%" height="116%" colorInterpolationFilters="sRGB">
+          <feImage id="daira-backtop-map" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="lens-field" />
+          <feDisplacementMap in="SourceGraphic" in2="lens-field" scale="17" xChannelSelector="R" yChannelSelector="G" />
         </filter>
       </defs>
     </svg>
