@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useLandingGlassCapture } from "./LandingGlassBackdrop";
 import LiquidGlass, { type RenderingDiagnostics } from "simple-liquid-glass";
 
 /**
@@ -44,20 +45,41 @@ const optics = {
 };
 
 export function LiquidHeaderSurface() {
-  // This is NOT a second glass renderer: it keeps the live CSS backdrop
-  // visible until the real SVG / WebGL renderer has a usable image. Safari
-  // can temporarily lose a tile while the scene snapshots another section.
+  const capture = useLandingGlassCapture();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLCanvasElement | null>(null);
+  const [sourceBound, setSourceBound] = useState(false);
+  const [captureReady, setCaptureReady] = useState(false);
   const [strategy, setStrategy] = useState("pending");
+
+  useLayoutEffect(() => {
+    if (!capture || !panelRef.current) return;
+    // An explicit library backdrop source prevents its scene-hook from
+    // destroying the WebGL GPU renderer whenever a new tile is incomplete.
+    const registration = capture.register(panelRef.current, setCaptureReady);
+    backdropRef.current = registration.canvas;
+    setSourceBound(true);
+    return () => {
+      backdropRef.current = null;
+      registration.release();
+    };
+  }, [capture]);
+
   const onDiagnosticsChange = useCallback((next: RenderingDiagnostics) => {
     setStrategy(previous => previous === next.strategy ? previous : next.strategy);
   }, []);
-  const ready = strategy === "webgl" || strategy === "svg";
+  const opticalReady = strategy === "svg" || (strategy === "webgl" && sourceBound);
+  const ready = opticalReady && (!capture || captureReady);
 
   return (
-    <div className="daira-library-glass-frame" data-glass-ready={ready ? "true" : "false"}>
+    <div className="daira-library-glass-frame"
+      data-glass-ready={ready ? "true" : "false"}
+      data-optical-strategy={strategy}>
       <span className="daira-library-glass-live-fallback" aria-hidden="true" />
       <LiquidGlass
         {...optics}
+        ref={panelRef}
+        backdropRef={backdropRef}
         radius={26}
         onDiagnosticsChange={onDiagnosticsChange}
         className="daira-library-liquid-header"
