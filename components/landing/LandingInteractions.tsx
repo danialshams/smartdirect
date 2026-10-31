@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LiveOpticalSurface } from "./LiveOptics";
 import { ChevronUp } from "lucide-react";
 
 export function LandingInteractions() {
@@ -51,7 +50,7 @@ export function LandingInteractions() {
 
   return (
     <div className={"ap-backtop"+(showTop?" ap-backtop--visible":"")} data-liquid-glass-ignore="">
-      {hasShown && <LiveOpticalSurface variant="backtop" className="ap-backtop__lens" />}
+      {hasShown && <span className="ap-backtop__lens ap-backtop__blue-blur" aria-hidden="true" />}
       <button type="button"
         className="ap-backtop__action"
         aria-label="بازگشت به بالای صفحه"

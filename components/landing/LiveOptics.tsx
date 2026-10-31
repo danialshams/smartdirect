@@ -25,48 +25,44 @@ const docSelector = ":scope > main, :scope > section.ap-showcase-capture, :scope
  * cached snapshot. The previous handwritten feDisplacementMap was a flat
  * approximation that looked transparent rather than liquid.
  */
-const liquidLens = {
-  renderer: "svg" as const,
-  effectMode: "svg" as const,
-  webglScene: "off" as const,
-  refraction: "lens" as const,
-  optics: "native" as const,
-  lensProfile: "player" as const,
-  quality: "standard" as const,
-  border: 0,
-  borderColor: "rgba(255,255,255,0)",
-  // Do NOT supply background: in this library it forces the *inner*
-  // glass material background to transparent and ignores glassColor.
-  saturation: 124,
-  dispersion: 7,
-  aberrationIntensity: .07,
-  scale: 135,
-  reveal: "ready" as const,
-};
-/** Optical curvature, no blue wash over the header. */
+/**
+ * Optical baseline restored from commit c4ac4a8, before PR #174 turned off
+ * the caustics and PR #175 replaced the scene and lens profiles. Loupe uses
+ * a stronger edge bend, narrow dispersion and directional specular lighting.
+ *
+ * Chromium samples the actual live backdrop with SVG. Do not force WebGL:
+ * it requires asynchronous DOM captures and had produced delayed reflections.
+ */
 const headerLens = {
-  ...liquidLens,
-  // The former scale implied ~93px of sampling for a 62px high header,
-  // mostly pulling white outside the content. Keep the actual lens optical
-  // displacement smaller than the material height, even on wide screens.
-  displacementScale: 30,
-  frost: .028,
-  blur: .12,
-  glassColor: "rgba(255,255,255,.028)",
+  renderer: "svg" as const,
+  refraction: "lens" as const,
+  lensProfile: "loupe" as const,
+  quality: "high" as const,
+  mobileFallback: "svg" as const,
+  // Keep physical lens geometry, never overlay a white or blue fake glass.
+  displacementScale: 32,
+  frost: 0,
+  blur: 0,
+  saturation: 120,
+  dispersion: 24,
+  aberrationIntensity: .16,
+  border: 0,
+  borderColor: "rgba(255,255,255,.33)",
+  glassColor: "rgba(255,255,255,.038)",
   lensOptions: {
-    strength: .18, depth: .83, curvature: .80, bend: .52, bendWidth: .20,
-    sheen: 1.38, sheenWidth: 4.3, specular: 1.42, glow: .10, brightness: 0,
-  },
-};
-const buttonLens = {
-  ...liquidLens,
-  displacementScale: 17,
-  frost: .13,
-  blur: 1.2,
-  glassColor: "rgba(255,255,255,.17)",
-  lensOptions: {
-    strength: .17, depth: .72, curvature: .62, bend: .4, bendWidth: .2,
-    sheen: 1.0, sheenWidth: 2.7, specular: 1.12, glow: .08, brightness: 0,
+    strength: .11,
+    depth: .34,
+    curvature: .55,
+    bend: .55,
+    bendWidth: .18,
+    sheen: 1.32,
+    sheenWidth: 6.5,
+    sheenAngle: -34,
+    specular: 1.65,
+    glow: .09,
+    glowSpread: .48,
+    glowFalloff: 1.6,
+    brightness: 0,
   },
 };
 
@@ -235,7 +231,7 @@ export function LiveOpticalSurface({ className, variant }: Props) {
   }, []);
 
   if (mode === "native") {
-    const options = variant === "header" ? headerLens : buttonLens;
+    const options = headerLens;
     return (
       <LiquidGlass
         {...options}
