@@ -34,10 +34,10 @@ for(const route of ["terms","about","contact"])
 assert.match(root,/LiveOpticsDefinitions/);
 assert.doesNotMatch(root,/LiquidGlassScene|maxCacheBytes|simple-liquid-glass/);
 assert.match(header,/<LiquidHeaderSurface \/>/);
-assert.match(liquidHeader,/prepareOpticalMaps\(\)/);
-assert.match(liquidHeader,/ap-liquid-header__refraction/);
+assert.match(liquidHeader,/LiveOpticalSurface variant="header"/);
+assert.match(liquidHeader,/ap-liquid-header__lens/);
 assert.match(liquidHeader,/ap-liquid-header__glint/);
-assert.match(liquidHeaderCSS,/backdrop-filter:contrast\(1\.045\) saturate\(148%\) url/);
+assert.match(liquidHeaderCSS,/\.ap-liquid-header__lens > div\[style\*="backdrop-filter"\]/);
 assert.match(liquidHeaderCSS,/\.ap-header\[data-landing-header\]/);
 assert.match(page,/import "\.\/liquid-header\.css"/);
 assert.match(header,/aria-expanded=\{open\}/);
