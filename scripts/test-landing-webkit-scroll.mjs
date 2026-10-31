@@ -36,11 +36,25 @@ try {
     return { strategy: lens?.dataset.glassStrategy, reason: lens?.dataset.glassReason,
       stable: document.querySelector(".ap-site")?.dataset.sceneCaptureStable,
       ready: document.querySelector(".daira-library-glass-frame")?.dataset.glassReady,
+      bound: document.querySelector(".daira-library-glass-frame")?.dataset.opticalSourceBound,
+      sources: document.querySelectorAll("canvas[data-liquid-glass-backdrop]").length,
       scene: !!document.querySelector("[data-liquid-glass-scene]"),
       captures: Number(document.querySelector("[data-liquid-glass-scene]")?.getAttribute("data-liquid-glass-captures") ?? 0),
       edge: getComputedStyle(lens.querySelector(".liquid-glass-border")).display };
   });
   console.log("WEBKIT_FIRST="+JSON.stringify(first));
+  // A scene can be ready while the library's deferred optical ref is not
+  // mounted yet. Require the explicit source to bind and produce REAL optics
+  // before exercising scrolling: otherwise a permanent missing-backdrop blur
+  // could misleadingly pass a generic "no off strategy" test.
+  await page.waitForFunction(() => {
+    const lens=document.querySelector(".daira-library-liquid-header");
+    const frame=document.querySelector(".daira-library-glass-frame");
+    return frame?.dataset.opticalSourceBound === "true" &&
+      frame?.dataset.glassReady === "true" &&
+      lens?.dataset.glassStrategy === "webgl";
+  },null,{timeout:25000});
+
   const frames = await page.evaluate(async () => {
     const panel = document.querySelector(".daira-library-liquid-header");
     const samples = [];
@@ -70,6 +84,8 @@ try {
       y:scrollY,
       revisionNodes:document.querySelectorAll("[data-daira-glass-viewport-revision]").length,
       strategy:lens?.dataset.glassStrategy,
+      reason:lens?.dataset.glassReason,
+      bound:frame?.dataset.opticalSourceBound,
       ready:frame?.dataset.glassReady,
       nativeCanvas:!!lens?.querySelector("canvas[data-liquid-glass-webgl]") ||
         !!lens?.parentElement?.querySelector("canvas[data-liquid-glass-scene]"),
@@ -81,7 +97,7 @@ try {
   });
   console.log("WEBKIT_SETTLED_CAPTURE="+JSON.stringify(settled));
   if (settled.revisionNodes !== 0) throw Error("Scrolling must not invalidate static cached captures");
-  if (settled.strategy !== "webgl" || !settled.nativeCanvas) {
+  if (settled.strategy !== "webgl" || settled.bound !== "true" || !settled.nativeCanvas) {
     throw Error("Native WebGL renderer or its GPU presentation was lost");
   }
   if (settled.edgeShadow !== "none" || settled.clip !== "hidden") {
