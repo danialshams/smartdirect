@@ -137,6 +137,7 @@ try {
   // Refraction must remain active across previously uncaptured sections.
   await evaluate('window.scrollTo({top:1250,behavior:"instant"})');
   await waitFor(async () => await evaluate('window.scrollY>600'));
+  await waitFor(async () => (await evaluate('document.querySelector(".ap-backtop__lens")?.dataset.opticsMode')) === "native");
   const scroll = await evaluate(`(() => ({
     header:document.querySelector(".ap-header__backdrop").dataset.opticsMode,
     button:document.querySelector(".ap-backtop__lens")?.dataset.opticsMode,
