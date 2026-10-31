@@ -1,0 +1,44 @@
+[
+  {
+    "name": "desktop",
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "overflow": 0,
+    "heroHeight": 834,
+    "headerHeight": 66,
+    "h1Height": 271.78125,
+    "h1Width": 610,
+    "font": "DairaVazir, Vazirmatn, Arial, sans-serif",
+    "visible": true,
+    "sourceImages": 0,
+    "startScrollY": 0
+  },
+  {
+    "name": "mobile",
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "overflow": 0,
+    "heroHeight": 782,
+    "headerHeight": 62,
+    "h1Height": 113.6875,
+    "h1Width": 236,
+    "font": "DairaVazir, Vazirmatn, Arial, sans-serif",
+    "visible": true,
+    "sourceImages": 0,
+    "startScrollY": 0
+  },
+  {
+    "name": "small-mobile",
+    "scrollWidth": 320,
+    "innerWidth": 320,
+    "overflow": 0,
+    "heroHeight": 690,
+    "headerHeight": 62,
+    "h1Height": 100.4375,
+    "h1Width": 211,
+    "font": "DairaVazir, Vazirmatn, Arial, sans-serif",
+    "visible": true,
+    "sourceImages": 0,
+    "startScrollY": 0
+  }
+]
