@@ -123,11 +123,19 @@ export function SimpleHeader() {
           <span>دایرا</span>
         </Link>
 
-        <LiquidGlass {...blueOptics} radius={28} className="ap-header__login-glass">
+        <div className="ap-header__login-holder">
+          <LiquidGlass
+            {...blueOptics}
+            radius={24}
+            className="ap-header__login-lens"
+            style={{position:"absolute",inset:0,pointerEvents:"none"}}
+          >
+            <span className="ap-header__login-fill" aria-hidden="true"/>
+          </LiquidGlass>
           <Link href="/login" className="ap-header__panel-login">
             ورود به پنل <ArrowUpLeft size={15} aria-hidden="true"/>
           </Link>
-        </LiquidGlass>
+        </div>
       </div>
 
       <button
