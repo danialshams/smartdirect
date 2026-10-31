@@ -40,13 +40,13 @@
   backface-visibility: hidden;
   will-change: auto;
 }
-.ap-site .ap-hero__word:nth-child(1) { --word-x: 110px; --word-y: -54px; --word-delay: 0ms; }
-.ap-site .ap-hero__word:nth-child(2) { --word-x: -105px; --word-y: 48px; --word-delay: 55ms; }
-.ap-site .ap-hero__word:nth-child(3) { --word-x: 96px; --word-y: 61px; --word-delay: 110ms; }
-.ap-site .ap-hero__word:nth-child(4) { --word-x: -92px; --word-y: -45px; --word-delay: 165ms; }
-.ap-site .ap-hero__word:nth-child(5) { --word-x: 106px; --word-y: -43px; --word-delay: 220ms; }
-.ap-site .ap-hero__word:nth-child(6) { --word-x: -85px; --word-y: 43px; --word-delay: 275ms; }
-.ap-site .ap-hero__word:nth-child(7) { --word-x: 95px; --word-y: -50px; --word-delay: 330ms; }
+.ap-site .ap-hero__word:nth-child(1) { --word-x: 112px; --word-y: -76px; --word-delay: 0ms; }
+.ap-site .ap-hero__word:nth-child(2) { --word-x: 0px; --word-y: -92px; --word-delay: 55ms; }
+.ap-site .ap-hero__word:nth-child(3) { --word-x: -138px; --word-y: -40px; --word-delay: 110ms; }
+.ap-site .ap-hero__word:nth-child(4) { --word-x: 112px; --word-y: 48px; --word-delay: 165ms; }
+.ap-site .ap-hero__word:nth-child(5) { --word-x: 18px; --word-y: 56px; --word-delay: 220ms; }
+.ap-site .ap-hero__word:nth-child(6) { --word-x: -52px; --word-y: 70px; --word-delay: 275ms; }
+.ap-site .ap-hero__word:nth-child(7) { --word-x: -126px; --word-y: 45px; --word-delay: 330ms; }
 html[data-daira-hero="pending"] .ap-site .ap-hero__word {
   opacity: .56;
   transform: translate3d(var(--word-x),var(--word-y),0) scale(.94);
@@ -69,13 +69,13 @@ html[data-daira-hero="done"] .ap-site .ap-hero__word {
   100% { opacity: 1; transform: translate3d(0,0,0) scale(1); }
 }
 @media (max-width: 600px) {
-  .ap-site .ap-hero__word:nth-child(1) { --word-x: 56px; --word-y: -41px; }
-  .ap-site .ap-hero__word:nth-child(2) { --word-x: -51px; --word-y: 31px; }
-  .ap-site .ap-hero__word:nth-child(3) { --word-x: 49px; --word-y: 37px; }
-  .ap-site .ap-hero__word:nth-child(4) { --word-x: -45px; --word-y: -32px; }
-  .ap-site .ap-hero__word:nth-child(5) { --word-x: 54px; --word-y: -35px; }
-  .ap-site .ap-hero__word:nth-child(6) { --word-x: -46px; --word-y: 31px; }
-  .ap-site .ap-hero__word:nth-child(7) { --word-x: 47px; --word-y: -35px; }
+  .ap-site .ap-hero__word:nth-child(1) { --word-x: 52px; --word-y: -42px; }
+  .ap-site .ap-hero__word:nth-child(2) { --word-x: 0px; --word-y: -60px; }
+  .ap-site .ap-hero__word:nth-child(3) { --word-x: -58px; --word-y: -30px; }
+  .ap-site .ap-hero__word:nth-child(4) { --word-x: 56px; --word-y: 34px; }
+  .ap-site .ap-hero__word:nth-child(5) { --word-x: 10px; --word-y: 45px; }
+  .ap-site .ap-hero__word:nth-child(6) { --word-x: -28px; --word-y: 53px; }
+  .ap-site .ap-hero__word:nth-child(7) { --word-x: -65px; --word-y: 41px; }
 }
 @media (prefers-reduced-motion: reduce) {
   html[data-daira-hero] .ap-site .ap-hero__word {
