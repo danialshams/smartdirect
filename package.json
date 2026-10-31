@@ -133,9 +133,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "simple-liquid-glass": "5.4.0",
-    "@react-three/fiber": "9.8.2",
-    "three": "0.186.1"
+    "simple-liquid-glass": "5.4.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -147,8 +145,7 @@
     "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
-    "typescript": "^5",
-    "@types/three": "0.186.0"
+    "typescript": "^5"
   },
   "browserslist": [
     "chrome 111",
