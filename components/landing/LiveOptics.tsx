@@ -87,7 +87,7 @@ const isNative = () => {
  * with a tiny non-repeating wave through the center.
  */
 let mapsPrepared = false;
-function prepareOpticalMaps() {
+export function prepareOpticalMaps() {
   if (mapsPrepared) return;
   for (const lens of [
     { id: "daira-header-map", width: 640, height: 88, edge: 17, shape: "rect" },
