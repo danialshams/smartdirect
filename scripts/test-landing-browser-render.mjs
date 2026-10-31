@@ -111,9 +111,10 @@ try {
 
   // Native Chromium must render the LIVE backdrop without capture queues.
   await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop")?.dataset.opticsMode')) === "native");
-  const startup = await evaluate(`(() => {
+  const startup = await waitFor(async () => await evaluate(`(() => {
     const s = document.querySelector(".ap-header__backdrop");
-    const pane=s.querySelector(".ap-optical-native");
+    const pane=s?.querySelector(".ap-optical-native");
+    if (!s || !pane) return null;
     return {
       mode:s.dataset.opticsMode,
       filter:pane ? getComputedStyle(pane).backdropFilter : "MISSING_NATIVE_NODE: "+s.outerHTML.slice(0,650),
@@ -123,7 +124,7 @@ try {
       sceneInstances:document.querySelectorAll("[data-liquid-glass-scene]").length,
       words:document.querySelectorAll("[data-hero-word]").length
     };
-  })()`);
+  })()`));
   assert.equal(startup.mode, "native");
   assert.match(startup.filter,/url\(/,"Native lens must sample live page pixels");
   assert.equal(startup.border,"0px");
@@ -131,6 +132,7 @@ try {
   assert.equal(startup.libraryInstances,0);
   assert.equal(startup.sceneInstances,0);
   assert.equal(startup.words,7);
+  console.log("NATIVE OPTICS DOM READY",JSON.stringify(startup));
 
   // Refraction must remain active across previously uncaptured sections.
   await evaluate('window.scrollTo({top:1250,behavior:"instant"})');
