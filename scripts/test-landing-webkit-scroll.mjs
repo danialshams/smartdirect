@@ -69,6 +69,12 @@ try {
     throw Error("WebKit is not refracting in real WebGL: "+JSON.stringify({first, modes:[...modes]}));
   }
   if (frames.some(x=>x.strategy==="off")) throw Error("WebKit optical renderer was disabled while scrolling");
+  const firstActive = frames.findIndex(x=>x.strategy==="webgl");
+  if (firstActive<0 || frames.slice(firstActive+1).some(x=>x.strategy!=="webgl")) {
+    throw Error("WebGL renderer was destroyed and reinitialized between live scroll frames: "
+      +JSON.stringify(frames.map(x=>x.strategy)));
+  }
+  console.log("WEBKIT_CONTINUOUS_GPU_FRAMES_PASS="+(frames.length-firstActive));
   console.log("WEBKIT_SCROLL_PASS");
 } catch (error) {
   console.error("WEBKIT_SCROLL_ERROR", error);
