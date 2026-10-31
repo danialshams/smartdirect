@@ -5,7 +5,7 @@ import LiquidGlass from "simple-liquid-glass";
 /**
  * The header is ONE native optical lens from simple-liquid-glass 5.4.
  * No nested homegrown refraction layer, tint overlay, manually painted
- * specular rim, SVG filter injection or forced displacementScale.
+ * specular rim, injected filter or forced pixel displacement override.
  *
  * These values restore the physically refractive loupe used before the
  * scroll-performance patch. On Chromium the library samples the LIVE
