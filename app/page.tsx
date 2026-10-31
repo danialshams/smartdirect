@@ -6,6 +6,7 @@ import { BadgeCheck, Check, ShieldCheck } from "lucide-react";
 import { LandingGlassBackdrop } from "../components/landing/LandingGlassBackdrop";
 import { SimpleHeader } from "../components/landing/SimpleHeader";
 import { LandingInteractions } from "../components/landing/LandingInteractions";
+import { HeroAssembly } from "../components/landing/HeroAssembly";
 import { FeatureShowcase } from "../components/landing/FeatureShowcase";
 import "./simple-home.css";
 import "./showcase.css";
@@ -30,7 +31,7 @@ export const metadata:Metadata = {
 /* Pre-hydration scroll reset avoids showing the old navy section before the
    first paint. Back/forward navigation is unaffected; regular reload starts
    at the hero even if the previous URL had a section hash. */
-const initialScrollGuard = "(function(){try{var n=performance.getEntriesByType('navigation')[0];var reload=n&&n.type==='reload';if(reload&&location.hash){history.replaceState(null,'',location.pathname+location.search);}if(reload||!location.hash){history.scrollRestoration='manual';scrollTo(0,0);addEventListener('pageshow',function(){if(!location.hash)scrollTo(0,0);},{once:true});}}catch(e){}})();";
+const initialScrollGuard = "(function(){document.documentElement.dataset.dairaHero='pending';try{var n=performance.getEntriesByType('navigation')[0];var reload=n&&n.type==='reload';if(reload&&location.hash){history.replaceState(null,'',location.pathname+location.search);}if(reload||!location.hash){history.scrollRestoration='manual';scrollTo(0,0);addEventListener('pageshow',function(){if(!location.hash)scrollTo(0,0);},{once:true});}}catch(e){}})();";
 
 const heroWords=["مدیریت","کل","پیجت","رو","بسپار","به","دایرا"];
 
@@ -98,6 +99,7 @@ export default function Home() {
           <span>ساخته‌شده برای مدیریت ساده‌تر پیج</span>
         </div>
       </footer>
+      <HeroAssembly />
       <LandingInteractions />
     </LandingGlassBackdrop>
   );
