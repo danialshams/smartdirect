@@ -45,12 +45,13 @@ export function LandingInteractions() {
 
   const goToTop = () => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({ top: 0, behavior: reduced ? "instant" : "smooth" });
+    window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
   };
 
   return (
     <button type="button"
       className={"ap-backtop" + (showTop ? " ap-backtop--visible" : "")}
+      data-liquid-glass-ignore=""
       aria-label="بازگشت به بالای صفحه"
       title="بازگشت به بالا"
       disabled={!showTop}
