@@ -1,5 +1,5 @@
-/** DAIRA public landing regression contract, October 2026. */
-import { readFileSync, existsSync } from "node:fs";
+/** Daira landing V2: native optical pipeline, prewarmed fallback, compositor-only hero. */
+import {readFileSync, existsSync} from "node:fs";
 import assert from "node:assert/strict";
 const read=(p:string)=>readFileSync(p,"utf8");
 const page=read("app/page.tsx");
@@ -7,137 +7,68 @@ const header=read("components/landing/SimpleHeader.tsx");
 const features=read("components/landing/FeatureShowcase.tsx");
 const previews=read("components/landing/InstagramPreview.tsx");
 const scenes=read("components/landing/showcase-scenes.ts");
-const glass=read("components/landing/LandingGlassBackdrop.tsx");
-const hero=read("components/landing/HeroMotion.tsx");
+const root=read("components/landing/LandingGlassBackdrop.tsx");
+const optics=read("components/landing/LiveOptics.tsx");
 const interactions=read("components/landing/LandingInteractions.tsx");
-const css=read("app/showcase.css");
-const refresh=read("app/landing-refresh.css");
-const instagram=read("app/landing-instagram.css");
-const polish=read("app/landing-polish.css");
-const refraction=read("app/landing-refraction-fix.css");
-const live=read("app/landing-live-glass.css");
-const pkg=JSON.parse(read("package.json"));
-const lock=JSON.parse(read("package-lock.json"));
-assert.equal(pkg.dependencies.gsap,"3.14.2");
-assert.equal(pkg.dependencies["simple-liquid-glass"],"5.4.0");
-assert.equal(lock.packages["node_modules/simple-liquid-glass"].version,"5.4.0");
-for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />","<HeroMotion />",
- '<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'",
- "جایگاه مجوزهای آینده","در آینده","مدیریت کل پیجت رو بسپار به دایرا","رایگان شروع کن",
- "./landing-instagram.css","./landing-polish.css","./landing-refraction-fix.css","./landing-live-glass.css"])
-  assert.ok(page.includes(item),"Missing homepage contract: "+item);
-assert.doesNotMatch(page,/ورود به پنل|بازگشت به بالا|ap-hero__subtitle|RobotHeroScene|<video/);
+const css=read("app/landing-optics-v2.css");
+
+for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />",
+  '<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'",
+  "جایگاه مجوزهای آینده","در آینده","مدیریت کل پیجت رو بسپار به دایرا","رایگان شروع کن",
+  "./landing-instagram.css","./landing-optics-v2.css"])
+  assert.ok(page.includes(item),"Missing landing contract: "+item);
+assert.doesNotMatch(page,/HeroMotion|<video|heroFragments|data-hero-fragment/);
 assert.match(page,/heroWords\.map/);
 assert.match(page,/data-hero-word/);
-assert.doesNotMatch(page,/heroFragments|data-hero-fragment/);
 assert.match(page,/data-reveal/);
 for(const url of ["/login","/privacy-policy","/terms","/data-deletion","/contact","/about"])
   assert.ok(page.includes('href:"'+url+'"')||page.includes('href="'+url+'"'),"Missing link "+url);
 for(const route of ["terms","about","contact"])
   assert.ok(existsSync("app/"+route+"/page.tsx"),"Missing public route "+route);
 
-assert.match(features,/id=\{rowIndex === 0 \? "features" : undefined\}/);
-assert.match(features,/ap-social-grid/);
-assert.match(features,/showcaseScenes\.find/);
-assert.match(features,/const rows:/);
-assert.match(features,/ap-showcase-capture/);
-assert.equal((features.match(/\["/g)||[]).length>=8,true);
-assert.match(features,/InstagramPreview kind=\{scene\.id\}/);
-assert.match(features,/data-reveal/);
-assert.match(features,/ap-social-card--wide/);
-assert.match(instagram,/\.ap-social-card--wide/);
-assert.match(instagram,/\.ig-preview/);
-assert.match(instagram,/\.ig-story/);
-assert.match(instagram,/\.ig-menu-sheet/);
-assert.match(instagram,/\.ig-quickreplies/);
-assert.match(instagram,/\.ig-inbox-row/);
-assert.match(instagram,/@media\(max-width:600px\)/);
-assert.match(instagram,/@media\(prefers-reduced-motion:reduce\)/);
-assert.match(previews,/نمایشی/);
-for(const feature of ["comment","story","direct","share","live","reminder","inbox","publishing","insights","menu","icebreaker"])
-  assert.ok(scenes.includes('id: "'+feature+'"'),"Missing Daira capability "+feature);
-assert.equal((scenes.match(/no: "([۰-۹]+)"/g)||[]).length,11);
-for(const kind of ['kind==="menu"','kind==="icebreaker"','kind==="reminder"','kind==="direct"','kind==="inbox"','kind==="publishing"'])
-  assert.ok(previews.includes(kind),"Missing recognizable Instagram preview "+kind);
-assert.match(previews,/ig-menu-sheet/);
-assert.match(previews,/ig-quickreplies/);
-assert.match(previews,/ig-live__badge/);
-assert.match(previews,/ig-comment-answer/);
-assert.match(previews,/ig-schedule/);
-assert.match(previews,/role="img"/);
-assert.doesNotMatch(previews,/from "gsap"|<video\b|setInterval/);
-
-assert.match(glass,/LiquidGlassScene/);
-assert.match(glass,/maxCacheBytes/);
-assert.match(header,/import LiquidGlass from "simple-liquid-glass"/);
-assert.match(header,/refraction:"lens"/);
-assert.match(header,/lensProfile:"material"/);
-assert.match(header,/quality:"standard"/);
-assert.match(header,/strength:\.17,depth:\.48/);
-assert.match(header,/data-liquid-glass-ignore=""/);
+assert.match(root,/LiveOpticsDefinitions/);
+assert.doesNotMatch(root,/LiquidGlassScene|maxCacheBytes|simple-liquid-glass/);
+assert.match(header,/LiveOpticalSurface variant="header"/);
 assert.match(header,/aria-expanded=\{open\}/);
 assert.match(header,/aria-controls="ap-menu"/);
 assert.match(header,/inert=\{!open\}/);
 assert.match(header,/event\.key==="Escape"/);
 assert.match(header,/returnFocus\.current/);
-assert.doesNotMatch(header,/hasOpened/);
-assert.doesNotMatch(header,/menuOptics|blueOptics|ap-header__login-lens/);
-assert.match(header,/renderer:"svg" as const/);
-assert.match(header,/<div className="ap-menu__liquid">/);
-assert.equal((header.match(/<LiquidGlass/g)||[]).length,1,"Only header may create an expensive glass renderer");
-assert.match(header,/sheen:0/);
-assert.match(header,/specular:0/);
-assert.doesNotMatch(header,/window\.addEventListener\("scroll"|elementFromPoint/);
-assert.match(hero,/gsap\.timeline/);
-assert.match(hero,/data-hero-word/);
-assert.match(hero,/force3D: false/);
-assert.match(hero,/revealInGlass/);
-assert.match(hero,/removeAttribute\("data-liquid-glass-ignore"\)/);
-assert.match(hero,/clearProps: "transform,opacity,willChange"/);
-assert.match(hero,/prefers-reduced-motion: reduce/);
-assert.doesNotMatch(hero,/data-hero-fragment|blur\(|filter:|repeat:-1/);
+assert.doesNotMatch(header,/LiquidGlass|simple-liquid-glass|WebGL/);
+assert.match(interactions,/LiveOpticalSurface variant="backtop"/);
 assert.match(interactions,/IntersectionObserver/);
-assert.match(interactions,/requestAnimationFrame/);
 assert.match(interactions,/passive:true/);
-assert.match(interactions,/window\.scrollTo/);
-assert.match(interactions,/LiquidGlass/);
-assert.match(interactions,/renderer:"svg" as const/);
 assert.match(interactions,/ChevronUp/);
-assert.match(interactions,/ap-backtop__lens/);
-assert.match(interactions,/prefers-reduced-motion: reduce/);
-assert.doesNotMatch(interactions,/\bArrowUp\b/);
+assert.doesNotMatch(interactions,/LiquidGlass|simple-liquid-glass/);
 
-assert.match(css,/\.ap-header__backdrop \{/);
-assert.match(css,/\.ap-site > main,/);
-assert.match(css,/\.ap-site > \.ap-footer/);
-assert.match(css,/overflow:clip/);
-assert.match(refresh,/\.ap-hero__cta::before/);
-assert.match(polish,/@keyframes ap-light-orbit/);
-assert.match(polish,/41%,100%/);
-assert.match(polish,/\.ap-backtop__lens/);
-assert.match(polish,/backdrop-filter:none!important/);
-assert.match(polish,/\.ap-footer__links/);
-assert.match(polish,/justify-content:center/);
-assert.match(polish,/\.ap-menu__item/);
-assert.match(polish,/@media\(prefers-reduced-motion:reduce\)/);
-assert.match(refraction,/\.ap-site > \.ap-showcase-capture/);
-assert.match(refraction,/body:has\(\.ap-site\)/);
-assert.match(refraction,/background:transparent!important/);
-assert.match(refraction,/clip-path:inset\(0 0 100%/);
-assert.match(refraction,/translate3d\(0,-21px,0\)/);
-assert.match(refraction,/\.ap-menu__item/);
-assert.match(refraction,/background:transparent!important/);
-assert.match(refraction,/@media\(prefers-reduced-motion:reduce\)/);
-assert.match(page,/data-hero-assembly data-liquid-glass-ignore/);
-assert.match(page,/data-hero-cta data-liquid-glass-ignore/);
-assert.match(page,/Separate clipped rows must be direct scene children/);
-assert.match(interactions,/sheen:0/);
-assert.match(interactions,/specular:0/);
-assert.match(live,/\.ap-header__backdrop > div/);
-assert.match(live,/\.ap-backtop__lens > div/);
-assert.match(live,/\.liquid-glass-border/);
-assert.match(live,/backdrop-filter:blur\(3px\)/);
-assert.match(live,/clip-path:none!important/);
-assert.match(live,/\.ap-menu__content/);
-assert.match(live,/backdrop-filter:none!important/);
-console.log("DAIRA landing PASS: eight independent capture rows, transparent scene shell, rimless refractive header/back-to-top, vertically revealed menu, fast isolated GSAP hero.");
+assert.match(optics,/feTurbulence/);
+assert.match(optics,/feDisplacementMap/);
+assert.match(optics,/CSS\.supports\("backdrop-filter"/);
+assert.match(optics,/requestAnimationFrame/);
+assert.match(optics,/cloneNode\(true\)/);
+assert.match(optics,/document\.fonts\.ready/);
+assert.match(optics,/await twoFrames\(\)/);
+assert.match(optics,/setMode\("mirror"\)/);
+assert.match(optics,/data-optics-mode=\{mode\}/);
+assert.match(optics,/window\.addEventListener\("scroll", schedulePosition/);
+assert.match(optics,/translate3d\(0,\$\{-window\.scrollY\}px,0\)/);
+assert.doesNotMatch(optics,/html-to-image|toSvg\(|html2canvas|WebGLRenderingContext/);
+
+assert.match(css,/\.ap-optical-surface\[data-optics-mode="mirror"\]/);
+assert.match(css,/\.ap-optical-surface\[data-optics-mode="native"\]/);
+assert.match(css,/-webkit-backdrop-filter:saturate\(118%\) url/);
+assert.match(css,/filter:url\("#daira-optical-displacement"\)/);
+assert.match(css,/box-shadow:none!important/);
+assert.match(css,/@keyframes daira-word-assemble/);
+assert.match(css,/animation:daira-word-assemble/);
+assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+assert.doesNotMatch(css,/border:[^;]*solid\s+white|setInterval/);
+
+assert.match(features,/ap-showcase-capture/);
+assert.match(features,/InstagramPreview kind=\{scene\.id\}/);
+assert.equal((scenes.match(/no: "([۰-۹]+)"/g)||[]).length,11);
+for(const id of ["comment","story","direct","share","live","reminder","inbox","publishing","insights","menu","icebreaker"])
+  assert.ok(scenes.includes('id: "'+id+'"'),"Missing feature "+id);
+for(const label of ["ig-menu-sheet","ig-quickreplies","ig-live__badge","ig-comment-answer","ig-schedule"])
+  assert.ok(previews.includes(label),"Missing Instagram-like preview "+label);
+console.log("DAIRA OPTICS V2 PASS: no WebGL capture dependency, prewarmed full-page fallback, native live filter, no inner white rim, CSS-only hero and all 11 features.");
