@@ -294,3 +294,5 @@
   .ap-site [data-reveal]{opacity:1!important;transform:none!important}
   .ap-hero__cta::before{animation:none!important;background:rgba(255,255,255,.65)}
 }
+
+.ap-hero__word{display:inline-block;white-space:pre;will-change:transform,opacity}
