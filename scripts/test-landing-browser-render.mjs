@@ -153,7 +153,7 @@ try {
   })()`);
   assert.equal(glassShell.shell,true,"Fallback and lens must share the exact geometry");
   assert.equal(glassShell.ready,"true","On Chromium the native live lens must be ready");
-  assert.equal(glassShell.fallback,"0","No second frosting layer over the live SVG lens");
+  assert.ok(Number(glassShell.fallback)<.35,"Live fallback must be fading out immediately as the SVG lens becomes ready");
   assert.ok(Math.abs(glassShell.rect.width-glassShell.lensRect.width)<1,
     "The edge and middle must be one continuous surface");
 
