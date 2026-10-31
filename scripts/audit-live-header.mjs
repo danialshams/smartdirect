@@ -80,7 +80,23 @@ try{
   await until(async()=>evaluate("window.scrollY>650"));
   await wait(700);
   await shot("mobile_scrolled");
-  console.log("LIVE_AUDIT_SUCCESS_POST_RELEASE_PR183");
+  await until(async()=>evaluate('document.documentElement.dataset.dairaHero==="done"'),9000);
+  const checks=await evaluate(`(() => {
+    const lens=document.querySelector(".daira-library-liquid-header");
+    const rim=lens?.querySelector(".liquid-glass-border");
+    const back=document.querySelector(".ap-backtop__blue-blur");
+    return {strategy:lens?.dataset.glassStrategy,
+      rimOpacity:rim&&getComputedStyle(rim).opacity,
+      backBlur:back&&getComputedStyle(back).backdropFilter,
+      heroState:document.documentElement.dataset.dairaHero,
+      heroIgnored:document.querySelector("[data-hero-assembly]")?.hasAttribute("data-liquid-glass-ignore"),
+      sceneCache:document.querySelector("[data-liquid-glass-scene]")!==null};
+  })()`);
+  console.log("LIVE_POST_FIX_CHECKS="+JSON.stringify(checks));
+  if(checks.strategy!=="svg"||Math.abs(Number(checks.rimOpacity)-.43)>.04||
+    !checks.backBlur?.includes("blur(15px)")||
+    checks.heroState!=="done"||checks.heroIgnored)throw Error("Published landing polish mismatch");
+  console.log("LIVE_AUDIT_SUCCESS_POST_RELEASE_PR184");
 }catch(e){console.error("LIVE_AUDIT_FAILED",e);process.exitCode=1;}
 finally {try{socket?.close();}catch{}try{browser?.kill("SIGKILL");}catch{}
   if(dir)await rm(dir,{recursive:true,force:true}).catch(()=>{});}
