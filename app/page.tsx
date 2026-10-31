@@ -13,6 +13,7 @@ import "./showcase.css";
 import "./landing-refresh.css";
 import "./landing-instagram.css";
 import "./landing-polish.css";
+import "./landing-refraction-fix.css";
 
 export const metadata:Metadata = {
   title:"دایرا | همه تعاملات پیجت، در یک فضای ساده",
@@ -46,16 +47,16 @@ export default function Home() {
     <LandingGlassBackdrop>
       <script dangerouslySetInnerHTML={{__html:initialScrollGuard}} />
       <SimpleHeader />
-      <a className="ap-skip" href="#content">رفتن به محتوای صفحه</a>
+      <a className="ap-skip" data-liquid-glass-ignore="" href="#content">رفتن به محتوای صفحه</a>
       <HeroMotion />
       <main id="content">
         <section className="ap-hero" aria-labelledby="ap-hero-title">
           <div className="ap-hero__ambient" aria-hidden="true"/>
           <div className="ap-shell ap-hero__content">
-            <h1 id="ap-hero-title" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly>
+            <h1 id="ap-hero-title" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly data-liquid-glass-ignore="">
               {heroWords.map((word,index)=><span className="ap-hero__word" data-hero-word key={word}>{word}{index<heroWords.length-1?" ":""}</span>)}
             </h1>
-            <div className="ap-hero__actions" data-hero-cta>
+            <div className="ap-hero__actions" data-hero-cta data-liquid-glass-ignore="">
               <Link className="ap-button ap-button--solid ap-hero__cta" href="/login">
                 رایگان شروع کن <ArrowUpLeft size={18} aria-hidden="true"/>
               </Link>
@@ -63,8 +64,10 @@ export default function Home() {
           </div>
         </section>
 
-        <FeatureShowcase />
       </main>
+
+      {/* Separate clipped rows must be direct scene children for fast WebGL captures. */}
+      <FeatureShowcase />
 
       <footer className="ap-footer ap-footer--extended">
         <div className="ap-footer__halo" aria-hidden="true"/>

@@ -8,15 +8,15 @@ const buttonOptics={
   refraction:"lens" as const,
   lensProfile:"material" as const,
   lensOptions:{
-    strength:.13,depth:.23,curvature:.48,bend:.32,bendWidth:.23,
-    sheen:1.34,sheenWidth:4,specular:1.6,glow:.09
+    strength:.092,depth:.13,curvature:.14,bend:.12,bendWidth:.42,
+    sheen:0,sheenWidth:0,specular:0,glow:0
   },
   quality:"low" as const,
   mobileFallback:"svg" as const,
-  frost:0,blur:0,scale:133,saturation:120,dispersion:6,aberrationIntensity:.06,
+  frost:0,blur:0,scale:118,saturation:120,dispersion:6,aberrationIntensity:.045,
   borderColor:"rgba(255,255,255,0)",
-  glassColor:"rgba(255,255,255,.085)",
-  background:"rgba(255,255,255,.025)"
+  glassColor:"rgba(255,255,255,.016)",
+  background:"rgba(255,255,255,0)"
 };
 
 export function LandingInteractions() {

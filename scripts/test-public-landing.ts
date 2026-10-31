@@ -14,6 +14,7 @@ const css=read("app/showcase.css");
 const refresh=read("app/landing-refresh.css");
 const instagram=read("app/landing-instagram.css");
 const polish=read("app/landing-polish.css");
+const refraction=read("app/landing-refraction-fix.css");
 const pkg=JSON.parse(read("package.json"));
 const lock=JSON.parse(read("package-lock.json"));
 assert.equal(pkg.dependencies.gsap,"3.14.2");
@@ -22,7 +23,7 @@ assert.equal(lock.packages["node_modules/simple-liquid-glass"].version,"5.4.0");
 for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />","<HeroMotion />",
  '<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'",
  "جایگاه مجوزهای آینده","در آینده","مدیریت کل پیجت رو بسپار به دایرا","رایگان شروع کن",
- "./landing-instagram.css","./landing-polish.css"])
+ "./landing-instagram.css","./landing-polish.css","./landing-refraction-fix.css"])
   assert.ok(page.includes(item),"Missing homepage contract: "+item);
 assert.doesNotMatch(page,/ورود به پنل|بازگشت به بالا|ap-hero__subtitle|RobotHeroScene|<video/);
 assert.match(page,/heroWords\.map/);
@@ -34,9 +35,12 @@ for(const url of ["/login","/privacy-policy","/terms","/data-deletion","/contact
 for(const route of ["terms","about","contact"])
   assert.ok(existsSync("app/"+route+"/page.tsx"),"Missing public route "+route);
 
-assert.match(features,/id="features"/);
+assert.match(features,/id=\{rowIndex === 0 \? "features" : undefined\}/);
 assert.match(features,/ap-social-grid/);
-assert.match(features,/showcaseScenes\.map/);
+assert.match(features,/showcaseScenes\.find/);
+assert.match(features,/const rows:/);
+assert.match(features,/ap-showcase-capture/);
+assert.equal((features.match(/\["/g)||[]).length>=8,true);
 assert.match(features,/InstagramPreview kind=\{scene\.id\}/);
 assert.match(features,/data-reveal/);
 assert.match(features,/ap-social-card--wide/);
@@ -74,13 +78,17 @@ assert.match(header,/aria-controls="ap-menu"/);
 assert.match(header,/inert=\{!open\}/);
 assert.match(header,/event\.key==="Escape"/);
 assert.match(header,/returnFocus\.current/);
-assert.match(header,/hasOpened/);
-assert.match(header,/\{hasOpened && <LiquidGlass/);
+assert.doesNotMatch(header,/hasOpened/);
+assert.match(header,/<LiquidGlass \{\.\.\.menuOptics\}/);
+assert.match(header,/sheen:0/);
+assert.match(header,/specular:0/);
 assert.doesNotMatch(header,/window\.addEventListener\("scroll"|elementFromPoint/);
 assert.match(hero,/gsap\.timeline/);
 assert.match(hero,/data-hero-word/);
-assert.match(hero,/force3D:true/);
-assert.match(hero,/clearProps:"transform,opacity,visibility,willChange"/);
+assert.match(hero,/force3D: false/);
+assert.match(hero,/revealInGlass/);
+assert.match(hero,/removeAttribute\("data-liquid-glass-ignore"\)/);
+assert.match(hero,/clearProps: "transform,opacity,willChange"/);
 assert.match(hero,/prefers-reduced-motion: reduce/);
 assert.doesNotMatch(hero,/data-hero-fragment|blur\(|filter:|repeat:-1/);
 assert.match(interactions,/IntersectionObserver/);
@@ -106,4 +114,17 @@ assert.match(polish,/\.ap-footer__links/);
 assert.match(polish,/justify-content:center/);
 assert.match(polish,/\.ap-menu__item/);
 assert.match(polish,/@media\(prefers-reduced-motion:reduce\)/);
-console.log("DAIRA landing PASS: real optical back-to-top, soft header lens, readable menu, static final GSAP headline, 11 Instagram-like demos and scroll-triggered reveals.");
+assert.match(refraction,/\.ap-site > \.ap-showcase-capture/);
+assert.match(refraction,/body:has\(\.ap-site\)/);
+assert.match(refraction,/background:transparent!important/);
+assert.match(refraction,/clip-path:inset\(0 0 100%/);
+assert.match(refraction,/translate3d\(0,-21px,0\)/);
+assert.match(refraction,/\.ap-menu__item/);
+assert.match(refraction,/background:transparent!important/);
+assert.match(refraction,/@media\(prefers-reduced-motion:reduce\)/);
+assert.match(page,/data-hero-assembly data-liquid-glass-ignore/);
+assert.match(page,/data-hero-cta data-liquid-glass-ignore/);
+assert.match(page,/Separate clipped rows must be direct scene children/);
+assert.match(interactions,/sheen:0/);
+assert.match(interactions,/specular:0/);
+console.log("DAIRA landing PASS: eight independent capture rows, transparent scene shell, rimless refractive header/back-to-top, vertically revealed menu, fast isolated GSAP hero.");
