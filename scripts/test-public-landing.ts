@@ -15,7 +15,7 @@ const hero=read("components/landing/HeroAssembly.tsx");
 const showcaseStyles=read("app/showcase.css");
 const polish=read("app/landing-polish.css");
 const liquidHeader=read("components/landing/LiquidHeaderSurface.tsx");
-const liquidHeaderCSS=read("app/liquid-header.css");
+const liquidHeaderCSS=read("app/header-library-optics.css");
 
 for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />",
   '<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'",
@@ -31,15 +31,19 @@ for(const url of ["/login","/privacy-policy","/terms","/data-deletion","/contact
 for(const route of ["terms","about","contact"])
   assert.ok(existsSync("app/"+route+"/page.tsx"),"Missing public route "+route);
 
-assert.match(root,/LiveOpticsDefinitions/);
-assert.doesNotMatch(root,/LiquidGlassScene|maxCacheBytes|simple-liquid-glass/);
+assert.match(root,/LiquidGlassScene/);
+assert.match(root,/maxCacheBytes/);
 assert.match(header,/<LiquidHeaderSurface \/>/);
-assert.match(liquidHeader,/LiveOpticalSurface variant="header"/);
-assert.match(liquidHeader,/ap-liquid-header__lens/);
-assert.match(liquidHeader,/ap-liquid-header__glint/);
-assert.match(liquidHeaderCSS,/\.ap-liquid-header__lens > div\[style\*="backdrop-filter"\]/);
-assert.match(liquidHeaderCSS,/\.ap-header\[data-landing-header\]/);
-assert.match(page,/import "\.\/liquid-header\.css"/);
+assert.match(liquidHeader,/import LiquidGlass from "simple-liquid-glass"/);
+assert.match(liquidHeader,/lensProfile: "loupe"/);
+assert.match(liquidHeader,/renderer: "svg"/);
+assert.match(liquidHeader,/scale: 135/);
+assert.match(liquidHeader,/specular: 1\.35/);
+assert.match(liquidHeader,/sheen: 1\.12/);
+assert.doesNotMatch(liquidHeader,/displacementScale|ap-liquid-header__volume|ap-liquid-header__edge|ap-liquid-header__glint/);
+assert.match(liquidHeader,/className="daira-library-liquid-header"/);
+assert.doesNotMatch(liquidHeaderCSS,/liquid-glass-border|div\[style\*="backdrop-filter"\]|radial-gradient|box-shadow:[^;]+rgba\(/);
+assert.match(page,/import "\.\/header-library-optics\.css"/);
 assert.match(header,/aria-expanded=\{open\}/);
 assert.match(header,/aria-controls="ap-menu"/);
 assert.match(header,/inert=\{!open\}/);
@@ -126,4 +130,4 @@ for(const id of ["comment","story","direct","share","live","reminder","inbox","p
   assert.ok(scenes.includes('id: "'+id+'"'),"Missing feature "+id);
 for(const label of ["ig-menu-sheet","ig-quickreplies","ig-live__badge","ig-comment-answer","ig-schedule"])
   assert.ok(previews.includes(label),"Missing Instagram-like preview "+label);
-console.log("DAIRA OPTICS V2 PASS: no WebGL capture dependency, prewarmed full-page fallback, restored loupe spectral highlights, blue blurred backtop, CSS-only hero and all 11 features.");
+console.log("DAIRA GLASS PASS: genuine unmodified library optics restored, iOS scene connected, CSS only positions the lens, all 11 homepage features preserved.");
