@@ -48,12 +48,12 @@ assert.doesNotMatch(interactions,/LiquidGlass|simple-liquid-glass/);
 assert.match(optics,/prepareOpticalMaps/);
 assert.match(optics,/import LiquidGlass from "simple-liquid-glass"/);
 assert.match(optics,/renderer: "svg"/);
-assert.match(optics,/scale: 156/);
+assert.match(optics,/displacementScale: 52/);
 assert.doesNotMatch(optics,/displacementScale: 32/);
 assert.match(optics,/lensProfile: "loupe"/);
 assert.ok(optics.includes('glassColor: "rgba(255,255,255,.038)"'));
 assert.match(optics,/sheenAngle: -34/);
-assert.match(optics,/specular: 1\.65/);
+assert.match(optics,/specular: 2\.0/);
 assert.ok(!optics.includes('background: "rgba(255,255,255,0)"'));
 
 
