@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import {
   ArrowRight, AtSign, BarChart3, Bookmark, CalendarDays, CheckCheck,
-  ChevronLeft, Clock3, Heart, ImageIcon, Instagram, Menu, MessageCircle,
+  ChevronLeft, Clock3, Heart, ImageIcon, Camera, Menu, MessageCircle,
   MoreHorizontal, Radio, Search, Send, Smile,
 } from "lucide-react";
 import type { ShowcaseKind } from "./showcase-scenes";
@@ -19,7 +19,7 @@ function TopBar({ title, menu = false }: { title: string; menu?: boolean }) {
 }
 function Profile({ title = "daira.shop", sub }: {title?:string;sub?:string}) {
   return <div className="ig-profile">
-    <span className="ig-avatar"><Instagram size={15} aria-hidden="true"/></span>
+    <span className="ig-avatar"><Camera size={15} aria-hidden="true"/></span>
     <span><strong>{title}</strong>{sub && <small>{sub}</small>}</span>
   </div>;
 }
