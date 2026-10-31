@@ -124,3 +124,16 @@
 @media(prefers-reduced-motion:reduce){
   .ap-site .ap-hero__cta::before{animation:none!important;opacity:0!important}
 }
+
+/* Static high-contrast body text, with blue liquid accent only on the brand name.
+   Avoid background-clip on a parent containing independent animated word spans. */
+.ap-site .ap-hero h1{
+  background:none!important;
+  -webkit-text-fill-color:initial!important;
+  color:#1a315a!important;
+}
+.ap-site .ap-hero__word:last-child{
+  background:linear-gradient(110deg,#2260d8,#3a8bff);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
