@@ -1,0 +1,87 @@
+/*
+ * Landing polish ONLY. Preserve the existing simple-liquid-glass loupe,
+ * displacement strength, dispersion and the genuine live backdrop renderer.
+ */
+
+/* The package's narrow bright perimeter looked like a second white capsule
+   around an otherwise clear lens. Soften ONLY that decorative optical rim.
+   Never hide it or disable the actual inner SVG/WebGL refractor. */
+.ap-site .daira-library-liquid-header > .liquid-glass-border {
+  display: block !important;
+  opacity: .43 !important;
+  pointer-events: none !important;
+}
+
+/* Back to top: truly see some of the scrolling page THROUGH the blue chip.
+   Do not blur/flatten its white arrow or introduce a separate border. */
+.ap-site .ap-backtop__lens.ap-backtop__blue-blur {
+  background: linear-gradient(
+    145deg,
+    rgba(51, 119, 244, .42),
+    rgba(22, 79, 213, .57)
+  ) !important;
+  -webkit-backdrop-filter: blur(15px) saturate(155%) !important;
+  backdrop-filter: blur(15px) saturate(155%) !important;
+  border: 0 !important;
+}
+.ap-site .ap-backtop__action,
+.ap-site .ap-backtop__action svg {
+  color: #fff !important;
+  stroke: #fff !important;
+}
+
+/* Start from the FINAL Persian sentence layout, and gently bring each word
+   home with transform/opacity only. No moving layout boxes, text clipping,
+   rotation or repeated JavaScript re-rendering. */
+.ap-site .ap-hero__word {
+  display: inline-block;
+  white-space: pre;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  will-change: auto;
+}
+.ap-site .ap-hero__word:nth-child(1) { --word-x: 112px; --word-y: -76px; --word-delay: 0ms; }
+.ap-site .ap-hero__word:nth-child(2) { --word-x: 0px; --word-y: -92px; --word-delay: 55ms; }
+.ap-site .ap-hero__word:nth-child(3) { --word-x: -138px; --word-y: -40px; --word-delay: 110ms; }
+.ap-site .ap-hero__word:nth-child(4) { --word-x: 112px; --word-y: 48px; --word-delay: 165ms; }
+.ap-site .ap-hero__word:nth-child(5) { --word-x: 18px; --word-y: 56px; --word-delay: 220ms; }
+.ap-site .ap-hero__word:nth-child(6) { --word-x: -52px; --word-y: 70px; --word-delay: 275ms; }
+.ap-site .ap-hero__word:nth-child(7) { --word-x: -126px; --word-y: 45px; --word-delay: 330ms; }
+html[data-daira-hero="pending"] .ap-site .ap-hero__word {
+  opacity: .56;
+  transform: translate3d(var(--word-x),var(--word-y),0) scale(.94);
+  will-change: transform,opacity;
+}
+html[data-daira-hero="play"] .ap-site .ap-hero__word {
+  animation: daira-word-assemble 1.75s cubic-bezier(.22,.61,.36,1) both;
+  animation-delay: var(--word-delay);
+  will-change: transform,opacity;
+}
+html[data-daira-hero="done"] .ap-site .ap-hero__word {
+  animation: none;
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+@keyframes daira-word-assemble {
+  0% { opacity: .56; transform: translate3d(var(--word-x),var(--word-y),0) scale(.94); }
+  70% { opacity: .96; }
+  100% { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+}
+@media (max-width: 600px) {
+  .ap-site .ap-hero__word:nth-child(1) { --word-x: 52px; --word-y: -42px; }
+  .ap-site .ap-hero__word:nth-child(2) { --word-x: 0px; --word-y: -60px; }
+  .ap-site .ap-hero__word:nth-child(3) { --word-x: -58px; --word-y: -30px; }
+  .ap-site .ap-hero__word:nth-child(4) { --word-x: 56px; --word-y: 34px; }
+  .ap-site .ap-hero__word:nth-child(5) { --word-x: 10px; --word-y: 45px; }
+  .ap-site .ap-hero__word:nth-child(6) { --word-x: -28px; --word-y: 53px; }
+  .ap-site .ap-hero__word:nth-child(7) { --word-x: -65px; --word-y: 41px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-daira-hero] .ap-site .ap-hero__word {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    will-change: auto !important;
+  }
+}

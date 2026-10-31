@@ -16,6 +16,7 @@ const showcaseStyles=read("app/showcase.css");
 const polish=read("app/landing-polish.css");
 const liquidHeader=read("components/landing/LiquidHeaderSurface.tsx");
 const liquidHeaderCSS=read("app/header-library-optics.css");
+const landingFixes=read("app/landing-fixes.css");
 
 for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />",
   '<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'",
@@ -33,6 +34,17 @@ for(const route of ["terms","about","contact"])
 
 assert.match(root,/LiquidGlassScene/);
 assert.match(root,/maxCacheBytes/);
+assert.ok(root.includes("maxCacheBytes={64 * 1024 * 1024}"));
+assert.ok(page.includes('import "./landing-fixes.css";'));
+assert.ok(landingFixes.includes(".daira-library-liquid-header > .liquid-glass-border"));
+assert.ok(landingFixes.includes("opacity: .43 !important"));
+assert.ok(landingFixes.includes("backdrop-filter: blur(15px) saturate(155%)"));
+assert.ok(landingFixes.includes("daira-word-assemble 1.75s cubic-bezier"));
+assert.ok(landingFixes.includes("prefers-reduced-motion"));
+assert.ok(hero.includes("animationend"));
+assert.ok(hero.includes("data-liquid-glass-ignore"));
+assert.ok(hero.includes("document.fonts.ready"));
+
 assert.match(header,/<LiquidHeaderSurface \/>/);
 assert.match(liquidHeader,/import LiquidGlass from "simple-liquid-glass"/);
 assert.match(liquidHeader,/lensProfile: "loupe"/);
