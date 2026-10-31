@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLandingGlassCapture } from "./LandingGlassBackdrop";
 import LiquidGlass, { type RenderingDiagnostics } from "simple-liquid-glass";
 
@@ -50,6 +50,7 @@ export function LiquidHeaderSurface() {
   const backdropRef = useRef<HTMLCanvasElement | null>(null);
   const [sourceBound, setSourceBound] = useState(false);
   const [captureReady, setCaptureReady] = useState(false);
+  const [everReady, setEverReady] = useState(false);
   const [strategy, setStrategy] = useState("pending");
 
   useLayoutEffect(() => {
@@ -77,13 +78,21 @@ export function LiquidHeaderSurface() {
     setStrategy(previous => previous === next.strategy ? previous : next.strategy);
   }, []);
   const opticalReady = strategy === "svg" || (strategy === "webgl" && sourceBound);
-  const ready = opticalReady && (!capture || captureReady);
+  // Once the native lens has rendered a complete scene, a newly arriving
+  // adjacent section must not cause the CSS fallback to flash over/behind it.
+  // The official WebGL renderer continues presenting live frames while the
+  // next tile captures, so keep the material optical after first success.
+  useEffect(() => {
+    if (opticalReady && (!capture || captureReady)) setEverReady(true);
+  }, [opticalReady, capture, captureReady]);
+  const ready = opticalReady && (everReady || !capture || captureReady);
 
   return (
     <div ref={frameRef} className="daira-library-glass-frame"
       data-glass-ready={ready ? "true" : "false"}
       data-optical-strategy={strategy}
-      data-optical-source-bound={sourceBound ? "true" : "false"}>
+      data-optical-source-bound={sourceBound ? "true" : "false"}
+      data-optical-ever-ready={everReady ? "true" : "false"}>
       <span className="daira-library-glass-live-fallback" aria-hidden="true" />
       <LiquidGlass
         {...optics}
