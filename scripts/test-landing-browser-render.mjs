@@ -151,10 +151,12 @@ try {
   console.log("DAIRA MATERIAL",JSON.stringify({color:startup.materialColor,alpha:materialAlpha,scales:startup.displacementScales}));
   assert.ok(materialAlpha>.025 && materialAlpha<.08,
     "The REAL library material must be translucent neutral glass, not transparent or opaque");
-  assert.ok(Math.max(...startup.displacementScales) <= 38,
-    "Too much displacement samples white space beyond the 62px high header");
-  assert.ok(Math.max(...startup.displacementScales) >= 26,
-    "Refraction must be visible rather than a no-op");
+  // The original strong loupe uses geometry-relative scale, not the 32px
+  // override that made the physical lens appear like transparent acrylic.
+  assert.ok(Math.max(...startup.displacementScales) >= 40,
+    "Loupe refraction is unexpectedly weak or still forcibly clamped");
+  assert.ok(Math.max(...startup.displacementScales) <= 180,
+    "Loupe optical displacement exceeded its expected desktop bound");
 
   // Temporary public-landing visual diagnostics. The user reports no visually
   // discernible lens despite a positive filter CSS property test.
@@ -183,10 +185,15 @@ try {
   // scrolling pixels from the genuine SVG filter. Assert actual CSS root.
   const roots=await evaluate(`(() => ({
     header:getComputedStyle(document.querySelector(".ap-header")).isolation,
+    headerBackdrop:getComputedStyle(document.querySelector(".ap-header")).backdropFilter,
+    headerFilter:getComputedStyle(document.querySelector(".ap-header")).filter,
     lens:getComputedStyle(document.querySelector(".ap-header__backdrop")).isolation,
     blueFill:getComputedStyle(document.querySelector(".ap-header__backdrop > div[style*='backdrop-filter']")).backgroundColor
   }))()`);
   assert.equal(roots.header,"auto","An isolated sticky header prevents sampling the scrolling page");
+  assert.equal(roots.headerBackdrop,"none",
+    "CRITICAL: a parent's backdrop-filter forms a Backdrop Root that blocks the child lens from the page");
+  assert.equal(roots.headerFilter,"none","Header parent must not create a filter backdrop root");
   assert.equal(roots.lens,"auto","A nested isolated lens also traps the backdrop");
   assert.ok(!roots.blueFill.includes("241, 249, 255"),"Header must not have a blue tint");
 
