@@ -66,7 +66,7 @@ assert.match(css,/saturate\(138%\) contrast\(105%\)/);
 assert.match(css,/blur\(2\.4px\)/);
 assert.match(css,/daira-optical-backtop/);
 assert.doesNotMatch(page,/ArrowUpLeft/);
-assert.match(page,/رایگان شروع کن<\/Link>/);
+assert.match(page,/رایگان شروع کن\s*<\/Link>/);
 assert.match(css,/@keyframes daira-word-assemble/);
 assert.match(css,/animation:daira-word-assemble/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
