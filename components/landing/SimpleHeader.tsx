@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { LiveOpticalSurface } from "./LiveOptics";
+import { LiquidHeaderSurface } from "./LiquidHeaderSurface";
 import { ArrowUpLeft, Menu, X } from "lucide-react";
 
 const menuItems = [
@@ -53,7 +53,7 @@ export function SimpleHeader() {
 
   return (
     <header className="ap-header" data-landing-header data-liquid-glass-ignore="">
-      <LiveOpticalSurface variant="header" className="ap-header__backdrop" />
+      <LiquidHeaderSurface />
 
       {/*
         The entire header is excluded from the scene capture. Simply ignoring
