@@ -39,7 +39,7 @@
         "svg"
       ]
     },
-    "glassReadyMs": 2558,
+    "glassReadyMs": 2011,
     "errors": []
   },
   {
@@ -82,7 +82,7 @@
         "svg"
       ]
     },
-    "glassReadyMs": 2358,
+    "glassReadyMs": 2033,
     "errors": []
   },
   {
@@ -125,7 +125,7 @@
         "svg"
       ]
     },
-    "glassReadyMs": 2094,
+    "glassReadyMs": 2028,
     "errors": []
   },
   {
@@ -168,7 +168,7 @@
         "webgl"
       ]
     },
-    "glassReadyMs": 7831,
+    "glassReadyMs": 5917,
     "errors": []
   },
   {
@@ -211,7 +211,7 @@
         "webgl"
       ]
     },
-    "glassReadyMs": 6288,
+    "glassReadyMs": 4715,
     "errors": []
   },
   {
@@ -254,7 +254,7 @@
         "webgl"
       ]
     },
-    "glassReadyMs": 6222,
+    "glassReadyMs": 4482,
     "errors": []
   }
 ]
