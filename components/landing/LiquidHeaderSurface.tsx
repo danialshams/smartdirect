@@ -2,7 +2,7 @@
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { useLandingGlassCapture } from "./LandingGlassBackdrop";
-import LiquidGlass, { type RenderingDiagnostics } from "simple-liquid-glass";
+import LiquidGlass, { type LiquidGlassHandle, type RenderingDiagnostics } from "simple-liquid-glass";
 
 /**
  * The header is ONE native optical lens from simple-liquid-glass 5.4.
@@ -46,17 +46,18 @@ const optics = {
 
 export function LiquidHeaderSurface() {
   const capture = useLandingGlassCapture();
-  const panelRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<LiquidGlassHandle>(null);
   const backdropRef = useRef<HTMLCanvasElement | null>(null);
   const [sourceBound, setSourceBound] = useState(false);
   const [captureReady, setCaptureReady] = useState(false);
   const [strategy, setStrategy] = useState("pending");
 
   useLayoutEffect(() => {
-    if (!capture || !panelRef.current) return;
+    const element = panelRef.current?.element;
+    if (!capture || !element) return;
     // An explicit library backdrop source prevents its scene-hook from
     // destroying the WebGL GPU renderer whenever a new tile is incomplete.
-    const registration = capture.register(panelRef.current, setCaptureReady);
+    const registration = capture.register(element, setCaptureReady);
     backdropRef.current = registration.canvas;
     setSourceBound(true);
     return () => {
