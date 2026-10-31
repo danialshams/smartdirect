@@ -59,7 +59,7 @@ assert.doesNotMatch(optics,/html-to-image|toSvg\(|html2canvas|WebGLRenderingCont
 
 assert.match(css,/\.ap-optical-surface\[data-optics-mode="mirror"\]/);
 assert.match(css,/\.ap-optical-surface\[data-optics-mode="native"\]/);
-assert.match(css,/-webkit-backdrop-filter:saturate\(118%\) url/);
+assert.match(css,/-webkit-backdrop-filter:saturate\(138%\) contrast\(105%\) url/);
 assert.match(css,/filter:url\("#daira-optical-displacement"\)/);
 assert.match(css,/box-shadow:none!important/);
 assert.match(css,/saturate\(138%\) contrast\(105%\)/);
