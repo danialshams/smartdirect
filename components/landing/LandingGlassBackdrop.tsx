@@ -1,14 +1,19 @@
+"use client";
+
 import type { ReactNode } from "react";
-import { LiveOpticsDefinitions } from "./LiveOptics";
+import { LiquidGlassScene } from "simple-liquid-glass/backdrop";
 
 /**
- * No third-party WebGL snapshot queue. The optical filter is
- * declared in the initial HTML for immediate native Chromium refraction.
- * WebKit/Firefox use a prewarmed full-page visual mirror.
+ * Shared scene is REQUIRED for authentic WebGL refraction on iOS/Safari.
+ * Chromium uses the library's native SVG backdrop sampling instead;
+ * it does not trigger the scene's HTML capture pipeline.
+ * data-liquid-glass-ignore on the sticky header avoids self-reflections.
  */
 export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
-  return <div className="ap-site" id="top" dir="rtl">
-    <LiveOpticsDefinitions />
-    {children}
-  </div>;
+  return (
+    <LiquidGlassScene className="ap-site" id="top" dir="rtl"
+      maxCacheBytes={32 * 1024 * 1024}>
+      {children}
+    </LiquidGlassScene>
+  );
 }
