@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { LiveOpticsDefinitions } from "./LiveOptics";
 
 /**
- * No LiquidGlassScene / WebGL snapshot queue. The optical filter is
+ * No third-party WebGL snapshot queue. The optical filter is
  * declared in the initial HTML for immediate native Chromium refraction.
  * WebKit/Firefox use a prewarmed full-page visual mirror.
  */
