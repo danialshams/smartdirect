@@ -296,3 +296,6 @@
 }
 
 .ap-hero__word{display:inline-block;white-space:pre;will-change:transform,opacity}
+
+/* Footer link entrance order, in visual DOM order and without repeat timelines. */
+.ap-footer__links>a[data-reveal]{transition-delay:calc(var(--link-index,0)*65ms)}
