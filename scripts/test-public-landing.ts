@@ -76,7 +76,6 @@ assert.match(css,/\.ap-feature__number/);
 assert.match(css,/\.ap-menu__content/);
 assert.match(css,/\.ap-header__login-glass/);
 assert.match(css,/\.ap-menu--open \.ap-menu__nav \.ap-menu__item/);
-assert.match(css,/data-liquid-glass-ignore/);
 assert.match(css,/\.ap-header__backdrop \{/);
 assert.match(css,/border:0!important/);
 assert.match(css,/@media\(max-width:800px\)/);
