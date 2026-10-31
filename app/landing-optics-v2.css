@@ -1,0 +1,121 @@
+/*
+ * DAIRA OPTICS V2
+ * No simple-liquid-glass component, no HTML-to-image, WebGL scene cache,
+ * internal inset shadows, specular rims, DOM mutation capture queue or
+ * per-scroll rasterization. The first mirror preparation is a one-time clone.
+ *
+ * Native Blink: live CSS/SVG backdrop-filter on the visible 66px surface.
+ * WebKit/Gecko: one prewarmed DOM mirror, moved by a compositor transform.
+ */
+.ap-optical-definitions {
+  position:absolute;width:0;height:0;overflow:hidden;pointer-events:none;
+}
+.ap-site .ap-optical-surface {
+  position:absolute!important;
+  isolation:auto!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  overflow:hidden!important;
+  contain:paint;
+}
+.ap-site .ap-header__backdrop.ap-optical-surface {
+  border-radius:26px!important;
+}
+.ap-site .ap-backtop__lens.ap-optical-surface {
+  border-radius:50%!important;
+  pointer-events:none;
+}
+.ap-optical-native,
+.ap-optical-mirror,
+.ap-optical-tint {
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  border:0;
+  outline:0;
+  box-shadow:none;
+  pointer-events:none;
+}
+.ap-optical-native {
+  opacity:0;
+  background:rgba(236,247,255,.035);
+  -webkit-backdrop-filter:saturate(118%) url("#daira-optical-displacement");
+  backdrop-filter:saturate(118%) url("#daira-optical-displacement");
+  transition:opacity .23s ease;
+}
+.ap-optical-mirror {
+  opacity:0;
+  overflow:hidden;
+  filter:url("#daira-optical-displacement");
+  transition:opacity .23s ease;
+  contain:paint;
+}
+.ap-optical-document {
+  position:absolute!important;
+  width:100vw!important;
+  max-width:none!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  overflow:visible!important;
+  pointer-events:none!important;
+  will-change:transform;
+  contain:layout style;
+}
+.ap-optical-document *,
+.ap-optical-document *::before,
+.ap-optical-document *::after {
+  animation:none!important;
+  transition:none!important;
+  pointer-events:none!important;
+}
+.ap-optical-document [data-reveal] {opacity:1!important;transform:none!important}
+.ap-optical-document .ap-hero__word {transform:none!important;opacity:1!important}
+.ap-optical-tint {
+  background:rgba(239,248,255,.025);
+}
+.ap-optical-surface[data-optics-mode="native"] .ap-optical-native {opacity:1}
+.ap-optical-surface[data-optics-mode="mirror"] .ap-optical-mirror {opacity:1}
+.ap-site .ap-backtop__action,
+.ap-site .ap-backtop__lens,
+.ap-site .ap-backtop {
+  border:0!important;
+  box-shadow:none!important;
+  outline:0!important;
+}
+.ap-site .ap-backtop__action {
+  background:transparent!important;
+  filter:none!important;
+  color:#2f61fd!important;
+}
+.ap-site .ap-backtop__action svg {filter:none!important;stroke:currentColor!important}
+
+/* Pure CSS word assembly, executed by the compositor rather than a JS
+ * timeline. No animation-frame JS, blur, expensive layer masks or recurring
+ * snapshots. Individual Persian words preserve their joined letters. */
+.ap-site .ap-hero__word {
+  display:inline-block;
+  white-space:pre;
+  animation:daira-word-assemble .64s cubic-bezier(.16,.85,.26,1) both;
+  will-change:auto;
+  transform-origin:center center;
+}
+.ap-site .ap-hero__word:nth-child(1){--word-x:29px;--word-y:-9px;animation-delay:0ms}
+.ap-site .ap-hero__word:nth-child(2){--word-x:-24px;--word-y:12px;animation-delay:25ms}
+.ap-site .ap-hero__word:nth-child(3){--word-x:23px;--word-y:-12px;animation-delay:48ms}
+.ap-site .ap-hero__word:nth-child(4){--word-x:-21px;--word-y:10px;animation-delay:17ms}
+.ap-site .ap-hero__word:nth-child(5){--word-x:26px;--word-y:-9px;animation-delay:31ms}
+.ap-site .ap-hero__word:nth-child(6){--word-x:-20px;--word-y:9px;animation-delay:49ms}
+.ap-site .ap-hero__word:nth-child(7){--word-x:27px;--word-y:-10px;animation-delay:67ms}
+@keyframes daira-word-assemble {
+  0% { transform:translate3d(var(--word-x),var(--word-y),0);opacity:.48 }
+  100% { transform:translate3d(0,0,0);opacity:1 }
+}
+@media(prefers-reduced-motion:reduce) {
+  .ap-site .ap-hero__word{animation:none!important;opacity:1!important;transform:none!important}
+  .ap-optical-native,.ap-optical-mirror{transition:none!important}
+}
