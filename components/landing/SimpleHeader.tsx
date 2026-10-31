@@ -1,89 +1,125 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import LiquidGlass from "simple-liquid-glass";
 import { ArrowUpLeft, Menu, X } from "lucide-react";
 
-const nav = [
-  { href: "#experience", label: "معرفی" },
-  { href: "#features", label: "امکانات" },
+const menuItems = [
+  { href:"#features", label:"امکانات" },
+  { href:"/privacy-policy", label:"حفظ حریم خصوصی" },
+  { href:"/terms", label:"قوانین و مقررات" },
+  { href:"/data-deletion", label:"حذف اطلاعات" },
+  { href:"/contact", label:"ارتباط با ما" },
+  { href:"/about", label:"درباره ما" },
 ] as const;
 
+const glassProps = {
+  refraction:"lens" as const,
+  lensProfile:"loupe" as const,
+  quality:"high" as const,
+  mobileFallback:"svg" as const,
+  frost:.035,
+  blur:0,
+  saturation:130,
+  scale:162,
+  aberrationIntensity:.27,
+  glassColor:"rgba(255,255,255,0.075)",
+  background:"rgba(255,255,255,0.025)",
+};
+
+/**
+ * Actual refracting glass, backed by LandingGlassBackdrop / LiquidGlassScene.
+ * A normal CSS backdrop-filter alone cannot refract on iPhone.
+ */
 export function SimpleHeader() {
-  const [open,setOpen] = useState(false);
-  const toggle = useRef<HTMLButtonElement>(null);
-  const close = useRef<HTMLButtonElement>(null);
-  const panel = useRef<HTMLDivElement>(null);
-  const restoreFocus = useRef(true);
-  const onNavigate = () => { restoreFocus.current=false; setOpen(false); };
+  const [open,setOpen]=useState(false);
+  const toggleRef=useRef<HTMLButtonElement>(null);
+  const closeRef=useRef<HTMLButtonElement>(null);
+  const menuRef=useRef<HTMLElement>(null);
+  const returnFocus=useRef(true);
+  const closeOnNavigate=()=>{returnFocus.current=false;setOpen(false);};
 
   useEffect(()=>{
     if(!open)return;
-    const old=document.body.style.overflow;
+    const prior=document.body.style.overflow;
     document.body.style.overflow="hidden";
-    close.current?.focus();
-    const onKey = (e:KeyboardEvent)=>{
-      if(e.key==="Escape"){setOpen(false);return;}
-      if(e.key!=="Tab"||!panel.current)return;
-      const all=Array.from(panel.current.querySelectorAll<HTMLElement>("a[href],button:not([disabled])"));
-      const first=all[0],last=all[all.length-1];
+    closeRef.current?.focus();
+
+    const onKey=(event:KeyboardEvent)=>{
+      if(event.key==="Escape"){setOpen(false);return;}
+      if(event.key!=="Tab"||!menuRef.current)return;
+      const options=Array.from(menuRef.current.querySelectorAll<HTMLElement>("a[href],button:not([disabled])"));
+      const first=options[0],last=options[options.length-1];
       if(!first||!last)return;
-      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
-      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
     };
-    const media=window.matchMedia("(min-width: 800px)");
-    const onResize=()=>{if(media.matches)setOpen(false);};
-    window.addEventListener("keydown",onKey);
-    media.addEventListener("change",onResize);
+    document.addEventListener("keydown",onKey);
     return ()=>{
-      document.body.style.overflow=old;
-      window.removeEventListener("keydown",onKey);
-      media.removeEventListener("change",onResize);
-      if(restoreFocus.current&&toggle.current?.getClientRects().length)toggle.current.focus();
+      document.body.style.overflow=prior;
+      document.removeEventListener("keydown",onKey);
+      if(returnFocus.current&&toggleRef.current?.getClientRects().length)
+        toggleRef.current.focus();
     };
   },[open]);
 
   return (
     <header className="ap-header">
+      <LiquidGlass {...glassProps} className="ap-header__backdrop" radius={25}
+        style={{position:"absolute",inset:0,pointerEvents:"none"}} >
+        <div className="ap-header__refraction-grain" aria-hidden="true"/>
+      </LiquidGlass>
       <div className="ap-shell ap-header__inner">
-        <Link className="ap-brand" href="/" aria-label="دایرا، صفحه اصلی">
-          <Image src="/daira-header-logo-hd.webp" alt="" width={38} height={38} priority sizes="38px"/>
+        <div className="ap-menu-toggle__holder">
+          <LiquidGlass {...glassProps} radius={24} className="ap-menu-toggle__glass">
+            <button ref={toggleRef} className="ap-menu-toggle" type="button"
+              aria-label={open?"بستن منو":"باز کردن منو"}
+              aria-controls="ap-menu" aria-expanded={open}
+              onClick={()=>{returnFocus.current=true;setOpen(v=>!v);}}>
+              {open?<X size={21}/>:<Menu size={21}/>}
+            </button>
+          </LiquidGlass>
+        </div>
+        <Link href="/" className="ap-brand ap-header__logo" aria-label="دایرا، صفحه اصلی">
+          <Image src="/daira-header-logo-hd.webp" alt="" width={36} height={36} priority sizes="36px"/>
           <span>دایرا</span>
         </Link>
-        <nav className="ap-header__nav" aria-label="ناوبری اصلی">
-          {nav.map(link=><a href={link.href} key={link.href}>{link.label}</a>)}
-        </nav>
-        <div className="ap-header__actions">
-          <Link className="ap-header__login" href="/login">ورود</Link>
-          <Link className="ap-header__cta" href="/login">شروع کن <ArrowUpLeft size={15} aria-hidden="true"/></Link>
-        </div>
-        <button className="ap-menu-toggle" ref={toggle} type="button"
-          aria-label={open?"بستن منو":"باز کردن منو"}
-          aria-controls="ap-menu" aria-expanded={open}
-          onClick={()=>{restoreFocus.current=true;setOpen(x=>!x);}}>
-          {open?<X size={21}/>:<Menu size={21}/>}
-        </button>
-      </div>
-      <button className={"ap-menu-overlay"+(open?" ap-menu-overlay--open":"")}
-        aria-label="بستن منو" tabIndex={open?0:-1} disabled={!open}
-        type="button" onClick={()=>setOpen(false)}/>
-      <div className={"ap-menu"+(open?" ap-menu--open":"")}
-        id="ap-menu" role="dialog" aria-label="منوی دایرا"
-        aria-modal={open?"true":undefined}
-        ref={panel} inert={!open} aria-hidden={!open}>
-        <div className="ap-menu__top">
-          <strong>دایرا</strong>
-          <button type="button" ref={close} aria-label="بستن منو" onClick={()=>setOpen(false)}><X size={21}/></button>
-        </div>
-        <nav aria-label="ناوبری موبایل">
-          {nav.map(link=><a href={link.href} key={link.href} onClick={onNavigate}>{link.label}</a>)}
-          <Link href="/login" onClick={onNavigate}>ورود به پنل</Link>
-        </nav>
-        <Link className="ap-button ap-button--solid ap-menu__start" href="/login" onClick={onNavigate}>
-          شروع با دایرا <ArrowUpLeft size={17} aria-hidden="true"/>
+        <Link className="ap-header__panel-login" href="/login">
+          ورود به پنل <ArrowUpLeft size={15} aria-hidden="true"/>
         </Link>
       </div>
+
+      <button className={"ap-menu-overlay"+(open?" ap-menu-overlay--open":"")}
+        type="button" disabled={!open} tabIndex={open?0:-1}
+        aria-label="بستن منو" onClick={()=>setOpen(false)}/>
+
+      <aside id="ap-menu" ref={menuRef}
+        className={"ap-menu"+(open?" ap-menu--open":"")}
+        role="dialog" aria-label="منوی اصلی دایرا"
+        aria-modal={open?true:undefined} aria-hidden={!open} inert={!open}>
+        <LiquidGlass {...glassProps} radius={28} className="ap-menu__liquid">
+          <div className="ap-menu__content">
+            <div className="ap-menu__top">
+              <strong>دایرا</strong>
+              <button type="button" ref={closeRef} aria-label="بستن منو" onClick={()=>setOpen(false)}>
+                <X size={20}/>
+              </button>
+            </div>
+            <nav className="ap-menu__nav" aria-label="صفحات دایرا">
+              {menuItems.map((item,i)=>(
+                <Link
+                  key={item.href} href={item.href} onClick={closeOnNavigate}
+                  className="ap-menu__item" style={{"--enter-index":i} as CSSProperties}>
+                  {item.label}
+                  <ArrowUpLeft size={17} aria-hidden="true"/>
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </LiquidGlass>
+      </aside>
     </header>
   );
 }
