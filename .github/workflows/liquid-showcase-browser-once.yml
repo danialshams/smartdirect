@@ -1,0 +1,48 @@
+name: One-off glass and 11-scene visual QA
+
+on:
+  push:
+    branches: [feature/liquid-glass-11-scene-showcase-20261031]
+    paths:
+      - ".github/workflows/liquid-showcase-browser-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  glass-scene-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - name: Install project and temporary Chromium visual test runner
+        run: |
+          npm ci --no-audit --no-fund
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.0
+          npx playwright install --with-deps chromium
+      - name: Run desktop, mobile and narrow display visual tests
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          npm run dev -- --hostname 127.0.0.1 --port 3000 > /tmp/daira-showcase.log 2>&1 &
+          PID=$!
+          trap "kill $PID || true" EXIT
+          for i in $(seq 1 65); do
+            if curl --silent --fail --output /dev/null http://127.0.0.1:3000/; then break; fi
+            sleep 2
+          done
+          curl --fail --silent --output /dev/null http://127.0.0.1:3000/
+          node scripts/qa-liquid-showcase.cjs
+      - name: Commit screenshots and renderer diagnostics to feature branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/qa/landing-*.jpg public/qa/menu-*.jpg public/qa/scene-*.jpg public/qa/liquid-showcase-report.json
+          git commit -m "Inspect iOS-style glass and eleven GSAP scenes at 1440, 390 and 320 pixels"
+          git push origin HEAD:feature/liquid-glass-11-scene-showcase-20261031
