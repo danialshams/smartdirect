@@ -1,0 +1,19 @@
+name: Audit production header optics
+on:
+  push:
+    branches:
+      - feature/fix-header-backdrop-root-lens-20261031
+  workflow_dispatch:
+jobs:
+  visual-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check Chromium availability
+        run: which google-chrome || which chromium
+      - name: Capture real deployed site, desktop and mobile
+        run: node scripts/audit-live-header.mjs
