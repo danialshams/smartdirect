@@ -139,7 +139,7 @@ try {
   assert.ok(startup.opticalMaps>=1,"Actual library displacement stages must exist");
   assert.equal(startup.oldApproximation,false);
   assert.equal(startup.ctaIcons,0,"Free Start button should remain icon-free");
-  assert.match(startup.materialColor,/rgba\\(255, 255, 255, 0\\.065\\)/,
+  assert.ok(startup.materialColor.includes("255, 255, 255, 0.065"),
     "The REAL library material must be translucent neutral glass, not transparent from a background prop");
   assert.ok(Math.max(...startup.displacementScales) <= 36,
     "Too much displacement samples white space beyond the 62px high header");
