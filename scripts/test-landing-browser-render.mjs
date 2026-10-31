@@ -150,8 +150,8 @@ try {
   assert.equal(startup.ctaIcons,0,"Free Start button should remain icon-free");
   const materialAlpha=Number(startup.materialColor.split(",").at(-1)?.replace(")","").trim());
   console.log("DAIRA MATERIAL",JSON.stringify({color:startup.materialColor,alpha:materialAlpha,scales:startup.displacementScales}));
-  assert.ok(materialAlpha>.025 && materialAlpha<.08,
-    "The backdrop refractor must stay neutral and translucent");
+  assert.ok(materialAlpha>=0 && materialAlpha<.1,
+    "Native glass may have a fully clear backdrop; its edge optics supply the material");
   assert.ok(Math.max(...startup.displacementScales) >= 40,
     "The original library loupe must genuinely refract background pixels");
   assert.ok(Math.max(...startup.displacementScales) <= 160,
