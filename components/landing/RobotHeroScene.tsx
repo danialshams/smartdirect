@@ -1,6 +1,9 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
+import dynamic from "next/dynamic";
+
+const RobotThreeModel = dynamic(() => import("./RobotThreeModel").then(m => m.RobotThreeModel), { ssr: false });
 import type { CSSProperties } from "react";
 import { gsap } from "gsap";
 import {
@@ -23,11 +26,7 @@ const cables = [
   { id: "icebreakers", label: "پیام شروع گفتگو", Icon: WandSparkles, x: 808, y: 650, sx: 639, sy: 530, path: "M639 530 C691 579 652 618 725 609 S765 653 808 650", duration: 7.6, phase: -2.8 },
 ] as const;
 
-/**
- * Preserve the exact approved photoreal robot asset, with independently animated
- * optical dimmers over its painted irises and an SVG wire network.
- * This is a lightweight 2.5D visual, not a true mesh or orbitable 3D model.
- */
+/** Assemble eleven connected features around the genuine geometry-based 3D robot. */
 export function RobotHeroScene() {
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -50,22 +49,6 @@ export function RobotHeroScene() {
         stagger: { each:.035, from:"random" },
         ease:"expo.out",
         delay:.12,
-      });
-
-      // Only the real eye apertures are dimmed. The painted details stay sharp.
-      const dimmers=stage.querySelectorAll<SVGElement>(".sh-robot-eye-dimmer");
-      gsap.timeline({ repeat:-1, repeatDelay:2.1, delay:1.6 })
-        .set(dimmers,{opacity:1})
-        .to(dimmers,{opacity:0,duration:.065})
-        .to(dimmers,{opacity:1,duration:.095})
-        .to(dimmers,{opacity:.03,duration:.13})
-        .to(dimmers,{opacity:.9,duration:.075})
-        .to(dimmers,{opacity:0,duration:.24,ease:"power2.out"})
-        .to({}, {duration:1.7});
-
-      gsap.to(".sh-robot-portrait", {
-        y:-5, rotation:.36, duration:5.3, ease:"sine.inOut", repeat:-1, yoyo:true,
-        transformOrigin:"50% 50%",
       });
 
       const paths=Array.from(stage.querySelectorAll<SVGPathElement>("[data-cable-path]"));
@@ -102,31 +85,15 @@ export function RobotHeroScene() {
 
   return (
     <div ref={stageRef} className="sh-robot-scene"
-      aria-label="ربات سه‌بعدی‌نما و یازده قابلیت دایرا با کابل‌های متحرک و نورهای تصادفی">
+      aria-label="مدل سه‌بعدی واقعی ربات دایرا و یازده قابلیت متصل با کابل‌های متحرک و نورهای تصادفی">
       <div className="sh-robot-world">
         <svg className="sh-robot-svg" viewBox="0 0 1200 710" role="img"
-          aria-label="ربات دایرا با چشم‌های نورانی و کابل‌های متصل به امکانات"
+          aria-label="کابل‌های ارتباطی متصل به امکانات دایرا"
           xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="dairaCable" x1="0" y1="0" x2=".75" y2="1">
               <stop stopColor="#39659c"/><stop offset=".45" stopColor="#c2d9ee"/><stop offset="1" stopColor="#4c85ce"/>
             </linearGradient>
-            <radialGradient id="dairaPortraitFade" cx="0" cy="0" r="1"
-              gradientUnits="userSpaceOnUse"
-              gradientTransform="translate(585 350) scale(500 405)">
-              <stop offset="0%" stopColor="#fff"/><stop offset="64%" stopColor="#fff"/>
-              <stop offset="89%" stopColor="#fff" stopOpacity=".95"/>
-              <stop offset="100%" stopColor="#000"/>
-            </radialGradient>
-            <mask id="dairaPortraitMask" maskUnits="userSpaceOnUse">
-              <rect width="1200" height="710" fill="url(#dairaPortraitFade)"/>
-            </mask>
-            <radialGradient id="dairaEyeDim" cx=".5" cy=".5" r=".5">
-              <stop offset="0%" stopColor="#081d39" stopOpacity=".98"/>
-              <stop offset="51%" stopColor="#071a32" stopOpacity=".96"/>
-              <stop offset="76%" stopColor="#092447" stopOpacity=".73"/>
-              <stop offset="100%" stopColor="#04152b" stopOpacity="0"/>
-            </radialGradient>
             <filter id="dairaPulseGlow" x="-250%" y="-250%" width="600%" height="600%">
               <feGaussianBlur stdDeviation="4"/>
             </filter>
@@ -148,21 +115,14 @@ export function RobotHeroScene() {
               </g>
             ))}
           </g>
-          <g data-robot-assembly="portrait">
-            <g className="sh-robot-portrait" style={{transformOrigin:"600px 350px"}}>
-            <image href="/landing/daira-robot-hero.webp" x="0" y="17" width="1200" height="676"
-              preserveAspectRatio="xMidYMid meet" mask="url(#dairaPortraitMask)"/>
-            <g className="sh-robot-eye-dimmer" opacity="0">
-              <ellipse cx="474" cy="282" rx="70" ry="66" fill="url(#dairaEyeDim)"/>
-              <ellipse cx="677" cy="324" rx="60" ry="60" fill="url(#dairaEyeDim)"/>
-            </g>
-            </g>
-          </g>
           {cables.map((cable)=>(
             <circle key={cable.id} cx={cable.x} cy={cable.y} r="5.5"
               fill="#73c9ff" stroke="#fff" strokeWidth="2" opacity=".82"/>
           ))}
         </svg>
+        <div className="sh-robot-3d-assembly" data-robot-assembly="portrait">
+          <div className="sh-robot-3d"><RobotThreeModel /></div>
+        </div>
         {cables.map((cable)=>{
           const Icon=cable.Icon;
           return (
