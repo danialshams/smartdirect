@@ -89,5 +89,8 @@ assert.doesNotMatch(css,/backdrop-filter:blur/);
 assert.match(baseCss,/font-family:"DairaVazir"/);
 assert.match(baseCss,/Vazir-Regular\.woff2/);
 assert.match(hero,/gsap\.timeline/);
+assert.doesNotMatch(hero,/autoAlpha:0/);
+assert.match(hero,/opacity:.92/);
+assert.match(css,/background:linear-gradient\(135deg,rgba\(50,117,250,.86\),rgba\(25,77,210,.91\)\)/);
 assert.match(hero,/prefers-reduced-motion: reduce/);
 console.log("DAIRA landing PASS: 11 static intros; borderless single optical header; blue glass login; no recursive reflections, scroll listeners, infinite demos or video; six accessible nav links.");
