@@ -47,9 +47,13 @@ assert.ok(landingFixes.includes("box-shadow:none!important"));
 assert.ok(landingFixes.includes("data-glass-ready"));
 assert.ok(landingFixes.includes("data-scene-capture-stable"));
 assert.ok(landingFixes.includes("backdrop-filter: blur(15px) saturate(155%)"));
-assert.ok(landingFixes.includes("daira-word-assemble 1.75s cubic-bezier"));
+assert.ok(landingFixes.includes("daira-hero-fade 1.55s cubic-bezier"));
+assert.ok(landingFixes.includes("inset:-1.6px!important"));
 assert.ok(landingFixes.includes("prefers-reduced-motion"));
 assert.ok(hero.includes("animationend"));
+assert.ok(hero.includes("daira-hero-fade"));
+assert.ok(!hero.includes("word-assemble"));
+assert.ok(root.includes("dairaGlassViewportRevision"));
 assert.ok(hero.includes("data-liquid-glass-ignore"));
 assert.ok(hero.includes("document.fonts.ready"));
 
