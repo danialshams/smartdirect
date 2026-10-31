@@ -16,25 +16,25 @@ const menuItems = [
 ] as const;
 
 /**
- * Each surface is one optical lens, with zero frost/blur.
+ * Shared optical presets: soft edge curvature on the wide header prevents\n * an exaggerated rim and low-quality single-pass refraction keeps scroll smooth.
  * Borders are disabled at the component level, not only via CSS.
  */
 const optics = {
   refraction:"lens" as const,
-  lensProfile:"loupe" as const,
+  lensProfile:"material" as const,
   lensOptions:{
-    strength:.09,depth:.3,curvature:.48,bend:.51,bendWidth:.16,
-    sheen:1.12,sheenWidth:7,sheenAngle:-30,specular:1.35,
-    glow:.08,glowSpread:.4,glowFalloff:1.6,brightness:0,
+    strength:.066,depth:.16,curvature:.22,bend:.18,bendWidth:.31,
+    sheen:.85,sheenWidth:3.2,sheenAngle:-25,specular:1.0,
+    glow:.025,glowSpread:.24,glowFalloff:2.1,brightness:0,
   },
-  quality:"standard" as const,
+  quality:"low" as const,
   mobileFallback:"svg" as const,
   frost:0,
   blur:0,
-  scale:135,
+  scale:108,
   saturation:110,
-  dispersion:17,
-  aberrationIntensity:.11,
+  dispersion:7,
+  aberrationIntensity:.045,
   borderColor:"rgba(255,255,255,0)",
   glassColor:"rgba(255,255,255,.035)",
   background:"rgba(255,255,255,.01)",
@@ -42,19 +42,20 @@ const optics = {
 
 const menuOptics = {
   ...optics,
-  lensOptions:{...optics.lensOptions,strength:.05,bend:.36,sheen:1.03},
-  scale:102,dispersion:8,aberrationIntensity:.055,
-  glassColor:"rgba(255,255,255,.13)",
-  frost:.12,
-  blur:2,
+  lensOptions:{...optics.lensOptions,strength:.09,depth:.23,curvature:.3,bend:.27,sheen:1.2,specular:1.3},
+  quality:"standard" as const,
+  scale:112,dispersion:5,aberrationIntensity:.045,
+  glassColor:"rgba(255,255,255,.09)",
+  frost:.06,
+  blur:.8,
 };
 
 const blueOptics = {
   ...optics,
-  lensOptions:{...optics.lensOptions,strength:.13,curvature:.58,specular:1.65},
+  lensOptions:{...optics.lensOptions,strength:.11,curvature:.37,specular:1.35},
   glassColor:"rgba(36,100,243,.45)",
   background:"rgba(36,100,243,.65)",
-  scale:150,
+  scale:128,
 };
 
 export function SimpleHeader() {
