@@ -945,3 +945,44 @@
 @media(prefers-reduced-motion:reduce) {
   .sh-robot-3d {filter:none}
 }
+
+
+/* V7: composited offline Blender render. No WebGL or continuous GPU geometry. */
+.sh-robot-3d-assembly {pointer-events:none}
+.sh-robot-rendered {
+  position:absolute;left:50%;top:48%;
+  width:74%;aspect-ratio:1000/563;
+  transform:translate(-50%,-50%);
+  overflow:hidden;isolation:isolate;pointer-events:none;
+  -webkit-mask-image:radial-gradient(ellipse 78% 89% at 47% 47%,#000 53%,rgba(0,0,0,.96) 75%,transparent 100%);
+  mask-image:radial-gradient(ellipse 78% 89% at 47% 47%,#000 53%,rgba(0,0,0,.96) 75%,transparent 100%);
+  filter:drop-shadow(0 6px 15px rgba(52,102,163,.07));
+}
+.sh-robot-rendered__poster,.sh-robot-rendered__video,.sh-robot-rendered__eyes {
+  position:absolute;inset:0;width:100%;height:100%;
+}
+.sh-robot-rendered__poster {object-fit:cover}
+.sh-robot-rendered__video {
+  object-fit:cover;
+  opacity:0;
+  transition:opacity .3s ease-out;
+}
+.sh-robot-rendered__video--playing {opacity:1}
+.sh-robot-rendered__eyes {z-index:2;pointer-events:none}
+.sh-robot-cables {opacity:.79}
+.sh-robot-node-anchor {z-index:4}
+@media(max-width:860px) {
+ .sh-robot-rendered {width:81%;top:47%}
+}
+@media(max-width:600px) {
+ .sh-robot-world {aspect-ratio:1200/715}
+ .sh-robot-rendered {width:106%;top:48%}
+ .sh-robot-rendered__eyes {display:block}
+ .sh-robot-mobile-features {position:relative;z-index:4}
+ .sh-robot-cables {opacity:.34}
+}
+@media(prefers-reduced-motion:reduce){
+ .sh-robot-rendered__video {display:none!important}
+ .sh-robot-rendered__poster {opacity:1!important}
+ .sh-robot-rendered {filter:none}
+}
