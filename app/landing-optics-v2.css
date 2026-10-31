@@ -40,7 +40,7 @@
 }
 .ap-optical-native {
   opacity:0;
-  background:rgba(226,242,255,.065);
+  background:rgba(255,255,255,.05);
   -webkit-backdrop-filter:saturate(138%) contrast(105%) url("#daira-optical-displacement");
   backdrop-filter:saturate(138%) contrast(105%) url("#daira-optical-displacement");
   transition:opacity .23s ease;
@@ -78,13 +78,13 @@
 /* Broad spectral reflections across the whole lens, not a bright outline.
    These sit on top of the TRUE displacement filter, never replacing it. */
 .ap-optical-tint {
+  /* Fallback only: clear neutral reflections, no artificial BLUE halo. */
   background:
-    radial-gradient(ellipse 58% 230% at 11% -62%,rgba(255,255,255,.28) 0%,rgba(222,240,255,.09) 48%,transparent 78%),
-    radial-gradient(ellipse 64% 150% at 93% 142%,rgba(122,186,255,.20) 0%,transparent 75%),
-    linear-gradient(106deg,rgba(240,250,255,.105),rgba(187,220,255,.045) 46%,rgba(241,249,255,.075));
+    radial-gradient(ellipse 60% 200% at 12% -65%,rgba(255,255,255,.16) 0%,rgba(255,255,255,.035) 48%,transparent 77%),
+    radial-gradient(ellipse 60% 180% at 93% 145%,rgba(255,255,255,.08),transparent 75%);
 }
 .ap-optical-surface--backtop .ap-optical-native {
-  background:rgba(235,243,255,.15);
+  background:rgba(255,255,255,.17);
   -webkit-backdrop-filter:blur(2.4px) saturate(132%) url("#daira-optical-backtop");
   backdrop-filter:blur(2.4px) saturate(132%) url("#daira-optical-backtop");
 }
@@ -93,8 +93,8 @@
 }
 .ap-optical-surface--backtop .ap-optical-tint {
   background:
-    radial-gradient(circle at 21% 12%,rgba(255,255,255,.26),transparent 73%),
-    linear-gradient(135deg,rgba(234,244,255,.20),rgba(205,227,253,.15));
+    radial-gradient(circle at 21% 12%,rgba(255,255,255,.21),transparent 73%),
+    linear-gradient(135deg,rgba(255,255,255,.15),rgba(255,255,255,.04));
 }
 .ap-optical-surface[data-optics-mode="native"] .ap-optical-native {opacity:1}
 .ap-optical-surface[data-optics-mode="mirror"] .ap-optical-mirror {opacity:1}
