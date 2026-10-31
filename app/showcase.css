@@ -430,3 +430,61 @@
 .ap-info__actions a {display:inline-flex;padding:12px 20px;border-radius:12px;color:#fff;background:#3167e9;font-size:12px}
 .ap-info__actions a:last-child {background:#eaf2ff;color:#315bc6}
 @media(max-width:600px){.ap-info {padding:66px 18px 96px}.ap-info__back {margin-bottom:35px}.ap-info__body {margin-top:32px}}
+
+/* Each feature gets its own very subtle visual metaphor, not one template. */
+.ap-showcase-scene__ambient::after {
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.27;
+  -webkit-mask-image:radial-gradient(ellipse at center,#000 5%,transparent 73%);
+  mask-image:radial-gradient(ellipse at center,#000 5%,transparent 73%);
+}
+.ap-showcase-scene[data-demo-id="comment"] .ap-showcase-scene__ambient::after {
+  background:radial-gradient(circle at 24% 40%,#92bbff 0 7px,transparent 8px),
+    radial-gradient(circle at 70% 59%,#89bdff 0 5px,transparent 6px),
+    radial-gradient(circle at 64% 20%,#abcaff 0 12px,transparent 13px);
+}
+.ap-showcase-scene[data-demo-id="story"] .ap-showcase-scene__ambient::after {
+  background:linear-gradient(100deg,transparent 16%,rgba(178,122,236,.28) 34%,transparent 52%),
+    linear-gradient(124deg,transparent 50%,rgba(197,152,248,.34) 65%,transparent 78%);
+  transform:rotate(-9deg);
+}
+.ap-showcase-scene[data-demo-id="direct"] .ap-showcase-scene__ambient::after {
+  background:repeating-linear-gradient(120deg,transparent 0 70px,rgba(84,139,255,.24) 71px 72px,transparent 73px 145px);
+}
+.ap-showcase-scene[data-demo-id="share"] .ap-showcase-scene__ambient::after {
+  background:repeating-radial-gradient(ellipse at 44% 54%,transparent 0 85px,rgba(45,166,204,.26) 86px 87px,transparent 88px 170px);
+}
+.ap-showcase-scene[data-demo-id="live"] .ap-showcase-scene__ambient::after {
+  background:repeating-radial-gradient(circle at 50% 50%,transparent 0 40px,rgba(177,103,255,.33) 41px 42px,transparent 43px 95px);
+}
+.ap-showcase-scene[data-demo-id="reminder"] .ap-showcase-scene__ambient::after {
+  background:conic-gradient(from 40deg at 50% 50%,transparent 0 18%,rgba(73,142,255,.21) 21%,transparent 24% 55%,rgba(94,154,248,.24) 60%,transparent 65%);
+}
+.ap-showcase-scene[data-demo-id="inbox"] .ap-showcase-scene__ambient::after {
+  background:repeating-linear-gradient(0deg,transparent 0 61px,rgba(71,149,224,.18) 62px 63px,transparent 64px 124px);
+}
+.ap-showcase-scene[data-demo-id="publishing"] .ap-showcase-scene__ambient::after {
+  background:repeating-linear-gradient(90deg,transparent 0 98px,rgba(73,131,228,.25) 99px 100px,transparent 101px 200px);
+}
+.ap-showcase-scene[data-demo-id="insights"] .ap-showcase-scene__ambient::after {
+  background:linear-gradient(rgba(77,125,233,.25) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(77,125,233,.25) 1px,transparent 1px);
+  background-size:68px 68px;
+}
+.ap-showcase-scene[data-demo-id="menu"] .ap-showcase-scene__ambient::after {
+  background:linear-gradient(90deg,transparent 12%,rgba(145,114,219,.25) 13% 14%,transparent 15% 28%,rgba(145,114,219,.2) 29% 30%,transparent 31% 45%,rgba(145,114,219,.2) 46% 47%,transparent 48%);
+}
+.ap-showcase-scene[data-demo-id="icebreaker"] .ap-showcase-scene__ambient::after {
+  background:radial-gradient(circle at 20% 30%,rgba(65,194,164,.4) 0 13px,transparent 14px),
+    radial-gradient(circle at 58% 50%,rgba(65,194,164,.3) 0 7px,transparent 8px),
+    radial-gradient(circle at 82% 25%,rgba(65,194,164,.4) 0 11px,transparent 12px);
+}
+.ap-showcase-scene.is-playing .ap-showcase-scene__ambient::after {
+  animation:ap-theme-drift 13s ease-in-out infinite alternate;
+}
+@keyframes ap-theme-drift {
+  from{translate:-2% 1%;opacity:.18}
+  to{translate:3% -3%;opacity:.30}
+}
+@media(prefers-reduced-motion:reduce) {
+  .ap-showcase-scene__ambient::after{animation:none!important}
+}
