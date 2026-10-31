@@ -40,8 +40,12 @@ export function LiveOpticalSurface({ className, variant }: Props) {
     let observer: ResizeObserver | undefined;
     let mirror: HTMLDivElement | undefined;
 
-    const applyPosition = () => {
+    const updateScrollTransform = () => {
       raf = 0;
+      if (!mirror) return;
+      mirror.style.transform = `translate3d(0,${-window.scrollY}px,0)`;
+    };
+    const positionMirror = () => {
       if (!mirror || !surface.current) return;
       const site = document.querySelector<HTMLElement>(".ap-site");
       const originalMain = site?.querySelector<HTMLElement>(":scope > main");
@@ -50,10 +54,10 @@ export function LiveOpticalSurface({ className, variant }: Props) {
       const siteLeft = site?.getBoundingClientRect().left ?? 0;
       mirror.style.left = `${siteLeft - panelRect.left}px`;
       mirror.style.top = `${mainTop - panelRect.top}px`;
-      mirror.style.transform = `translate3d(0,${-window.scrollY}px,0)`;
+      updateScrollTransform();
     };
     const schedulePosition = () => {
-      if (!raf) raf = requestAnimationFrame(applyPosition);
+      if (!raf) raf = requestAnimationFrame(updateScrollTransform);
     };
 
     if (isNative()) {
@@ -62,7 +66,7 @@ export function LiveOpticalSurface({ className, variant }: Props) {
     } else {
       const prepare = async () => {
         // Build the entire visual source before showing any refracted pixels.
-        await Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 1200))]);
+        await Promise.all([\n          Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 1200))]),\n          new Promise(resolve => setTimeout(resolve, 790)), // after CSS hero assembly\n        ]);
         if (!active || !windowRef.current || !surface.current) return;
         const site = document.querySelector<HTMLElement>(".ap-site");
         if (!site) return;
@@ -84,15 +88,19 @@ export function LiveOpticalSurface({ className, variant }: Props) {
         }
         if (!active) return;
         windowRef.current.appendChild(mirror);
-        applyPosition();
-        // First layout and paint of all cloned sections are finished before
-        // the fallback begins drawing through the refractive SVG filter.
+        positionMirror();
+        const images = Array.from(mirror.querySelectorAll<HTMLImageElement>("img"));
+        await Promise.race([
+          Promise.all(images.map(image => image.decode().catch(() => undefined))),
+          new Promise(resolve => setTimeout(resolve, 1000)),
+        ]);
+        // Give the fully composed mirror two paints BEFORE exposing any glass.
         await twoFrames();
         if (!active) return;
         setMode("mirror");
         window.addEventListener("scroll", schedulePosition, { passive: true });
-        window.addEventListener("resize", schedulePosition, { passive: true });
-        observer = new ResizeObserver(schedulePosition);
+        window.addEventListener("resize", positionMirror, { passive: true });
+        observer = new ResizeObserver(positionMirror);
         observer.observe(surface.current!);
       };
       void prepare();
@@ -102,7 +110,7 @@ export function LiveOpticalSurface({ className, variant }: Props) {
       active = false;
       if (raf) cancelAnimationFrame(raf);
       window.removeEventListener("scroll", schedulePosition);
-      window.removeEventListener("resize", schedulePosition);
+      window.removeEventListener("resize", positionMirror);
       observer?.disconnect();
       mirror?.remove();
     };
