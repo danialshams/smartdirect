@@ -44,7 +44,9 @@ const menuOptics = {
   ...optics,
   lensOptions:{...optics.lensOptions,strength:.05,bend:.36,sheen:1.03},
   scale:102,dispersion:8,aberrationIntensity:.055,
-  glassColor:"rgba(255,255,255,.085)",
+  glassColor:"rgba(255,255,255,.13)",
+  frost:.12,
+  blur:2,
 };
 
 const blueOptics = {
@@ -57,6 +59,7 @@ const blueOptics = {
 
 export function SimpleHeader() {
   const [open,setOpen]=useState(false);
+  const [hasOpened,setHasOpened]=useState(false);
   const toggleRef=useRef<HTMLButtonElement>(null);
   const closeRef=useRef<HTMLButtonElement>(null);
   const menuRef=useRef<HTMLElement>(null);
@@ -115,9 +118,12 @@ export function SimpleHeader() {
           aria-label={open?"بستن منو":"باز کردن منو"}
           aria-controls="ap-menu"
           aria-expanded={open}
-          onClick={()=>{returnFocus.current=true;setOpen(value=>!value);}}
+          onClick={()=>{returnFocus.current=true;setHasOpened(true);setOpen(value=>!value);}}
         >
-          {open?<X size={21} aria-hidden="true"/>:<Menu size={21} aria-hidden="true"/>}
+          <span className={"ap-menu-toggle__glyphs"+(open?" ap-menu-toggle__glyphs--open":"")} aria-hidden="true">
+            <Menu size={21} className="ap-menu-toggle__hamburger"/>
+            <X size={21} className="ap-menu-toggle__close"/>
+          </span>
         </button>
 
         <Link href="/" className="ap-brand ap-header__logo" aria-label="دایرا، صفحه اصلی">
@@ -143,6 +149,7 @@ export function SimpleHeader() {
       <button
         type="button"
         className={"ap-menu-overlay"+(open?" ap-menu-overlay--open":"")}
+        data-liquid-glass-ignore=""
         disabled={!open}
         tabIndex={open?0:-1}
         aria-label="بستن منو"
@@ -160,7 +167,7 @@ export function SimpleHeader() {
         inert={!open}
         data-liquid-glass-ignore=""
       >
-        {open && <LiquidGlass {...menuOptics} radius={28} className="ap-menu__liquid">
+        {hasOpened && <LiquidGlass {...menuOptics} radius={28} className="ap-menu__liquid">
           <div className="ap-menu__content">
             <div className="ap-menu__top">
               <strong>دایرا</strong>
