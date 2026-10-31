@@ -5,17 +5,18 @@ import LiquidGlass from "simple-liquid-glass";
 import { ChevronUp } from "lucide-react";
 
 const buttonOptics={
+  renderer:"svg" as const,
   refraction:"lens" as const,
   lensProfile:"material" as const,
   lensOptions:{
-    strength:.092,depth:.13,curvature:.14,bend:.12,bendWidth:.42,
+    strength:.08,depth:.16,curvature:.045,bend:.018,bendWidth:.48,
     sheen:0,sheenWidth:0,specular:0,glow:0
   },
   quality:"low" as const,
   mobileFallback:"svg" as const,
   frost:0,blur:0,scale:118,saturation:120,dispersion:6,aberrationIntensity:.045,
   borderColor:"rgba(255,255,255,0)",
-  glassColor:"rgba(255,255,255,.016)",
+  glassColor:"rgba(255,255,255,.007)",
   background:"rgba(255,255,255,0)"
 };
 

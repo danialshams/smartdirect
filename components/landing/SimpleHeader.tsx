@@ -20,14 +20,15 @@ const menuItems = [
  * Specular and sheen on the large lenses were painting a bright inner rim,\n * which looked like a separate border despite CSS border:0.
  */
 const optics = {
+  renderer:"svg" as const,
   refraction:"lens" as const,
   lensProfile:"material" as const,
   lensOptions:{
-    strength:.082,depth:.12,curvature:.12,bend:.10,bendWidth:.45,
+    strength:.17,depth:.48,curvature:.43,bend:.23,bendWidth:.22,
     sheen:0,sheenWidth:0,sheenAngle:-25,specular:0,
     glow:0,glowSpread:0,glowFalloff:2.1,brightness:0,
   },
-  quality:"low" as const,
+  quality:"standard" as const,
   mobileFallback:"svg" as const,
   frost:0,
   blur:0,
@@ -38,24 +39,6 @@ const optics = {
   borderColor:"rgba(255,255,255,0)",
   glassColor:"rgba(255,255,255,.018)",
   background:"rgba(255,255,255,.01)",
-};
-
-const menuOptics = {
-  ...optics,
-  lensOptions:{...optics.lensOptions,strength:.095,depth:.18,curvature:.22,bend:.16,sheen:.25,specular:.28},
-  quality:"standard" as const,
-  scale:112,dispersion:5,aberrationIntensity:.045,
-  glassColor:"rgba(255,255,255,.09)",
-  frost:.06,
-  blur:.8,
-};
-
-const blueOptics = {
-  ...optics,
-  lensOptions:{...optics.lensOptions,strength:.11,curvature:.2,specular:.18},
-  glassColor:"rgba(36,100,243,.45)",
-  background:"rgba(36,100,243,.65)",
-  scale:128,
 };
 
 export function SimpleHeader() {
@@ -132,14 +115,6 @@ export function SimpleHeader() {
         </Link>
 
         <div className="ap-header__login-holder">
-          <LiquidGlass
-            {...blueOptics}
-            radius={24}
-            className="ap-header__login-lens"
-            style={{position:"absolute",inset:0,pointerEvents:"none"}}
-          >
-            <span className="ap-header__login-fill" aria-hidden="true"/>
-          </LiquidGlass>
           <Link href="/login" className="ap-header__panel-login">
             ورود به پنل <ArrowUpLeft size={15} aria-hidden="true"/>
           </Link>
@@ -167,7 +142,7 @@ export function SimpleHeader() {
         inert={!open}
         data-liquid-glass-ignore=""
       >
-        <LiquidGlass {...menuOptics} radius={28} className="ap-menu__liquid">
+        <div className="ap-menu__liquid">
           <div className="ap-menu__content">
             <div className="ap-menu__top">
               <strong>دایرا</strong>
@@ -190,7 +165,7 @@ export function SimpleHeader() {
               ))}
             </nav>
           </div>
-        </LiquidGlass>
+        </div>
       </aside>
     </header>
   );

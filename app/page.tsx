@@ -14,6 +14,7 @@ import "./landing-refresh.css";
 import "./landing-instagram.css";
 import "./landing-polish.css";
 import "./landing-refraction-fix.css";
+import "./landing-live-glass.css";
 
 export const metadata:Metadata = {
   title:"دایرا | همه تعاملات پیجت، در یک فضای ساده",

@@ -1,0 +1,112 @@
+/* DAIRA / live optics: fixes at the actual painted layers, not the outer CSS border.
+ * Chromium runs an SVG BACKDROP filter against the live page. No HTML snapshots.
+ * Two costly additional LiquidGlass instances (menu/login) were removed in JSX.
+ */
+
+/* Library 5.4.0 paints a built-in WHITE inset box-shadow on the inner optical
+ * div even with borderColor=transparent and specular=0.
+ * The previous fixes targeted only the outer component; this removes the source. */
+.ap-site .ap-header__backdrop > div,
+.ap-site .ap-backtop__lens > div {
+  box-shadow:none!important;
+  outline:none!important;
+  border:0!important;
+}
+.ap-site .ap-header__backdrop > .liquid-glass-border,
+.ap-site .ap-backtop__lens > .liquid-glass-border {
+  display:none!important;
+}
+.ap-site .ap-header__backdrop {
+  isolation:auto!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.ap-site .ap-header__backdrop > div[style*="backdrop-filter"],
+.ap-site .ap-backtop__lens > div[style*="backdrop-filter"] {
+  background:rgba(255,255,255,.008)!important;
+  box-shadow:none!important;
+}
+.ap-site .ap-backtop,
+.ap-site .ap-backtop__lens {
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+.ap-site .ap-backtop__action {border:0!important;box-shadow:none!important;filter:none!important;}
+
+/* The full-screen overlay used to ANIMATE backdrop-filter from 0 to 11px,
+ * forcing expensive re-rasterization on each intermediate frame. Keep one
+ * fixed 3px blur and animate only the composited opacity of that surface. */
+.ap-site .ap-menu-overlay,
+.ap-site .ap-menu-overlay--open {
+  background:rgba(22,39,69,.17)!important;
+  -webkit-backdrop-filter:blur(3px) saturate(94%)!important;
+  backdrop-filter:blur(3px) saturate(94%)!important;
+  transition:opacity .26s ease,visibility 0s linear .28s!important;
+  will-change:opacity;
+}
+.ap-site .ap-menu-overlay--open {
+  transition:opacity .26s ease,visibility 0s!important;
+}
+/* No nested WebGL/SVG lens and NO nested blur in the menu.
+ * Single translucency surface, static color, opacity + vertical translation. */
+.ap-site .ap-menu,
+.ap-site .ap-menu--open {
+  clip-path:none!important;
+  -webkit-clip-path:none!important;
+  transform-origin:top center!important;
+  transition:opacity .28s cubic-bezier(.2,.74,.2,1),
+    transform .28s cubic-bezier(.2,.74,.2,1),
+    visibility 0s linear .3s!important;
+  will-change:transform,opacity;
+}
+.ap-site .ap-menu {
+  transform:translate3d(0,-15px,0) scale(.99)!important;
+}
+.ap-site .ap-menu--open {
+  transform:translate3d(0,0,0) scale(1)!important;
+  transition:opacity .28s cubic-bezier(.2,.74,.2,1),
+    transform .28s cubic-bezier(.2,.74,.2,1),
+    visibility 0s!important;
+}
+.ap-site .ap-menu__liquid {
+  overflow:hidden!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(223,238,255,.93))!important;
+  box-shadow:0 15px 42px rgba(25,53,98,.17)!important;
+  border:0!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+.ap-site .ap-menu__content {
+  background:transparent!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+.ap-site .ap-menu__nav .ap-menu__item,
+.ap-site .ap-menu--open .ap-menu__nav .ap-menu__item {
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  opacity:1!important;
+  transform:none!important;
+  transition:color .18s ease!important;
+  transition-delay:0ms!important;
+}
+.ap-site .ap-menu__nav .ap-menu__item:hover,
+.ap-site .ap-menu__nav .ap-menu__item:focus-visible {
+  background:transparent!important;
+  color:#2459c6!important;
+}
+/* Blue login stays visually glass-like but has no second expensive GPU lens. */
+.ap-site .ap-header__login-holder {
+  background:linear-gradient(135deg,rgba(67,132,254,.87),rgba(33,79,206,.91))!important;
+}
+.ap-site .ap-header__panel-login {
+  background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(39,91,230,.12))!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .ap-site .ap-menu,.ap-site .ap-menu--open,
+  .ap-site .ap-menu-overlay,.ap-site .ap-menu-overlay--open {
+    transition:none!important;
+  }
+}
