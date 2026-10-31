@@ -158,8 +158,8 @@ try {
   ),1800);
   assert.equal(await evaluate('document.querySelector(".daira-library-glass-frame").dataset.glassReady'),"true",
     "The real SVG filter must be ready before fallback disappears");
-  assert.ok(Math.abs(glassShell.rect.width-glassShell.lensRect.width)<1,
-    "The edge and middle must be one continuous surface");
+  assert.ok(Math.abs((glassShell.lensRect.width-glassShell.rect.width)-3.2)<.75,
+    "The lens must slightly overscan the clipped shell to hide only the white fringe");
 
   assert.equal(startup.sceneCount,1,"iOS Safari must have official WebGL scene source");
   assert.ok(startup.opticalMaps>=1,"Actual library displacement stages must exist");
