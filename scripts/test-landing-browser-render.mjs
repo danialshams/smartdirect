@@ -133,6 +133,13 @@ try {
   assert.equal(startup.strategy,"svg","Use genuine SVG LiquidGlass optical renderer");
   assert.match(startup.filter,/url\(/,"Liquid lens must refract LIVE backdrop pixels");
   assert.equal(startup.shadow,"none","Do not draw an unwanted internal rim");
+  const depth=await evaluate(`(() => {
+    const root=document.querySelector(".ap-header__backdrop");
+    return {shadow:getComputedStyle(root).boxShadow,
+      specular:getComputedStyle(root,"::after").backgroundImage};
+  })()`);
+  assert.match(depth.shadow,/rgba\(24, 44, 69, 0\.105\)/,"Soft neutral depth shadow must be present");
+  assert.match(depth.specular,/radial-gradient/,"Curved neutral reflection must be visible on white");
   assert.equal(startup.border,"0px","No white outline on header");
   assert.equal(startup.glassCount,1,"Exactly one native glass instance before scroll");
   assert.equal(startup.sceneCount,0,"No heavy HTML snapshot scene");
