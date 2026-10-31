@@ -24,11 +24,11 @@ const optics = {
   refraction:"lens" as const,
   lensProfile:"material" as const,
   lensOptions:{
-    strength:.082,depth:.12,curvature:.12,bend:.10,bendWidth:.45,
+    strength:.17,depth:.48,curvature:.43,bend:.23,bendWidth:.22,
     sheen:0,sheenWidth:0,sheenAngle:-25,specular:0,
     glow:0,glowSpread:0,glowFalloff:2.1,brightness:0,
   },
-  quality:"low" as const,
+  quality:"standard" as const,
   mobileFallback:"svg" as const,
   frost:0,
   blur:0,
