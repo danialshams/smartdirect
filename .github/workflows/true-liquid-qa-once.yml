@@ -36,10 +36,13 @@ jobs:
           done
           curl --fail --silent --output /dev/null http://127.0.0.1:3000/
           node scripts/qa-optical-lenses.cjs
-      - name: Commit proof screenshots to review branch only
+      - name: Commit optical diagnostics even if a browser cannot initialize refraction
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          test -d public/qa-liquid || exit 0
           git add public/qa-liquid/
+          git diff --cached --quiet && exit 0
           git commit -m "Capture refractive glass on Chromium and WebKit, light and dark scenes"
           git push origin HEAD:feature/true-liquid-optics-refinement-20261031
