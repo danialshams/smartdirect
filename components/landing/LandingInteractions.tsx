@@ -11,6 +11,18 @@ export function LandingInteractions() {
     const root = document.querySelector<HTMLElement>(".ap-site");
     const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // WebKit / Gecko use HTML snapshots behind the WebGL lens. Animating
+    // dozens of showcase cards during scroll invalidates their cached tiles,
+    // causing blank frames and expensive main-thread HTML re-rasterization.
+    // Chromium keeps the existing reveal animations (native live SVG lens).
+    const ua = navigator.userAgent;
+    const snapshotEngine = /Firefox\/|FxiOS\/|iPhone|iPad|iPod/.test(ua) ||
+      (/Safari\//.test(ua) && !/Chrome\/|Chromium\/|Edg\/|OPR\//.test(ua));
+    if (root && snapshotEngine) {
+      root.dataset.sceneCaptureStable = "true";
+      targets.forEach(element => element.setAttribute("data-visible", "true"));
+      return () => { delete root.dataset.sceneCaptureStable; };
+    }
     if (!root || reduced || !("IntersectionObserver" in window)) {
       targets.forEach(element => element.setAttribute("data-visible", "true"));
       return;
