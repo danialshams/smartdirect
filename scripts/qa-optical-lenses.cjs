@@ -25,6 +25,16 @@ fs.mkdirSync(out, { recursive: true });
       await page.screenshot({path:path.join(out,browserName+"-"+size.name+"-header.jpg"),type:"jpeg",quality:82});
       await page.locator(".ap-menu-toggle").click();
       await page.waitForTimeout(1200);
+      // WebKit must capture the HTML source before it can refract it.
+      // Measure this readiness rather than interpreting "initializing" as CSS blur.
+      const readinessStart=Date.now();
+      try {
+        await page.waitForFunction(()=>
+          [...document.querySelectorAll("[data-glass-strategy]")].some(
+            el=>["svg","webgl"].includes(el.getAttribute("data-glass-strategy"))),
+          null,{timeout:22000,polling:350});
+      }catch(e){console.log("GLASS_STILL_NOT_READY",browserName,size.name,Date.now()-readinessStart);}
+      console.log("GLASS_READY_WAIT_MS",browserName,size.name,Date.now()-readinessStart);
       const menu=await page.evaluate(()=>{
         const nav=document.querySelector(".ap-menu");
         const glass=[...document.querySelectorAll("[data-glass-strategy]")];
