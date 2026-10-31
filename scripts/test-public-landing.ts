@@ -15,6 +15,7 @@ const refresh=read("app/landing-refresh.css");
 const instagram=read("app/landing-instagram.css");
 const polish=read("app/landing-polish.css");
 const refraction=read("app/landing-refraction-fix.css");
+const live=read("app/landing-live-glass.css");
 const pkg=JSON.parse(read("package.json"));
 const lock=JSON.parse(read("package-lock.json"));
 assert.equal(pkg.dependencies.gsap,"3.14.2");
@@ -23,7 +24,7 @@ assert.equal(lock.packages["node_modules/simple-liquid-glass"].version,"5.4.0");
 for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />","<HeroMotion />",
  '<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'",
  "جایگاه مجوزهای آینده","در آینده","مدیریت کل پیجت رو بسپار به دایرا","رایگان شروع کن",
- "./landing-instagram.css","./landing-polish.css","./landing-refraction-fix.css"])
+ "./landing-instagram.css","./landing-polish.css","./landing-refraction-fix.css","./landing-live-glass.css"])
   assert.ok(page.includes(item),"Missing homepage contract: "+item);
 assert.doesNotMatch(page,/ورود به پنل|بازگشت به بالا|ap-hero__subtitle|RobotHeroScene|<video/);
 assert.match(page,/heroWords\.map/);
@@ -79,7 +80,10 @@ assert.match(header,/inert=\{!open\}/);
 assert.match(header,/event\.key==="Escape"/);
 assert.match(header,/returnFocus\.current/);
 assert.doesNotMatch(header,/hasOpened/);
-assert.match(header,/<LiquidGlass \{\.\.\.menuOptics\}/);
+assert.doesNotMatch(header,/menuOptics|blueOptics|ap-header__login-lens/);
+assert.match(header,/renderer:"svg" as const/);
+assert.match(header,/<div className="ap-menu__liquid">/);
+assert.equal((header.match(/<LiquidGlass/g)||[]).length,1,"Only header may create an expensive glass renderer");
 assert.match(header,/sheen:0/);
 assert.match(header,/specular:0/);
 assert.doesNotMatch(header,/window\.addEventListener\("scroll"|elementFromPoint/);
@@ -96,6 +100,7 @@ assert.match(interactions,/requestAnimationFrame/);
 assert.match(interactions,/passive:true/);
 assert.match(interactions,/window\.scrollTo/);
 assert.match(interactions,/LiquidGlass/);
+assert.match(interactions,/renderer:"svg" as const/);
 assert.match(interactions,/ChevronUp/);
 assert.match(interactions,/ap-backtop__lens/);
 assert.match(interactions,/prefers-reduced-motion: reduce/);
@@ -127,4 +132,11 @@ assert.match(page,/data-hero-cta data-liquid-glass-ignore/);
 assert.match(page,/Separate clipped rows must be direct scene children/);
 assert.match(interactions,/sheen:0/);
 assert.match(interactions,/specular:0/);
+assert.match(live,/\.ap-header__backdrop > div/);
+assert.match(live,/\.ap-backtop__lens > div/);
+assert.match(live,/\.liquid-glass-border/);
+assert.match(live,/backdrop-filter:blur\(3px\)/);
+assert.match(live,/clip-path:none!important/);
+assert.match(live,/\.ap-menu__content/);
+assert.match(live,/backdrop-filter:none!important/);
 console.log("DAIRA landing PASS: eight independent capture rows, transparent scene shell, rimless refractive header/back-to-top, vertically revealed menu, fast isolated GSAP hero.");
