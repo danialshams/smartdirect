@@ -38,7 +38,8 @@ assert.match(header,/inert=\{!open\}/);
 assert.match(header,/event\.key==="Escape"/);
 assert.match(header,/returnFocus\.current/);
 assert.doesNotMatch(header,/LiquidGlass|simple-liquid-glass|WebGL/);
-assert.match(interactions,/LiveOpticalSurface variant="backtop"/);
+assert.match(interactions,/ap-backtop__blue-blur/);
+assert.doesNotMatch(interactions,/LiveOpticalSurface/);
 assert.match(interactions,/IntersectionObserver/);
 assert.match(interactions,/passive:true/);
 assert.match(interactions,/ChevronUp/);
@@ -47,15 +48,16 @@ assert.doesNotMatch(interactions,/LiquidGlass|simple-liquid-glass/);
 assert.match(optics,/prepareOpticalMaps/);
 assert.match(optics,/import LiquidGlass from "simple-liquid-glass"/);
 assert.match(optics,/renderer: "svg"/);
-assert.match(optics,/displacementScale: 30/);
-assert.match(optics,/displacementScale: 17/);
-assert.ok(optics.includes('glassColor: "rgba(255,255,255,.028)"'));
-assert.ok(optics.includes('glassColor: "rgba(255,255,255,.17)"'));
+assert.match(optics,/displacementScale: 32/);
+assert.match(optics,/lensProfile: "loupe"/);
+assert.ok(optics.includes('glassColor: "rgba(255,255,255,.038)"'));
+assert.match(optics,/sheenAngle: -34/);
+assert.match(optics,/specular: 1\.65/);
 assert.ok(!optics.includes('background: "rgba(255,255,255,0)"'));
 
 
-assert.match(optics,/webglScene: "off"/);
-assert.match(optics,/lensProfile: "player"/);
+assert.doesNotMatch(optics,/webglScene: "on"/);
+assert.match(optics,/quality: "high"/);
 assert.match(optics,/className=\{\`ap-native-liquid/);
 assert.match(optics,/daira-header-map/);
 assert.match(optics,/daira-backtop-map/);
@@ -77,13 +79,15 @@ assert.match(css,/\.ap-optical-surface\[data-optics-mode="native"\]/);
 assert.match(css,/-webkit-backdrop-filter:saturate\(138%\) contrast\(105%\) url/);
 assert.match(css,/filter:url\("#daira-optical-displacement"\)/);
 assert.match(css,/box-shadow:none!important/);
-assert.ok(css.includes(".ap-backtop::after"),"Keep the user-requested white back-to-top outline");
+assert.ok(css.includes(".ap-backtop__lens.ap-backtop__blue-blur"),"Blurred blue back-to-top control must be styled");
+assert.match(css,/color:#fff!important/);
+assert.match(css,/backdrop-filter:blur\(9px\) saturate\(155%\)/);
 assert.ok(!css.includes("rgba(122,186,255,.20)"),"No synthetic blue halo");
 
-assert.match(css,/\.ap-native-liquid > \.liquid-glass-border/);
-assert.match(css,/border:2px solid rgba\(255,255,255,\.98\)/);
+assert.match(css,/\.ap-header__backdrop\.ap-native-liquid > \.liquid-glass-border/);
+assert.match(css,/\.ap-backtop::after\s*\{\s*content:none!important/);
 assert.match(css,/saturate\(138%\) contrast\(105%\)/);
-assert.match(css,/blur\(2\.4px\)/);
+assert.match(css,/blur\(9px\)/);
 assert.match(css,/daira-optical-backtop/);
 assert.doesNotMatch(page,/ArrowUpLeft/);
 assert.match(page,/رایگان شروع کن\s*<\/Link>/);
@@ -110,4 +114,4 @@ for(const id of ["comment","story","direct","share","live","reminder","inbox","p
   assert.ok(scenes.includes('id: "'+id+'"'),"Missing feature "+id);
 for(const label of ["ig-menu-sheet","ig-quickreplies","ig-live__badge","ig-comment-answer","ig-schedule"])
   assert.ok(previews.includes(label),"Missing Instagram-like preview "+label);
-console.log("DAIRA OPTICS V2 PASS: no WebGL capture dependency, prewarmed full-page fallback, native live filter, no inner white rim, CSS-only hero and all 11 features.");
+console.log("DAIRA OPTICS V2 PASS: no WebGL capture dependency, prewarmed full-page fallback, restored loupe spectral highlights, blue blurred backtop, CSS-only hero and all 11 features.");
