@@ -1,0 +1,160 @@
+/* Daira Instagram-like product visuals. These previews are illustrations,
+   not screenshots, API responses or live Instagram data. */
+
+.ap-social-showcase{background:linear-gradient(180deg,#f5f9ff 0%,#fff 15%,#f4f8ff 100%)!important;overflow:clip}
+.ap-social-showcase .ap-showcase__inner{max-width:1160px}
+.ap-social-showcase .ap-showcase__intro{margin-bottom:53px!important}
+.ap-social-showcase .ap-showcase__eyebrow{display:inline-flex;align-items:center;gap:7px;color:#365fbd}
+.ap-social-showcase .ap-showcase__intro h2{font-size:clamp(34px,4vw,59px);line-height:1.52}
+.ap-social-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.ap-social-card{grid-column:span 2;display:flex;flex-direction:column;position:relative;isolation:isolate;min-width:0;overflow:hidden;
+  border:1px solid rgba(215,230,250,.71);border-radius:30px;
+  background:linear-gradient(133deg,rgba(255,255,255,.96),rgba(239,246,255,.9));
+  box-shadow:0 16px 46px rgba(54,103,174,.067),inset 0 1px rgba(255,255,255,.94);
+  transition:transform .42s cubic-bezier(.17,.84,.2,1),box-shadow .4s ease;
+}
+.ap-social-card:hover{transform:translate3d(0,-4px,0);box-shadow:0 22px 50px rgba(53,99,182,.12)}
+.ap-social-card--wide{grid-column:span 4;display:grid;grid-template-columns:minmax(0,37%) minmax(0,63%);min-height:405px;align-items:center}
+.ap-social-card__copy{padding:32px 31px 25px;position:relative;z-index:1}
+.ap-social-card--wide .ap-social-card__copy{padding:42px}
+.ap-social-card__icon{display:grid;place-items:center;width:48px;height:48px;border-radius:16px;color:#2961df;
+  background:linear-gradient(145deg,#fff,#e4efff);box-shadow:0 6px 18px rgba(57,104,186,.12)}
+.ap-social-card__count{position:absolute;top:48px;left:31px;direction:ltr;font:500 12px Arial,sans-serif;color:#94a8c7}
+.ap-social-card__copy h3{margin-top:18px!important;color:#182c4f;font-size:clamp(21px,2.05vw,30px);line-height:1.65;font-weight:850}
+.ap-social-card__copy p{margin-top:7px!important;max-width:340px;color:#6680a1;font-size:12px;line-height:2}
+.ap-social-card__visual{display:grid;place-items:center;min-width:0;padding:0 21px 27px;flex:1}
+.ap-social-card--wide .ap-social-card__visual{padding:26px 24px}
+.ap-social-card--wide:nth-child(even){direction:ltr}
+.ap-social-card--wide:nth-child(even)>*{direction:rtl}
+.ap-social-card--wide:nth-child(even) .ap-social-card__copy{text-align:right}
+.ap-social-card--wide:nth-child(even) .ap-social-card__count{left:42px}
+.ig-preview{width:min(100%,390px);min-height:305px;position:relative;overflow:hidden;direction:rtl;
+  border:1px solid #e5e9f0;border-radius:20px;background:#fff;color:#202532;
+  box-shadow:0 10px 32px rgba(30,52,100,.1);font-family:"DairaVazir","Vazirmatn",Arial,sans-serif}
+.ap-social-card--wide .ig-preview{width:min(100%,470px);min-height:326px}
+.ig-preview *{box-sizing:border-box}
+.ig-topbar{height:47px;padding:0 15px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #eef0f4;color:#242a35}
+.ig-topbar strong{flex:1;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ig-profile{display:flex;align-items:center;gap:8px;min-width:0}
+.ig-profile>span:last-child{display:grid;gap:1px;min-width:0}
+.ig-profile strong{font-size:11px;direction:ltr;font-weight:800;text-align:right}
+.ig-profile small{font-size:9px;color:#a4aab6}
+.ig-avatar{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(150deg,#ffce58 0%,#f64783 53%,#8a40e6 100%);color:#fff;
+  border:2px solid #fff;outline:1px solid rgba(238,80,134,.45);font:700 13px Arial,sans-serif}
+.ig-avatar--large{width:53px;height:53px;font:700 21px Arial,sans-serif}
+.ig-chat{min-height:212px;padding:14px 13px;display:flex;flex-direction:column;align-items:flex-start;gap:11px}
+.ig-chat__center{align-self:center;text-align:center;display:grid;justify-items:center;gap:5px;margin:2px 0 9px}
+.ig-chat__center strong{font:700 12px Arial,sans-serif}
+.ig-chat__center small{font-size:9px;color:#89909c}
+.ig-bubble{max-width:83%;padding:9px 13px;background:#f0f1f5;color:#242b37;border-radius:16px 16px 5px 16px;font-size:11px;line-height:1.8}
+.ig-bubble--mine{background:linear-gradient(120deg,#486bfb,#8657e8);color:white;align-self:flex-end;border-radius:16px 16px 16px 5px}
+.ig-seen{display:flex;gap:4px;align-items:center;align-self:flex-end;color:#9da7b7;font-size:9px;direction:ltr}
+.ig-input{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:36px;margin:0 12px 11px;border:1px solid #e6e7ef;border-radius:999px;padding:6px 14px;color:#949eac;font-size:10px}
+.ig-input>span:last-child{display:flex;gap:10px}
+.ig-timestamp{display:flex;gap:5px;align-items:center;align-self:center;color:#687b9c;font-size:9px;background:#f3f6fe;padding:4px 10px;border-radius:40px}
+.ig-quickreplies{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
+.ig-quickreplies span{font-size:10px;font-weight:700;padding:7px 10px;border-radius:14px;color:#1966df;background:#e7f0ff;border:1px solid #afd2ff}
+.ig-menu-sheet{position:absolute;left:0;right:0;bottom:0;padding:11px 18px 17px;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -12px 28px rgba(31,42,62,.18)}
+.ig-sheet-handle{display:block;margin:0 auto 10px;width:36px;height:4px;border-radius:99px;background:#d8dce4}
+.ig-menu-sheet>strong{display:flex;gap:6px;align-items:center;font-size:12px;margin-bottom:8px}
+.ig-menu-sheet>div{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:9px 1px;border-bottom:1px solid #f1f2f6;color:#363f53}
+.ig-menu-sheet>div:last-child{border:0}
+.ig-feed-top{display:flex;align-items:center;justify-content:space-between;padding:9px 13px}
+.ig-post-image{height:170px;position:relative;overflow:hidden;display:grid;place-items:center;
+  background:radial-gradient(circle at 73% 24%,#e9b2c9 0%,transparent 40%),
+  linear-gradient(145deg,#e0b6df,#fbebd9 58%,#b7b8e6)}
+.ig-post-object{height:100px;width:82px;border-radius:22px 22px 13px 13px;background:linear-gradient(150deg,#fffcf0,#d4c7ce);
+  transform:rotate(-13deg);box-shadow:19px 14px 32px rgba(63,56,84,.24)}
+.ig-post-object:before{content:"";display:block;width:35px;height:22px;border:7px solid #ece3e4;border-bottom:0;border-radius:20px 20px 0 0;margin:-16px auto 0}
+.ig-post-image>span{position:absolute;bottom:13px;left:15px;direction:ltr;letter-spacing:2px;font:700 10px Arial;color:#5e5478}
+.ig-feed-actions{display:flex;gap:13px;align-items:center;padding:11px 14px 5px;color:#252b36}
+.ig-feed-actions svg:last-child{margin-right:auto}
+.ig-post-comments{padding:4px 14px;font-size:10px}
+.ig-post-comments strong{margin-left:6px}
+.ig-comment-answer{display:flex;align-items:center;gap:5px;background:#edf3ff;color:#3261b9;padding:7px 12px;margin:7px 11px 13px;border-radius:12px;font-size:10px}
+.ig-story{position:relative;overflow:hidden;min-height:309px;background:linear-gradient(148deg,#6b8cc5,#bd8ca8 50%,#e8cfc6);color:#fff}
+.ig-story--share{background:linear-gradient(145deg,#6b6bba,#dca4c7 56%,#e8b97c)}
+.ig-story__progress{display:flex;gap:3px;padding:10px 10px 0}
+.ig-story__progress span{height:2px;border-radius:5px;background:rgba(255,255,255,.85);flex:1}
+.ig-story__top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
+.ig-story__top .ig-profile strong,.ig-story__top .ig-profile small{color:white}
+.ig-story__art{min-height:196px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.ig-story__circle{position:absolute;width:128px;height:128px;background:radial-gradient(circle at 31% 28%,#fff9 0%,#ffc1d8 25%,#e578a7 65%,#bd71c2 100%);filter:drop-shadow(0 12px 19px #532c7455);border-radius:40% 55% 42% 56%;transform:rotate(-20deg)}
+.ig-story__art strong{position:relative;font-size:18px;color:#fff;text-shadow:0 2px 12px #4e356e55}
+.ig-story__art>span:last-child{position:relative;font-size:13px}
+.ig-story__bottom{display:flex;align-items:center;gap:12px;padding:10px 13px;position:relative;z-index:1}
+.ig-story__bottom span{flex:1;border:1px solid #ffffffad;border-radius:30px;padding:8px 14px;font-size:10px}
+.ig-mention{position:absolute;z-index:2;top:140px;right:15%;padding:12px;background:#fff;color:#373c52;border-radius:13px;
+  display:flex;align-items:center;gap:5px;font:700 13px Arial;box-shadow:0 5px 16px #4a2b6750}
+.ig-mention span{font:500 9px "DairaVazir",sans-serif;color:#64708f}
+.ig-live{position:relative;overflow:hidden;min-height:316px;background:linear-gradient(147deg,#282b52,#6e3b70 55%,#c27089);color:#fff}
+.ig-live__badge{display:flex;align-items:center;gap:4px;padding:4px 8px;background:#ed3f7c;border-radius:4px;font:700 11px Arial}
+.ig-live__photo{height:138px;display:grid;place-items:center}
+.ig-live__object{width:91px;height:116px;border-radius:38% 38% 12% 12%;background:linear-gradient(140deg,#b698cf,#6a5595);box-shadow:0 0 30px #e9b7ee55}
+.ig-live__comments{display:grid;gap:9px;padding:4px 15px;min-height:66px;font-size:10px}
+.ig-live__comments>div{background:#0003;padding:4px 9px;border-radius:20px;width:max-content;max-width:100%}
+.ig-inbox-tabs{display:flex;gap:20px;padding:13px 17px;color:#8d92a0;font-size:10px;border-bottom:1px solid #f2f2f5}
+.ig-tab-active{color:#222c47;font-weight:800;position:relative}
+.ig-tab-active:after{content:"";position:absolute;bottom:-14px;inset-inline:0;height:2px;background:#242a37}
+.ig-inbox-row{display:flex;gap:10px;align-items:center;padding:11px 14px}
+.ig-person{display:grid;place-items:center;width:40px;height:40px;flex:none;border-radius:50%;background:linear-gradient(135deg,#d8caee,#986caa);color:white;font-size:14px}
+.ig-person--1{background:linear-gradient(135deg,#98caea,#3765ab)}
+.ig-person--2{background:linear-gradient(135deg,#eac2a1,#b07759)}
+.ig-inbox-row>div{flex:1;display:grid;gap:3px}
+.ig-inbox-row strong{font-size:11px}
+.ig-inbox-row small{font-size:10px;color:#858c9c}
+.ig-inbox-time{display:grid;gap:5px;justify-items:center;color:#abb1bc;font-size:9px}
+.ig-inbox-time i{width:7px;height:7px;border-radius:50%;background:#2885fc}
+.ig-inbox-bottom{border-top:1px solid #edf0f6;color:#647ba2;font-size:10px;padding:12px;text-align:center}
+.ig-profile-stats{display:flex;align-items:center;justify-content:space-around;gap:11px;padding:13px 16px}
+.ig-profile-stats>div{display:grid;text-align:center;gap:4px}
+.ig-profile-stats strong{font-size:11px}.ig-profile-stats small{font-size:9px;color:#7f8491}
+.ig-photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:4px}
+.ig-photo-grid__item{position:relative;aspect-ratio:1.16;display:grid;place-items:center;color:#ffffffa8;
+  background:linear-gradient(145deg,#bdcce5,#6887b1)}
+.ig-photo-grid__item--1,.ig-photo-grid__item--4{background:linear-gradient(145deg,#e6c6b3,#c88f83)}
+.ig-photo-grid__item--2,.ig-photo-grid__item--5{background:linear-gradient(145deg,#a6c8be,#558b8d)}
+.ig-publish-clock{position:absolute;top:8px;left:8px;background:#fff;color:#3168d8;border-radius:50%;width:23px;height:23px;display:grid;place-items:center}
+.ig-schedule{display:flex;align-items:center;gap:7px;padding:12px;font-size:10px;color:#3975c6}
+.ig-schedule>span{flex:1}
+.ig-insights-head{display:flex;gap:9px;align-items:center;padding:18px 18px 8px;color:#293a5c}
+.ig-insights-head strong{font-size:13px}
+.ig-insights-labels{display:flex;justify-content:space-around;padding:13px 16px;font-size:10px;color:#55698c;background:#f7f9ff;margin:10px 12px;border-radius:11px}
+.ig-insights-bars{height:135px;display:flex;align-items:flex-end;gap:9px;padding:14px 24px 0;margin-top:10px}
+.ig-insights-bars span{flex:1;background:linear-gradient(180deg,#668fff,#c6d6ff);border-radius:6px 6px 0 0}
+.ig-insights-caption{text-align:center;color:#97a3b8;font-size:10px;margin:12px!important}
+
+/* One-shot scroll entrance: preview, title and copy each have their own reveal. */
+.ap-site[data-motion-ready] .ap-social-showcase [data-reveal]:not([data-visible]){
+  opacity:0;transform:translate3d(0,35px,0) scale(.97);
+}
+.ap-site .ap-social-showcase [data-reveal]{
+  transition:opacity .8s cubic-bezier(.2,.75,.2,1),transform .8s cubic-bezier(.15,.82,.2,1);
+  transition-delay:calc(var(--reveal-index,0)*75ms);
+}
+.ap-site .ap-social-showcase [data-reveal][data-visible]{opacity:1;transform:translate3d(0,0,0) scale(1)}
+.ap-social-showcase .ap-social-card__visual[data-reveal]{transition-delay:125ms}
+.ap-social-showcase .ap-social-card__copy p[data-reveal]{transition-delay:110ms}
+
+@media(max-width:800px){
+  .ap-social-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .ap-social-card{grid-column:span 1}
+  .ap-social-card--wide{grid-column:span 2;grid-template-columns:38% 62%}
+  .ap-social-card__copy{padding:23px}
+  .ap-social-card--wide .ap-social-card__copy{padding:26px}
+  .ap-social-card__visual{padding:0 14px 20px}
+  .ap-social-card--wide .ap-social-card__visual{padding:15px}
+}
+@media(max-width:600px){
+  .ap-social-grid{grid-template-columns:minmax(0,1fr);gap:19px}
+  .ap-social-card,.ap-social-card--wide{grid-column:span 1;display:flex;flex-direction:column;min-height:unset}
+  .ap-social-card__copy,.ap-social-card--wide .ap-social-card__copy{padding:26px 24px 20px}
+  .ap-social-card__count,.ap-social-card--wide:nth-child(even) .ap-social-card__count{top:35px;left:23px}
+  .ap-social-card__visual,.ap-social-card--wide .ap-social-card__visual{padding:0 20px 23px}
+  .ap-social-showcase .ap-showcase__intro{margin-bottom:34px!important}
+  .ap-social-showcase .ap-showcase__intro h2{font-size:clamp(30px,8vw,42px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .ap-social-card,.ap-site .ap-social-showcase [data-reveal]{transition:none!important;transform:none!important;opacity:1!important}
+}
