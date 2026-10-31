@@ -40,7 +40,9 @@ const headerLens = {
   quality: "high" as const,
   mobileFallback: "svg" as const,
   // Keep physical lens geometry, never overlay a white or blue fake glass.
-  displacementScale: 32,
+  // Restore the original 2026-10-31 loupe strength; the previous 32px
+  // override bypassed the real lens profile and flattened visible bending.
+  scale: 156,
   frost: 0,
   blur: 0,
   saturation: 120,
