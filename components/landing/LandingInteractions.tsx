@@ -1,10 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUp } from "lucide-react";
+import LiquidGlass from "simple-liquid-glass";
+import { ChevronUp } from "lucide-react";
+
+const buttonOptics={
+  refraction:"lens" as const,
+  lensProfile:"material" as const,
+  lensOptions:{
+    strength:.13,depth:.23,curvature:.48,bend:.32,bendWidth:.23,
+    sheen:1.34,sheenWidth:4,specular:1.6,glow:.09
+  },
+  quality:"low" as const,
+  mobileFallback:"svg" as const,
+  frost:0,blur:0,scale:133,saturation:120,dispersion:6,aberrationIntensity:.06,
+  borderColor:"rgba(255,255,255,0)",
+  glassColor:"rgba(255,255,255,.085)",
+  background:"rgba(255,255,255,.025)"
+};
 
 export function LandingInteractions() {
   const [showTop, setShowTop] = useState(false);
+  const [hasShown, setHasShown] = useState(false);
 
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(".ap-site");
@@ -20,44 +37,51 @@ export function LandingInteractions() {
         entry.target.setAttribute("data-visible", "true");
         observer.unobserve(entry.target);
       }
-    }, { threshold: .08, rootMargin: "0px 0px -20px 0px" });
+    }, { threshold: .07, rootMargin: "0px 0px -32px 0px" });
     targets.forEach(element => observer.observe(element));
     root.setAttribute("data-motion-ready", "true");
-    return () => { observer.disconnect(); root.removeAttribute("data-motion-ready"); };
-  }, []);
+    return () => {observer.disconnect(); root.removeAttribute("data-motion-ready");};
+  },[]);
 
   useEffect(() => {
-    let frame = 0;
-    const check = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(() => {
-        setShowTop(window.scrollY > 520);
-        frame = 0;
+    let frame=0;
+    let displayed=false;
+    const check=()=>{
+      if(frame)return;
+      frame=window.requestAnimationFrame(()=>{
+        const next=window.scrollY>540;
+        if(next!==displayed){displayed=next;setShowTop(next);if(next)setHasShown(true);}
+        frame=0;
       });
     };
     check();
-    window.addEventListener("scroll", check, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", check);
-      if (frame) window.cancelAnimationFrame(frame);
-    };
-  }, []);
+    window.addEventListener("scroll",check,{passive:true});
+    return ()=>{window.removeEventListener("scroll",check);if(frame)window.cancelAnimationFrame(frame);};
+  },[]);
 
-  const goToTop = () => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
+  const goToTop=()=>{
+    const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
   };
 
   return (
-    <button type="button"
-      className={"ap-backtop" + (showTop ? " ap-backtop--visible" : "")}
-      data-liquid-glass-ignore=""
-      aria-label="بازگشت به بالای صفحه"
-      title="بازگشت به بالا"
-      disabled={!showTop}
-      tabIndex={showTop ? 0 : -1}
-      onClick={goToTop}>
-      <ArrowUp size={23} strokeWidth={2.35} aria-hidden="true" />
-    </button>
+    <div className={"ap-backtop"+(showTop?" ap-backtop--visible":"")} data-liquid-glass-ignore="">
+      {hasShown && <LiquidGlass
+        {...buttonOptics}
+        radius={28}
+        className="ap-backtop__lens"
+        style={{position:"absolute",inset:0,pointerEvents:"none"}}
+      ><span className="ap-backtop__fill" aria-hidden="true"/></LiquidGlass>}
+      <button type="button"
+        className="ap-backtop__action"
+        aria-label="بازگشت به بالای صفحه"
+        title="بازگشت به بالا"
+        disabled={!showTop}
+        tabIndex={showTop?0:-1}
+        onClick={goToTop}
+      >
+        <ChevronUp size={28} strokeWidth={2.8} aria-hidden="true"/>
+      </button>
+    </div>
   );
 }

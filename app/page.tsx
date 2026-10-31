@@ -11,6 +11,8 @@ import { FeatureShowcase } from "../components/landing/FeatureShowcase";
 import "./simple-home.css";
 import "./showcase.css";
 import "./landing-refresh.css";
+import "./landing-instagram.css";
+import "./landing-polish.css";
 
 export const metadata:Metadata = {
   title:"دایرا | همه تعاملات پیجت، در یک فضای ساده",
@@ -28,7 +30,6 @@ export const metadata:Metadata = {
    at the hero even if the previous URL had a section hash. */
 const initialScrollGuard = "(function(){try{var n=performance.getEntriesByType('navigation')[0];var reload=n&&n.type==='reload';if(reload&&location.hash){history.replaceState(null,'',location.pathname+location.search);}if(reload||!location.hash){history.scrollRestoration='manual';scrollTo(0,0);addEventListener('pageshow',function(){if(!location.hash)scrollTo(0,0);},{once:true});}}catch(e){}})();";
 
-const heroFragments=["د","ا","ی","ر","ا","پ","ی","ج","ت","م","د","ی","ر","ی","ت"];
 const heroWords=["مدیریت","کل","پیجت","رو","بسپار","به","دایرا"];
 
 const footerLinks=[
@@ -51,9 +52,6 @@ export default function Home() {
         <section className="ap-hero" aria-labelledby="ap-hero-title">
           <div className="ap-hero__ambient" aria-hidden="true"/>
           <div className="ap-shell ap-hero__content">
-            <div className="ap-hero__fragments" aria-hidden="true">
-              {heroFragments.map((letter,index)=><span key={index} data-hero-fragment style={{"--fragment-index":index} as CSSProperties}>{letter}</span>)}
-            </div>
             <h1 id="ap-hero-title" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly>
               {heroWords.map((word,index)=><span className="ap-hero__word" data-hero-word key={word}>{word}{index<heroWords.length-1?" ":""}</span>)}
             </h1>
