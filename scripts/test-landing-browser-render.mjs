@@ -158,8 +158,8 @@ try {
   ),1800);
   assert.equal(await evaluate('document.querySelector(".daira-library-glass-frame").dataset.glassReady'),"true",
     "The real SVG filter must be ready before fallback disappears");
-  assert.ok(Math.abs(glassShell.rect.width-glassShell.lensRect.width)<1,
-    "The edge and middle must be one continuous surface");
+  assert.ok(Math.abs((glassShell.lensRect.width-glassShell.rect.width)-3.2)<.75,
+    "The lens must slightly overscan the clipped shell to hide only the white fringe");
 
   assert.equal(startup.sceneCount,1,"iOS Safari must have official WebGL scene source");
   assert.ok(startup.opticalMaps>=1,"Actual library displacement stages must exist");
@@ -214,36 +214,32 @@ try {
   assert.equal(roots.lens,"auto","A nested isolated lens also traps the backdrop");
   assert.ok(!roots.blueFill.includes("241, 249, 255"),"Header must not have a blue tint");
 
-  // The animation must only START when fonts and hydration have finished, so
-  // it is visibly scattered on actual first load, unlike a 640ms CSS animation
-  // that usually finishes before a visitor can see it.
+  // Headline appears once as a complete sentence: no scatter/translation.
   await waitFor(async()=>(await evaluate("document.documentElement.dataset.dairaHero"))==="play");
   const hero=await evaluate(`(() => {
-    const word=document.querySelector("[data-hero-word]");
-    const style=getComputedStyle(word);
-    return {name:style.animationName,duration:style.animationDuration,
-      spread:parseFloat(style.getPropertyValue("--word-x"))};
+    const title=document.querySelector("[data-hero-assembly]");
+    const word=title.querySelector("[data-hero-word]");
+    const hs=getComputedStyle(title);
+    return {name:hs.animationName,duration:hs.animationDuration,
+      titleTransform:hs.transform,wordTransform:getComputedStyle(word).transform,
+      wordAnimation:getComputedStyle(word).animationName};
   })()`);
-  assert.match(hero.name,/daira-word-assemble/);
-  assert.ok(parseFloat(hero.duration)>=1.0,"Headline must assemble visibly rather than instantly");
-  assert.ok(Math.abs(hero.spread)>=100,"Words must actually start scattered");
-  // The first load should visibly ease words together, then settle without
-  // replay, jumps, or continual style updates during scrolling.
-  await sleep(330);
-  const midHero=await evaluate(`(() => {
-    const w=document.querySelector("[data-hero-word]");
-    return {state:document.documentElement.dataset.dairaHero,
-      transform:getComputedStyle(w).transform,
-      animation:getComputedStyle(w).animationName};
-  })()`);
-  assert.equal(midHero.state,"play","Hero assembly must still be running after the first paint");
-  assert.notEqual(midHero.transform,"none","Words must have an actual composited travel path");
-  assert.match(midHero.animation,/daira-word-assemble/);
+  assert.match(hero.name,/daira-hero-fade/);
+  assert.ok(parseFloat(hero.duration)>=1.4,"Headline must fade slowly on first entry");
+  assert.equal(hero.wordTransform,"none","Words must never scatter or translate");
+  assert.equal(hero.wordAnimation,"none","No per-word animation is allowed");
+  await sleep(320);
+  const midHero=await evaluate(`(() => ({
+    state:document.documentElement.dataset.dairaHero,
+    opacity:parseFloat(getComputedStyle(document.querySelector("[data-hero-assembly]")).opacity)
+  }))()`);
+  assert.equal(midHero.state,"play");
+  assert.ok(midHero.opacity>0 && midHero.opacity<1,"Entire sentence should be visibly fading");
   const motionImage=(await send("Page.captureScreenshot",{format:"jpeg",quality:56,captureBeyondViewport:false})).data;
   console.log("DAIRA_DIAG_SCREENSHOT_HERO_MOTION="+motionImage);
   await waitFor(async()=>await evaluate('document.documentElement.dataset.dairaHero==="done"'),5000);
-  assert.equal(await evaluate('document.querySelector("[data-hero-assembly]").hasAttribute("data-liquid-glass-ignore")'),false,
-    "Hero text should rejoin the Safari backdrop source only after its motion finishes");
+  assert.equal(await evaluate('getComputedStyle(document.querySelector("[data-hero-assembly]")).opacity'),"1");
+  assert.equal(await evaluate('document.querySelector("[data-hero-assembly]").hasAttribute("data-liquid-glass-ignore")'),false);
 
   // Contrast fixture under the header catches regressions where an SVG
   // backdrop-filter reports a valid URL but has no visual pixels to sample.
@@ -338,6 +334,7 @@ try {
       svgStroke:getComputedStyle(action.querySelector("svg")).stroke,
       borderWidth:getComputedStyle(overlay,"::after").borderTopWidth,
       borderContent:getComputedStyle(overlay,"::after").content,
+      buttonShadow:getComputedStyle(b).boxShadow,
       glassCount:document.querySelectorAll('[data-liquid-glass]').length
     };
   })()`);
@@ -345,6 +342,7 @@ try {
   assert.match(scrolled.headerFilter,/url\(/);
   assert.match(scrolled.buttonColor,/linear-gradient/);
   assert.match(scrolled.buttonBlur,/blur\(15px\)/);
+  assert.equal(scrolled.buttonShadow,"none","No blue glow around the back-to-top control");
   assert.equal(scrolled.arrowColor,"rgb(255, 255, 255)");
   assert.equal(scrolled.svgStroke,"rgb(255, 255, 255)");
   assert.equal(scrolled.borderContent,"none","Blue blurred button must have NO white border overlay");

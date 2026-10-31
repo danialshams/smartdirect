@@ -55,6 +55,50 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
     };
   }, [onCaptureError]);
 
+  // Safari captures sections into textures. When crossing into a section
+  // whose screenshot predates a lazy image or other DOM paint, the old
+  // reflection can linger until the library sees another mutation. Revalidate
+  // ONLY the current section after scrolling settles, and only once per
+  // entrance (never on every animation frame or across the whole page).
+  useEffect(() => {
+    const scene = root.current;
+    if (!capture || !scene) return;
+    const sections = Array.from(scene.children).filter(
+      (node): node is HTMLElement =>
+        node instanceof HTMLElement &&
+        (node.matches("main, section.ap-showcase, footer"))
+    );
+    const seen = new WeakMap<HTMLElement, number>();
+    let settle: ReturnType<typeof setTimeout> | undefined;
+    let lastY = window.scrollY;
+    let lastSection: HTMLElement | null = null;
+    const warm = () => {
+      const x = window.innerWidth / 2;
+      const y = Math.min(window.innerHeight - 1, 92);
+      const node = document.elementFromPoint(x, y);
+      const section = (node instanceof Element ? node.closest("main, section.ap-showcase, footer") : null) as HTMLElement | null;
+      if (!section || !sections.includes(section)) return;
+      const now = performance.now();
+      // Each new section gets one prompt refresh. Repeat only on revisits
+      // after 6s, to avoid html-to-image snapshots thrashing while scrolling.
+      if (section === lastSection || now - (seen.get(section) ?? -Infinity) < 6000) return;
+      lastSection = section;
+      seen.set(section, now);
+      section.dataset.dairaGlassViewportRevision = String(Math.round(now));
+    };
+    const onScroll = () => {
+      if (Math.abs(window.scrollY - lastY) < 8) return;
+      lastY = window.scrollY;
+      if (settle) clearTimeout(settle);
+      settle = setTimeout(warm, 95);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (settle) clearTimeout(settle);
+    };
+  }, [capture]);
+
   useEffect(() => () => {
     for (const timer of timers.current) clearTimeout(timer);
     timers.current.clear();
