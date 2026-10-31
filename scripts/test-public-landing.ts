@@ -70,7 +70,7 @@ assert.doesNotMatch(robot, /<image\s+href=/);
 assert.match(robot, /<RobotThreeModel \/>/);
 assert.match(sculpture, /from "@react-three\/fiber"/);
 assert.match(sculpture, /<Canvas/);
-assert.match(sculpture, /<Eye side=\{-1\}/);
+assert.match(sculpture, /<Eye side=\{-1\}\s+material=/);
 assert.match(sculpture, /<SideModule side=\{side\}/);
 assert.match(sculpture, /<sphereGeometry/);
 assert.match(sculpture, /<torusGeometry/);
