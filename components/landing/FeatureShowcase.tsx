@@ -34,7 +34,7 @@ export function FeatureShowcase() {
           <section
             key={ids.join("-")}
             id={rowIndex === 0 ? "features" : undefined}
-            className={"ap-showcase ap-showcase-capture" +
+            className={"ap-showcase ap-social-showcase ap-showcase-capture" +
               (rowIndex === 0 ? " ap-showcase-capture--first" : "") +
               (rowIndex === rows.length - 1 ? " ap-showcase-capture--last" : "") +
               (rowIndex % 2 ? " ap-showcase-capture--alternate" : "")}
