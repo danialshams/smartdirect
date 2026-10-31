@@ -66,6 +66,7 @@ try {
         strategy: panel.dataset.glassStrategy,
         reason: panel.dataset.glassReason,
         ready: document.querySelector(".daira-library-glass-frame").dataset.glassReady,
+        ever: document.querySelector(".daira-library-glass-frame").dataset.opticalEverReady,
         captures: Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures ?? 0),
       });
     }
@@ -136,6 +137,9 @@ try {
     throw Error("WebKit is not refracting in real WebGL: "+JSON.stringify({first, modes:[...modes]}));
   }
   if (frames.some(x=>x.strategy==="off")) throw Error("WebKit optical renderer was disabled while scrolling");
+  if (frames.some(x=>x.ready !== "true" || x.ever !== "true")) {
+    throw Error("Native optics must never flash back to CSS blur after first successful frame");
+  }
   const firstActive = frames.findIndex(x=>x.strategy==="webgl");
   if (firstActive<0 || frames.slice(firstActive+1).some(x=>x.strategy!=="webgl")) {
     throw Error("WebGL renderer was destroyed and reinitialized between live scroll frames: "
