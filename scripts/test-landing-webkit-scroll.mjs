@@ -52,6 +52,7 @@ try {
     const frame=document.querySelector(".daira-library-glass-frame");
     return frame?.dataset.opticalSourceBound === "true" &&
       frame?.dataset.glassReady === "true" &&
+      frame?.dataset.opticalEverReady === "true" &&
       lens?.dataset.glassStrategy === "webgl";
   },null,{timeout:25000});
 
