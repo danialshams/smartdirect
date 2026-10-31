@@ -114,7 +114,7 @@ try {
   await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop")?.dataset.liquidHeader')) === "native");
   const startup=await waitFor(async()=>await evaluate(`(() => {
     const root=document.querySelector(".ap-header__backdrop");
-    const optical=root?.querySelector('.ap-liquid-header__refraction');
+    const optical=root?.querySelector('.ap-liquid-header__lens > div[style*="backdrop-filter"]');
     if(!root||!optical)return null;
     return {
       strategy:root.dataset.liquidHeader,
@@ -123,11 +123,11 @@ try {
       border:getComputedStyle(root).borderTopWidth,
       glassCount:document.querySelectorAll('.ap-liquid-header').length,
       sceneCount:document.querySelectorAll('[data-liquid-glass-scene]').length,
-      opticalMaps:document.querySelectorAll('#daira-optical-displacement feDisplacementMap').length,
+      opticalMaps:root.querySelectorAll('feDisplacementMap').length,
       oldApproximation:!!root.querySelector('.ap-optical-native'),
       ctaIcons:document.querySelector(".ap-hero__cta")?.querySelectorAll("svg").length,
       materialColor:getComputedStyle(optical).backgroundColor,
-      displacementScales:[...document.querySelectorAll("#daira-optical-displacement feDisplacementMap")].map(x=>Number(x.getAttribute("scale")))
+      displacementScales:[...root.querySelectorAll("feDisplacementMap")].map(x=>Number(x.getAttribute("scale")))
     };
   })()`));
   assert.equal(startup.strategy,"native","Use a truly refractive live-backdrop SVG lens");
@@ -151,17 +151,17 @@ try {
   console.log("DAIRA MATERIAL",JSON.stringify({color:startup.materialColor,alpha:materialAlpha,scales:startup.displacementScales}));
   assert.ok(materialAlpha>.025 && materialAlpha<.08,
     "The backdrop refractor must stay neutral and translucent");
-  assert.ok(Math.max(...startup.displacementScales) >= 30,
-    "The glass must bend actual background pixels, not just blur them");
-  assert.ok(Math.max(...startup.displacementScales) <= 40,
-    "Constrain the edge lens to the 62px-deep header");
+  assert.ok(Math.max(...startup.displacementScales) >= 46,
+    "The lens must bend live background pixels, not just tint or blur them");
+  assert.ok(Math.max(...startup.displacementScales) <= 58,
+    "Constrain the live curved lens to the 62px header");
 
   // Temporary public-landing visual diagnostics. The user reports no visually
   // discernible lens despite a positive filter CSS property test.
   const opticDebug=await evaluate(`(() => {
     const h=document.querySelector(".ap-header");
     const g=document.querySelector(".ap-header__backdrop");
-    const panel=g.querySelector(".ap-liquid-header__refraction");
+    const panel=g.querySelector('.ap-liquid-header__lens > div[style*="backdrop-filter"]');
     const rect=g.getBoundingClientRect();
     const hero=document.querySelector(".ap-hero");
     const selectors=[".ap-header",".ap-header__backdrop",".ap-hero",".ap-hero__ambient",".ap-site","main"];
@@ -186,7 +186,7 @@ try {
     headerBackdrop:getComputedStyle(document.querySelector(".ap-header")).backdropFilter,
     headerFilter:getComputedStyle(document.querySelector(".ap-header")).filter,
     lens:getComputedStyle(document.querySelector(".ap-header__backdrop")).isolation,
-    blueFill:getComputedStyle(document.querySelector(".ap-liquid-header__refraction")).backgroundColor
+    blueFill:getComputedStyle(document.querySelector('.ap-liquid-header__lens > div[style*="backdrop-filter"]')).backgroundColor
   }))()`);
   assert.equal(roots.header,"auto","An isolated sticky header prevents sampling the scrolling page");
   assert.equal(roots.headerBackdrop,"none",
@@ -222,7 +222,7 @@ try {
   await evaluate(`(() => {
     const style=document.createElement("style");
     style.id="daira-ci-disable-refraction";
-    style.textContent='.ap-liquid-header__refraction{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}';
+    style.textContent='.ap-liquid-header__lens > div[style*="backdrop-filter"]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}';
     document.head.appendChild(style);
   })()`);
   await sleep(140);
@@ -274,7 +274,7 @@ try {
     const overlay=document.querySelector(".ap-backtop");
     return {
       headerStrategy:h.dataset.liquidHeader,
-      headerFilter:getComputedStyle(h.querySelector(".ap-liquid-header__refraction")).backdropFilter,
+      headerFilter:getComputedStyle(h.querySelector('.ap-liquid-header__lens > div[style*="backdrop-filter"]')).backdropFilter,
       buttonColor:getComputedStyle(b).backgroundImage,
       buttonBlur:getComputedStyle(b).backdropFilter,
       arrowColor:getComputedStyle(action).color,
