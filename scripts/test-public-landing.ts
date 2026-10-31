@@ -14,6 +14,8 @@ const css=read("app/landing-optics-v2.css");
 const hero=read("components/landing/HeroAssembly.tsx");
 const showcaseStyles=read("app/showcase.css");
 const polish=read("app/landing-polish.css");
+const liquidHeader=read("components/landing/LiquidHeaderSurface.tsx");
+const liquidHeaderCSS=read("app/liquid-header.css");
 
 for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />",
   '<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'",
@@ -31,7 +33,13 @@ for(const route of ["terms","about","contact"])
 
 assert.match(root,/LiveOpticsDefinitions/);
 assert.doesNotMatch(root,/LiquidGlassScene|maxCacheBytes|simple-liquid-glass/);
-assert.match(header,/LiveOpticalSurface variant="header"/);
+assert.match(header,/<LiquidHeaderSurface \/>/);
+assert.match(liquidHeader,/prepareOpticalMaps\(\)/);
+assert.match(liquidHeader,/ap-liquid-header__refraction/);
+assert.match(liquidHeader,/ap-liquid-header__glint/);
+assert.match(liquidHeaderCSS,/backdrop-filter:contrast\(1\.045\) saturate\(148%\) url/);
+assert.match(liquidHeaderCSS,/\.ap-header\[data-landing-header\]/);
+assert.match(page,/import "\.\/liquid-header\.css"/);
 assert.match(header,/aria-expanded=\{open\}/);
 assert.match(header,/aria-controls="ap-menu"/);
 assert.match(header,/inert=\{!open\}/);
