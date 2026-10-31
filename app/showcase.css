@@ -249,3 +249,27 @@
   .ap-menu,.ap-menu-overlay,.ap-menu__nav .ap-menu__item {transition:none!important}
   .ap-menu__nav .ap-menu__item {opacity:1!important;transform:none!important}
 }
+
+
+/* Optical snapshot topology / scroll performance.
+   simple-liquid-glass treats overflow-visible direct children as overlapping
+   content and otherwise captures the entire page root as a single large tile.
+   These two independent clips let the backdrop source be reused by section,
+   while the sticky header itself is excluded via data-liquid-glass-ignore.
+   The login and menu remain functional overlays outside these clips. */
+.ap-site > main,
+.ap-site > .ap-footer {
+  overflow:clip;
+}
+
+/* The lens provides its own curvature and sheen; no extra painted outline. */
+.ap-header__backdrop {
+  border:0!important;
+  box-shadow:none!important;
+  outline:0!important;
+}
+
+/* Avoid an unnecessary stack of bright rim/shadow layers on the login chip. */
+.ap-header__login-lens {
+  outline:0!important;
+}
