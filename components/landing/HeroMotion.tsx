@@ -17,6 +17,14 @@ export function HeroMotion() {
         y: 22, opacity: .05, filter: "blur(11px)", duration: 1.35,
         clearProps: "transform,opacity,filter"
       }, .2);
+      timeline.from("[data-hero-word]", {
+        x: (i) => Math.sin(i * 2.1) * (46 + i * 9),
+        y: (i) => Math.cos(i * 1.5) * (39 + i * 8),
+        rotation: (i) => i % 2 ? -7 : 6,
+        filter: "blur(5px)", opacity: 0, duration: 1.2,
+        stagger: { each: .055, from: "random" },
+        clearProps: "transform,filter,opacity"
+      }, .16);
       timeline.fromTo(pieces, {
         x: (i) => Math.sin(i * 2.47) * (95 + i * 9),
         y: (i) => Math.cos(i * 1.73) * (65 + i * 5),
