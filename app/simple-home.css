@@ -896,3 +896,52 @@
   .sh-robot-portrait {will-change:auto}
   .sh-robot-cable-sway,.sh-robot-node {animation:none!important}
 }
+
+
+/* V6 — actual WebGL sculpture: the photograph is NOT part of the normal scene. */
+.sh-robot-world {isolation:isolate;}
+.sh-robot-3d-assembly {
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+}
+.sh-robot-3d {
+  position:absolute;
+  left:50%;top:47%;
+  width:39%;height:86%;
+  transform:translate(-50%,-50%);
+  pointer-events:auto;
+  filter:drop-shadow(0 21px 23px rgba(59,102,166,.15));
+  touch-action:pan-y;
+  contain:layout paint;
+}
+.sh-robot-3d canvas {display:block;width:100%;height:100%;outline:none;touch-action:pan-y}
+.sh-robot-3d__skeleton {
+  width:100%;height:100%;border-radius:48% 48% 41% 41%;
+  background:radial-gradient(ellipse at 45% 28%,rgba(255,255,255,.78),rgba(190,222,255,.18) 60%,transparent 77%);
+}
+.sh-robot-3d__fallback {position:relative;width:100%;height:100%}
+.sh-robot-3d__fallback img {object-fit:contain}
+.sh-robot-cables {opacity:.86}
+.sh-robot-svg {z-index:1;pointer-events:none}
+.sh-robot-node-anchor {z-index:3}
+@media(min-width:861px){
+  .sh-robot-3d {width:42%;height:91%}
+}
+@media(max-width:860px){
+  .sh-robot-3d {width:43%;height:91%}
+}
+@media(max-width:600px){
+  .sh-robot-world {aspect-ratio:1200/800;overflow:visible}
+  .sh-robot-3d {
+    top:48%;width:61%;height:94%;
+    filter:drop-shadow(0 10px 14px rgba(49,93,157,.14));
+  }
+  .sh-robot-3d canvas {touch-action:pan-y}
+  .sh-robot-cables {opacity:.45}
+  .sh-robot-mobile-features {position:relative;z-index:4}
+}
+@media(prefers-reduced-motion:reduce) {
+  .sh-robot-3d {filter:none}
+}
