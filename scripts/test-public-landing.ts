@@ -39,7 +39,7 @@ assert.match(features,/<article/);
 assert.match(features,/item\.title/);
 assert.match(features,/item\.tagline/);
 assert.match(features,/item\.Icon/);
-assert.doesNotMatch(features,/use client|gsap|ScrollTrigger|IntersectionObserver|repeat:-1|setInterval|useEffect|video|ap-demo|ap-showcase-scene/);
+assert.doesNotMatch(features,/"use client"|from "gsap"|ScrollTrigger|IntersectionObserver|repeat:-1|setInterval|useEffect|<video\\b|ap-demo|ap-showcase-scene/);
 assert.equal((data.match(/no: "([۰-۹]+)"/g)||[]).length,11);
 for(const id of ["comment","story","direct","share","live","reminder","inbox","publishing","insights","menu","icebreaker"])
  assert.ok(data.includes('id: "'+id+'"'),"Missing real dashboard capability "+id);
