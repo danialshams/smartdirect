@@ -34,7 +34,7 @@ bpy.ops.object.select_all(action="SELECT")
 bpy.ops.object.delete(use_global=False)
 scene=bpy.context.scene
 scene.render.engine="CYCLES"
-scene.cycles.samples=12
+scene.cycles.samples=9
 scene.cycles.use_denoising=False
 scene.render.resolution_x=WIDTH
 scene.render.resolution_y=HEIGHT
@@ -157,7 +157,7 @@ ell("04 | upper visor cradle",(0,-.54,.53),(1.055,.43,.66),chrome)
 ell("05 | REAL convex smoked-glass visor",(0,-.685,.58),(1.015,.46,.605),visor)
 ell("06 | ceramic forehead upper eyebrow",(0,-.55,1.15),(1.015,.35,.24),ceramic_light)
 ell("07 | jaw chin protective mechanical shell",(0,-.58,-.27),(.89,.48,.39),ceramic)
-ell("08 | inset chin beveled plate",(0,-.75,-.41),(.69,.27,.16),ceramic_light)
+ell("08 | inset chin beveled plate",(0,-.74,-.42),(.67,.31,.18),ceramic_light)
 ell("09 | central face graphite seam",(0,-.69,-.40),(.55,.37,.078),rubber)
 
 
@@ -202,10 +202,10 @@ for i in range(9):
 
 # Layered mechanical cheek plates, ear shells, engraved micro-gaskets.
 for sign in (-1,1):
-    ell("10 | sculpted cheek ceramic panel",(.91*sign,-.55,-.17),(.155,.26,.32),ceramic)
+    ell("10 | sculpted cheek ceramic panel",(.91*sign,-.56,-.17),(.225,.35,.40),ceramic)
     ell("11 | cheek metal undercut",(1.03*sign,-.45,-.05),(.115,.27,.42),chrome_dark)
-    ell("12 | precision temple cap",(1.012*sign,-.19,.99),(.156,.31,.24),ceramic_light)
-    ell("13 | side seam inset",(1.065*sign,-.12,.23),(.09,.48,.37),chrome)
+    ell("12 | precision temple cap",(1.013*sign,-.35,.92),(.24,.46,.31),ceramic_light)
+    ell("13 | side seam inset",(1.052*sign,-.16,.22),(.125,.55,.48),chrome)
     for idx in range(5):
         box("14 | tiny cheek ventilation grille",(.88*sign,-.846,-.26+idx*.069),(.16,.016,.017),vent,angle=(0,0,sign*.1),bev=.004)
     for idx in range(3):
@@ -312,23 +312,6 @@ area("Large softbox upper left",(-3.6,-4.2,5.1),230,4.2,(1,1,1))
 area("Cool panoramic fill",(3.3,-4.0,2.3),150,3.4,(.62,.79,1))
 area("Bright satin edge highlight",(1.2,2.8,4.8),210,2.7,(.48,.75,1))
 area("Opposite bevel rim",(-2.8,1.4,1.5),120,2.9,(1,1,1))
-
-# Pure white emissive studio cyclorama, unaffected by scene exposure.
-# Prevents the gray color-management backdrop in the initial review render.
-background=bpy.data.materials.new("White studio backdrop (self-illuminated)")
-background.use_nodes=True
-ns=background.node_tree.nodes
-ns.clear()
-bgemit=ns.new("ShaderNodeEmission")
-bgemit.inputs["Color"].default_value=(1,1,1,1)
-bgemit.inputs["Strength"].default_value=5
-bgout=ns.new("ShaderNodeOutputMaterial")
-background.node_tree.links.new(bgemit.outputs[0],bgout.inputs["Surface"])
-bpy.ops.mesh.primitive_plane_add(size=100,location=(0,5,.2),rotation=(math.pi/2,0,0))
-backdrop=bpy.context.object
-backdrop.name="Clean pure white studio backdrop"
-backdrop.data.materials.append(background)
-
 
 bpy.ops.object.camera_add(location=(0,-7.8,.20))
 camera=bpy.context.object
