@@ -30,13 +30,13 @@ async function evaluate(expression){
 async function shot(name){
   const rect=await evaluate(`(() => {
     const h=document.querySelector(".ap-header");
-    const b=document.querySelector(".ap-header__backdrop");
+    const b=document.querySelector(".daira-library-liquid-header");
     const o=b?.querySelector('div[style*="backdrop-filter"]');
     return {url:location.href,scroll:scrollY,viewport:[innerWidth,innerHeight],
       header:{box:h?.getBoundingClientRect().toJSON(),backdrop:getComputedStyle(h).backdropFilter,
         opacity:getComputedStyle(h).opacity,filter:getComputedStyle(h).filter},
       lens:{mode:b?.dataset.liquidHeader||b?.dataset.glassStrategy||b?.dataset.opticsMode,
-        curvedGlint:b&&getComputedStyle(b.querySelector(".ap-liquid-header__glint")).backgroundImage,
+        libraryRim:b?.querySelector(".liquid-glass-border") && getComputedStyle(b.querySelector(".liquid-glass-border")).display,
         background:b&&getComputedStyle(b).backgroundColor,
         opticalFilter:o&&getComputedStyle(o).backdropFilter,
         displacement:b&&[...b.querySelectorAll("feDisplacementMap")].map(x=>x.getAttribute("scale"))}};
@@ -64,7 +64,7 @@ try{
     data.error?job.reject(Error(JSON.stringify(data.error))):job.resolve(data.result);
   });
   await send("Page.enable");await send("Runtime.enable");
-  await until(async()=>evaluate('document.readyState==="complete"&&!!document.querySelector(".ap-header__backdrop")'));
+  await until(async()=>evaluate('document.readyState==="complete"&&document.querySelector(".daira-library-liquid-header")?.dataset.glassStrategy==="svg"'));
   await wait(1200);
   await shot("desktop_top");
   await evaluate('window.scrollTo({top:1350,behavior:"instant"})');
@@ -80,7 +80,7 @@ try{
   await until(async()=>evaluate("window.scrollY>650"));
   await wait(700);
   await shot("mobile_scrolled");
-  console.log("LIVE_AUDIT_SUCCESS_POST_RELEASE_PR182");
+  console.log("LIVE_AUDIT_SUCCESS_POST_RELEASE_PR183");
 }catch(e){console.error("LIVE_AUDIT_FAILED",e);process.exitCode=1;}
 finally {try{socket?.close();}catch{}try{browser?.kill("SIGKILL");}catch{}
   if(dir)await rm(dir,{recursive:true,force:true}).catch(()=>{});}
