@@ -5,8 +5,8 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { TextPlugin } from "gsap/TextPlugin";
 import {
-  ArrowLeft, Check, CheckCheck, Clock3, Ellipsis, Image as ImageIcon,
-  MessageCircle, MoreHorizontal, Plus, Radio, Send, Smartphone,
+  Check, CheckCheck, Clock3, Ellipsis, Image as ImageIcon,
+  MessageCircle, Radio,
 } from "lucide-react";
 import { showcaseScenes, type ShowcaseScene } from "./showcase-scenes";
 
@@ -81,7 +81,7 @@ function PreviewContext({ scene }: {scene:ShowcaseScene}) {
   }
 }
 
-function FeatureScene({ scene, index }: {scene:ShowcaseScene; index:number}) {
+function FeatureScene({ scene }: {scene:ShowcaseScene}) {
   const rootRef=useRef<HTMLElement>(null);
 
   useEffect(()=>{
@@ -125,9 +125,14 @@ function FeatureScene({ scene, index }: {scene:ShowcaseScene; index:number}) {
       const enter=()=>{
         if(document.hidden||running)return;
         running=true;
+        root.classList.add("is-playing");
         timeline.restart();
       };
-      const leave=()=>{running=false;timeline.pause(0);};
+      const leave=()=>{
+        running=false;
+        root.classList.remove("is-playing");
+        timeline.pause(0);
+      };
       const trigger=ScrollTrigger.create({
         trigger:root,
         start:"top 72%",
@@ -140,6 +145,7 @@ function FeatureScene({ scene, index }: {scene:ShowcaseScene; index:number}) {
       const onVis=()=>{if(document.hidden)timeline.pause();else if(running)timeline.resume();};
       document.addEventListener("visibilitychange",onVis);
       return ()=>{
+        root.classList.remove("is-playing");
         document.removeEventListener("visibilitychange",onVis);
         trigger.kill();
         timeline.kill();
@@ -191,7 +197,7 @@ function FeatureScene({ scene, index }: {scene:ShowcaseScene; index:number}) {
                 </div>
               </div>
             </div>
-            <div className="ap-demo__result" data-demo-result role="presentation"><Check size={15}/>{scene.outcome}</div>
+            <div className="ap-demo__result" data-demo-result aria-hidden="true"><Check size={15}/>{scene.outcome}</div>
             <div className="ap-demo__progress-track" aria-hidden="true"><span data-demo-progress/></div>
           </div>
         </div>
@@ -204,7 +210,7 @@ function FeatureScene({ scene, index }: {scene:ShowcaseScene; index:number}) {
 export function FeatureShowcase() {
   return (
     <div id="features" className="ap-showcase" aria-label="معرفی تصویری و خودکار یازده قابلیت دایرا">
-      {showcaseScenes.map((scene,i)=><FeatureScene key={scene.id} scene={scene} index={i}/>)}
+      {showcaseScenes.map(scene=><FeatureScene key={scene.id} scene={scene}/>)}
     </div>
   );
 }
