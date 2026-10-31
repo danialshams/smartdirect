@@ -209,6 +209,23 @@ try {
   assert.match(hero.name,/daira-word-assemble/);
   assert.ok(parseFloat(hero.duration)>=1.0,"Headline must assemble visibly rather than instantly");
   assert.ok(Math.abs(hero.spread)>=100,"Words must actually start scattered");
+  // The first load should visibly ease words together, then settle without
+  // replay, jumps, or continual style updates during scrolling.
+  await sleep(330);
+  const midHero=await evaluate(`(() => {
+    const w=document.querySelector("[data-hero-word]");
+    return {state:document.documentElement.dataset.dairaHero,
+      transform:getComputedStyle(w).transform,
+      animation:getComputedStyle(w).animationName};
+  })()`);
+  assert.equal(midHero.state,"play","Hero assembly must still be running after the first paint");
+  assert.notEqual(midHero.transform,"none","Words must have an actual composited travel path");
+  assert.match(midHero.animation,/daira-word-assemble/);
+  const motionImage=(await send("Page.captureScreenshot",{format:"jpeg",quality:56,captureBeyondViewport:false})).data;
+  console.log("DAIRA_DIAG_SCREENSHOT_HERO_MOTION="+motionImage);
+  await waitFor(async()=>await evaluate('document.documentElement.dataset.dairaHero==="done"'),5000);
+  assert.equal(await evaluate('document.querySelector("[data-hero-assembly]").hasAttribute("data-liquid-glass-ignore")'),false,
+    "Hero text should rejoin the Safari backdrop source only after its motion finishes");
 
   // Contrast fixture under the header catches regressions where an SVG
   // backdrop-filter reports a valid URL but has no visual pixels to sample.
@@ -288,7 +305,7 @@ try {
   assert.equal(scrolled.headerStrategy,"svg");
   assert.match(scrolled.headerFilter,/url\(/);
   assert.match(scrolled.buttonColor,/linear-gradient/);
-  assert.match(scrolled.buttonBlur,/blur\(9px\)/);
+  assert.match(scrolled.buttonBlur,/blur\(15px\)/);
   assert.equal(scrolled.arrowColor,"rgb(255, 255, 255)");
   assert.equal(scrolled.svgStroke,"rgb(255, 255, 255)");
   assert.equal(scrolled.borderContent,"none","Blue blurred button must have NO white border overlay");
