@@ -111,7 +111,7 @@ try {
 
   // Native Chromium must render the LIVE backdrop without capture queues.
   await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop")?.dataset.opticsMode')) === "native");
-  const startup = await evaluate(\`(() => {
+  const startup = await evaluate(`(() => {
     const s = document.querySelector(".ap-header__backdrop");
     const pane=s.querySelector(".ap-optical-native");
     return {
@@ -123,7 +123,7 @@ try {
       sceneInstances:document.querySelectorAll("[data-liquid-glass-scene]").length,
       words:document.querySelectorAll("[data-hero-word]").length
     };
-  })()\`);
+  })()`);
   assert.equal(startup.mode, "native");
   assert.match(startup.filter,/url\(/,"Native lens must sample live page pixels");
   assert.equal(startup.border,"0px");
@@ -135,13 +135,13 @@ try {
   // Refraction must remain active across previously uncaptured sections.
   await evaluate('window.scrollTo({top:1250,behavior:"instant"})');
   await waitFor(async () => await evaluate('window.scrollY>600'));
-  const scroll = await evaluate(\`(() => ({
+  const scroll = await evaluate(`(() => ({
     header:document.querySelector(".ap-header__backdrop").dataset.opticsMode,
     button:document.querySelector(".ap-backtop__lens")?.dataset.opticsMode,
     filter:getComputedStyle(document.querySelector(".ap-header__backdrop .ap-optical-native")).backdropFilter,
     buttonBorder:getComputedStyle(document.querySelector(".ap-backtop__lens")).borderWidth,
     buttonShadow:getComputedStyle(document.querySelector(".ap-backtop__lens")).boxShadow
-  }))()\`);
+  }))()`);
   assert.equal(scroll.header,"native");
   assert.equal(scroll.button,"native");
   assert.match(scroll.filter,/url\(/);
@@ -150,7 +150,7 @@ try {
 
   await evaluate('document.querySelector(".ap-menu-toggle").click()');
   await sleep(110);
-  const mid=await evaluate(\`(() => {
+  const mid=await evaluate(`(() => {
     const menu=document.querySelector(".ap-menu"),overlay=document.querySelector(".ap-menu-overlay");
     return {
       open:menu.classList.contains("ap-menu--open"),
@@ -158,7 +158,7 @@ try {
       filter:getComputedStyle(overlay).backdropFilter,
       libraryCount:document.querySelectorAll("[data-liquid-glass]").length
     };
-  })()\`);
+  })()`);
   assert.equal(mid.open,true);
   assert.equal(mid.clip,"none");
   assert.match(mid.filter,/blur\(3px\)/);
@@ -173,7 +173,7 @@ try {
   await send("Emulation.setUserAgentOverride",{userAgent:"Mozilla/5.0 (X11; Linux x86_64; rv:134.0) Gecko/20100101 Firefox/134.0"});
   await send("Page.navigate",{url:"http://127.0.0.1:"+port+"/"});
   await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop")?.dataset.opticsMode')) === "mirror",14000);
-  const fallback=await evaluate(\`(() => {
+  const fallback=await evaluate(`(() => {
     const s=document.querySelector(".ap-header__backdrop"),doc=s.querySelector(".ap-optical-document");
     return {
       mode:s.dataset.opticsMode,
@@ -184,7 +184,7 @@ try {
       filter:getComputedStyle(s.querySelector(".ap-optical-mirror")).filter,
       border:getComputedStyle(s).borderTopWidth
     };
-  })()\`);
+  })()`);
   assert.equal(fallback.mode,"mirror");
   assert.equal(fallback.mainCount,1);
   assert.equal(fallback.sections,8);
