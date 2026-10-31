@@ -1,0 +1,290 @@
+[
+  {
+    "engine": "chromium",
+    "viewport": "desktop",
+    "initial": {
+      "overflow": 0,
+      "introCount": 11,
+      "animationCards": 0,
+      "headerIgnored": true,
+      "captureSplits": {
+        "main": "clip",
+        "footer": "clip"
+      },
+      "glassNodes": 2,
+      "loginStyle": "rgb(255, 255, 255)",
+      "initialScroll": 0,
+      "mainHeight": 2617.265625
+    },
+    "menu": {
+      "open": true,
+      "rightGap": 14,
+      "links": [
+        "امکانات",
+        "حفظ حریم خصوصی",
+        "قوانین و مقررات",
+        "حذف اطلاعات",
+        "ارتباط با ما",
+        "درباره ما"
+      ],
+      "strategy": [
+        "svg",
+        "svg",
+        "svg"
+      ],
+      "opacity": "rgba(247, 250, 255, 0.78)",
+      "selfCapture": true
+    },
+    "after": {
+      "scroll": 2045,
+      "overflow": 0,
+      "glass": [
+        "svg",
+        "svg"
+      ],
+      "totalCaptures": 0
+    },
+    "glassReadyMs": 2145,
+    "errors": []
+  },
+  {
+    "engine": "chromium",
+    "viewport": "mobile",
+    "initial": {
+      "overflow": 0,
+      "introCount": 11,
+      "animationCards": 0,
+      "headerIgnored": true,
+      "captureSplits": {
+        "main": "clip",
+        "footer": "clip"
+      },
+      "glassNodes": 2,
+      "loginStyle": "rgb(255, 255, 255)",
+      "initialScroll": 0,
+      "mainHeight": 2186.875
+    },
+    "menu": {
+      "open": true,
+      "rightGap": 12,
+      "links": [
+        "امکانات",
+        "حفظ حریم خصوصی",
+        "قوانین و مقررات",
+        "حذف اطلاعات",
+        "ارتباط با ما",
+        "درباره ما"
+      ],
+      "strategy": [
+        "svg",
+        "svg",
+        "svg"
+      ],
+      "opacity": "rgba(247, 250, 255, 0.78)",
+      "selfCapture": true
+    },
+    "after": {
+      "scroll": 1661,
+      "overflow": 0,
+      "glass": [
+        "svg",
+        "svg"
+      ],
+      "totalCaptures": 0
+    },
+    "glassReadyMs": 2131,
+    "errors": []
+  },
+  {
+    "engine": "chromium",
+    "viewport": "tiny",
+    "initial": {
+      "overflow": 0,
+      "introCount": 11,
+      "animationCards": 0,
+      "headerIgnored": true,
+      "captureSplits": {
+        "main": "clip",
+        "footer": "clip"
+      },
+      "glassNodes": 2,
+      "loginStyle": "rgb(255, 255, 255)",
+      "initialScroll": 0,
+      "mainHeight": 2033.46875
+    },
+    "menu": {
+      "open": true,
+      "rightGap": 12,
+      "links": [
+        "امکانات",
+        "حفظ حریم خصوصی",
+        "قوانین و مقررات",
+        "حذف اطلاعات",
+        "ارتباط با ما",
+        "درباره ما"
+      ],
+      "strategy": [
+        "svg",
+        "svg",
+        "svg"
+      ],
+      "opacity": "rgba(247, 250, 255, 0.78)",
+      "selfCapture": true
+    },
+    "after": {
+      "scroll": 1584,
+      "overflow": 0,
+      "glass": [
+        "svg",
+        "svg"
+      ],
+      "totalCaptures": 0
+    },
+    "glassReadyMs": 2107,
+    "errors": []
+  },
+  {
+    "engine": "webkit",
+    "viewport": "desktop",
+    "initial": {
+      "overflow": 0,
+      "introCount": 11,
+      "animationCards": 0,
+      "headerIgnored": true,
+      "captureSplits": {
+        "main": "clip",
+        "footer": "clip"
+      },
+      "glassNodes": 2,
+      "loginStyle": "rgb(255, 255, 255)",
+      "initialScroll": 0,
+      "mainHeight": 2615.984375
+    },
+    "menu": {
+      "open": true,
+      "rightGap": 14,
+      "links": [
+        "امکانات",
+        "حفظ حریم خصوصی",
+        "قوانین و مقررات",
+        "حذف اطلاعات",
+        "ارتباط با ما",
+        "درباره ما"
+      ],
+      "strategy": [
+        "webgl",
+        "webgl",
+        "webgl"
+      ],
+      "opacity": "rgba(247, 250, 255, 0.78)",
+      "selfCapture": true
+    },
+    "after": {
+      "scroll": 2093,
+      "overflow": 0,
+      "glass": [
+        "webgl",
+        "webgl"
+      ],
+      "totalCaptures": 6
+    },
+    "glassReadyMs": 6704,
+    "errors": []
+  },
+  {
+    "engine": "webkit",
+    "viewport": "mobile",
+    "initial": {
+      "overflow": 0,
+      "introCount": 11,
+      "animationCards": 0,
+      "headerIgnored": true,
+      "captureSplits": {
+        "main": "clip",
+        "footer": "clip"
+      },
+      "glassNodes": 2,
+      "loginStyle": "rgb(255, 255, 255)",
+      "initialScroll": 0,
+      "mainHeight": 2185.984375
+    },
+    "menu": {
+      "open": true,
+      "rightGap": 12,
+      "links": [
+        "امکانات",
+        "حفظ حریم خصوصی",
+        "قوانین و مقررات",
+        "حذف اطلاعات",
+        "ارتباط با ما",
+        "درباره ما"
+      ],
+      "strategy": [
+        "webgl",
+        "webgl",
+        "webgl"
+      ],
+      "opacity": "rgba(247, 250, 255, 0.78)",
+      "selfCapture": true
+    },
+    "after": {
+      "scroll": 1709,
+      "overflow": 0,
+      "glass": [
+        "webgl",
+        "webgl"
+      ],
+      "totalCaptures": 6
+    },
+    "glassReadyMs": 4755,
+    "errors": []
+  },
+  {
+    "engine": "webkit",
+    "viewport": "tiny",
+    "initial": {
+      "overflow": 0,
+      "introCount": 11,
+      "animationCards": 0,
+      "headerIgnored": true,
+      "captureSplits": {
+        "main": "clip",
+        "footer": "clip"
+      },
+      "glassNodes": 2,
+      "loginStyle": "rgb(255, 255, 255)",
+      "initialScroll": 0,
+      "mainHeight": 2032
+    },
+    "menu": {
+      "open": true,
+      "rightGap": 12,
+      "links": [
+        "امکانات",
+        "حفظ حریم خصوصی",
+        "قوانین و مقررات",
+        "حذف اطلاعات",
+        "ارتباط با ما",
+        "درباره ما"
+      ],
+      "strategy": [
+        "webgl",
+        "webgl",
+        "webgl"
+      ],
+      "opacity": "rgba(247, 250, 255, 0.78)",
+      "selfCapture": true
+    },
+    "after": {
+      "scroll": 1632,
+      "overflow": 0,
+      "glass": [
+        "webgl",
+        "webgl"
+      ],
+      "totalCaptures": 5
+    },
+    "glassReadyMs": 3276,
+    "errors": []
+  }
+]
