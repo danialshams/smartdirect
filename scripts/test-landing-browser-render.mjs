@@ -111,17 +111,17 @@ try {
 
   // The restored library must draw its real analytical SVG lens — not the
   // old CSS-only transparent imitation — and keep it live during scrolling.
-  await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop")?.dataset.glassStrategy')) === "svg");
+  await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop")?.dataset.liquidHeader')) === "native");
   const startup=await waitFor(async()=>await evaluate(`(() => {
     const root=document.querySelector(".ap-header__backdrop");
-    const optical=root?.querySelector('div[style*="backdrop-filter"]');
+    const optical=root?.querySelector('.ap-liquid-header__lens > div[style*="backdrop-filter"]');
     if(!root||!optical)return null;
     return {
-      strategy:root.dataset.glassStrategy,
+      strategy:root.dataset.liquidHeader,
       filter:getComputedStyle(optical).backdropFilter,
-      shadow:getComputedStyle(optical).boxShadow,
+      shadow:getComputedStyle(root).boxShadow,
       border:getComputedStyle(root).borderTopWidth,
-      glassCount:document.querySelectorAll('[data-liquid-glass]').length,
+      glassCount:document.querySelectorAll('.ap-liquid-header').length,
       sceneCount:document.querySelectorAll('[data-liquid-glass-scene]').length,
       opticalMaps:root.querySelectorAll('feDisplacementMap').length,
       oldApproximation:!!root.querySelector('.ap-optical-native'),
@@ -130,16 +130,16 @@ try {
       displacementScales:[...root.querySelectorAll("feDisplacementMap")].map(x=>Number(x.getAttribute("scale")))
     };
   })()`));
-  assert.equal(startup.strategy,"svg","Use genuine SVG LiquidGlass optical renderer");
+  assert.equal(startup.strategy,"native","Use a truly refractive live-backdrop SVG lens");
   assert.match(startup.filter,/url\(/,"Liquid lens must refract LIVE backdrop pixels");
-  assert.match(startup.shadow,/inset/,"Original loupe requires physical edge lighting, not a flat transparent layer");
+  assert.match(startup.shadow,/inset/,"Real glass volume must catch light, not be flat transparent acrylic");
   const depth=await evaluate(`(() => {
     const root=document.querySelector(".ap-header__backdrop");
     return {shadow:getComputedStyle(root).boxShadow,
-      specular:getComputedStyle(root,"::after").backgroundImage};
+      specular:getComputedStyle(root.querySelector(".ap-liquid-header__glint")).backgroundImage};
   })()`);
   assert.ok(depth.shadow!=="none","Soft neutral depth shadow must be present");
-  assert.equal(depth.specular,"none","Do not replace physical loupe highlights with a synthetic white overlay");
+  assert.match(depth.specular,/radial-gradient/,"The new lens must show a curved physical specular light response");
   assert.equal(startup.border,"0px","No white outline on header");
   assert.equal(startup.glassCount,1,"Exactly one native glass instance before scroll");
   assert.equal(startup.sceneCount,0,"No heavy HTML snapshot scene");
@@ -150,25 +150,25 @@ try {
   const materialAlpha=Number(startup.materialColor.split(",").at(-1)?.replace(")","").trim());
   console.log("DAIRA MATERIAL",JSON.stringify({color:startup.materialColor,alpha:materialAlpha,scales:startup.displacementScales}));
   assert.ok(materialAlpha>.025 && materialAlpha<.08,
-    "The REAL library material must be translucent neutral glass, not transparent or opaque");
-  assert.ok(Math.max(...startup.displacementScales) <= 38,
-    "Too much displacement samples white space beyond the 62px high header");
-  assert.ok(Math.max(...startup.displacementScales) >= 26,
-    "Refraction must be visible rather than a no-op");
+    "The backdrop refractor must stay neutral and translucent");
+  assert.ok(Math.max(...startup.displacementScales) >= 46,
+    "The lens must bend live background pixels, not just tint or blur them");
+  assert.ok(Math.max(...startup.displacementScales) <= 58,
+    "Constrain the live curved lens to the 62px header");
 
   // Temporary public-landing visual diagnostics. The user reports no visually
   // discernible lens despite a positive filter CSS property test.
   const opticDebug=await evaluate(`(() => {
     const h=document.querySelector(".ap-header");
     const g=document.querySelector(".ap-header__backdrop");
-    const panel=g.querySelector('div[style*="backdrop-filter"]');
+    const panel=g.querySelector('.ap-liquid-header__lens > div[style*="backdrop-filter"]');
     const rect=g.getBoundingClientRect();
     const hero=document.querySelector(".ap-hero");
     const selectors=[".ap-header",".ap-header__backdrop",".ap-hero",".ap-hero__ambient",".ap-site","main"];
     return {state:document.documentElement.dataset.dairaHero,
       size:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},
       filter:panel.getAttribute("style"),computedFilter:getComputedStyle(panel).backdropFilter,
-      map:g.querySelector('feImage')?.getAttribute('href')?.length,
+      map:document.querySelector('#daira-header-map')?.getAttribute('href')?.length,
       layers:selectors.map(s=>{const e=document.querySelector(s),v=getComputedStyle(e);
         return [s,v.position,v.zIndex,v.isolation,v.background,v.backgroundColor,v.filter,v.backdropFilter,v.opacity,v.overflow];}),
       center:document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2)?.className
@@ -183,10 +183,15 @@ try {
   // scrolling pixels from the genuine SVG filter. Assert actual CSS root.
   const roots=await evaluate(`(() => ({
     header:getComputedStyle(document.querySelector(".ap-header")).isolation,
+    headerBackdrop:getComputedStyle(document.querySelector(".ap-header")).backdropFilter,
+    headerFilter:getComputedStyle(document.querySelector(".ap-header")).filter,
     lens:getComputedStyle(document.querySelector(".ap-header__backdrop")).isolation,
-    blueFill:getComputedStyle(document.querySelector(".ap-header__backdrop > div[style*='backdrop-filter']")).backgroundColor
+    blueFill:getComputedStyle(document.querySelector('.ap-liquid-header__lens > div[style*="backdrop-filter"]')).backgroundColor
   }))()`);
   assert.equal(roots.header,"auto","An isolated sticky header prevents sampling the scrolling page");
+  assert.equal(roots.headerBackdrop,"none",
+    "CRITICAL: a parent's backdrop-filter forms a Backdrop Root that blocks the child lens from the page");
+  assert.equal(roots.headerFilter,"none","Header parent must not create a filter backdrop root");
   assert.equal(roots.lens,"auto","A nested isolated lens also traps the backdrop");
   assert.ok(!roots.blueFill.includes("241, 249, 255"),"Header must not have a blue tint");
 
@@ -217,7 +222,7 @@ try {
   await evaluate(`(() => {
     const style=document.createElement("style");
     style.id="daira-ci-disable-refraction";
-    style.textContent='.ap-header__backdrop > div[style*="backdrop-filter"]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}';
+    style.textContent='.ap-liquid-header__lens > div[style*="backdrop-filter"]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}';
     document.head.appendChild(style);
   })()`);
   await sleep(140);
@@ -268,8 +273,8 @@ try {
     const action=document.querySelector(".ap-backtop__action");
     const overlay=document.querySelector(".ap-backtop");
     return {
-      headerStrategy:h.dataset.glassStrategy,
-      headerFilter:getComputedStyle(h.querySelector('div[style*="backdrop-filter"]')).backdropFilter,
+      headerStrategy:h.dataset.liquidHeader,
+      headerFilter:getComputedStyle(h.querySelector('.ap-liquid-header__lens > div[style*="backdrop-filter"]')).backdropFilter,
       buttonColor:getComputedStyle(b).backgroundImage,
       buttonBlur:getComputedStyle(b).backdropFilter,
       arrowColor:getComputedStyle(action).color,
@@ -279,7 +284,7 @@ try {
       glassCount:document.querySelectorAll('[data-liquid-glass]').length
     };
   })()`);
-  assert.equal(scrolled.headerStrategy,"svg");
+  assert.equal(scrolled.headerStrategy,"native");
   assert.match(scrolled.headerFilter,/url\(/);
   assert.match(scrolled.buttonColor,/linear-gradient/);
   assert.match(scrolled.buttonBlur,/blur\(9px\)/);
@@ -318,11 +323,11 @@ try {
   // Chrome's filter primitives render the fallback for a predictable CI check.
   await send("Emulation.setUserAgentOverride",{userAgent:"Mozilla/5.0 (X11; Linux x86_64; rv:134.0) Gecko/20100101 Firefox/134.0"});
   await send("Page.navigate",{url:"http://127.0.0.1:"+port+"/"});
-  await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop")?.dataset.opticsMode')) === "mirror",14000);
+  await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop .ap-optical-surface")?.dataset.opticsMode')) === "mirror",14000);
   const fallback=await evaluate(`(() => {
     const s=document.querySelector(".ap-header__backdrop"),doc=s.querySelector(".ap-optical-document");
     return {
-      mode:s.dataset.opticsMode,
+      mode:s.querySelector(".ap-optical-surface")?.dataset.opticsMode,
       ready:!!doc,
       mainCount:doc?.querySelectorAll(":scope > main").length,
       sections:doc?.querySelectorAll(":scope > section.ap-showcase-capture").length,
@@ -339,8 +344,8 @@ try {
   assert.equal(fallback.border,"0px");
   await evaluate('window.scrollTo({top:1350,behavior:"instant"})');
   await waitFor(async () => !!(await evaluate('document.querySelector(".ap-header__backdrop .ap-optical-document")?.style.transform.includes("-1350px")')));
-  assert.equal(await evaluate('document.querySelector(".ap-header__backdrop").dataset.opticsMode'),"mirror");
-  console.log("DAIRA BROWSER PASS: original loupe SVG refraction with native edge lighting, blue borderless blurred back-to-top, no heavy scene or menu lens, prewarmed Firefox fallback.");
+  assert.equal(await evaluate('document.querySelector(".ap-header__backdrop .ap-optical-surface").dataset.opticsMode'),"mirror");
+  console.log("DAIRA BROWSER PASS: rebuilt live liquid header, curved specular reflections, measured backdrop pixel displacement, blue back-to-top and prewarmed Firefox fallback.");
 } finally {
   try {socket?.close();} catch {}
   if (chrome && chrome.exitCode === null) {

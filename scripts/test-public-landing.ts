@@ -14,6 +14,8 @@ const css=read("app/landing-optics-v2.css");
 const hero=read("components/landing/HeroAssembly.tsx");
 const showcaseStyles=read("app/showcase.css");
 const polish=read("app/landing-polish.css");
+const liquidHeader=read("components/landing/LiquidHeaderSurface.tsx");
+const liquidHeaderCSS=read("app/liquid-header.css");
 
 for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />",
   '<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'",
@@ -31,7 +33,13 @@ for(const route of ["terms","about","contact"])
 
 assert.match(root,/LiveOpticsDefinitions/);
 assert.doesNotMatch(root,/LiquidGlassScene|maxCacheBytes|simple-liquid-glass/);
-assert.match(header,/LiveOpticalSurface variant="header"/);
+assert.match(header,/<LiquidHeaderSurface \/>/);
+assert.match(liquidHeader,/LiveOpticalSurface variant="header"/);
+assert.match(liquidHeader,/ap-liquid-header__lens/);
+assert.match(liquidHeader,/ap-liquid-header__glint/);
+assert.match(liquidHeaderCSS,/\.ap-liquid-header__lens > div\[style\*="backdrop-filter"\]/);
+assert.match(liquidHeaderCSS,/\.ap-header\[data-landing-header\]/);
+assert.match(page,/import "\.\/liquid-header\.css"/);
 assert.match(header,/aria-expanded=\{open\}/);
 assert.match(header,/aria-controls="ap-menu"/);
 assert.match(header,/inert=\{!open\}/);
@@ -48,11 +56,12 @@ assert.doesNotMatch(interactions,/LiquidGlass|simple-liquid-glass/);
 assert.match(optics,/prepareOpticalMaps/);
 assert.match(optics,/import LiquidGlass from "simple-liquid-glass"/);
 assert.match(optics,/renderer: "svg"/);
-assert.match(optics,/displacementScale: 32/);
+assert.match(optics,/displacementScale: 52/);
+assert.doesNotMatch(optics,/displacementScale: 32/);
 assert.match(optics,/lensProfile: "loupe"/);
 assert.ok(optics.includes('glassColor: "rgba(255,255,255,.038)"'));
 assert.match(optics,/sheenAngle: -34/);
-assert.match(optics,/specular: 1\.65/);
+assert.match(optics,/specular: 2\.0/);
 assert.ok(!optics.includes('background: "rgba(255,255,255,0)"'));
 
 
@@ -85,6 +94,9 @@ assert.match(css,/backdrop-filter:blur\(9px\) saturate\(155%\)/);
 assert.ok(!css.includes("rgba(122,186,255,.20)"),"No synthetic blue halo");
 
 assert.match(css,/\.ap-header__backdrop\.ap-native-liquid > \.liquid-glass-border/);
+assert.match(css,/\.ap-header\[data-landing-header\]/);
+assert.match(css,/backdrop-filter:none!important/);
+assert.ok(css.includes("A filtered parent becomes a Backdrop Root"),"Document and retain the actual nested backdrop-filter fix");
 assert.match(css,/\.ap-backtop::after\s*\{\s*content:none!important/);
 assert.match(css,/saturate\(138%\) contrast\(105%\)/);
 assert.match(css,/blur\(9px\)/);

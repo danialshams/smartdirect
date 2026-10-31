@@ -40,7 +40,10 @@ const headerLens = {
   quality: "high" as const,
   mobileFallback: "svg" as const,
   // Keep physical lens geometry, never overlay a white or blue fake glass.
-  displacementScale: 32,
+  // The original geometry-relative 156 scale oversamples the backdrop
+  // by ~102px on this 62px-high header. 52px preserves a real curved lens
+  // on the scrolling page without tearing distant content across the bar.
+  displacementScale: 52,
   frost: 0,
   blur: 0,
   saturation: 120,
@@ -55,14 +58,16 @@ const headerLens = {
     curvature: .55,
     bend: .55,
     bendWidth: .18,
-    sheen: 1.32,
+    sheen: 1.65,
     sheenWidth: 6.5,
     sheenAngle: -34,
-    specular: 1.65,
+    specular: 2.0,
     glow: .09,
     glowSpread: .48,
     glowFalloff: 1.6,
-    brightness: 0,
+    // Slightly deepen the real material so white speculars remain visible
+    // over the white hero, without adding a blue or opaque CSS overlay.
+    brightness: -.025,
   },
 };
 
@@ -82,7 +87,7 @@ const isNative = () => {
  * with a tiny non-repeating wave through the center.
  */
 let mapsPrepared = false;
-function prepareOpticalMaps() {
+export function prepareOpticalMaps() {
   if (mapsPrepared) return;
   for (const lens of [
     { id: "daira-header-map", width: 640, height: 88, edge: 17, shape: "rect" },
