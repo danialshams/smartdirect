@@ -1,6 +1,7 @@
 "use client";
 
-import LiquidGlass from "simple-liquid-glass";
+import { useCallback, useState } from "react";
+import LiquidGlass, { type RenderingDiagnostics } from "simple-liquid-glass";
 
 /**
  * The header is ONE native optical lens from simple-liquid-glass 5.4.
@@ -43,13 +44,26 @@ const optics = {
 };
 
 export function LiquidHeaderSurface() {
+  // This is NOT a second glass renderer: it keeps the live CSS backdrop
+  // visible until the real SVG / WebGL renderer has a usable image. Safari
+  // can temporarily lose a tile while the scene snapshots another section.
+  const [strategy, setStrategy] = useState("pending");
+  const onDiagnosticsChange = useCallback((next: RenderingDiagnostics) => {
+    setStrategy(previous => previous === next.strategy ? previous : next.strategy);
+  }, []);
+  const ready = strategy === "webgl" || strategy === "svg";
+
   return (
-    <LiquidGlass
-      {...optics}
-      radius={26}
-      className="daira-library-liquid-header"
-      style={{ position: "absolute", pointerEvents: "none" }}
-      aria-hidden="true"
-    />
+    <div className="daira-library-glass-frame" data-glass-ready={ready ? "true" : "false"}>
+      <span className="daira-library-glass-live-fallback" aria-hidden="true" />
+      <LiquidGlass
+        {...optics}
+        radius={26}
+        onDiagnosticsChange={onDiagnosticsChange}
+        className="daira-library-liquid-header"
+        style={{ position: "absolute", pointerEvents: "none" }}
+        aria-hidden="true"
+      />
+    </div>
   );
 }
