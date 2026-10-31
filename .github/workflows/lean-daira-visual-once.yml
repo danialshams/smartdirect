@@ -20,7 +20,7 @@ jobs:
           npm ci --no-audit --no-fund
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.0
           npx playwright install --with-deps chromium webkit
-      - name: Inspect compact saturated blue optical login across six viewports
+      - name: Check visible Safari hero and stable blue CTA with real optical refraction
         env:
           NEXT_TELEMETRY_DISABLED: "1"
         run: |
