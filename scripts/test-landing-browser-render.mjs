@@ -116,7 +116,7 @@ try {
     const pane=s.querySelector(".ap-optical-native");
     return {
       mode:s.dataset.opticsMode,
-      filter:getComputedStyle(pane).backdropFilter,
+      filter:pane ? getComputedStyle(pane).backdropFilter : "MISSING_NATIVE_NODE: "+s.outerHTML.slice(0,650),
       border:getComputedStyle(s).borderTopWidth,
       shadow:getComputedStyle(s).boxShadow,
       libraryInstances:document.querySelectorAll("[data-liquid-glass]").length,
