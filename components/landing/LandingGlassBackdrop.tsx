@@ -12,7 +12,7 @@ import { LiquidGlassScene } from "simple-liquid-glass/backdrop";
 export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
   return (
     <LiquidGlassScene className="ap-site" id="top" dir="rtl"
-      maxCacheBytes={32 * 1024 * 1024}>
+      maxCacheBytes={64 * 1024 * 1024}>
       {children}
     </LiquidGlassScene>
   );
