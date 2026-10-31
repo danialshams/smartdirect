@@ -78,8 +78,8 @@ export default function Home() {
             </Link>
             <p>مدیریت ساده‌تر تعامل‌ها، گفتگوها و محتوای اینستاگرام.</p>
           </div>
-          <nav className="ap-footer__links" aria-label="راهنمای سایت" data-reveal>
-            {footerLinks.map(item=><Link href={item.href} key={item.href}>{item.label}</Link>)}
+          <nav className="ap-footer__links" aria-label="راهنمای سایت">
+            {footerLinks.map((item,index)=><Link href={item.href} key={item.href} data-reveal style={{"--link-index":index} as CSSProperties}>{item.label}</Link>)}
           </nav>
         </div>
         <div className="ap-shell ap-footer__trust" data-reveal>
