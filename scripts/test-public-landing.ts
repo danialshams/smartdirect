@@ -34,16 +34,16 @@ for(const route of ["terms","about","contact"])
 
 assert.match(root,/LiquidGlassScene/);
 assert.match(root,/maxCacheBytes/);
-assert.match(root,/maxCacheBytes=\\{64 \\* 1024 \\* 1024\\}/);
-assert.match(page,/import "\\.\\/landing-fixes\\.css"/);
-assert.match(landingFixes,/\\.daira-library-liquid-header > \\.liquid-glass-border/);
-assert.match(landingFixes,/opacity: \\.43 !important/);
-assert.match(landingFixes,/backdrop-filter: blur\\(15px\\) saturate\\(155%\\)/);
-assert.match(landingFixes,/daira-word-assemble 1\\.75s cubic-bezier/);
-assert.match(landingFixes,/prefers-reduced-motion/);
-assert.match(hero,/animationend/);
-assert.match(hero,/data-liquid-glass-ignore/);
-assert.match(hero,/document\\.fonts\\.ready/);
+assert.ok(root.includes("maxCacheBytes={64 * 1024 * 1024}"));
+assert.ok(page.includes('import "./landing-fixes.css";'));
+assert.ok(landingFixes.includes(".daira-library-liquid-header > .liquid-glass-border"));
+assert.ok(landingFixes.includes("opacity: .43 !important"));
+assert.ok(landingFixes.includes("backdrop-filter: blur(15px) saturate(155%)"));
+assert.ok(landingFixes.includes("daira-word-assemble 1.75s cubic-bezier"));
+assert.ok(landingFixes.includes("prefers-reduced-motion"));
+assert.ok(hero.includes("animationend"));
+assert.ok(hero.includes("data-liquid-glass-ignore"));
+assert.ok(hero.includes("document.fonts.ready"));
 
 assert.match(header,/<LiquidHeaderSurface \/>/);
 assert.match(liquidHeader,/import LiquidGlass from "simple-liquid-glass"/);
