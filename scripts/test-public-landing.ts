@@ -53,7 +53,7 @@ assert.ok(hero.includes("data-liquid-glass-ignore"));
 assert.ok(hero.includes("document.fonts.ready"));
 
 assert.match(header,/<LiquidHeaderSurface \/>/);
-assert.match(liquidHeader,/import LiquidGlass from "simple-liquid-glass"/);
+assert.match(liquidHeader,/import LiquidGlass.*from "simple-liquid-glass"/);
 assert.match(liquidHeader,/lensProfile: "loupe"/);
 assert.match(liquidHeader,/renderer: "svg"/);
 assert.match(liquidHeader,/scale: 118/);
