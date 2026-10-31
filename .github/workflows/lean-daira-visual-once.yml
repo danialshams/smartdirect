@@ -20,7 +20,7 @@ jobs:
           npm ci --no-audit --no-fund
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.0
           npx playwright install --with-deps chromium webkit
-      - name: Capture final six viewport screenshots and verify optimized glass
+      - name: Inspect compact saturated blue optical login across six viewports
         env:
           NEXT_TELEMETRY_DISABLED: "1"
         run: |
