@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
  * Native CSS/SVG backdrop refraction in Chromium; for WebKit/Gecko render a
  * full-page DOM mirror once, and move it using a compositor-only transform.
  *
- * Previous html-to-image/WebGL scene snapshots were captured tile-by-tile
+ * Previous screenshot-based snapshots were captured tile-by-tile
  * AFTER entering the viewport, throttled while scrolling and invalidated on
  * every reveal animation. This renderer has no scrolling capture queue.
  *
