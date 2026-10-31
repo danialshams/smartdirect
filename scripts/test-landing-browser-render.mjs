@@ -187,7 +187,7 @@ try {
     headerBackdrop:getComputedStyle(document.querySelector(".ap-header")).backdropFilter,
     headerFilter:getComputedStyle(document.querySelector(".ap-header")).filter,
     lens:getComputedStyle(document.querySelector(".daira-library-liquid-header")).isolation,
-    blueFill:getComputedStyle(document.querySelector(':scope > div[style*="backdrop-filter"]')).backgroundColor
+    blueFill:getComputedStyle(document.querySelector('.daira-library-liquid-header > div[style*="backdrop-filter"]')).backgroundColor
   }))()`);
   assert.equal(roots.header,"auto","An isolated sticky header prevents sampling the scrolling page");
   assert.equal(roots.headerBackdrop,"none",
@@ -223,7 +223,7 @@ try {
   await evaluate(`(() => {
     const style=document.createElement("style");
     style.id="daira-ci-disable-refraction";
-    style.textContent=':scope > div[style*="backdrop-filter"]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}';
+    style.textContent='.daira-library-liquid-header > div[style*="backdrop-filter"]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}';
     document.head.appendChild(style);
   })()`);
   await sleep(140);
