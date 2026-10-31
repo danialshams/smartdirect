@@ -4,36 +4,53 @@ import { useLayoutEffect } from "react";
 import { gsap } from "gsap";
 
 /**
- * Animate only transform and opacity on intact Persian words.
- * No filter/blur animation, nested parent motion, floating glyphs or loops:
- * the final headline becomes a completely static text layout.
+ * A short, single compositor-only assembly. Ignore the moving text in scene
+ * captures until it settles so each GSAP style mutation cannot enqueue another
+ * expensive Safari/WebGL HTML snapshot. The finished headline is captured.
  */
 export function HeroMotion() {
   useLayoutEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const ctx = gsap.context(() => {
+    const title = document.querySelector<HTMLElement>("[data-hero-assembly]");
+    const cta = document.querySelector<HTMLElement>("[data-hero-cta]");
+    const revealInGlass = () => {
+      title?.removeAttribute("data-liquid-glass-ignore");
+      cta?.removeAttribute("data-liquid-glass-ignore");
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      revealInGlass();
+      return;
+    }
+    const context = gsap.context(() => {
       const words = gsap.utils.toArray<HTMLElement>("[data-hero-word]");
-      const cta = document.querySelector<HTMLElement>("[data-hero-cta]");
-      gsap.timeline({
-        delay: .1,
-        defaults: {ease:"power3.out"},
+      if (!words.length) {
+        revealInGlass();
+        return;
+      }
+      const timeline = gsap.timeline({
+        defaults: { ease: "power2.out" },
         onComplete: () => {
-          gsap.set(words, {clearProps:"transform,opacity,visibility,willChange"});
-          if (cta) gsap.set(cta, {clearProps:"transform,opacity,visibility,willChange"});
-        }
-      })
-        .from(words, {
-          x: (i) => [75,-82,62,-63,81,-53,46][i%7],
-          y: (i) => [27,-31,-21,32,-28,23,-19][i%7],
-          rotation: (i) => i%2 ? -5 : 4,
-          autoAlpha:0,
-          duration:1.05,
-          stagger:{each:.052,from:"random"},
-          force3D:true
-        },0)
-        .from(cta,{y:15,autoAlpha:0,duration:.65,force3D:true},.76);
+          gsap.set(words, { clearProps: "transform,opacity,willChange" });
+          if (cta) gsap.set(cta, { clearProps: "transform,opacity,willChange" });
+          revealInGlass();
+        },
+      });
+      timeline.fromTo(words, {
+        x: (index) => [24, -19, 21, -18, 20, -16, 23][index % 7],
+        y: (index) => [-10, 9, -8, 11, -9, 8, -10][index % 7],
+        opacity: .45,
+      }, {
+        x: 0, y: 0, opacity: 1, duration: .58,
+        stagger: { each: .027, from: "center" },
+        force3D: false,
+      }, 0);
+      if (cta) timeline.fromTo(cta, { y: 9, opacity: .7 }, {
+        y: 0, opacity: 1, duration: .38, force3D: false,
+      }, .25);
     });
-    return () => ctx.revert();
-  },[]);
+    return () => {
+      context.revert();
+      revealInGlass();
+    };
+  }, []);
   return null;
 }
