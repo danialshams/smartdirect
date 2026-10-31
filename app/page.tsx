@@ -56,7 +56,7 @@ export default function Home() {
         <section className="ap-hero" aria-labelledby="ap-hero-title">
           <div className="ap-hero__ambient" aria-hidden="true"/>
           <div className="ap-shell ap-hero__content">
-            <h1 id="ap-hero-title" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly>
+            <h1 id="ap-hero-title" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly data-liquid-glass-ignore="">
               {heroWords.map((word,index)=><span className="ap-hero__word" data-hero-word key={word}>{word}{index<heroWords.length-1?" ":""}</span>)}
             </h1>
             <div className="ap-hero__actions" data-hero-cta>
