@@ -15,18 +15,41 @@ const menuItems = [
   { href:"/about", label:"درباره ما" },
 ] as const;
 
+/**
+ * Real rounded-lens optics, not a translucent white/blurred rectangle.
+ * A strong displacement field bends content at the edge and the dome.
+ * At rest, underlying type and gradients remain legible through the lens.
+ * SVG rendering refracts in Chromium; WebKit picks its WebGL scene source.
+ */
 const glassProps = {
   refraction:"lens" as const,
   lensProfile:"loupe" as const,
-  quality:"high" as const,
+  lensOptions:{
+    strength:.23,
+    depth:.58,
+    curvature:.62,
+    bend:.77,
+    bendWidth:.22,
+    sheen:1.65,
+    sheenWidth:6.5,
+    sheenAngle:-34,
+    specular:2.15,
+    glow:.13,
+    glowSpread:.55,
+    glowFalloff:1.7,
+    brightness:0,
+  },
+  quality:"extreme" as const,
   mobileFallback:"svg" as const,
-  frost:.035,
+  // No frosted shader: glass is clear, refraction is what creates its look.
+  frost:0,
   blur:0,
   saturation:130,
-  scale:162,
-  aberrationIntensity:.27,
-  glassColor:"rgba(255,255,255,0.075)",
-  background:"rgba(255,255,255,0.025)",
+  dispersion:58,
+  scale:200,
+  aberrationIntensity:.38,
+  glassColor:"rgba(255,255,255,0.032)",
+  background:"rgba(255,255,255,0.012)",
 };
 
 /**
@@ -73,7 +96,8 @@ export function SimpleHeader() {
       </LiquidGlass>
       <div className="ap-shell ap-header__inner">
         <div className="ap-menu-toggle__holder">
-          <LiquidGlass {...glassProps} radius={24} className="ap-menu-toggle__glass">
+          <LiquidGlass {...glassProps} radius={24} className="ap-menu-toggle__glass"
+            liquid="flow" liquidSpeed={0.75} liquidScale={0.38}>
             <button ref={toggleRef} className="ap-menu-toggle" type="button"
               aria-label={open?"بستن منو":"باز کردن منو"}
               aria-controls="ap-menu" aria-expanded={open}
@@ -99,7 +123,8 @@ export function SimpleHeader() {
         className={"ap-menu"+(open?" ap-menu--open":"")}
         role="dialog" aria-label="منوی اصلی دایرا"
         aria-modal={open?true:undefined} aria-hidden={!open} inert={!open}>
-        <LiquidGlass {...glassProps} radius={28} className="ap-menu__liquid">
+        <LiquidGlass {...glassProps} radius={28} className="ap-menu__liquid"
+          liquid="wobble" liquidSpeed={0.46} liquidScale={0.28}>
           <div className="ap-menu__content">
             <div className="ap-menu__top">
               <strong>دایرا</strong>
