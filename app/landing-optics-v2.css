@@ -252,3 +252,15 @@ html[data-daira-hero="done"] .ap-site .ap-hero__word {
   stroke:#fff!important;
   filter:none!important;
 }
+
+
+/* Critical: the base .ap-header still has backdrop-filter: blur(18px).
+   A filtered parent becomes a Backdrop Root, so the nested SVG lens samples
+   the empty header layer instead of the real scrolling page. Keep the shell
+   optically inert; ONLY the child LiquidGlass may filter live backdrop. */
+.ap-site .ap-header[data-landing-header] {
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+  filter:none!important;
+  will-change:auto!important;
+}
