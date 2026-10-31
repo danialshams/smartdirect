@@ -36,11 +36,26 @@ try {
     return { strategy: lens?.dataset.glassStrategy, reason: lens?.dataset.glassReason,
       stable: document.querySelector(".ap-site")?.dataset.sceneCaptureStable,
       ready: document.querySelector(".daira-library-glass-frame")?.dataset.glassReady,
+      bound: document.querySelector(".daira-library-glass-frame")?.dataset.opticalSourceBound,
+      sources: document.querySelectorAll("canvas[data-liquid-glass-backdrop]").length,
       scene: !!document.querySelector("[data-liquid-glass-scene]"),
       captures: Number(document.querySelector("[data-liquid-glass-scene]")?.getAttribute("data-liquid-glass-captures") ?? 0),
       edge: getComputedStyle(lens.querySelector(".liquid-glass-border")).display };
   });
   console.log("WEBKIT_FIRST="+JSON.stringify(first));
+  // A scene can be ready while the library's deferred optical ref is not
+  // mounted yet. Require the explicit source to bind and produce REAL optics
+  // before exercising scrolling: otherwise a permanent missing-backdrop blur
+  // could misleadingly pass a generic "no off strategy" test.
+  await page.waitForFunction(() => {
+    const lens=document.querySelector(".daira-library-liquid-header");
+    const frame=document.querySelector(".daira-library-glass-frame");
+    return frame?.dataset.opticalSourceBound === "true" &&
+      frame?.dataset.glassReady === "true" &&
+      frame?.dataset.opticalEverReady === "true" &&
+      lens?.dataset.glassStrategy === "webgl";
+  },null,{timeout:25000});
+
   const frames = await page.evaluate(async () => {
     const panel = document.querySelector(".daira-library-liquid-header");
     const samples = [];
@@ -52,27 +67,64 @@ try {
         strategy: panel.dataset.glassStrategy,
         reason: panel.dataset.glassReason,
         ready: document.querySelector(".daira-library-glass-frame").dataset.glassReady,
+        ever: document.querySelector(".daira-library-glass-frame").dataset.opticalEverReady,
         captures: Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures ?? 0),
       });
     }
     return samples;
   });
   console.log("WEBKIT_SCROLL_FRAMES="+JSON.stringify(frames));
-  // The scroll-settled revalidation must target the visible section, not
-  // invalidate every cached image or restart the GPU renderer.
-  await page.waitForTimeout(420);
-  const settled = await page.evaluate(() => ({
-    y:scrollY,
-    revisionNodes:document.querySelectorAll("[data-daira-glass-viewport-revision]").length,
-    strategy:document.querySelector(".daira-library-liquid-header")?.dataset.glassStrategy,
-    edgeShadow:getComputedStyle(document.querySelector(".daira-library-glass-frame")).boxShadow,
-    clip:getComputedStyle(document.querySelector(".daira-library-glass-frame")).overflow
-  }));
+  // A real WebKit regression: do not generate new HTML snapshots merely
+  // because the user scrolled across static page sections. The official
+  // canvas must remain active and track scroll positions itself.
+  await page.waitForTimeout(620);
+  const settled = await page.evaluate(() => {
+    const lens=document.querySelector(".daira-library-liquid-header");
+    const optical=lens?.querySelector(':scope > div[style*="backdrop-filter"]');
+    const frame=document.querySelector(".daira-library-glass-frame");
+    return {
+      y:scrollY,
+      revisionNodes:document.querySelectorAll("[data-daira-glass-viewport-revision]").length,
+      strategy:lens?.dataset.glassStrategy,
+      reason:lens?.dataset.glassReason,
+      bound:frame?.dataset.opticalSourceBound,
+      ready:frame?.dataset.glassReady,
+      nativeCanvas:!!lens?.querySelector("canvas[data-liquid-glass-webgl]") ||
+        !!lens?.parentElement?.querySelector("canvas[data-liquid-glass-scene]"),
+      opticalFilter:optical ? getComputedStyle(optical).backdropFilter : null,
+      edgeShadow:getComputedStyle(frame).boxShadow,
+      clip:getComputedStyle(frame).overflow,
+      captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0)
+    };
+  });
   console.log("WEBKIT_SETTLED_CAPTURE="+JSON.stringify(settled));
-  if (settled.revisionNodes < 1) throw Error("Visible Safari section was never revalidated on scroll settle");
-  if (settled.strategy !== "webgl") throw Error("Refresh reset the WebGL renderer");
+  if (settled.revisionNodes !== 0) throw Error("Scrolling must not invalidate static cached captures");
+  if (settled.strategy !== "webgl" || settled.bound !== "true" || !settled.nativeCanvas) {
+    throw Error("Native WebGL renderer or its GPU presentation was lost");
+  }
   if (settled.edgeShadow !== "none" || settled.clip !== "hidden") {
     throw Error("Visible white rim must be clipped without an outer shadow");
+  }
+  if (settled.captures < 2) throw Error("No real scene tiles captured during scroll");
+  // Revisiting a previously captured region must preserve optical rendering
+  // without replacing the GPU canvas with the old 5px frosted material.
+  await page.evaluate(() => window.scrollTo({top:0,behavior:"instant"}));
+  await page.waitForTimeout(420);
+  const revisited=await page.evaluate(() => {
+    const lens=document.querySelector(".daira-library-liquid-header");
+    const optical=lens?.querySelector(':scope > div[style*="backdrop-filter"]');
+    return {
+      y:scrollY, strategy:lens?.dataset.glassStrategy,
+      nativeCanvas:!!lens?.querySelector("canvas[data-liquid-glass-webgl]") ||
+        !!lens?.parentElement?.querySelector("canvas[data-liquid-glass-scene]"),
+      filter:optical ? getComputedStyle(optical).backdropFilter : null,
+      captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0),
+      revisions:document.querySelectorAll("[data-daira-glass-viewport-revision]").length
+    };
+  });
+  console.log("WEBKIT_REVISIT="+JSON.stringify(revisited));
+  if (revisited.strategy!=="webgl" || !revisited.nativeCanvas || revisited.revisions) {
+    throw Error("Backtracking must retain the same real WebGL renderer");
   }
 
   const snapshot = await page.screenshot({type:"jpeg",quality:54});
@@ -86,6 +138,9 @@ try {
     throw Error("WebKit is not refracting in real WebGL: "+JSON.stringify({first, modes:[...modes]}));
   }
   if (frames.some(x=>x.strategy==="off")) throw Error("WebKit optical renderer was disabled while scrolling");
+  if (frames.some(x=>x.ready !== "true" || x.ever !== "true")) {
+    throw Error("Native optics must never flash back to CSS blur after first successful frame");
+  }
   const firstActive = frames.findIndex(x=>x.strategy==="webgl");
   if (firstActive<0 || frames.slice(firstActive+1).some(x=>x.strategy!=="webgl")) {
     throw Error("WebGL renderer was destroyed and reinitialized between live scroll frames: "

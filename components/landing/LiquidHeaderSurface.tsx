@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLandingGlassCapture } from "./LandingGlassBackdrop";
-import LiquidGlass, { type LiquidGlassHandle, type RenderingDiagnostics } from "simple-liquid-glass";
+import LiquidGlass, { type RenderingDiagnostics } from "simple-liquid-glass";
 
 /**
  * The header is ONE native optical lens from simple-liquid-glass 5.4.
@@ -46,21 +46,29 @@ const optics = {
 
 export function LiquidHeaderSurface() {
   const capture = useLandingGlassCapture();
-  const panelRef = useRef<LiquidGlassHandle>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLCanvasElement | null>(null);
   const [sourceBound, setSourceBound] = useState(false);
   const [captureReady, setCaptureReady] = useState(false);
+  const [everReady, setEverReady] = useState(false);
   const [strategy, setStrategy] = useState("pending");
 
   useLayoutEffect(() => {
-    const element = panelRef.current?.element;
-    if (!capture || !element) return;
-    // An explicit library backdrop source prevents its scene-hook from
-    // destroying the WebGL GPU renderer whenever a new tile is incomplete.
-    const registration = capture.register(element, setCaptureReady);
+    // Bind the stable frame, NOT the library's deferred inner optical ref.
+    // React has committed this frame before a layout effect runs, whereas the
+    // LiquidGlass root can appear later (reveal/hydration). The old one-shot
+    // inner ref lookup could fail permanently, leaving the renderer in
+    // missing-backdrop blur mode even though a valid scene was available.
+    const frame = frameRef.current;
+    if (!capture || !frame) return;
+    let active = true;
+    const registration = capture.register(frame, nextReady => {
+      if (active) setCaptureReady(previous => previous === nextReady ? previous : nextReady);
+    });
     backdropRef.current = registration.canvas;
     setSourceBound(true);
     return () => {
+      active = false;
       backdropRef.current = null;
       registration.release();
     };
@@ -70,16 +78,24 @@ export function LiquidHeaderSurface() {
     setStrategy(previous => previous === next.strategy ? previous : next.strategy);
   }, []);
   const opticalReady = strategy === "svg" || (strategy === "webgl" && sourceBound);
-  const ready = opticalReady && (!capture || captureReady);
+  // Once the native lens has rendered a complete scene, a newly arriving
+  // adjacent section must not cause the CSS fallback to flash over/behind it.
+  // The official WebGL renderer continues presenting live frames while the
+  // next tile captures, so keep the material optical after first success.
+  useEffect(() => {
+    if (opticalReady && (!capture || captureReady)) setEverReady(true);
+  }, [opticalReady, capture, captureReady]);
+  const ready = opticalReady && (everReady || !capture || captureReady);
 
   return (
-    <div className="daira-library-glass-frame"
+    <div ref={frameRef} className="daira-library-glass-frame"
       data-glass-ready={ready ? "true" : "false"}
-      data-optical-strategy={strategy}>
+      data-optical-strategy={strategy}
+      data-optical-source-bound={sourceBound ? "true" : "false"}
+      data-optical-ever-ready={everReady ? "true" : "false"}>
       <span className="daira-library-glass-live-fallback" aria-hidden="true" />
       <LiquidGlass
         {...optics}
-        ref={panelRef}
         backdropRef={backdropRef}
         radius={26}
         onDiagnosticsChange={onDiagnosticsChange}
