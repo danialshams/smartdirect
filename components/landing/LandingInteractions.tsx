@@ -1,24 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import LiquidGlass from "simple-liquid-glass";
+import { LiveOpticalSurface } from "./LiveOptics";
 import { ChevronUp } from "lucide-react";
-
-const buttonOptics={
-  renderer:"svg" as const,
-  refraction:"lens" as const,
-  lensProfile:"material" as const,
-  lensOptions:{
-    strength:.08,depth:.16,curvature:.045,bend:.018,bendWidth:.48,
-    sheen:0,sheenWidth:0,specular:0,glow:0
-  },
-  quality:"low" as const,
-  mobileFallback:"svg" as const,
-  frost:0,blur:0,scale:118,saturation:120,dispersion:6,aberrationIntensity:.045,
-  borderColor:"rgba(255,255,255,0)",
-  glassColor:"rgba(255,255,255,.007)",
-  background:"rgba(255,255,255,0)"
-};
 
 export function LandingInteractions() {
   const [showTop, setShowTop] = useState(false);
@@ -67,12 +51,7 @@ export function LandingInteractions() {
 
   return (
     <div className={"ap-backtop"+(showTop?" ap-backtop--visible":"")} data-liquid-glass-ignore="">
-      {hasShown && <LiquidGlass
-        {...buttonOptics}
-        radius={28}
-        className="ap-backtop__lens"
-        style={{position:"absolute",inset:0,pointerEvents:"none"}}
-      ><span className="ap-backtop__fill" aria-hidden="true"/></LiquidGlass>}
+      {hasShown && <LiveOpticalSurface variant="backtop" className="ap-backtop__lens" />}
       <button type="button"
         className="ap-backtop__action"
         aria-label="بازگشت به بالای صفحه"

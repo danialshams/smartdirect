@@ -1,18 +1,14 @@
-"use client";
-
 import type { ReactNode } from "react";
-import { LiquidGlassScene } from "simple-liquid-glass/backdrop";
+import { LiveOpticsDefinitions } from "./LiveOptics";
 
 /**
- * The real background captured by the scene is the source of distortion on
- * WebKit / iPhone. Without this, simple-liquid-glass would only be frosted CSS.
- * One shared scene feeds header and menu lenses; a modest cache avoids repeating expensive captures as sections scroll.
+ * No third-party WebGL snapshot queue. The optical filter is
+ * declared in the initial HTML for immediate native Chromium refraction.
+ * WebKit/Firefox use a prewarmed full-page visual mirror.
  */
-export function LandingGlassBackdrop({children}:{children:ReactNode}) {
-  return (
-    <LiquidGlassScene className="ap-site" id="top" dir="rtl"
-      maxCacheBytes={32*1024*1024}>
-      {children}
-    </LiquidGlassScene>
-  );
+export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
+  return <div className="ap-site" id="top" dir="rtl">
+    <LiveOpticsDefinitions />
+    {children}
+  </div>;
 }

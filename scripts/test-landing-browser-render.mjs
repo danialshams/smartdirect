@@ -107,69 +107,97 @@ try {
   await start();
   bindSocket();
   await send("Runtime.enable");
-  await waitFor(async () => (await evaluate(`document.querySelector(".ap-header__backdrop")?.getAttribute("data-glass-strategy")`)) === "svg");
-  const startup = await evaluate(`(() => {
-    const root = document.querySelector(".ap-header__backdrop");
-    const optical = [...root.children].find(child => child.style.backdropFilter || child.style.webkitBackdropFilter);
-    const menu = document.querySelector(".ap-menu");
+  await send("Page.enable");
+
+  // Native Chromium must render the LIVE backdrop without capture queues.
+  await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop")?.dataset.opticsMode')) === "native");
+  const startup = await waitFor(async () => await evaluate(`(() => {
+    const s = document.querySelector(".ap-header__backdrop");
+    const pane=s?.querySelector(".ap-optical-native");
+    if (!s || !pane) return null;
     return {
-      strategy:root.dataset.glassStrategy,
-      opticalFilter: optical && getComputedStyle(optical).backdropFilter,
-      opticalShadow: optical && getComputedStyle(optical).boxShadow,
-      opticalBorder:!!root.querySelector(".liquid-glass-border") && getComputedStyle(root.querySelector(".liquid-glass-border")).display,
-      lenses:document.querySelectorAll("[data-liquid-glass]").length,
-      menuFilter:getComputedStyle(menu.querySelector(".ap-menu__content")).backdropFilter
+      mode:s.dataset.opticsMode,
+      filter:pane ? getComputedStyle(pane).backdropFilter : "MISSING_NATIVE_NODE: "+s.outerHTML.slice(0,650),
+      border:getComputedStyle(s).borderTopWidth,
+      shadow:getComputedStyle(s).boxShadow,
+      libraryInstances:document.querySelectorAll("[data-liquid-glass]").length,
+      sceneInstances:document.querySelectorAll("[data-liquid-glass-scene]").length,
+      words:document.querySelectorAll("[data-hero-word]").length
+    };
+  })()`));
+  assert.equal(startup.mode, "native");
+  assert.match(startup.filter,/url\(/,"Native lens must sample live page pixels");
+  assert.equal(startup.border,"0px");
+  assert.equal(startup.shadow,"none");
+  assert.equal(startup.libraryInstances,0);
+  assert.equal(startup.sceneInstances,0);
+  assert.equal(startup.words,7);
+  console.log("NATIVE OPTICS DOM READY",JSON.stringify(startup));
+
+  // Refraction must remain active across previously uncaptured sections.
+  await evaluate('window.scrollTo({top:1250,behavior:"instant"})');
+  await waitFor(async () => await evaluate('window.scrollY>600'));
+  await waitFor(async () => (await evaluate('document.querySelector(".ap-backtop__lens")?.dataset.opticsMode')) === "native");
+  const scroll = await evaluate(`(() => ({
+    header:document.querySelector(".ap-header__backdrop").dataset.opticsMode,
+    button:document.querySelector(".ap-backtop__lens")?.dataset.opticsMode,
+    filter:getComputedStyle(document.querySelector(".ap-header__backdrop .ap-optical-native")).backdropFilter,
+    buttonBorder:getComputedStyle(document.querySelector(".ap-backtop__lens")).borderWidth,
+    buttonShadow:getComputedStyle(document.querySelector(".ap-backtop__lens")).boxShadow
+  }))()`);
+  assert.equal(scroll.header,"native");
+  assert.equal(scroll.button,"native");
+  assert.match(scroll.filter,/url\(/);
+  assert.equal(scroll.buttonBorder,"0px");
+  assert.equal(scroll.buttonShadow,"none");
+
+  await evaluate('document.querySelector(".ap-menu-toggle").click()');
+  await sleep(110);
+  const mid=await evaluate(`(() => {
+    const menu=document.querySelector(".ap-menu"),overlay=document.querySelector(".ap-menu-overlay");
+    return {
+      open:menu.classList.contains("ap-menu--open"),
+      clip:getComputedStyle(menu).clipPath,
+      filter:getComputedStyle(overlay).backdropFilter,
+      libraryCount:document.querySelectorAll("[data-liquid-glass]").length
     };
   })()`);
-  assert.equal(startup.strategy, "svg", "Chromium header must use live SVG refraction");
-  assert.match(startup.opticalFilter, /url\(/i, "Live SVG filter must actually be on backdrop layer");
-  assert.equal(startup.opticalShadow, "none", "No library inline white rim is allowed");
-  assert.equal(startup.opticalBorder, "none", "No library border overlay is allowed");
-  assert.equal(startup.lenses, 1, "Before scrolling, only the header is a LiquidGlass instance");
-  assert.equal(startup.menuFilter, "none", "No nested menu blur allowed");
+  assert.equal(mid.open,true);
+  assert.equal(mid.clip,"none");
+  assert.match(mid.filter,/blur\(3px\)/);
+  assert.equal(mid.libraryCount,0);
+  await sleep(310);
+  await evaluate('document.querySelector(".ap-menu__top button").click()');
+  await sleep(340);
+  assert.equal(await evaluate('document.querySelector(".ap-menu").classList.contains("ap-menu--open")'),false);
 
-  await evaluate(`window.scrollTo({top:950,behavior:"instant"})`);
-  await sleep(160);
-  const scrolled = await evaluate(`(() => ({
-    strategy:document.querySelector(".ap-header__backdrop")?.dataset.glassStrategy,
-    y:window.scrollY,
-    filter:getComputedStyle([...document.querySelector(".ap-header__backdrop").children].find(el => el.style.backdropFilter)).backdropFilter
-  }))()`);
-  assert.ok(scrolled.y > 200, "Scroll test did not actually move page");
-  assert.equal(scrolled.strategy,"svg");
-  assert.match(scrolled.filter,/url\(/);
-  const lensesScrolled = await waitFor(async () => {
-    const count = await evaluate(`document.querySelectorAll("[data-liquid-glass]").length`);
-    return count === 2 ? count : false;
-  });
-  const backTop = await evaluate(`(() => {
-    const lens=document.querySelector(".ap-backtop__lens");
-    const glass=[...lens.children].find(el=>el.style.backdropFilter||el.style.webkitBackdropFilter);
-    return {strategy:lens.dataset.glassStrategy,
-      shadow:glass&&getComputedStyle(glass).boxShadow,
-      border:getComputedStyle(lens.querySelector(".liquid-glass-border")).display};
+  // Emulate the WebKit/Gecko *selection path* in a separate navigation.
+  // Chrome's filter primitives render the fallback for a predictable CI check.
+  await send("Emulation.setUserAgentOverride",{userAgent:"Mozilla/5.0 (X11; Linux x86_64; rv:134.0) Gecko/20100101 Firefox/134.0"});
+  await send("Page.navigate",{url:"http://127.0.0.1:"+port+"/"});
+  await waitFor(async () => (await evaluate('document.querySelector(".ap-header__backdrop")?.dataset.opticsMode')) === "mirror",14000);
+  const fallback=await evaluate(`(() => {
+    const s=document.querySelector(".ap-header__backdrop"),doc=s.querySelector(".ap-optical-document");
+    return {
+      mode:s.dataset.opticsMode,
+      ready:!!doc,
+      mainCount:doc?.querySelectorAll(":scope > main").length,
+      sections:doc?.querySelectorAll(":scope > section.ap-showcase-capture").length,
+      footer:!!doc?.querySelector(":scope > footer"),
+      filter:getComputedStyle(s.querySelector(".ap-optical-mirror")).filter,
+      border:getComputedStyle(s).borderTopWidth
+    };
   })()`);
-  assert.equal(backTop.strategy,"svg");
-  assert.equal(backTop.shadow,"none","Back-to-top has no white inset shadow");
-  assert.equal(backTop.border,"none","Back-to-top has no white gradient border");
-
-  await evaluate(`document.querySelector(".ap-menu-toggle").click()`);
-  await sleep(110);
-  const menuMid = await evaluate(`(() => {
-    const menu=document.querySelector(".ap-menu"), overlay=document.querySelector(".ap-menu-overlay");
-    return {open:menu.classList.contains("ap-menu--open"),transform:getComputedStyle(menu).transform,
-      clip:getComputedStyle(menu).clipPath,overlayFilter:getComputedStyle(overlay).backdropFilter,
-      count:document.querySelectorAll("[data-liquid-glass]").length};
-  })()`);
-  assert.equal(menuMid.open,true);
-  assert.equal(menuMid.clip,"none","Avoid animated clip-path repaint");
-  assert.match(menuMid.overlayFilter,/blur\(3px\)/,"Backdrop blur is static");
-  assert.equal(menuMid.count,lensesScrolled,"Opening menu must not mount an extra WebGL/SVG lens");
-  await sleep(300);
-  await evaluate(`document.querySelector('.ap-menu__top button').click()`);
-  await sleep(350);
-  assert.equal(await evaluate(`document.querySelector(".ap-menu").classList.contains("ap-menu--open")`),false);
-  console.log("DAIRA BROWSER PASS: real native SVG refraction while scrolling; no inner white rim; menu opens/closes without GPU lenses or animated backdrop-filter.");
+  assert.equal(fallback.mode,"mirror");
+  assert.equal(fallback.mainCount,1);
+  assert.equal(fallback.sections,8);
+  assert.ok(fallback.footer);
+  assert.match(fallback.filter,/url\(/);
+  assert.equal(fallback.border,"0px");
+  await evaluate('window.scrollTo({top:1350,behavior:"instant"})');
+  await waitFor(async () => !!(await evaluate('document.querySelector(".ap-header__backdrop .ap-optical-document")?.style.transform.includes("-1350px")')));
+  assert.equal(await evaluate('document.querySelector(".ap-header__backdrop").dataset.opticsMode'),"mirror");
+  console.log("DAIRA BROWSER PASS: live Chromium SVG backdrop, no white borders or snapshot scenes, lightweight menu, full-page prewarmed mirror visible only after readiness and tracking scroll.");
 } finally {
   try {socket?.close();} catch {}
   if (chrome && chrome.exitCode === null) {

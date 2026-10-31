@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowUpLeft, BadgeCheck, Check, ShieldCheck } from "lucide-react";
 import { LandingGlassBackdrop } from "../components/landing/LandingGlassBackdrop";
 import { SimpleHeader } from "../components/landing/SimpleHeader";
-import { HeroMotion } from "../components/landing/HeroMotion";
 import { LandingInteractions } from "../components/landing/LandingInteractions";
 import { FeatureShowcase } from "../components/landing/FeatureShowcase";
 import "./simple-home.css";
@@ -15,6 +14,7 @@ import "./landing-instagram.css";
 import "./landing-polish.css";
 import "./landing-refraction-fix.css";
 import "./landing-live-glass.css";
+import "./landing-optics-v2.css";
 
 export const metadata:Metadata = {
   title:"دایرا | همه تعاملات پیجت، در یک فضای ساده",
@@ -49,15 +49,14 @@ export default function Home() {
       <script dangerouslySetInnerHTML={{__html:initialScrollGuard}} />
       <SimpleHeader />
       <a className="ap-skip" data-liquid-glass-ignore="" href="#content">رفتن به محتوای صفحه</a>
-      <HeroMotion />
       <main id="content">
         <section className="ap-hero" aria-labelledby="ap-hero-title">
           <div className="ap-hero__ambient" aria-hidden="true"/>
           <div className="ap-shell ap-hero__content">
-            <h1 id="ap-hero-title" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly data-liquid-glass-ignore="">
+            <h1 id="ap-hero-title" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly>
               {heroWords.map((word,index)=><span className="ap-hero__word" data-hero-word key={word}>{word}{index<heroWords.length-1?" ":""}</span>)}
             </h1>
-            <div className="ap-hero__actions" data-hero-cta data-liquid-glass-ignore="">
+            <div className="ap-hero__actions" data-hero-cta>
               <Link className="ap-button ap-button--solid ap-hero__cta" href="/login">
                 رایگان شروع کن <ArrowUpLeft size={18} aria-hidden="true"/>
               </Link>
