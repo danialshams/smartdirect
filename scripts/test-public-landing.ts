@@ -1,4 +1,4 @@
-/** Daira minimalist public landing: content, motion, navigation and mobile contract. */
+/** Editorial Daira landing smoke checks: sparse content, Vazir, GSAP and mobile accessibility. */
 import { readFileSync, existsSync } from "node:fs";
 import assert from "node:assert/strict";
 
@@ -7,82 +7,91 @@ const page=read("app/page.tsx");
 const css=read("app/simple-home.css");
 const header=read("components/landing/SimpleHeader.tsx");
 const motion=read("components/landing/HeroMotion.tsx");
-const tokens=read("app/daira-tokens.css");
 const pkg=JSON.parse(read("package.json"));
 const lock=JSON.parse(read("package-lock.json"));
 
 assert.match(page,/dir="rtl"/);
 assert.match(page,/<main id="content">/);
-assert.match(page,/aria-labelledby="sh-hero-title"/);
+assert.match(page,/aria-labelledby="ap-hero-title"/);
 assert.match(page,/<HeroMotion \/>/);
 assert.match(page,/<SimpleHeader \/>/);
+assert.equal((page.match(/<h1\b/g)||[]).length,1,"Exactly one marketing h1");
+assert.equal((page.match(/<section\b/g)||[]).length,4,"Only four intentional editorial sections");
 
-for(const route of ["/login","/privacy-policy","/data-deletion"])
-  assert.ok(page.includes('href="'+route+'"'),"Missing real route: "+route);
-for(const section of ["features","example","how","faq"])
-  assert.ok(page.includes('id="'+section+'"'),"Missing marketing section: "+section);
+for(const link of ["/login","/privacy-policy","/data-deletion"])
+  assert.ok(page.includes('href="'+link+'"'),"Missing legal/user path: "+link);
+for(const section of ["experience","features","start"])
+  assert.ok(page.includes('id="'+section+'"'),"Missing editorial scene: "+section);
+for(const label of [
+  "کامنت","استوری","دایرکت","لایو","اشتراک‌گذاری","منشن",
+  "صندوق دایرکت","یادآوری هوشمند","منوی دایرکت","پیام شروع گفتگو",
+  "محتوا","تحلیل",
+])
+  assert.ok(page.includes(label),"Missing supported feature reference: "+label);
 
-for(const label of ["کامنت","استوری","لایو","اشتراک‌گذاری","منشن","دایرکت","یادآوری هوشمند","منوی دایرکت","پیام شروع گفتگو","انتشار محتوا","تحلیل پیج","صندوق دایرکت"])
-  assert.ok(page.includes(label),"Missing existing Daira feature: "+label);
-
-for(const copy of ["شروع با دایرا","آشنایی با امکانات","شروعی ساده، در سه قدم","سؤالات متداول","نمای نمونه"])
-  assert.ok(page.includes(copy),"Missing meaningful marketing content: "+copy);
-
-assert.match(page,/const features = \[/);
-assert.match(page,/const steps = \[/);
-assert.match(page,/const faqs = \[/);
-assert.equal((page.match(/description: "/g)||[]).length>=9,true);
-
-assert.match(page,/sh-preview__window/);
-assert.match(page,/sh-preview__flow-answer/);
-assert.match(page,/sh-hero__copy/);
-assert.match(page,/sh-feature-grid/);
-assert.match(page,/sh-faq__item/);
-assert.doesNotMatch(page,/RobotHeroScene|RobotMotionPlayer|<video|<Canvas|WebGL|LandingWebGL|LandingMotion/);
+assert.match(page,/کمتر درگیر شو/);
+assert.match(page,/بیشتر ارتباط بگیر/);
+assert.match(page,/پیام‌ها می‌رسند/);
+assert.match(page,/پاسخ‌ها آماده‌اند/);
+assert.match(page,/کنترل بیشتر/);
+assert.match(page,/پیچیدگی کمتر/);
+assert.match(page,/const capabilities = \[/);
+assert.equal((page.match(/no: "0[1-3]"/g)||[]).length,3,"Three focused capabilities only");
+assert.match(page,/ap-story__sticky/);
+assert.match(page,/ap-story__ring--outer/);
+assert.match(page,/ap-capabilities__list/);
+assert.match(page,/ap-hero__line--accent/);
+assert.match(page,/data-story-reveal/);
+assert.match(page,/data-hero-entrance/);
+assert.doesNotMatch(page,/DashboardPreview|RobotHeroScene|RobotMotionPlayer|<video|<Canvas|WebGL|sh-preview|sh-feature-grid|image:\s*"/);
 assert.doesNotMatch(page,/fetch\(|dangerouslySetInnerHTML|ثبت.نام رایگان|مشتری راضی/);
-assert.ok(existsSync("public/daira-header-logo-hd.webp"),"Brand logo required");
-assert.match(tokens,/--daira-primary: #2F61FD/);
+assert.ok(existsSync("public/daira-header-logo-hd.webp"));
+
+assert.match(header,/document\.body\.style\.overflow="hidden"/);
+assert.match(header,/e\.key==="Escape"/);
+assert.match(header,/inert=\{!open\}/);
+assert.match(header,/aria-expanded=\{open\}/);
+assert.match(header,/aria-controls="ap-menu"/);
+assert.match(header,/ap-menu-overlay/);
+assert.match(header,/role="dialog"/);
+assert.match(header,/close\.current\?\.focus\(\)/);
+assert.match(header,/matchMedia\("\(min-width: 800px\)"\)/);
+assert.doesNotMatch(header,/LiquidGlass|LandingGlass|fetch\(|localStorage/);
 
 assert.equal(pkg.dependencies.gsap,"3.14.2");
-assert.equal(lock.packages[""].dependencies.gsap,"3.14.2");
 assert.equal(lock.packages["node_modules/gsap"].version,"3.14.2");
 assert.match(motion,/from "gsap"/);
 assert.match(motion,/from "gsap\/ScrollTrigger"/);
 assert.match(motion,/gsap\.timeline/);
 assert.match(motion,/scrollTrigger:/);
+assert.match(motion,/scrub:1\.15/);
+assert.match(motion,/gsap\.matchMedia/);
 assert.match(motion,/context\.revert\(\)/);
 assert.match(motion,/prefers-reduced-motion: reduce/);
-assert.match(motion,/history\.scrollRestoration = "manual"/);
-assert.match(motion,/window\.addEventListener\("pageshow", reset\)/);
-assert.doesNotMatch(motion,/setInterval|fetch\(|requestAnimationFrame/);
+assert.match(motion,/history\.scrollRestoration="manual"/);
+assert.match(motion,/window\.addEventListener\("pageshow",reset\)/);
+assert.doesNotMatch(motion,/setInterval|requestAnimationFrame|fetch\(/);
 
-assert.match(header,/document\.body\.style\.overflow = "hidden"/);
-assert.match(header,/event\.key === "Escape"/);
-assert.match(header,/inert=\{!open\}/);
-assert.match(header,/aria-expanded=\{open\}/);
-assert.match(header,/aria-controls="sh-menu-panel"/);
-assert.match(header,/sh-menu-toggle/);
-assert.match(header,/sh-menu-backdrop/);
-assert.match(header,/closeButton\.current\?\.focus\(\)/);
-assert.match(header,/largeScreen|breakpoint = window\.matchMedia/);
-assert.doesNotMatch(header,/LiquidGlass|LandingGlass|fetch\(|localStorage/);
-
-assert.match(css,/\.sh-header__inner\s*\{/);
-assert.match(css,/grid-template-columns:minmax\(150px,1fr\) auto minmax\(150px,1fr\)/);
-assert.match(css,/\.sh-hero__inner\s*\{/);
-assert.match(css,/\.sh-feature-grid\s*\{/);
-assert.match(css,/\.sh-menu-panel--open\s*\{/);
+assert.match(css,/@font-face/);
+assert.match(css,/font-family:"DairaVazir"/);
+for(const weight of ["Vazir-Regular.woff2","Vazir-Medium.woff2","Vazir-Bold.woff2","Vazir-Black.woff2"])
+  assert.ok(css.includes(weight),"Missing exact original Vazir face: "+weight);
+assert.match(css,/\.ap-site \{/);
+assert.match(css,/\.ap-header__inner \{/);
+assert.match(css,/\.ap-hero__content \{/);
+assert.match(css,/\.ap-story__sticky \{/);
+assert.match(css,/position:sticky;top:66px/);
+assert.match(css,/\.ap-capability \{/);
+assert.match(css,/\.ap-menu--open \{/);
 assert.match(css,/@media\(max-width:1050px\)/);
-assert.match(css,/@media\(max-width:860px\)/);
+assert.match(css,/@media\(max-width:800px\)/);
 assert.match(css,/@media\(max-width:600px\)/);
-assert.match(css,/@media\(max-width:390px\)/);
-assert.match(css,/@media\(max-width:340px\)/);
+assert.match(css,/@media\(max-width:375px\)/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-assert.match(css,/scroll-margin-top:105px/);
-assert.match(css,/--sh-blue:#2f61fd/);
-assert.match(css,/\.sh-menu-toggle \{display:flex/);
-assert.match(css,/\.sh-feature-grid \{grid-template-columns:1fr/);
-assert.match(css,/\.sh-hero__actions \{display:grid;grid-template-columns:1fr 1fr/);
-assert.doesNotMatch(css,/sh-robot-world|sh-robot-svg|sh-robot-cables|daira-robot-motion/);
+assert.match(css,/scroll-margin-top:70px/);
+assert.match(css,/--ap-accent:#2f61fd/);
+assert.match(css,/\.ap-menu-toggle \{display:flex/);
+assert.match(css,/\.ap-capability \{/);
+assert.doesNotMatch(css,/\.sh-preview|\.sh-feature-grid|\.sh-robot|daira-robot-motion/);
 
-console.log("DAIRA minimalist landing PASS: concise content, 11 capabilities, semantic navigation, real routes, GSAP reveal, accessible mobile menu and responsive layout");
+console.log("Daira Apple-style editorial landing PASS: four sparse sections, no mockup, exact Vazir fonts, GSAP scroll choreography, three essential feature rows, accessible menu and phone layouts.");
