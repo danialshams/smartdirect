@@ -58,6 +58,23 @@ try {
     return samples;
   });
   console.log("WEBKIT_SCROLL_FRAMES="+JSON.stringify(frames));
+  // The scroll-settled revalidation must target the visible section, not
+  // invalidate every cached image or restart the GPU renderer.
+  await page.waitForTimeout(420);
+  const settled = await page.evaluate(() => ({
+    y:scrollY,
+    revisionNodes:document.querySelectorAll("[data-daira-glass-viewport-revision]").length,
+    strategy:document.querySelector(".daira-library-liquid-header")?.dataset.glassStrategy,
+    edgeShadow:getComputedStyle(document.querySelector(".daira-library-glass-frame")).boxShadow,
+    clip:getComputedStyle(document.querySelector(".daira-library-glass-frame")).overflow
+  }));
+  console.log("WEBKIT_SETTLED_CAPTURE="+JSON.stringify(settled));
+  if (settled.revisionNodes < 1) throw Error("Visible Safari section was never revalidated on scroll settle");
+  if (settled.strategy !== "webgl") throw Error("Refresh reset the WebGL renderer");
+  if (settled.edgeShadow !== "none" || settled.clip !== "hidden") {
+    throw Error("Visible white rim must be clipped without an outer shadow");
+  }
+
   const snapshot = await page.screenshot({type:"jpeg",quality:54});
   console.log("WEBKIT_SCROLL_IMAGE="+snapshot.toString("base64"));
   const stable = first.stable === "true";
