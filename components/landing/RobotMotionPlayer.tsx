@@ -19,6 +19,7 @@ export function RobotMotionPlayer() {
   const activeRef=useRef(0);
   const lastMotion=useRef<string>("");
   const started=useRef(false);
+  const sourceRef=useRef<[string,string]>([IDLE,"turn-left"]);
   const [active,setActive]=useState(0);
   const [sources,setSources]=useState<[string,string]>([IDLE,"turn-left"]);
   const [startedPlaying,setStartedPlaying]=useState(false);
@@ -55,18 +56,18 @@ export function RobotMotionPlayer() {
   useEffect(()=>{
     if(!started.current) {
       started.current=true;
-      setSources([IDLE,selectNext(IDLE)]);
+      const initial:[string,string]=[IDLE,selectNext(IDLE)];
+      sourceRef.current=initial;
+      setSources(initial);
       return;
     }
-    const current=sources[active];
+    const current=sourceRef.current[active];
     const next=selectNext(current);
-    setSources(previous=>{
-      const updated:[string,string]=[...previous];
-      updated[1-active]=next;
-      return updated;
-    });
-    // Active source updates only on switch; never reload the playing video.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const updated:[string,string]=[...sourceRef.current];
+    updated[1-active]=next;
+    sourceRef.current=updated;
+    setSources(updated);
+    // Never reload the currently playing video.
   },[active,selectNext]);
 
   useEffect(()=>{
@@ -108,7 +109,6 @@ export function RobotMotionPlayer() {
           ref={index===0?videoA:videoB}
           className={"sh-robot-motion__clip"+(index===active && startedPlaying?" sh-robot-motion__clip--active":"")}
           src={ROOT+"/"+sources[index]+".mp4"}
-          autoPlay={index===0}
           muted playsInline preload="auto"
           tabIndex={-1}
           aria-hidden="true"
