@@ -151,12 +151,13 @@ try {
   console.log("DAIRA MATERIAL",JSON.stringify({color:startup.materialColor,alpha:materialAlpha,scales:startup.displacementScales}));
   assert.ok(materialAlpha>.025 && materialAlpha<.08,
     "The REAL library material must be translucent neutral glass, not transparent or opaque");
-  // The original strong loupe uses geometry-relative scale, not the 32px
-  // override that made the physical lens appear like transparent acrylic.
-  assert.ok(Math.max(...startup.displacementScales) >= 40,
+  // The 32px override barely refracted the backdrop; the original ~102px
+  // bent far-away page pixels across the 62px header. 52px is deliberately
+  // stronger but still spatially bounded for the narrow optical surface.
+  assert.ok(Math.max(...startup.displacementScales) >= 48,
     "Loupe refraction is unexpectedly weak or still forcibly clamped");
-  assert.ok(Math.max(...startup.displacementScales) <= 180,
-    "Loupe optical displacement exceeded its expected desktop bound");
+  assert.ok(Math.max(...startup.displacementScales) <= 58,
+    "Loupe refraction oversamples distant content behind the shallow header");
 
   // Temporary public-landing visual diagnostics. The user reports no visually
   // discernible lens despite a positive filter CSS property test.
