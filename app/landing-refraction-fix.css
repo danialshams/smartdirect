@@ -1,0 +1,152 @@
+/* Landing refraction and motion: narrow capture tiles, no optical inner rim.
+   Overrides are scoped to public homepage only. Dashboard/admin untouched. */
+
+/* A solid root forces the snapshot engine to capture a costly, blank full-page
+   shell; keep the body white and let each clipped section paint its own tile. */
+body:has(.ap-site){background:#fff}
+.ap-site{background:transparent!important}
+.ap-site>.ap-skip{pointer-events:auto}
+
+/* Each real section is a DIRECT CHILD of LiquidGlassScene and clips its
+   content. This keeps Safari WebGL HTML captures within one viewport-ish row
+   rather than recapturing all eleven previews in one huge main. */
+.ap-site > .ap-showcase-capture{
+  overflow:clip!important;
+  padding:14px 0 18px!important;
+  background:#f7faff!important;
+}
+.ap-site > .ap-showcase-capture--first{
+  padding-top:96px!important;
+}
+.ap-site > .ap-showcase-capture--last{
+  padding-bottom:114px!important;
+}
+.ap-site .ap-showcase-capture .ap-showcase__intro{
+  margin-bottom:49px!important;
+}
+.ap-site .ap-showcase-capture .ap-social-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+.ap-site .ap-showcase-capture .ap-social-card{
+  grid-column:span 2;
+}
+.ap-site .ap-showcase-capture .ap-social-card--wide{
+  grid-column:span 4;
+}
+/* Alternating rows keep a designed rhythm without one giant capture source. */
+.ap-site .ap-showcase-capture--alternate .ap-social-card--wide{
+  direction:ltr;
+}
+.ap-site .ap-showcase-capture--alternate .ap-social-card--wide>*{
+  direction:rtl;
+}
+.ap-site .ap-showcase-capture--alternate .ap-social-card--wide .ap-social-card__copy{
+  text-align:right;
+}
+
+/* Both header and floating back button use refractive optics, but never
+   a painted highlight/gloss/border overlay around the internal edge. */
+.ap-site .ap-header__backdrop,
+.ap-site .ap-backtop__lens{
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  filter:none!important;
+}
+.ap-site .ap-header__backdrop::before,
+.ap-site .ap-header__backdrop::after,
+.ap-site .ap-backtop__lens::before,
+.ap-site .ap-backtop__lens::after{
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+.ap-site .ap-backtop__action{filter:none!important}
+.ap-site .ap-backtop__action svg{filter:none!important;color:#2f61fd}
+.ap-site .ap-backtop__fill,.ap-site .ap-header__lens-fill{
+  background:transparent!important;
+}
+
+/* Dropdown travels vertically FROM UNDER the bottom edge of the header,
+   without sliding in from right or sliding links in from the side.
+   Closing uses exactly the inverse transform and reveal mask. */
+.ap-site .ap-menu{
+  top:71px!important;
+  right:max(14px,env(safe-area-inset-right))!important;
+  transform-origin:top center!important;
+  transform:translate3d(0,-21px,0) scale(.983)!important;
+  clip-path:inset(0 0 100% 0 round 27px);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:
+    clip-path .46s cubic-bezier(.2,.77,.2,1),
+    transform .46s cubic-bezier(.2,.77,.2,1),
+    opacity .34s ease,
+    visibility 0s linear .48s!important;
+}
+.ap-site .ap-menu--open{
+  transform:translate3d(0,0,0) scale(1)!important;
+  clip-path:inset(0 0 0 0 round 27px);
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transition:
+    clip-path .49s cubic-bezier(.18,.82,.22,1),
+    transform .49s cubic-bezier(.18,.82,.22,1),
+    opacity .36s ease,
+    visibility 0s!important;
+}
+.ap-site .ap-menu__nav .ap-menu__item{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  transform:translate3d(0,-7px,0)!important;
+  opacity:0;
+  transition:
+    transform .37s cubic-bezier(.2,.78,.2,1),
+    opacity .32s ease,
+    color .22s ease!important;
+  transition-delay:0ms!important;
+}
+.ap-site .ap-menu--open .ap-menu__nav .ap-menu__item{
+  transform:translate3d(0,0,0)!important;
+  opacity:1;
+  transition-delay:calc(72ms + var(--enter-index)*42ms)!important;
+}
+.ap-site .ap-menu__nav .ap-menu__item:hover,
+.ap-site .ap-menu__nav .ap-menu__item:focus-visible{
+  background:transparent!important;
+  color:#1759d3!important;
+}
+.ap-site .ap-menu__nav .ap-menu__item:hover svg{
+  color:#1759d3!important;
+}
+
+/* Hero motion is short, not seven heavy 3D layers, and there is no extra
+   white rim in the CTA or backdrop. */
+.ap-site .ap-hero__word{will-change:auto}
+
+/* Transparent root does not have the old giant blank white shell capture. */
+@media(max-width:800px){
+  .ap-site .ap-showcase-capture .ap-social-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ap-site .ap-showcase-capture .ap-social-card{grid-column:span 1}
+  .ap-site .ap-showcase-capture .ap-social-card--wide{grid-column:span 2}
+}
+@media(max-width:600px){
+  .ap-site > .ap-showcase-capture{padding:11px 0 15px!important}
+  .ap-site > .ap-showcase-capture--first{padding-top:67px!important}
+  .ap-site > .ap-showcase-capture--last{padding-bottom:81px!important}
+  .ap-site .ap-showcase-capture .ap-social-grid{grid-template-columns:minmax(0,1fr)}
+  .ap-site .ap-showcase-capture .ap-social-card,
+  .ap-site .ap-showcase-capture .ap-social-card--wide{grid-column:span 1}
+  .ap-site .ap-showcase-capture--alternate .ap-social-card--wide{direction:rtl}
+  .ap-site .ap-menu{top:65px!important;right:12px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .ap-site .ap-menu,
+  .ap-site .ap-menu__nav .ap-menu__item{transition:none!important}
+  .ap-site .ap-menu{clip-path:inset(0 0 100% 0 round 27px);transform:none!important}
+  .ap-site .ap-menu--open{clip-path:inset(0 0 0 0 round 27px);transform:none!important}
+}
