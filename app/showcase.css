@@ -490,3 +490,29 @@
 @media(prefers-reduced-motion:reduce) {
   .ap-showcase-scene__ambient::after{animation:none!important}
 }
+
+
+/* Clear optics, readable controls: adapt the liquid menu to dark feature stages. */
+.ap-menu--dark .ap-menu__content {
+  background:rgba(7,15,39,.25);
+}
+.ap-menu--dark .ap-menu__top,
+.ap-menu--dark .ap-menu__nav .ap-menu__item {
+  color:#f0f5ff;
+  text-shadow:0 1px 3px rgba(1,8,24,.20);
+}
+.ap-menu--dark .ap-menu__top {
+  border-bottom-color:rgba(216,226,253,.16);
+}
+.ap-menu--dark .ap-menu__top button {
+  background:rgba(221,233,255,.10);
+  color:#f2f6ff;
+}
+.ap-menu--dark .ap-menu__item svg {
+  color:#b8ccff;
+}
+.ap-menu--dark .ap-menu__item:hover,
+.ap-menu--dark .ap-menu__item:focus-visible {
+  background:rgba(144,177,241,.18);
+  color:#fff!important;
+}
