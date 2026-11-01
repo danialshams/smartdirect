@@ -403,7 +403,7 @@ try {
     const footer=document.querySelector(".ap-footer--extended");
     async function exercise(section, item) {
       const top=section.getBoundingClientRect().top+window.scrollY;
-      window.scrollTo({top:Math.max(0,top-innerHeight*1.18),behavior:"instant"});
+      window.scrollTo({top:Math.max(0,top-innerHeight*.73),behavior:"instant"});
       await sleep(500);
       const opacities=[];
       for (let i=0;i<11;i++) {
