@@ -1,4 +1,4 @@
-import "server-only";
+// Node-only AES-GCM module: no client component imports this file.
 import {createCipheriv,createDecipheriv,hkdfSync,randomBytes} from "node:crypto";
 const PREFIX="daira-meta-enc1:";
 function key():Buffer{
