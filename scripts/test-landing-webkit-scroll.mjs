@@ -250,6 +250,21 @@ try {
   console.log("WEBKIT_NATIVE_OPTICS_UNINTERRUPTED_PASS");
   console.log("WEBKIT_FAST_SCROLL_RECOVERY_PASS");
   console.log("WEBKIT_SCROLL_PASS");
+  // Export exact, fully rendered static page artwork for the next optical
+  // experiment. The final transparent loupe shader is NOT part of these
+  // images; it still runs live on the GPU over them.
+  await page.addStyleTag({content:
+    '.ap-header,.ap-backtop,.daira-static-reflection{visibility:hidden!important;}'});
+  const selectors=['main#content',...Array.from({length:8},(_,i)=>'.ap-showcase-capture:nth-of-type('+(i+1)+')'),'footer.ap-footer--extended'];
+  const exportItems=[page.locator('main#content'),...Array.from({length:8},(_,i)=>page.locator('.ap-showcase-capture').nth(i)),page.locator('footer.ap-footer--extended')];
+  for(let i=0;i<exportItems.length;i++) {
+    const item=exportItems[i];
+    await item.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1050);
+    const bytes=await item.screenshot({type:'jpeg',quality:82,scale:'css',timeout:20000});
+    console.log('DAIRA_REFLECTION_ASSET_390_'+i+'='+bytes.toString('base64'));
+  }
+
 } catch (error) {
   console.error("WEBKIT_SCROLL_ERROR", error);
   process.exitCode = 1;
