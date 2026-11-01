@@ -25,6 +25,20 @@ export function LandingInteractions() {
         const gsap = gsapModule.gsap;
         const ScrollTrigger = triggerModule.ScrollTrigger;
         gsap.registerPlugin(ScrollTrigger);
+        const ua = navigator.userAgent;
+        const snapshotEngine = /Firefox\/|FxiOS\/|iPhone|iPad|iPod/.test(ua) ||
+          (/Safari\//.test(ua) && !/Chrome\/|Chromium\/|Edg\/|OPR\//.test(ua));
+        // The Safari scene MutationObserver sees changes to inline styles.
+        // Exclude only the actively tweening targets from snapshots, then
+        // restore them in one mutation after GSAP completes. This prevents
+        // 60 separate expensive html-to-image captures per second.
+        const isolate = (items: HTMLElement[]) => {
+          if (snapshotEngine) items.forEach(item => item.setAttribute("data-liquid-glass-ignore", ""));
+        };
+        const revealToCapture = (items: HTMLElement[]) => {
+          if (snapshotEngine) items.forEach(item => item.removeAttribute("data-liquid-glass-ignore"));
+        };
+
         root.dataset.gsapMotion = "true";
         const context = gsap.context(() => {
           const sections = Array.from(root.querySelectorAll<HTMLElement>(".ap-showcase-capture"));
@@ -48,6 +62,7 @@ export function LandingInteractions() {
                   section.dataset.gsapShown = "true";
                   return;
                 }
+                isolate(targets);
                 gsap.fromTo(targets,
                   { autoAlpha: 0, y: 23 },
                   {
@@ -57,7 +72,7 @@ export function LandingInteractions() {
                     ease: "power3.out",
                     overwrite: "auto",
                     clearProps: "opacity,visibility,transform",
-                    onComplete: () => { if (active) section.dataset.gsapShown = "true"; }
+                    onComplete: () => { revealToCapture(targets); if (active) section.dataset.gsapShown = "true"; }
                   }
                 );
               }
@@ -77,6 +92,7 @@ export function LandingInteractions() {
                   footer.dataset.gsapShown = "true";
                   return;
                 }
+                isolate(items);
                 gsap.fromTo(items,
                   { autoAlpha: 0, y: 19 },
                   {
@@ -86,7 +102,7 @@ export function LandingInteractions() {
                     ease: "power3.out",
                     overwrite: "auto",
                     clearProps: "opacity,visibility,transform",
-                    onComplete: () => { if (active) footer.dataset.gsapShown = "true"; }
+                    onComplete: () => { revealToCapture(items); if (active) footer.dataset.gsapShown = "true"; }
                   }
                 );
               }
