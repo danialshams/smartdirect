@@ -84,7 +84,11 @@ export function LandingInteractions() {
       if (footer) {
         const callout = footer.querySelector<HTMLElement>("[data-footer-callout]");
         if (callout) reveal(callout,{start:"top 80%",y:18,duration:.84});
-        footer.querySelectorAll<HTMLElement>(".ap-footer__brand, .ap-footer__links, .ap-footer__bottom").forEach(node => reveal(node,{start:"top 85%",y:10,duration:.7}));
+        footer.querySelectorAll<HTMLElement>(".ap-footer__brand, .ap-footer__links").forEach(node => reveal(node,{start:"top 85%",y:10,duration:.7}));
+        // The copyright strip is the final page element: 85% would be
+        // unreachable at maximum scroll and leave it permanently invisible.
+        const bottom = footer.querySelector<HTMLElement>(".ap-footer__bottom");
+        if (bottom) reveal(bottom,{start:"top bottom",y:7,duration:.6});
       }
     }, root);
     let canceled=false;
