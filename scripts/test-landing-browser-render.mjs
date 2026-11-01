@@ -409,16 +409,17 @@ try {
       const top=section.getBoundingClientRect().top+window.scrollY;
       window.scrollTo({top:Math.max(0,top-innerHeight*.73),behavior:"instant"});
       await sleep(90);
-      const opacities=[];
+      const opacities=[], cardTransforms=[];
       for (let i=0;i<11;i++) {
         window.scrollBy({top:48,behavior:"instant"});
         await sleep(85);
         opacities.push(Number(getComputedStyle(item).opacity));
+        cardTransforms.push(getComputedStyle(section).transform);
       }
       await sleep(2200);
       return {started:Number(section.dataset.gsapStarted??0),
         shown:section.dataset.gsapShown,
-        opacities,finalOpacity:Number(getComputedStyle(item).opacity)};
+        opacities,cardTransforms,finalOpacity:Number(getComputedStyle(item).opacity)};
     }
     const row=rows[Math.min(4,rows.length-1)];
     const card=row.querySelector(".ap-social-grid > .ap-social-card");
@@ -428,6 +429,8 @@ try {
   })()`);
   console.log("DAIRA_GSAP_ENTRANCES="+JSON.stringify(entrance));
   assert.equal(entrance.active,"true","Real GSAP ScrollTrigger must be initialized");
+  assert.ok(entrance.feature.cardTransforms.some(t=>t!=="none"),
+    "Entire real feature card must visibly translate; moving only a decorative halo is invalid");
   for (const [name,result] of Object.entries({feature:entrance.feature,footer:entrance.footer})) {
     assert.ok(result.started>0, name+" must start a genuine GSAP entrance");
     assert.equal(result.shown,"true",name+" GSAP timeline must finish");
