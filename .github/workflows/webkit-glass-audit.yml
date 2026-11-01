@@ -19,6 +19,10 @@ permissions:
 jobs:
   webkit-mobile:
     if: github.event_name == 'push' || github.head_ref == 'fix/daira-static-reflection-architecture-20261101'
+    strategy:
+      fail-fast: false
+      matrix:
+        source: ${{ fromJSON(github.event_name == 'pull_request' && '["candidate", "master"]' || '["candidate"]') }}
     # Playwright WebKit currently does not ship binaries for Ubuntu 26.04.
     runs-on: ubuntu-24.04
     timeout-minutes: 18
@@ -46,6 +50,8 @@ jobs:
       REDIS_URL: redis://127.0.0.1:6379
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.source == 'master' && 'master' || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -68,7 +74,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: daira-webkit-optics-${{ github.sha }}
+          name: daira-webkit-optics-${{ github.sha }}-${{ matrix.source }}
           path: artifacts/landing-webkit/
           if-no-files-found: ignore
           retention-days: 7
