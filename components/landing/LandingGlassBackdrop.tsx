@@ -36,7 +36,7 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
     // A later, unrelated failure should not inherit an old long backoff.
     const count = previous && now - previous.at < 60000 ? previous.count : 0;
     failures.current.set(section, { count: count + 1, at: now });
-    const delay = Math.min(30000, 600 * 2 ** Math.min(count, 6));
+    const delay = Math.min(5500, 450 * 2 ** Math.min(count, 5));
     const timer = setTimeout(() => {
       timers.current.delete(section);
       if (section.isConnected) {

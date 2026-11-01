@@ -147,6 +147,30 @@ try {
       +JSON.stringify(frames.map(x=>x.strategy)));
   }
   console.log("WEBKIT_CONTINUOUS_GPU_FRAMES_PASS="+(frames.length-firstActive));
+  // Previous audit only used 28px scroll steps. A real flick sends the
+  // viewport thousands of pixels across multiple uncached feature tiles.
+  // Exercise that path, including returning to an already visited area.
+  const jumps = [];
+  for (const target of [0, 3600, 850, 6200]) {
+    await page.evaluate(top => window.scrollTo({top,behavior:"instant"}), target);
+    await page.waitForTimeout(270);
+    jumps.push(await page.evaluate(() => ({
+      y:scrollY,
+      strategy:document.querySelector(".daira-library-liquid-header")?.dataset.glassStrategy,
+      bound:document.querySelector(".daira-library-glass-frame")?.dataset.opticalSourceBound,
+      captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0),
+      gsapShown:document.querySelectorAll("[data-gsap-shown='true']").length,
+    })));
+  }
+  console.log("WEBKIT_FAST_JUMPS="+JSON.stringify(jumps));
+  if(jumps.some(x=>x.strategy!=="webgl"||x.bound!=="true")) {
+    throw Error("Rapid scroll must retain the native refractive WebGL engine");
+  }
+  await page.waitForFunction(() => {
+    const frame=document.querySelector(".daira-library-glass-frame");
+    return frame?.dataset.glassReady==="true";
+  },null,{timeout:10000});
+  console.log("WEBKIT_FAST_SCROLL_RECOVERY_PASS");
   console.log("WEBKIT_SCROLL_PASS");
 } catch (error) {
   console.error("WEBKIT_SCROLL_ERROR", error);

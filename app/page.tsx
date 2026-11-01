@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { preconnect } from "react-dom";
 import { BadgeCheck, Check, ShieldCheck } from "lucide-react";
 import { LandingGlassBackdrop } from "../components/landing/LandingGlassBackdrop";
 import { SimpleHeader } from "../components/landing/SimpleHeader";
@@ -47,6 +48,9 @@ const footerLinks=[
 ] as const;
 
 export default function Home() {
+  // Start the font CDN connection before WebKit waits for font embedding.
+  // No new runtime SDK or homepage paint-blocking request is introduced.
+  preconnect("https://cdnjs.cloudflare.com", { crossOrigin: "anonymous" });
   return (
     <LandingGlassBackdrop>
       <script dangerouslySetInnerHTML={{__html:initialScrollGuard}} />
@@ -56,8 +60,13 @@ export default function Home() {
         <section className="ap-hero" aria-labelledby="ap-hero-title">
           <div className="ap-hero__ambient" aria-hidden="true"/>
           <div className="ap-shell ap-hero__content">
-            <h1 id="ap-hero-title" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly data-liquid-glass-ignore="">
-              {heroWords.map((word,index)=><span className="ap-hero__word" data-hero-word key={word}>{word}{index<heroWords.length-1?" ":""}</span>)}
+            <h1 id="ap-hero-title" dir="rtl" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly data-liquid-glass-ignore="">
+              {heroWords.map((word,index)=>(
+                <Fragment key={word}>
+                  <span className="ap-hero__word" data-hero-word style={{"--hero-delay":`${index*170}ms`} as CSSProperties}>{word}</span>
+                  {index<heroWords.length-1?" ":""}
+                </Fragment>
+              ))}
             </h1>
             <div className="ap-hero__actions" data-hero-cta>
               <Link className="ap-button ap-button--solid ap-hero__cta" href="/login">
