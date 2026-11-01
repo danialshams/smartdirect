@@ -102,10 +102,10 @@ export function LandingInteractions() {
         if (shell) gsap.set(shell, { x: 54 * direction, opacity: 0 });
         gsap.set(copyParts, { x: 22 * opposite, opacity: 0 });
         if (preview) gsap.set(preview, { x: 20 * opposite, opacity: 0 });
-        // The entire phone enters from the opposite direction. Its many
-        // internal rows build one by one using alpha only to avoid creating
-        // a separate Safari GPU transform layer for every illustrated row.
-        gsap.set(visualParts, { opacity: 0 });
+        // The phone and each of its distinct illustrated rows enter from
+        // the opposite side. Only small child groups move; the large phone
+        // and the optical backdrop never receive additional capture work.
+        gsap.set(visualParts, { x: 12 * opposite, opacity: 0 });
 
         const timeline = gsap.timeline({
           defaults: { ease: "power3.out" },
@@ -131,8 +131,8 @@ export function LandingInteractions() {
           const previewAt = .56 + copyParts.length * .16 + .20;
           timeline.to(preview, { x: 0, opacity: 1, duration: .38 }, previewAt);
           visualParts.forEach((part, i) => timeline.to(part, {
-            opacity: 1, duration: .26, ease: "power2.out"
-          }, previewAt + .35 + i * .14));
+            x: 0, opacity: 1, duration: .28, ease: "power2.out"
+          }, previewAt + .35 + i * .16));
         }
       };
 
