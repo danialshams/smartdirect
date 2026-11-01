@@ -99,6 +99,7 @@ export function LandingInteractions() {
           return [child];
         }) : [];
         const stages = [...copyParts, ...visualParts];
+        card.dataset.gsapStages = String(stages.length);
         animated.add(card);
         stages.forEach(part => animated.add(part));
         if (preview) animated.add(preview);
