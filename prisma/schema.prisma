@@ -21,6 +21,7 @@ model User {
   blockedReason                                                  String?
   phone                                                          String?
   phoneVerifiedAt                                               DateTime?
+  phoneVerificationRequired                                      Boolean               @default(false)
   smsConsentAt                                                  DateTime?
   termsAcceptedAt                                                DateTime?
   termsVersion                                                   String?
@@ -43,6 +44,8 @@ model User {
   savedAutomationResponses SavedAutomationResponse[]
   smartReminderRules SmartReminderRule[]
   smsChallenges AuthSmsChallenge[]
+  adminMfa AdminMfa?
+  adminRecoveryCodes AdminRecoveryCode[]
 }
 
 model AuthPasswordAttempt {
@@ -965,12 +968,16 @@ model DataDeletionRequest {
   contact        String   @db.VarChar(190)
   instagramName  String?  @db.VarChar(80)
   details        String?  @db.VarChar(600)
+  verifiedUserId String?
+  verifiedAt     DateTime?
+  completedAt    DateTime?
   status         String   @default("PENDING") @db.VarChar(20)
   ipHash         String   @db.VarChar(64)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([ipHash, createdAt])
+  @@index([verifiedUserId])
   @@index([status, createdAt])
 }
 
@@ -981,4 +988,25 @@ model PublicFormSubmissionAttempt {
   createdAt DateTime @default(now())
   @@index([ipHash,createdAt])
   @@index([formId,createdAt])
+}
+
+model AdminMfa {
+ userId String @id
+ encryptedSecret String @db.Text
+ enabledAt DateTime?
+ pendingAt DateTime @default(now())
+ failedAttempts Int @default(0)
+ lastFailedAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+}
+model AdminRecoveryCode {
+ id String @id @default(cuid())
+ userId String
+ codeHash String @db.VarChar(64)
+ usedAt DateTime?
+ createdAt DateTime @default(now())
+ user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+ @@index([userId,usedAt])
 }

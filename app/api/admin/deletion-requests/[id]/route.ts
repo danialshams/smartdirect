@@ -9,10 +9,9 @@ export async function PATCH(req:NextRequest,{params}:{params:Promise<{id:string}
  const {id}=await params;
  const body=await req.json().catch(()=>null);
  const status=body?.status;
- if(!["VERIFYING","COMPLETED","REJECTED"].includes(status))
+ if(!["VERIFYING","REJECTED"].includes(status))
   return NextResponse.json({message:"وضعیت نامعتبر است."},{status:400});
- if(status==="COMPLETED" && body?.confirmedDeletion !== true)
-  return NextResponse.json({message:"تکمیل فقط پس از تأیید انجام واقعی حذف داده مجاز است."},{status:400});
+ if(status==="COMPLETED") return NextResponse.json({message:"تکمیل تنها از مسیر حذف واقعی و پس از تأیید مالک ممکن است."},{status:409});
  const existing=await prisma.dataDeletionRequest.findUnique({where:{id},select:{id:true,status:true}});
  if(!existing)return NextResponse.json({message:"درخواست پیدا نشد."},{status:404});
  if(existing.status==="COMPLETED")

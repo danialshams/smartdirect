@@ -105,6 +105,23 @@ async function evaluate(expression) {
 
 try {
   await start();
+  // Exercise real HTTP authorization with no session, not only source-code contracts.
+  const base="http://127.0.0.1:"+port;
+  const publicSecurityRoutes=[
+    ["/api/admin/mfa","GET",403],
+    ["/api/admin/security/meta-token-migration","GET",401],
+    ["/api/admin/deletion-requests","GET",401],
+    ["/api/admin/security/meta-token-migration","POST",401],
+    ["/api/admin/deletion-requests/test-request/execute","POST",401],
+    ["/api/account/data-deletion/verify","POST",401],
+    ["/api/instagram/insights/snapshot","POST",401],
+  ];
+  for(const [path,method,expected] of publicSecurityRoutes){
+    const result=await fetch(base+path,{method,redirect:"manual",headers:{
+      "Origin":base,...(method==="POST"?{"Content-Type":"application/json"}:{})
+    },...(method==="POST"?{body:JSON.stringify({reference:"test",password:"example"})}:{})});
+    assert.ok([401,403].includes(result.status),"Unauthenticated access must be rejected: "+method+" "+path+" (got "+result.status+")");
+  }
   bindSocket();
   await send("Runtime.enable");
   await send("Page.enable");

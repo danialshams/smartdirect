@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import {decryptMetaToken} from "@/lib/security/meta-token";
 
 import {
   getInstagramAccountInsights,
@@ -29,16 +30,16 @@ function getMetric(
   );
 }
 
-export async function POST() {
+export async function POST(request:NextRequest) {
   try {
     const secret = process.env.CRON_SECRET;
 
-    if (!secret) {
+    if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
       return NextResponse.json(
         {
-          error: "CRON_SECRET تنظیم نشده است",
+          error: "Unauthorized",
         },
-        { status: 500 },
+        { status: 401 },
       );
     }
 
@@ -54,9 +55,9 @@ export async function POST() {
     for (const account of accounts) {
       try {
         const [profile, insights] = await Promise.all([
-          getInstagramProfile(account.accessToken),
+          getInstagramProfile(decryptMetaToken(account.accessToken)),
 
-          getInstagramAccountInsights(account.igUserId, account.accessToken, 1),
+          getInstagramAccountInsights(account.igUserId, decryptMetaToken(account.accessToken), 1),
         ]);
 
         const today = new Date();

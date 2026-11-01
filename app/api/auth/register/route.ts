@@ -5,6 +5,7 @@ import { internalEmailForPhone, normalizePhone, validatePassword } from "@/lib/a
 import { clientIp, sameOrigin, privateHeaders } from "@/lib/auth/request";
 import { hashRequestIp } from "@/lib/auth/sms-otp";
 import { TERMS_VERSION } from "@/lib/legal/terms";
+import {isSmsReady} from "@/lib/auth/sms-otp";
 
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return NextResponse.json({message:"درخواست نامعتبر است."},{status:403,headers:privateHeaders});
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.create({
       data: { firstName, lastName, name: `${firstName} ${lastName}`,
         phone, email: internalEmailForPhone(phone), password: hash,
+        phoneVerificationRequired:isSmsReady(),
         termsAcceptedAt: new Date(), termsVersion: TERMS_VERSION }
     });
     return NextResponse.json({success:true,userId:user.id,phoneVerified:false},

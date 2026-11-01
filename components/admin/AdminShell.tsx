@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, ChevronLeft, Headset, LayoutDashboard, Menu, MessageSquare, ShieldCheck, Ticket, Users, X, BadgePercent, Smartphone, Activity, History, RadioTower, Trash2 } from "lucide-react";
+import { Bell, ChevronLeft, Headset, LayoutDashboard, Menu, MessageSquare, ShieldCheck, Ticket, Users, X, BadgePercent, Smartphone, Activity, History, RadioTower, Trash2, KeyRound } from "lucide-react";
 
 const items = [
   { href: "/rickandmorty", label: "داشبورد", icon: LayoutDashboard },
@@ -16,13 +16,14 @@ const items = [
   { href: "/rickandmorty/queue", label: "صف پردازش", icon: Activity },
   { href: "/rickandmorty/audit", label: "تاریخچه عملیات", icon: History },
   { href: "/rickandmorty/deletion-requests", label: "حذف اطلاعات", icon: Trash2 },
+  { href: "/rickandmorty/security", label: "امنیت", icon: KeyRound },
 ];
 type TicketAlert = { id: string; ticketId: string; subject: string; name: string; body: string; createdAt: string };
 type TicketSummary = { unreadCount: number; latest: TicketAlert | null; items: TicketAlert[] };
 const navGroups=[
  {title:"مرکز مدیریت",hrefs:["/rickandmorty","/rickandmorty/users","/rickandmorty/tickets"]},
  {title:"ارتباطات و خدمات",hrefs:["/rickandmorty/tickets/bulk","/rickandmorty/sms","/rickandmorty/coupons"]},
- {title:"گزارش و نظارت",hrefs:["/rickandmorty/meta-monitor","/rickandmorty/monitoring","/rickandmorty/queue","/rickandmorty/audit","/rickandmorty/deletion-requests"]}
+ {title:"گزارش و نظارت",hrefs:["/rickandmorty/meta-monitor","/rickandmorty/monitoring","/rickandmorty/queue","/rickandmorty/audit","/rickandmorty/deletion-requests","/rickandmorty/security"]}
 ];
 function NavItems({ onNavigate, metaUnread }: { onNavigate?: () => void; metaUnread: number }) {
  const path=usePathname();

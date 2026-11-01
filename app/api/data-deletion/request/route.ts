@@ -5,7 +5,7 @@ import { hashRequestIp } from "@/lib/auth/sms-otp";
 
 export const runtime = "nodejs";
 const limits={maxBody:4096, maxPerDay:3};
-const statuses=new Set(["PENDING","VERIFYING","COMPLETED","REJECTED"]);
+const statuses=new Set(["PENDING","VERIFYING","COMPLETED","REJECTED","PROCESSING"]);
 export async function POST(req:NextRequest){
   if(!sameOrigin(req)) return NextResponse.json({message:"درخواست نامعتبر است."},{status:403,headers:privateHeaders});
   const bytes=Number(req.headers.get("content-length") || 0);

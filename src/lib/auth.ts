@@ -51,6 +51,7 @@ export const authOptions: NextAuthOptions = {
           await prisma.authPasswordAttempt.create({data:{identifierHash,ipHash}});
           return null;
         }
+        if(user!.phoneVerificationRequired && !user!.phoneVerifiedAt) return null;
         await prisma.authPasswordAttempt.deleteMany({where:{identifierHash}});
         return {id:user!.id,email:user!.email,name:user!.name,role:user!.role,sessionVersion:user!.sessionVersion};
       },
