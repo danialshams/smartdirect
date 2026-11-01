@@ -58,8 +58,27 @@ export function LandingInteractions() {
         intro.querySelectorAll<HTMLElement>(".ap-showcase__eyebrow, p").forEach(node => reveal(node,{start:"top 83%",y:8,duration:.58}));
       });
       root.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card").forEach(card => {
-        // Each card fires only when ITS OWN bounds enter the viewport, never the enclosing row.
-        reveal(card,{start:"top 78%",y:17,duration:.76});
+        // The card itself contains a full Instagram-like UI. Moving that entire
+        // subtree caused large WebKit compositing stalls at the reveal boundary.
+        // Keep the preview static; animate only lightweight text/number layers.
+        const labels = [...card.querySelectorAll<HTMLElement>(
+          ".ap-social-card__index, .ap-social-card__copy h3, .ap-social-card__copy p"
+        )];
+        gsap.set(labels,{autoAlpha:0});
+        ScrollTrigger.create({
+          trigger:card,start:"top 78%",once:true,
+          onEnter:()=>{
+            if(card.dataset.gsapShown==="true")return;
+            card.dataset.gsapStarted=String(performance.now());
+            gsap.fromTo(labels,{autoAlpha:0,y:11},{
+              autoAlpha:1,y:0,duration:.65,stagger:.065,ease:"power2.out",overwrite:"auto",
+              onComplete:()=>{
+                card.dataset.gsapShown="true";
+                gsap.set(labels,{clearProps:"opacity,visibility,transform"});
+              }
+            });
+          }
+        });
       });
       const footer = root.querySelector<HTMLElement>(".ap-footer--extended");
       if (footer) {
