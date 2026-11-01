@@ -78,7 +78,7 @@ export function SimpleHeader() {
           aria-label={open?"بستن منو":"باز کردن منو"}
           aria-controls="ap-menu"
           aria-expanded={open}
-          onClick={()=>{returnFocus.current=true;setOpen(value=>!value);}}
+          onClick={()=>{returnFocus.current=true;if(!open)setGlassMounted(true);setOpen(value=>!value);}}
         >
           <span className={"ap-menu-toggle__glyphs"+(open?" ap-menu-toggle__glyphs--open":"")} aria-hidden="true">
             <Menu size={21} className="ap-menu-toggle__hamburger"/>
