@@ -83,7 +83,7 @@ assert.ok(interactions.includes(".ap-social-grid > .ap-social-card"), "GSAP must
 assert.ok(interactions.includes(".ap-footer__links"), "GSAP must animate footer links as one group");
 assert.ok(interactions.includes('rootMargin: "0px 0px -22% 0px"'),"Feature observer must wait until individual card approaches 78% viewport line");
 assert.ok(interactions.includes("IntersectionObserver"),"One native observer replaces expensive per-card ScrollTriggers");
-assert.ok(interactions.includes("timeline.to(visualParts") && interactions.includes("timeline.to(copyParts"),"GSAP assembles copy and real preview internals sequentially");
+assert.ok(interactions.includes("timeline.to(visualParts") && interactions.includes("copyParts.forEach((part, index) => timeline.to(part"),"GSAP assembles copy and real preview internals sequentially");
 assert.ok(interactions.includes("gsap.timeline") && interactions.includes("timeline.to(visualParts"),"Each feature uses a staged GSAP timeline for its real UI elements");
 assert.ok(features.includes("ap-social-card__index") && !features.includes("ap-social-card__icon"),"Feature card uses numbers rather than icons");
 assert.ok(landingFixes.includes("font-family:\"DairaVazir\""),"Feature numbers must use actual Vazir typeface");
