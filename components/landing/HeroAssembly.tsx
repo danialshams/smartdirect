@@ -33,6 +33,7 @@ export function HeroAssembly() {
       completed = true;
       heroEntranceFinished = true;
       gsap.set(words, { clearProps: "opacity" });
+      gsap.set([description, cta].filter(Boolean), { clearProps: "opacity,transform" });
       html.dataset.dairaHero = "done";
       title.dataset.gsapHero = "complete";
       if (title.dataset.gsapHeroStarted) {
