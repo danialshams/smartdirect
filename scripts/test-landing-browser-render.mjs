@@ -234,33 +234,32 @@ try {
   ),7000);
   const hero=await evaluate(`(() => {
     const title=document.querySelector("[data-hero-assembly]");
-    const words=[...title.querySelectorAll("[data-hero-word]")];
-    const styles=words.map(word=>getComputedStyle(word));
+    const typed=title.querySelector("[data-hero-typed]");
+    const style=getComputedStyle(typed);
     return {
-      text:title.textContent.replace(/\\s+/g," ").trim(),
-      count:words.length,
+      text:typed.textContent.replace(/\\s+/g," ").trim(),
+      count:title.querySelectorAll("[data-hero-typed]").length,
       stickers:title.querySelectorAll("[data-hero-sticker]").length,
       backgrounds:title.querySelectorAll(".ap-hero__sticker-bg").length,
       state:title.dataset.gsapHero,
       started:title.dataset.gsapHeroStarted,
       elapsed:Number(title.dataset.gsapHeroElapsed),
-      opacities:styles.map(v=>Number(v.opacity)),
-      transforms:styles.map(v=>v.transform),
-      cssAnimations:styles.map(v=>v.animationName)
+      visibility:style.visibility,
+      transform:style.transform,
+      cssAnimation:style.animationName
     };
   })()`);
   assert.equal(hero.text,"مدیریت کل پیجت رو بسپار به دایرا");
-  assert.equal(hero.count,7);
-  assert.equal(hero.stickers,7,"Hero words should be individually masked sticker labels");
-  assert.equal(hero.backgrounds,7,"Each hero word has a brief sticker-wipe surface");
+  assert.equal(hero.count,1,"One native RTL text container must be typed with GSAP");
+  assert.equal(hero.stickers,0,"Typewriter must contain no colored sticker panels");
+  assert.equal(hero.backgrounds,0,"Old blue highlight layers must be completely removed");
   assert.equal(hero.state,"complete");
   assert.ok(Number(hero.started)>0,"GSAP must actually start on first entry");
   assert.ok(hero.elapsed>=700 && hero.elapsed<3500,
     "RTL GSAP entrance must be short, legible, and actually complete");
-  assert.ok(hero.opacities.every(v=>v===1),"Every hero word must finish fully visible");
-  assert.ok(hero.transforms.every(v=>v==="none"),"No scattered or sliding RTL words");
-  assert.ok(hero.cssAnimations.every(v=>v==="none"),
-    "Old CSS keyframes must not override the GSAP timeline");
+  assert.equal(hero.visibility,"visible","Typed Persian headline must finish legible");
+  assert.equal(hero.transform,"none","Typewriter should not scatter or slide text");
+  assert.equal(hero.cssAnimation,"none","No legacy CSS word animation should fight the typewriter");
   assert.equal(await evaluate('document.querySelector("[data-hero-assembly]").hasAttribute("data-liquid-glass-ignore")'),false);
   const motionImage=(await send("Page.captureScreenshot",{format:"jpeg",quality:56,captureBeyondViewport:false})).data;
   console.log("DAIRA_DIAG_SCREENSHOT_HERO_MOTION="+motionImage);
@@ -386,13 +385,16 @@ try {
       open:menu.classList.contains("ap-menu--open"),
       clip:getComputedStyle(menu).clipPath,
       filter:getComputedStyle(overlay).backdropFilter,
-      count:document.querySelectorAll('[data-liquid-glass]').length
+      count:document.querySelectorAll('[data-liquid-glass]').length,
+      menuLens:!!menu.querySelector(".daira-menu-liquid-optics"),
+      menuFrame:!!menu.querySelector(".daira-menu-glass-frame")
     };
   })()`);
   assert.equal(mid.open,true);
   assert.equal(mid.clip,"none");
   assert.match(mid.filter,/blur\(3px\)/);
-  assert.equal(mid.count,1,"Opening menu must not create an extra lens");
+  assert.equal(mid.count,2,"Mobile menu should use its own instance of the EXACT native header LiquidGlass engine");
+  assert.ok(mid.menuLens && mid.menuFrame,"Menu must render a genuine optical lens with registered backdrop");
   await sleep(310);
   await evaluate('document.querySelector(".ap-menu__top button").click()');
   await sleep(340);
