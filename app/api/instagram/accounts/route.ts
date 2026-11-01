@@ -62,7 +62,6 @@ export async function GET() {
                 id: true,
                 igUserId: true,
                 igUsername: true,
-                accessToken: true,
                 isConnected: true,
             },
         });
