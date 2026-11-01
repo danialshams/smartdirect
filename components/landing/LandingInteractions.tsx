@@ -9,35 +9,79 @@ export function LandingInteractions() {
 
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(".ap-site");
-    const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // WebKit / Gecko use HTML snapshots behind the WebGL lens. Animating
-    // dozens of showcase cards during scroll invalidates their cached tiles,
-    // causing blank frames and expensive main-thread HTML re-rasterization.
-    // Chromium keeps the existing reveal animations (native live SVG lens).
+    if (!root) return;
+
+    // Keep every section's real content painted in the DOM, including before
+    // JavaScript arrives. The old WebKit path disabled ALL entrance animation.
+    // GSAP animates only eight stable inner wrappers, not dozens of nested
+    // card nodes. That avoids multiplying style mutations and section
+    // invalidations in the Safari HTML -> WebGL capture queue.
+    const revealChildren = root.querySelectorAll<HTMLElement>("[data-reveal]");
+    revealChildren.forEach(element => element.setAttribute("data-visible", "true"));
     const ua = navigator.userAgent;
     const snapshotEngine = /Firefox\/|FxiOS\/|iPhone|iPad|iPod/.test(ua) ||
       (/Safari\//.test(ua) && !/Chrome\/|Chromium\/|Edg\/|OPR\//.test(ua));
-    if (root && snapshotEngine) {
-      root.dataset.sceneCaptureStable = "true";
-      targets.forEach(element => element.setAttribute("data-visible", "true"));
-      return () => { delete root.dataset.sceneCaptureStable; };
-    }
-    if (!root || reduced || !("IntersectionObserver" in window)) {
-      targets.forEach(element => element.setAttribute("data-visible", "true"));
-      return;
-    }
-    const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        entry.target.setAttribute("data-visible", "true");
-        observer.unobserve(entry.target);
+    if (snapshotEngine) root.dataset.sceneCaptureStable = "true";
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced || !("IntersectionObserver" in window)) return;
+    let active = true;
+    let observer: IntersectionObserver | undefined;
+    const nodes = Array.from(root.querySelectorAll<HTMLElement>(
+      ".ap-showcase-capture > .ap-showcase__inner, .ap-footer--extended > .ap-footer__hero"
+    ));
+    let cancel = () => {};
+    void import("gsap").then(({ gsap }) => {
+      if (!active) return;
+      const hidden = new Set<HTMLElement>();
+      for (const node of nodes) {
+        const rect = node.getBoundingClientRect();
+        // Don't blank content already seen while JS is loading, or content
+        // above the viewport reached via a quick scroll before hydration.
+        if (rect.top > window.innerHeight + 80) {
+          gsap.set(node, { autoAlpha: 0, y: 26 });
+          hidden.add(node);
+        }
       }
-    }, { threshold: .07, rootMargin: "0px 0px -32px 0px" });
-    targets.forEach(element => observer.observe(element));
-    root.setAttribute("data-motion-ready", "true");
-    return () => {observer.disconnect(); root.removeAttribute("data-motion-ready");};
-  },[]);
+      const show = (node: HTMLElement) => {
+        if (!hidden.delete(node)) return;
+        observer?.unobserve(node);
+        gsap.to(node, {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.95,
+          ease: "power3.out",
+          overwrite: "auto",
+          onComplete: () => {
+            node.dataset.gsapShown = "true";
+            gsap.set(node, { clearProps: "opacity,visibility,transform" });
+          }
+        });
+      };
+      observer = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) show(entry.target as HTMLElement);
+        }
+      }, { threshold: 0.01, rootMargin: "0px 0px 180px 0px" });
+      hidden.forEach(node => observer?.observe(node));
+      // Handle elements that entered the viewport while GSAP was loading.
+      hidden.forEach(node => {
+        if (node.getBoundingClientRect().top < window.innerHeight + 180) show(node);
+      });
+      cancel = () => {
+        observer?.disconnect();
+        gsap.killTweensOf(nodes);
+        nodes.forEach(node => gsap.set(node, { clearProps: "opacity,visibility,transform" }));
+      };
+    }).catch(() => {
+      // A network failure loading GSAP must never leave offscreen rows hidden.
+      nodes.forEach(node => { node.style.opacity = ""; node.style.visibility = ""; node.style.transform = ""; });
+    });
+    return () => {
+      active = false;
+      cancel();
+    };
+  }, []);
 
   useEffect(() => {
     let frame=0;
