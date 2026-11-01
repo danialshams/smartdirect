@@ -31,6 +31,7 @@ export function LandingInteractions() {
       ".ap-showcase-capture > .ap-showcase__inner, .ap-footer--extended > .ap-footer__hero"
     ));
     let cancel = () => {};
+    const nativeAnimations: Animation[] = [];
     void import("gsap").then(({ gsap }) => {
       if (!active) return;
       const hidden = new Set<HTMLElement>();
@@ -46,17 +47,39 @@ export function LandingInteractions() {
       const show = (node: HTMLElement) => {
         if (!hidden.delete(node)) return;
         observer?.unobserve(node);
-        gsap.to(node, {
-          autoAlpha: 1,
-          y: 0,
-          duration: 0.95,
-          ease: "power3.out",
-          overwrite: "auto",
-          onComplete: () => {
-            node.dataset.gsapShown = "true";
-            gsap.set(node, { clearProps: "opacity,visibility,transform" });
-          }
-        });
+        const finish = () => {
+          if (!active) return;
+          node.dataset.gsapShown = "true";
+          gsap.set(node, { clearProps: "opacity,visibility,transform" });
+        };
+        if (snapshotEngine && typeof node.animate === "function") {
+          // Safari's scene capture watches style attribute mutations.
+          // GSAP writes to inline styles on every frame; native compositor
+          // keyframes produce the SAME GSAP-timed reveal without forcing
+          // html-to-image to invalidate the tile 60 times per second.
+          const animation = node.animate([
+            { opacity: 0, transform: "translate3d(0,26px,0)" },
+            { opacity: 1, transform: "translate3d(0,0,0)" }
+          ], {
+            duration: 950,
+            easing: "cubic-bezier(.22,.61,.36,1)",
+            fill: "both"
+          });
+          nativeAnimations.push(animation);
+          void animation.finished.then(() => {
+            finish();
+            animation.cancel();
+          }).catch(() => {});
+        } else {
+          gsap.to(node, {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.95,
+            ease: "power3.out",
+            overwrite: "auto",
+            onComplete: finish
+          });
+        }
       };
       observer = new IntersectionObserver(entries => {
         for (const entry of entries) {
@@ -70,6 +93,7 @@ export function LandingInteractions() {
       });
       cancel = () => {
         observer?.disconnect();
+        nativeAnimations.forEach(animation => animation.cancel());
         gsap.killTweensOf(nodes);
         nodes.forEach(node => gsap.set(node, { clearProps: "opacity,visibility,transform" }));
       };
