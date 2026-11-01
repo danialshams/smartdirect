@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Fragment, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { preconnect } from "react-dom";
+import { preconnect, preload } from "react-dom";
 import { BadgeCheck, Check, ShieldCheck } from "lucide-react";
 import { LandingGlassBackdrop } from "../components/landing/LandingGlassBackdrop";
 import { SimpleHeader } from "../components/landing/SimpleHeader";
@@ -51,6 +51,11 @@ export default function Home() {
   // Start the font CDN connection before WebKit waits for font embedding.
   // No new runtime SDK or homepage paint-blocking request is introduced.
   preconnect("https://cdnjs.cloudflare.com", { crossOrigin: "anonymous" });
+  // The headline uses bold Vazir: fetch it before first paint so the RTL
+  // GSAP fade does not hitch during a late font swap.
+  preload("https://cdnjs.cloudflare.com/ajax/libs/vazir-font/30.1.0/Vazir-Bold.woff2", {
+    as: "font", type: "font/woff2", crossOrigin: "anonymous"
+  });
   return (
     <LandingGlassBackdrop>
       <script dangerouslySetInnerHTML={{__html:initialScrollGuard}} />
