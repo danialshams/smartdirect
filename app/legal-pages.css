@@ -8,7 +8,7 @@
 .da-delete-form label{display:grid;gap:7px;color:#465b7c;font-size:13px;font-weight:700}
 .da-delete-form input,.da-delete-form textarea{width:100%;max-width:100%;border-radius:10px;border:1px solid #dbe4f1;background:#fbfdff;padding:11px 13px;color:#223955;font-size:15px;outline:none;transition:border-color .18s,box-shadow .18s}
 .da-delete-form input:focus,.da-delete-form textarea:focus{border-color:#76a2f1;box-shadow:0 0 0 3px rgba(63,117,231,.08)}
-.da-delete-form button{border:0;background:#326be9;color:#fff;padding:12px 18px;border-radius:11px;font:700 13px inherit;cursor:pointer}
+.da-delete-form button{border:0;background:#326be9;color:#fff;padding:12px 18px;border-radius:11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer}
 .da-delete-form button:disabled{opacity:.55;cursor:not-allowed}
 .da-delete-result{padding:12px;border-radius:11px;background:#eff8f3;color:#176d48;font-size:13px;line-height:2;overflow-wrap:anywhere}
 .da-delete-result--error{background:#fff1f3;color:#9b3045}
