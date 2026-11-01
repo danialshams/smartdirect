@@ -44,7 +44,8 @@ try {
   // Further repetitions are intentionally separate CI runs, not concurrent tabs.
   // Reverse the order: if the first cold context stalls regardless of mode,
   // the previous apparent heading cost was a warmup confound, not causation.
-  const modes = ["no-both", "normal", "no-heading"];
+  // Compare the cold first-card entrance with the earlier cold normal run.
+  const modes = ["normal", "no-heading", "no-both"];
   const results = [];
   for (const mode of modes) {
     const context = await browser.newContext({
