@@ -140,12 +140,17 @@ export function LandingInteractions() {
         }, .52 + i * .14));
         if (preview) {
           const previewAt = .52 + copyParts.length * .14 + .12;
-          timeline.set(preview, { visibility: "visible" }, previewAt);
-          timeline.to(preview, { x: 0, force3D: false, duration: .67 }, previewAt);
-          // The phone travels in the opposing direction. Each illustrated
-          // row fades in its own ordered GSAP stage. For small screens its
-          // children do not each acquire a separate moving GPU texture.
           const mobileLayers = innerWidth <= 640;
+          timeline.set(preview, { visibility: "visible" }, previewAt);
+          // On narrow mobile WebKit, painting a moving illustrated phone
+          // while animating its nested rows caused frame spikes. The numbered
+          // copy still slides from the opposite side; the phone builds in
+          // place with separate, genuinely sequential GSAP row fades.
+          if (mobileLayers) {
+            timeline.to(preview, { opacity: 1, duration: .34 }, previewAt);
+          } else {
+            timeline.to(preview, { x: 0, force3D: false, duration: .67 }, previewAt);
+          }
           timeline.set(visualParts, {
             ...(mobileLayers ? {} : { x: -12 * direction, force3D: false }),
             opacity: 0
@@ -220,7 +225,11 @@ export function LandingInteractions() {
       gsap.set(copyParts, { opacity: 0 });
       if (preview) {
         affected.add(preview);
-        gsap.set(preview, { x: 20 * opposite, visibility: "hidden", force3D: false });
+        if (innerWidth <= 640) {
+          gsap.set(preview, { opacity: 0, visibility: "hidden" });
+        } else {
+          gsap.set(preview, { x: 20 * opposite, visibility: "hidden", force3D: false });
+        }
       }
       for (const part of visualParts) affected.add(part);
       pending.add(card);
