@@ -52,6 +52,9 @@ try {
     return {
       pageSections:liveSections.length,reflectionSections:reflectionSections.length,
       sameTop:liveSections.every((el,i)=>Math.abs(el.getBoundingClientRect().top-reflectionSections[i].getBoundingClientRect().top)<3),
+      sameHeight:liveSections.every((el,i)=>Math.abs(el.getBoundingClientRect().height-reflectionSections[i].getBoundingClientRect().height)<3),
+      reflectionPreviews:source.querySelectorAll(".daira-glass-preview-facade").length,
+      originalPreviews:page.querySelectorAll(".ap-social-card__visual").length,
       sourceInert:source.inert && source.getAttribute("aria-hidden")==="true",
       noDuplicateIds:!source.querySelector("[id]"),
       noHiddenHero:[...source.querySelectorAll("[data-hero-word]")].every(el=>getComputedStyle(el).opacity==="1"),
@@ -60,7 +63,7 @@ try {
   });
   console.log("WEBKIT_STATIC_REFLECTION="+JSON.stringify(mirror));
   if(mirror.pageSections<9 || mirror.pageSections!==mirror.reflectionSections || !mirror.sameTop ||
-    !mirror.sourceInert || !mirror.noDuplicateIds || !mirror.noHiddenHero || !mirror.sourceRootIsSeparate) {
+    !mirror.sameHeight || mirror.reflectionPreviews!==mirror.originalPreviews || !mirror.sourceInert || !mirror.noDuplicateIds || !mirror.noHiddenHero || !mirror.sourceRootIsSeparate) {
     throw Error("Independent mirror must be visually aligned, static and inaccessible");
   }
 
