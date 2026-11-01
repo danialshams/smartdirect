@@ -44,7 +44,7 @@ try {
   // Further repetitions are intentionally separate CI runs, not concurrent tabs.
   // Reverse the order: if the first cold context stalls regardless of mode,
   // the previous apparent heading cost was a warmup confound, not causation.
-  const modes = ["no-heading", "normal", "no-both"];
+  const modes = ["no-both", "normal", "no-heading"];
   const results = [];
   for (const mode of modes) {
     const context = await browser.newContext({
@@ -82,7 +82,9 @@ try {
         const dt=previous?Math.round((now-previous)*10)/10:0;
         previous=now;
         scrollBy(0,28);
-        frames.push({y:scrollY,dt});
+        frames.push({y:scrollY,dt,
+          backtop:document.querySelector(".ap-backtop")?.classList.contains("ap-backtop--visible"),
+          captures:Number(document.querySelector(".daira-static-reflection")?.dataset.liquidGlassCaptures ?? 0)});
       }
       const card=document.querySelector("#feature-comment");
       const title=document.querySelector("#ap-features-title");
