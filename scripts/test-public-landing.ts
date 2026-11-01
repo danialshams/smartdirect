@@ -200,6 +200,6 @@ for(const label of ["ig-menu-sheet","ig-quickreplies","ig-live__badge","ig-comme
   assert.ok(previews.includes(label),"Missing Instagram-like preview "+label);
 console.log("DAIRA GLASS PASS: genuine unmodified library optics restored, iOS scene connected, CSS only positions the lens, all 11 homepage features preserved.");
 
-assert.ok(hero.includes("timeline.to(title"),"Hero title must have a single smooth fade rather than seven expensive word tweens");
-assert.ok(!hero.includes("timeline.to(words"),"Never animate all hero words independently in Safari");
+assert.ok(hero.includes("words.forEach((word, i)") && hero.includes("timeline.to(word") && hero.includes("timeline.to(background"),"Hero must reveal each Persian word in ordered GSAP sticker-mask stages");
+assert.ok(hero.includes("force3D: false") && hero.includes("heroEntranceFinished = true"),"Hero sticker motion must stay lightweight and play only on first load");
 assert.ok(!features.includes("data-reveal"),"Feature card animations must not conflict with obsolete CSS data-reveal transitions");
