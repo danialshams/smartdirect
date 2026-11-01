@@ -2,6 +2,14 @@
 ALTER TABLE "User" ADD COLUMN "firstName" TEXT;
 ALTER TABLE "User" ADD COLUMN "lastName" TEXT;
 
+CREATE TABLE "AuthSignupAttempt" (
+    "id" TEXT NOT NULL,
+    "ipHash" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "AuthSignupAttempt_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "AuthSignupAttempt_ipHash_createdAt_idx" ON "AuthSignupAttempt"("ipHash", "createdAt");
+
 CREATE TABLE "AuthSmsChallenge" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
