@@ -6,6 +6,13 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChevronUp } from "lucide-react";
 
 type CardState = "waiting" | "queued" | "playing" | "done";
+type CardParts = {
+  shell: HTMLElement | null;
+  copyParts: HTMLElement[];
+  preview: HTMLElement | null;
+  visualParts: HTMLElement[];
+};
+
 
 export function LandingInteractions() {
   const [showTop, setShowTop] = useState(false);
@@ -27,6 +34,7 @@ export function LandingInteractions() {
     root.dataset.gsapMotion = "true";
     const cards = [...root.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card")];
     const states = new Map<HTMLElement, CardState>();
+    const preparedCards = new Map<HTMLElement, CardParts>();
     const running = new Set<gsap.core.Animation>();
     const affected = new Set<HTMLElement>();
     const pending = new Set<HTMLElement>();
@@ -73,40 +81,11 @@ export function LandingInteractions() {
         card.dataset.gsapPhase = "building";
 
         const direction = Number(card.dataset.gsapDirection) || 1;
-        const opposite = -direction;
-        const copyParts = unique([
-          card.querySelector<HTMLElement>(".ap-social-card__index"),
-          card.querySelector<HTMLElement>(".ap-social-card__count"),
-          card.querySelector<HTMLElement>(".ap-social-card__copy h3"),
-          card.querySelector<HTMLElement>(".ap-social-card__copy p")
-        ]);
-        const shell = card.querySelector<HTMLElement>(".ap-social-card__shell");
-        const preview = card.querySelector<HTMLElement>(".ig-preview");
-        // Actual distinct blocks of the Instagram illustration, in DOM order.
-        // Do not animate every leaf icon (too many Safari compositor layers).
-        const groups = ".ig-chat, .ig-story, .ig-live, .ig-photo-grid, .ig-insights-bars, .ig-menu-sheet";
-        const visualParts = preview ? Array.from(preview.children).flatMap(child => {
-          if (!(child instanceof HTMLElement)) return [];
-          if (child.matches(groups)) return Array.from(child.children).filter(
-            (part): part is HTMLElement => part instanceof HTMLElement
-          );
-          return [child];
-        }) : [];
-
-        card.dataset.gsapStages = String(1 + copyParts.length + (preview ? 1 : 0) + visualParts.length);
-        for (const element of [card, ...(shell ? [shell] : []), ...copyParts, ...visualParts, ...(preview ? [preview] : [])]) {
-          affected.add(element);
-        }
-        // Everything is prepared while its parent card is still hidden.
-        // Each stage begins ONLY after the previous stage has entered.
-        if (shell) gsap.set(shell, { x: 54 * direction, opacity: 0 });
-        gsap.set(copyParts, { x: 22 * opposite, opacity: 0 });
-        if (preview) gsap.set(preview, { x: 20 * opposite, opacity: 0 });
-        // The phone and each of its distinct illustrated rows enter from
-        // the opposite side. Only small child groups move; the large phone
-        // and the optical backdrop never receive additional capture work.
-        gsap.set(visualParts, { x: 12 * opposite, opacity: 0 });
-
+        const prepared = preparedCards.get(card);
+        if (!prepared) return;
+        const { shell, copyParts, preview, visualParts } = prepared;
+        // All expensive element discovery and initial transform setup is
+        // finished before scrolling, not inside this viewport callback.
         const timeline = gsap.timeline({
           defaults: { ease: "power3.out" },
           onComplete: () => {
@@ -130,6 +109,10 @@ export function LandingInteractions() {
         if (preview) {
           const previewAt = .56 + copyParts.length * .16 + .20;
           timeline.to(preview, { x: 0, opacity: 1, duration: .38 }, previewAt);
+          // Hide preview internals only right before the preview itself enters.
+          // This avoids allocating many nested compositing layers at the
+          // precise scroll frame that first activates the card.
+          timeline.set(visualParts, { opacity: 0 }, previewAt - .12);
           visualParts.forEach((part, i) => timeline.to(part, {
             x: 0, opacity: 1, duration: .28, ease: "power2.out"
           }, previewAt + .35 + i * .16));
@@ -164,19 +147,38 @@ export function LandingInteractions() {
         return;
       }
       states.set(card, "waiting");
-      // Hide only lightweight independent surfaces. Hiding the entire card
-      // forces Safari to flatten/recapture all nested Instagram content.
-      // Each visual layer is now prepared independently without a giant
-      // opacity group, so GPU work remains bounded to each reveal stage.
+      const opposite = -direction;
       const shell = card.querySelector<HTMLElement>(".ap-social-card__shell");
       const preview = card.querySelector<HTMLElement>(".ig-preview");
-      const copyNodes = Array.from(card.querySelectorAll<HTMLElement>(
-        ".ap-social-card__index, .ap-social-card__count, .ap-social-card__copy h3, .ap-social-card__copy p"
-      ));
-      const prepared = [...(shell ? [shell] : []), ...copyNodes,
-        ...(preview ? [preview] : [])];
-      prepared.forEach(node => affected.add(node));
-      gsap.set(prepared, { opacity: 0 });
+      const copyParts = unique([
+        card.querySelector<HTMLElement>(".ap-social-card__index"),
+        card.querySelector<HTMLElement>(".ap-social-card__count"),
+        card.querySelector<HTMLElement>(".ap-social-card__copy h3"),
+        card.querySelector<HTMLElement>(".ap-social-card__copy p")
+      ]);
+      const groups = ".ig-chat, .ig-story, .ig-live, .ig-photo-grid, .ig-insights-bars, .ig-menu-sheet";
+      const visualParts = preview ? Array.from(preview.children).flatMap(child => {
+        if (!(child instanceof HTMLElement)) return [];
+        if (child.matches(groups)) return Array.from(child.children).filter(
+          (part): part is HTMLElement => part instanceof HTMLElement
+        );
+        return [child];
+      }) : [];
+      preparedCards.set(card, { shell, copyParts, preview, visualParts });
+      card.dataset.gsapStages = String(1 + copyParts.length + (preview ? 1 : 0) + visualParts.length);
+      // Prepare only lightweight parent/label transforms once on mount.
+      // Their actual GSAP entrance remains gated by the card observer.
+      if (shell) {
+        affected.add(shell);
+        gsap.set(shell, { x: 54 * direction, opacity: 0 });
+      }
+      for (const part of copyParts) affected.add(part);
+      gsap.set(copyParts, { x: 22 * opposite, opacity: 0 });
+      if (preview) {
+        affected.add(preview);
+        gsap.set(preview, { x: 20 * opposite, opacity: 0 });
+      }
+      for (const part of visualParts) affected.add(part);
       pending.add(card);
       cardObserver.observe(card);
     });
