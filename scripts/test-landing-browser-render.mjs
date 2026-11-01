@@ -394,8 +394,8 @@ try {
   await sleep(340);
   assert.equal(await evaluate('document.querySelector(".ap-menu").classList.contains("ap-menu--open")'),false);
 
-  // Verify ACTUAL ScrollTrigger launches a staged feature reveal and
-  // individually animated footer links (not just GSAP loaded in memory).
+  // Verify real GSAP tweens are driven by per-card native visibility, while
+  // the masked feature headline remains driven by ScrollTrigger.
   const entrance = await evaluate(`(async () => {
     const sleep = ms => new Promise(resolve=>setTimeout(resolve,ms));
     const root=document.querySelector(".ap-site");
@@ -418,7 +418,7 @@ try {
     }
     const row=rows[Math.min(4,rows.length-1)];
     const card=row.querySelector(".ap-social-grid > .ap-social-card");
-    const feature=await exercise(card,card.querySelector(".ap-social-card__copy h3"));
+    const feature=await exercise(card,card.querySelector(".ap-social-card__copy"));
     const foot=await exercise(footer.querySelector(".ap-footer__links"),footer.querySelector(".ap-footer__links"));
     return {active:root.dataset.gsapMotion,feature,footer:foot};
   })()`);
