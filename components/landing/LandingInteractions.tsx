@@ -34,7 +34,7 @@ function revealPreview(card: HTMLElement) {
       stagger: Math.min(.075, .35 / Math.max(targets.length, 1)),
       ease: "power2.out",
       overwrite: "auto",
-      onComplete: () => gsap.set(targets, { clearProps: "opacity,transform,transformOrigin" })
+      onComplete: () => { gsap.set(targets, { clearProps: "opacity,transform,transformOrigin" }); }
     });
 }
 
@@ -63,7 +63,7 @@ export function LandingInteractions() {
             gsap.to(inner, {
               yPercent: 0, duration: .86, ease: "power3.out",
               overwrite: "auto",
-              onComplete: () => gsap.set(inner, { clearProps: "transform,opacity" })
+              onComplete: () => { gsap.set(inner, { clearProps: "transform,opacity" }); }
             });
           }
         });
@@ -84,7 +84,7 @@ export function LandingInteractions() {
             gsap.to(copy, {
               autoAlpha: 1, y: 0, duration: .65, stagger: .14,
               ease: "power2.out", overwrite: "auto",
-              onComplete: () => gsap.set(copy, { clearProps: "opacity,visibility,transform" })
+              onComplete: () => { gsap.set(copy, { clearProps: "opacity,visibility,transform" }); }
             });
           }
         });
@@ -137,7 +137,7 @@ export function LandingInteractions() {
               gsap.to(targets, {
                 autoAlpha: 1, y: 0, duration: .69, stagger: .16,
                 delay: .2, ease: "power2.out", overwrite: "auto",
-                onComplete: () => gsap.set(targets, { clearProps: "opacity,visibility,transform" })
+                onComplete: () => { gsap.set(targets, { clearProps: "opacity,visibility,transform" }); }
               });
             }
           });
