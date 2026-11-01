@@ -322,3 +322,23 @@ html[data-daira-hero="pending"] .ap-site .ap-hero__actions{opacity:0}
     flex-direction:column;align-items:center;text-align:center;gap:18px;
   }
 }
+
+/* The homepage's GSAP engine is the only owner of entrance motion.
+   Disable residual CSS reveal transitions and card hover transforms. */
+.ap-site[data-gsap-motion="true"] .ap-social-showcase .ap-social-card,
+.ap-site[data-gsap-motion="true"] .ap-social-showcase .ap-social-card:hover {
+  transition:none!important;
+}
+.ap-site[data-gsap-motion="true"] .ap-social-showcase .ap-social-card,
+.ap-site[data-gsap-motion="true"] .ap-social-card__copy,
+.ap-site[data-gsap-motion="true"] .ap-social-card__visual,
+.ap-site[data-gsap-motion="true"] .ig-preview,
+.ap-site[data-gsap-motion="true"] .ig-preview > * {
+  animation:none!important;
+}
+.ap-site[data-gsap-motion="true"] .ap-footer__links > a {
+  transition:color .2s ease!important;
+}
+.ap-site[data-gsap-motion="true"] .ap-hero__word {
+  transition:none!important;
+}
