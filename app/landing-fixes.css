@@ -143,3 +143,30 @@ html[data-daira-hero="done"] .ap-site .ap-hero__word {opacity:1!important;}
   height:calc(100% + 3.2px)!important;
   border-radius:27.6px!important;
 }
+
+
+/* Safari's inert optical source duplicates only static visual sections.
+   It is NEVER the live UI, never focusable, and never animated. Avoid
+   capturing pending hero opacity, reveal CSS or hover state as a texture. */
+body > .daira-static-reflection {
+  position:absolute!important;
+  inset:0 0 auto!important;
+  height:auto!important;
+  margin:0!important;
+  overflow:visible!important;
+  pointer-events:none!important;
+  z-index:-10!important;
+  background:transparent!important;
+  user-select:none!important;
+}
+.daira-static-reflection .ap-hero__word,
+html[data-daira-hero] .daira-static-reflection .ap-hero__word,
+.daira-static-reflection [data-reveal] {
+  opacity:1!important;
+  visibility:visible!important;
+  transform:none!important;
+  animation:none!important;
+  transition:none!important;
+  will-change:auto!important;
+}
+.daira-static-reflection .ap-hero__cta::before {animation:none!important;}
