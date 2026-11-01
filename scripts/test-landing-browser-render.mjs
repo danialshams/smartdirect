@@ -418,7 +418,7 @@ try {
     }
     const row=rows[Math.min(4,rows.length-1)];
     const card=row.querySelector(".ap-social-grid > .ap-social-card");
-    const feature=await exercise(card,card.querySelector(".ap-social-card__copy"));
+    const feature=await exercise(card,card.querySelector(".ap-social-card__copy h3"));
     const foot=await exercise(footer.querySelector(".ap-footer__links"),footer.querySelector(".ap-footer__links"));
     return {active:root.dataset.gsapMotion,feature,footer:foot};
   })()`);
@@ -431,7 +431,26 @@ try {
       name+" must show actual intermediate opacity during the entrance");
     assert.equal(result.finalOpacity,1,name+" must remain fully visible after entrance");
   }
-  // A Firefox user-agent spoof inside Chromium does not test WebKit rendering.
+  const assembled = await evaluate(`(() => {
+    const cards=[...document.querySelectorAll(".ap-social-card")];
+    const card=cards[Math.min(4,cards.length-1)];
+    const preview=card?.querySelector(".ig-preview");
+    return {
+      stageCount:Number(card?.dataset.gsapStages??0),
+      phase:card?.dataset.gsapPhase,
+      shellOpacity:Number(getComputedStyle(card).opacity),
+      titleOpacity:Number(getComputedStyle(card.querySelector("h3")).opacity),
+      previewOpacity:Number(getComputedStyle(preview).opacity),
+      stagedParts:[...card.querySelectorAll(".ig-preview > *, .ap-social-card__index, .ap-social-card__count")].length
+    };
+  })()`);
+  console.log("DAIRA_CARD_GSAP_ASSEMBLY="+JSON.stringify(assembled));
+  assert.ok(assembled.stageCount >= 5, "Each feature must sequence multiple real card internals");
+  assert.equal(assembled.phase,"complete","GSAP must complete the inner UI assembly");
+  assert.equal(assembled.shellOpacity,1);
+  assert.equal(assembled.titleOpacity,1);
+  assert.equal(assembled.previewOpacity,1);
+    // A Firefox user-agent spoof inside Chromium does not test WebKit rendering.
   // The official shared scene makes WebGL background capture available on iOS.
   assert.equal(await evaluate("document.querySelectorAll('[data-liquid-glass-scene]').length"),1);
   console.log("DAIRA BROWSER PASS: original simple-liquid-glass loupe, native rim, real refraction, iOS scene, menu and backtop.");
