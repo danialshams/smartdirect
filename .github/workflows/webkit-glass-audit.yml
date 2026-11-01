@@ -61,3 +61,11 @@ jobs:
         run: npm run build
       - name: Record actual WebKit mobile scene while scrolling 75 animation frames
         run: node scripts/test-landing-webkit-scroll.mjs
+      - name: Archive Safari optical comparison and frame timing
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daira-webkit-optics-${{ github.sha }}
+          path: artifacts/landing-webkit/
+          if-no-files-found: ignore
+          retention-days: 7
