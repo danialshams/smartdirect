@@ -17,10 +17,12 @@ export function HeroAssembly() {
     const html = document.documentElement;
     if (!title) { html.dataset.dairaHero = "done"; return; }
     const words = Array.from(title.querySelectorAll<HTMLElement>("[data-hero-word]"));
+    const stickers = Array.from(title.querySelectorAll<HTMLElement>(".ap-hero__sticker-bg"));
     const description = document.querySelector<HTMLElement>("[data-hero-description]");
     const cta = document.querySelector<HTMLElement>("[data-hero-cta]");
     if (heroEntranceFinished) {
-      gsap.set(words, { clearProps: "opacity" });
+      gsap.set(words, { clearProps: "opacity,transform" });
+      gsap.set(stickers, { clearProps: "opacity,transform" });
       gsap.set(title, { clearProps: "opacity" });
       gsap.set([description, cta].filter(Boolean), { clearProps: "opacity,transform" });
       html.dataset.dairaHero = "done";
@@ -33,7 +35,8 @@ export function HeroAssembly() {
       if (completed) return;
       completed = true;
       heroEntranceFinished = true;
-      gsap.set(words, { clearProps: "opacity" });
+      gsap.set(words, { clearProps: "opacity,transform" });
+      gsap.set(stickers, { clearProps: "opacity,transform" });
       gsap.set([description, cta].filter(Boolean), { clearProps: "opacity,transform" });
       html.dataset.dairaHero = "done";
       title.dataset.gsapHero = "complete";
@@ -47,33 +50,47 @@ export function HeroAssembly() {
       return;
     }
 
-    // Render already contains the final line layout. CSS hides only word
-    // opacity before hydration, so GSAP can start immediately and smoothly.
-    // A single composited alpha fade is markedly cheaper than seven
-    // concurrent word tweens over the live optical header in Safari.
-    gsap.set(words, { opacity: 1 });
-    gsap.set(title, { opacity: 0 });
+    // Seven masked label pops in natural RTL reading order.
+    // A brief pale-blue backing wipe makes each word feel stamped onto
+    // the page, then vanishes, leaving the clean original typography.
+    gsap.set(title, { opacity: 1 });
+    gsap.set(words, {
+      opacity: 0, yPercent: 108, scale: .9, rotation: 5,
+      transformOrigin: "50% 95%", force3D: false
+    });
+    gsap.set(stickers, { opacity: 0, scaleX: 0, transformOrigin: "100% 50%" });
     title.dataset.gsapHero = "playing";
     title.dataset.gsapHeroStarted = String(performance.now());
     html.dataset.dairaHero = "playing";
-    const timeline = gsap.timeline({ onComplete: finish, defaults: { ease: "power2.out" } });
-    timeline.to(title, {
-      opacity: 1,
-      duration: .92,
-      ease: "sine.out",
-      overwrite: "auto"
-    }, 0);
+    const timeline = gsap.timeline({ onComplete: finish });
+    words.forEach((word, i) => {
+      const at = i * .145;
+      const background = stickers[i];
+      if (background) {
+        timeline.to(background, {
+          opacity: .95, scaleX: 1, duration: .27, ease: "power2.out"
+        }, at);
+        timeline.to(background, { opacity: 0, duration: .32, ease: "sine.out" }, at + .38);
+      }
+      timeline.to(word, {
+        yPercent: 0, opacity: 1, rotation: 0, scale: 1,
+        force3D: false, duration: .66, ease: "back.out(1.25)"
+      }, at + .07);
+    });
     if (description) timeline.fromTo(description,
-      { opacity: 0 }, { opacity: 1, duration: .68, ease: "sine.out" }, .17);
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: .52, ease: "power2.out" }, .9);
     if (cta) timeline.fromTo(cta,
-      { opacity: 0 }, { opacity: 1, duration: .62, ease: "sine.out" }, .32);
+      { opacity: 0, y: 15, scale: .97 },
+      { opacity: 1, y: 0, scale: 1, duration: .57, ease: "power2.out" }, 1.06);
 
     return () => {
       timeline.kill();
       // Cleanup is not completion: React immediately replays this effect in
       // Strict Mode. Allow the surviving timeline to run normally.
       if (!completed) {
-        gsap.set(words, { clearProps: "opacity" });
+        gsap.set(words, { clearProps: "opacity,transform" });
+      gsap.set(stickers, { clearProps: "opacity,transform" });
         gsap.set([description, cta].filter(Boolean), { clearProps: "opacity,transform" });
         html.dataset.dairaHero = "pending";
         title.dataset.gsapHero = "pending";
