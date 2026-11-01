@@ -391,7 +391,7 @@ html[data-daira-hero="done"] .ap-site .ap-hero__typed{visibility:visible}
    A very light frost veil is placed ABOVE it for menu legibility, never a
    CSS blur substituted for the refraction. */
 .ap-site .ap-menu__liquid{
-  position:relative!important;isolation:isolate;
+  position:relative!important;isolation:auto;
   background:rgba(255,255,255,.035)!important;
   border:0!important;box-shadow:0 19px 48px rgba(15,39,82,.14)!important;
   border-radius:27px!important;overflow:hidden!important;
