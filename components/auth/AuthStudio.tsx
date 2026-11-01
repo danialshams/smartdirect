@@ -277,7 +277,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
               {screen==="verify" && <label className="da-auth-field">
                 <span>کد تأیید موبایل {phone}</span><span className="da-auth-input">
                   <Fingerprint size={18}/><input inputMode="numeric" autoComplete="one-time-code" maxLength={6}
-                    value={code} onChange={e=>setCode(asciiDigits(e.target.value).replace(/\\D/g,"").slice(0,6))}
+                    value={code} onChange={e=>setCode(asciiDigits(e.target.value).replace(/\D/g,"").slice(0,6))}
                     placeholder="۶ رقم" dir="ltr" required/>
                 </span>
               </label>}
