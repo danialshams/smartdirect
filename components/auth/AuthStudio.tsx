@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
-import { ArrowLeft, ArrowUpLeft, CheckCircle2, Eye, EyeOff, Fingerprint, KeyRound, MessageCircleMore, Phone, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ContactRound, Eye, EyeOff, Fingerprint, KeyRound, LockKeyhole, MessageCircleMore, Phone, ShieldCheck, UserRound, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { asciiDigits } from "@/lib/auth/phone";
 import { ShineBorder } from "./ShineBorder";
@@ -198,7 +198,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
     <label className="da-auth-field">
       <span>{label}</span>
       <span className="da-auth-input">
-        <KeyRound size={18} strokeWidth={1.9} aria-hidden="true"/>
+        {label.startsWith("تکرار") ? <LockKeyhole size={18} strokeWidth={1.9} aria-hidden="true"/> : <KeyRound size={18} strokeWidth={1.9} aria-hidden="true"/>
         <input type={showPassword?"text":"password"} autoComplete={complete}
           value={value} onChange={event=>setValue(event.target.value)}
           placeholder={complete==="current-password"?"رمز عبور":"حداقل ۸ کاراکتر"} required minLength={8} maxLength={128} dir="ltr"/>
@@ -215,17 +215,14 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
     <div className="da-auth-shell">
       <section className="da-auth-formside">
         <header className="da-auth-header">
-          <BrandMark/>
-          <Link href="/" className="da-auth-home" aria-label="بازگشت به صفحه اصلی"><ArrowUpLeft size={19}/></Link>
+          <Link href="/" className="da-auth-brand-link" aria-label="دایرا – صفحه اصلی">
+            <BrandMark/>
+          </Link>
         </header>
         <div className="da-auth-formwrap">
           <div key={screen} className="da-auth-panel">
             <ShineBorder duration={16} borderWidth={1} />
             <h1>{headline[screen]}</h1>
-            {screen!=="forgot" && screen!=="verify" && <div className="da-auth-main-tabs" role="tablist" aria-label="ورود یا ثبت‌نام">
-              <button type="button" role="tab" aria-selected={screen==="login"} className={screen==="login"?"active":""} onClick={()=>changeScreen("login")}>ورود به حساب</button>
-              <button type="button" role="tab" aria-selected={screen==="signup"} className={screen==="signup"?"active":""} onClick={()=>changeScreen("signup")}>ایجاد حساب جدید</button>
-            </div>}
             {screen==="login" && <div className="da-auth-methods" role="tablist" aria-label="روش ورود">
               <button type="button" role="tab" aria-selected={method==="password"} className={method==="password"?"active":""} onClick={()=>changeMethod("password")}>
                 <KeyRound size={17}/> رمز عبور
@@ -240,12 +237,12 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
                   <UserRound size={18}/><input autoComplete="given-name" value={firstName} onChange={e=>setFirstName(e.target.value)} required placeholder="نام" maxLength={60}/>
                 </span></label>
                 <label className="da-auth-field"><span>نام خانوادگی</span><span className="da-auth-input">
-                  <UserRound size={18}/><input autoComplete="family-name" value={lastName} onChange={e=>setLastName(e.target.value)} required placeholder="نام خانوادگی" maxLength={60}/>
+                  <UsersRound size={18}/><input autoComplete="family-name" value={lastName} onChange={e=>setLastName(e.target.value)} required placeholder="نام خانوادگی" maxLength={60}/>
                 </span></label>
               </div>}
               {screen==="login" && method==="password" && <>
                 <label className="da-auth-field"><span>شماره موبایل یا ایمیل</span>
-                  <span className="da-auth-input"><Phone size={18}/><input
+                  <span className="da-auth-input"><ContactRound size={18}/><input
                     autoComplete="username" inputMode="email" value={identifier} onChange={e=>setIdentifier(e.target.value)}
                     placeholder="۰۹۱۲ ... یا ایمیل قبلی" required dir="auto" /></span>
                 </label>
@@ -297,7 +294,6 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
                 <span>{busy?"در حال انجام...":screen==="signup"?"ثبت‌نام":screen==="verify"?"تأیید و ورود":
                   screen==="forgot"?(codeSent?"تغییر رمز عبور":"دریافت کد بازیابی"):
                   method==="sms"?(codeSent?"ورود با کد":"دریافت کد"):"ورود"}</span>
-                <ArrowLeft size={20}/>
               </button>
             </form>
             {screen==="verify" && <button className="da-auth-back" onClick={()=>void run(finishSignup)}>
@@ -306,10 +302,13 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
             {screen==="forgot" && <button className="da-auth-back" onClick={()=>changeScreen("login")}>
               بازگشت به ورود <ArrowLeft size={16}/>
             </button>}
-            {screen==="signup" && <div className="da-auth-bottom">قبلاً حساب ساختی؟ <button onClick={()=>changeScreen("login")}>وارد شو</button></div>}
-            {screen==="login" && <div className="da-auth-bottom">هنوز عضو دایرا نیستی؟ <button onClick={()=>changeScreen("signup")}>حساب بساز</button></div>}
+            {screen==="signup" && <div className="da-auth-bottom">حساب دارید؟ <button type="button" onClick={()=>changeScreen("login")}>ورود</button></div>}
+            {screen==="login" && <div className="da-auth-bottom">حساب ندارید؟ <button type="button" onClick={()=>changeScreen("signup")}>ساخت حساب</button></div>}
           </div>
         </div>
+        <footer className="da-auth-footer">
+          <Link href="/" className="da-auth-return-home">بازگشت به صفحه اصلی</Link>
+        </footer>
       </section>
     </div>
   </main>;
