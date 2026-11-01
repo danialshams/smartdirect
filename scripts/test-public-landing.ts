@@ -81,7 +81,9 @@ assert.ok(interactions.includes('import { gsap } from "gsap"'), "Sections should
 assert.ok(interactions.includes('import { ScrollTrigger } from "gsap/ScrollTrigger"'), "Features and footer need real ScrollTrigger");
 assert.ok(interactions.includes(".ap-social-grid > .ap-social-card"), "GSAP must animate feature cards");
 assert.ok(interactions.includes(".ap-footer__links"), "GSAP must animate footer links as one group");
-assert.ok(interactions.includes('start:"top 78%"'),"Feature trigger must wait for the individual card to approach viewport");
+assert.ok(interactions.includes('rootMargin: "0px 0px -22% 0px"'),"Feature observer must wait until individual card approaches 78% viewport line");
+assert.ok(interactions.includes("IntersectionObserver"),"One native observer replaces expensive per-card ScrollTriggers");
+assert.ok(interactions.includes("gsap.to(copy"),"Only card text is animated, not the full Instagram preview");
 assert.ok(features.includes("ap-social-card__index") && !features.includes("ap-social-card__icon"),"Feature card uses numbers rather than icons");
 assert.ok(page.includes("ap-footer__callout") && !page.includes("اپراتور رسمی متا"),"Clean footer must include signup call to action");
 assert.ok(interactions.includes("yPercent:105"),"Only major feature heading gets the GSAP mask reveal");
