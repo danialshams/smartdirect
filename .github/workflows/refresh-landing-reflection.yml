@@ -61,6 +61,11 @@ jobs:
           test "$(find public/landing-reflection -maxdepth 1 -name '*.jpg' | wc -l)" -eq 20
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          mkdir -p /tmp/daira-reflection-source
+          cp -a public/landing-reflection/. /tmp/daira-reflection-source/
+          git fetch origin feature/daira-landing-motion-polish-20261101
+          git checkout -B feature/daira-landing-motion-polish-20261101 FETCH_HEAD
+          cp -a /tmp/daira-reflection-source/. public/landing-reflection/
           git add public/landing-reflection
           if ! git diff --cached --quiet; then
             git commit -m 'Refresh original responsive optical pixels after landing redesign'
