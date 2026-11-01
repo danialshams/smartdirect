@@ -41,6 +41,7 @@ export function LandingInteractions() {
     const queuedCards: HTMLElement[] = [];
     const builders = new Map<HTMLElement, () => void>();
     let activeCard: HTMLElement | null = null;
+    let activeTimeline: gsap.core.Timeline | null = null;
     let disposed = false;
 
     const cardObserver = new IntersectionObserver(entries => {
@@ -58,6 +59,14 @@ export function LandingInteractions() {
     let trailingProbeTimer: ReturnType<typeof setTimeout> | undefined;
     const probe = () => {
       scrollFrame = 0;
+      // A quick jump may leave an earlier card animating offscreen and blocking
+      // the visible one. Complete it instantly, without a replay or blank card.
+      if (activeCard && activeTimeline) {
+        const activeRect = activeCard.getBoundingClientRect();
+        if (activeRect.bottom < -12 || activeRect.top > innerHeight + 12) {
+          activeTimeline.progress(1);
+        }
+      }
       for (const card of pending) {
         const rect = card.getBoundingClientRect();
         const visible = Math.max(0, Math.min(rect.bottom, innerHeight * .73) - Math.max(rect.top, 0));
@@ -66,12 +75,12 @@ export function LandingInteractions() {
       }
     };
     const scheduleProbe = () => {
-      if (disposed || !pending.size || scrollFrame) return;
+      if (disposed || (!pending.size && !activeCard) || scrollFrame) return;
       lastProbeAt = performance.now();
       scrollFrame = requestAnimationFrame(probe);
     };
     const onScroll = () => {
-      if (!pending.size || scrollFrame) return;
+      if ((!pending.size && !activeCard) || scrollFrame) return;
       const remaining = 180 - (performance.now() - lastProbeAt);
       if (remaining <= 0) {
         if (trailingProbeTimer !== undefined) {
@@ -158,11 +167,13 @@ export function LandingInteractions() {
             });
             running.delete(timeline);
             activeCard = null;
+            activeTimeline = null;
             builders.delete(card);
             requestAnimationFrame(drainQueue);
           }
         });
         running.add(timeline);
+        activeTimeline = timeline;
 
         // 01 outer shell: right, 02 outer shell: left, alternating globally.
         if (shell) {
@@ -336,6 +347,7 @@ export function LandingInteractions() {
       queuedCards.length = 0;
       builders.clear();
       activeCard = null;
+      activeTimeline = null;
       running.forEach(animation => animation.kill());
       for (const node of affected) gsap.set(node, {
         clearProps: "transform,opacity,visibility"
