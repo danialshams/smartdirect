@@ -1,0 +1,47 @@
+name: Import exact Safari refraction source captures
+
+on:
+  push:
+    branches:
+      - fix/daira-static-reflection-architecture-20261101
+    paths:
+      - .github/workflows/import-landing-reflection-sources.yml
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  import:
+    if: github.repository == 'danialshams/smartdirect'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Retrieve already-tested original mobile and desktop screenshot assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh api -H 'Accept: application/vnd.github+json' \
+            /repos/danialshams/smartdirect/actions/artifacts/13079933791/zip > /tmp/daira-reflections.zip
+          mkdir -p /tmp/daira-reflections public/landing-reflection
+          unzip -q /tmp/daira-reflections.zip -d /tmp/daira-reflections
+          for i in $(seq 0 9); do
+            test -s "/tmp/daira-reflections/source-mobile-${i}.jpg"
+            test -s "/tmp/daira-reflections/source-desktop-${i}.jpg"
+            cp "/tmp/daira-reflections/source-mobile-${i}.jpg" "public/landing-reflection/mobile-${i}.jpg"
+            cp "/tmp/daira-reflections/source-desktop-${i}.jpg" "public/landing-reflection/desktop-${i}.jpg"
+          done
+      - name: Commit tested screenshot pixels on experimental branch only
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/landing-reflection
+          if ! git diff --cached --quiet; then
+            git commit -m 'Add original static Safari reflection rasters (experimental)'
+            git push origin HEAD:fix/daira-static-reflection-architecture-20261101
+          fi
