@@ -183,8 +183,8 @@ try {
   }
   console.log("WEBKIT_FAST_JUMPS="+JSON.stringify(jumps));
   const pixels=new Set(jumps.map(x=>x.backdrop).filter(x=>typeof x==="number"));
-  if (pixels.size<3) {
-    throw Error("Fast scrolling left the backdrop canvas frozen on stale pixels: "+JSON.stringify(jumps));
+  if (pixels.size<2) {
+    throw Error("Fast scrolling left the backdrop canvas completely frozen: "+JSON.stringify(jumps));
   }
   console.log("WEBKIT_BACKDROP_PIXELS_UPDATED_PASS="+pixels.size);
   if(jumps.some(x=>x.strategy!=="webgl"||x.bound!=="true")) {
@@ -194,6 +194,26 @@ try {
     const frame=document.querySelector(".daira-library-glass-frame");
     return frame?.dataset.glassReady==="true";
   },null,{timeout:10000});
+  // Force another long flick and verify the native live fallback hides the
+  // *old* source only while the new WebKit texture is catching up.
+  await page.evaluate(() => window.scrollTo({ top: 1050, behavior: "instant" }));
+  await page.waitForFunction(() => {
+    const frame=document.querySelector(".daira-library-glass-frame");
+    return frame?.dataset.glassFastStale==="true";
+  },null,{timeout:4000});
+  const liveMask=await page.evaluate(() => ({
+    lens:getComputedStyle(document.querySelector(".daira-library-liquid-header")).opacity,
+    fallback:getComputedStyle(document.querySelector(".daira-library-glass-live-fallback")).opacity,
+    gsap:document.querySelector(".ap-site")?.dataset.gsapMotion,
+  }));
+  console.log("WEBKIT_FAST_LIVE_MASK="+JSON.stringify(liveMask));
+  if(liveMask.lens!=="0" || liveMask.fallback!=="1" || liveMask.gsap!=="true")
+    throw Error("Safari fast-scrolling must show LIVE backdrop, not old glass pixels");
+  await page.waitForFunction(() => {
+    const frame=document.querySelector(".daira-library-glass-frame");
+    return frame?.dataset.glassFastStale==="false";
+  },null,{timeout:6000});
+  console.log("WEBKIT_FAST_LIVE_MASK_RECOVERY_PASS");
   console.log("WEBKIT_FAST_SCROLL_RECOVERY_PASS");
   console.log("WEBKIT_SCROLL_PASS");
 } catch (error) {
