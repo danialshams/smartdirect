@@ -109,8 +109,8 @@ export function LandingInteractions() {
         (ua.includes("Safari/") && !/Chrome|Chromium|Edg|OPR/.test(ua));
       for (const card of root.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card")) {
         const section = card.closest<HTMLElement>(".ap-showcase-capture");
-        const textGroup = card.querySelector<HTMLElement>(".ap-social-card__copy");
-        const movingElement = lightweightCards && textGroup ? textGroup : card;
+        const number = card.querySelector<HTMLElement>(".ap-social-card__number");
+        const movingElement = lightweightCards && number ? number : card;
         gsap.set(movingElement, { autoAlpha: 0 });
         ScrollTrigger.create({
           trigger: card,
@@ -122,10 +122,10 @@ export function LandingInteractions() {
             card.dataset.gsapStarted = String(performance.now());
             if (section) section.dataset.gsapStarted ??= card.dataset.gsapStarted;
             gsap.fromTo(movingElement,
-              { autoAlpha: 0, y: lightweightCards ? 9 : 17 },
+              { autoAlpha: 0, y: lightweightCards ? 0 : 17 },
               {
                 autoAlpha: 1, y: 0,
-                duration: lightweightCards ? .58 : .72,
+                duration: lightweightCards ? .46 : .72,
                 ease: "power3.out",
                 overwrite: "auto",
                 onComplete: () => {
