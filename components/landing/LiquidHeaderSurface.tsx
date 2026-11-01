@@ -5,7 +5,7 @@ import { useLandingGlassCapture } from "./LandingGlassBackdrop";
 import LiquidGlass, { type RenderingDiagnostics } from "simple-liquid-glass";
 
 /**
- * The header is ONE native optical lens from simple-liquid-glass 5.6.
+ * The header is ONE native optical lens from simple-liquid-glass 5.4.
  * No nested homegrown refraction layer, tint overlay, manually painted
  * specular rim, injected filter or forced pixel displacement override.
  *
