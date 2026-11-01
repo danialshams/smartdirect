@@ -86,7 +86,7 @@ assert.ok(interactions.includes("IntersectionObserver"),"One native observer rep
 assert.ok(interactions.includes("gsap.to(copy"),"Only card text is animated, not the full Instagram preview");
 assert.ok(features.includes("ap-social-card__index") && !features.includes("ap-social-card__icon"),"Feature card uses numbers rather than icons");
 assert.ok(page.includes("ap-footer__callout") && !page.includes("اپراتور رسمی متا"),"Clean footer must include signup call to action");
-assert.ok(interactions.includes("yPercent:105"),"Only major feature heading gets the GSAP mask reveal");
+assert.match(interactions,/yPercent:\s*105/,"Only major feature heading gets the GSAP mask reveal");
 assert.ok(!interactions.includes("node.animate("), "No Web Animations API fallback on Safari");
 assert.ok(!landingFixes.includes("daira-hero-rtl-fade"), "Legacy CSS keyframes must not fight GSAP");
 
