@@ -101,14 +101,18 @@ export function LandingInteractions() {
         running.add(timeline);
 
         // 01 outer shell: right, 02 outer shell: left, alternating globally.
-        if (shell) timeline.to(shell, { x: 0, opacity: 1, duration: .64 }, 0);
+        if (shell) {
+          timeline.set(shell, { visibility: "visible" }, 0);
+          timeline.to(shell, { x: 0, duration: .64 }, 0);
+        }
         // Opposing direction. Each number, title and description owns a slot.
         copyParts.forEach((part, i) => timeline.to(part, {
           x: 0, opacity: 1, duration: .36
         }, .56 + i * .16));
         if (preview) {
           const previewAt = .56 + copyParts.length * .16 + .20;
-          timeline.to(preview, { x: 0, opacity: 1, duration: .38 }, previewAt);
+          timeline.set(preview, { visibility: "visible" }, previewAt);
+          timeline.to(preview, { x: 0, duration: .38 }, previewAt);
           // Hide preview internals only right before the preview itself enters.
           // This avoids allocating many nested compositing layers at the
           // precise scroll frame that first activates the card.
@@ -170,13 +174,13 @@ export function LandingInteractions() {
       // Their actual GSAP entrance remains gated by the card observer.
       if (shell) {
         affected.add(shell);
-        gsap.set(shell, { x: 54 * direction, opacity: 0 });
+        gsap.set(shell, { x: 54 * direction, visibility: "hidden" });
       }
       for (const part of copyParts) affected.add(part);
       gsap.set(copyParts, { x: 22 * opposite, opacity: 0 });
       if (preview) {
         affected.add(preview);
-        gsap.set(preview, { x: 20 * opposite, opacity: 0 });
+        gsap.set(preview, { x: 20 * opposite, visibility: "hidden" });
       }
       for (const part of visualParts) affected.add(part);
       pending.add(card);
