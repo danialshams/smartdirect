@@ -17,7 +17,7 @@ export default function DeletionRequestsPage(){
  }catch(e){setError(e instanceof Error?e.message:"خطا در دریافت درخواست‌ها");}
  finally{setLoading(false);}},[]);
  useEffect(()=>{void load();},[load]);
- async function update(item:Item,status:"VERIFYING"|"COMPLETED"|"REJECTED"){
+ async function update(item:Item,status:"VERIFYING"|"REJECTED"){
   
   if(status==="REJECTED"&&!window.confirm("درخواست بدون حذف داده بسته شود؟"))return;
   setBusy(item.id);setError("");
@@ -27,6 +27,17 @@ export default function DeletionRequestsPage(){
    const data=await response.json();if(!response.ok)throw new Error(data.message||"خطا در تغییر وضعیت");
    await load();
   }catch(e){setError(e instanceof Error?e.message:"خطا در ثبت وضعیت");}
+  finally{setBusy("");}
+ }
+ async function execute(item:Item){
+  if(!window.confirm("اخطار: حساب کاربر، داده‌های مرتبط و فایل‌های ثبت‌شده حذف می‌شوند و قابل بازیابی نیستند. آیا مالکیت حساب را تأیید کرده‌ای؟"))return;
+  setBusy(item.id);setError("");
+  try{
+   const r=await fetch("/api/admin/deletion-requests/"+encodeURIComponent(item.id)+"/execute",{method:"POST"});
+   const data=await r.json();
+   if(!r.ok)throw new Error(data.message||"حذف انجام نشد.");
+   await load();
+  }catch(e){setError(e instanceof Error?e.message:"حذف انجام نشد.");}
   finally{setBusy("");}
  }
  return <div>
