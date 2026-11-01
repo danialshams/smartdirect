@@ -33,6 +33,11 @@ for(const route of ["terms","about","contact"])
   assert.ok(existsSync("app/"+route+"/page.tsx"),"Missing public route "+route);
 
 assert.match(root,/LiquidGlassScene/);
+assert.ok(root.includes("createStaticReflection(page)"),"Safari optical source must be independent of moving HTML");
+assert.ok(root.includes("source.inert = true"),"Reflection source must be inaccessible to users and assistive tech");
+assert.ok(root.includes("createLiquidGlassBackdrop(source"),"Native WebGL must read from the static mirror, not animated DOM");
+assert.ok(!root.includes("createLiquidGlassBackdrop(element"),"Never capture live animated page in Safari");
+assert.ok(landingFixes.includes(".daira-static-reflection"),"Static source must always paint without GSAP fade");
 assert.match(root,/maxCacheBytes/);
 assert.match(root,/onCaptureError/);
 assert.ok(page.includes("dataset.sceneCaptureStable='true'"),"WebKit scene should be stabilized before hydration");
