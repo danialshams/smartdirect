@@ -56,7 +56,7 @@ html[data-daira-hero="done"] .ap-site .ap-hero__word {opacity:1!important;}
 
 /* ScrollTrigger manages appearance. Legacy nested data-reveal transitions and
    the former Safari blanket opacity:1!important rule blocked real GSAP. */
-.ap-site[data-gsap-motion="true"] .ap-social-showcase [data-reveal] {
+.ap-site[data-gsap-motion="true"] [data-reveal] {
   transition:none!important;
 }
 /* One neutral, geometry-only shell. The lens's real displacement and caustic
