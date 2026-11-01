@@ -8,6 +8,7 @@ import { ChevronUp } from "lucide-react";
 type CardState = "waiting" | "queued" | "playing" | "done";
 type CardParts = {
   shell: HTMLElement | null;
+  copyContainer: HTMLElement | null;
   copyParts: HTMLElement[];
   preview: HTMLElement | null;
   visualParts: HTMLElement[];
@@ -38,10 +39,7 @@ export function LandingInteractions() {
     const running = new Set<gsap.core.Animation>();
     const affected = new Set<HTMLElement>();
     const pending = new Set<HTMLElement>();
-    const queuedCards: HTMLElement[] = [];
-    const builders = new Map<HTMLElement, () => void>();
-    let activeCard: HTMLElement | null = null;
-    let activeTimeline: gsap.core.Timeline | null = null;
+    const delays = new Set<gsap.core.Tween>();
     let disposed = false;
 
     const cardObserver = new IntersectionObserver(entries => {
@@ -59,14 +57,6 @@ export function LandingInteractions() {
     let trailingProbeTimer: ReturnType<typeof setTimeout> | undefined;
     const probe = () => {
       scrollFrame = 0;
-      // A quick jump may leave an earlier card animating offscreen and blocking
-      // the visible one. Complete it instantly, without a replay or blank card.
-      if (activeCard && activeTimeline) {
-        const activeRect = activeCard.getBoundingClientRect();
-        if (activeRect.bottom < -12 || activeRect.top > innerHeight + 12) {
-          activeTimeline.progress(1);
-        }
-      }
       for (const card of pending) {
         const rect = card.getBoundingClientRect();
         const visible = Math.max(0, Math.min(rect.bottom, innerHeight * .73) - Math.max(rect.top, 0));
@@ -75,12 +65,12 @@ export function LandingInteractions() {
       }
     };
     const scheduleProbe = () => {
-      if (disposed || (!pending.size && !activeCard) || scrollFrame) return;
+      if (disposed || !pending.size || scrollFrame) return;
       lastProbeAt = performance.now();
       scrollFrame = requestAnimationFrame(probe);
     };
     const onScroll = () => {
-      if ((!pending.size && !activeCard) || scrollFrame) return;
+      if (!pending.size || scrollFrame) return;
       const remaining = 180 - (performance.now() - lastProbeAt);
       if (remaining <= 0) {
         if (trailingProbeTimer !== undefined) {
@@ -105,35 +95,6 @@ export function LandingInteractions() {
     const unique = (nodes: (HTMLElement | null)[]) =>
       nodes.filter((node): node is HTMLElement => Boolean(node));
 
-    const drainQueue = () => {
-      if (disposed || activeCard) return;
-      while (queuedCards.length) {
-        const card = queuedCards.shift()!;
-        if (states.get(card) !== "queued") continue;
-        const rect = card.getBoundingClientRect();
-        if (rect.bottom <= 0 || rect.top >= innerHeight) {
-          // The user has already passed this card: restore its full content
-          // instead of leaving a blank card waiting for an outdated entrance.
-          const parts = preparedCards.get(card);
-          if (parts) gsap.set([
-            ...(parts.shell ? [parts.shell] : []),
-            ...parts.copyParts, ...parts.visualParts,
-            ...(parts.preview ? [parts.preview] : [])
-          ], { clearProps: "transform,opacity,visibility" });
-          states.set(card, "done");
-          card.dataset.gsapShown = "true";
-          card.dataset.gsapPhase = "complete";
-          builders.delete(card);
-          continue;
-        }
-        const build = builders.get(card);
-        if (!build) continue;
-        activeCard = card;
-        build();
-        return;
-      }
-    };
-
     const startCard = (card: HTMLElement) => {
       if (disposed || states.get(card) !== "waiting") return;
       states.set(card, "queued");
@@ -150,59 +111,67 @@ export function LandingInteractions() {
         const direction = Number(card.dataset.gsapDirection) || 1;
         const prepared = preparedCards.get(card);
         if (!prepared) return;
-        const { shell, copyParts, preview, visualParts } = prepared;
+        const { shell, copyContainer, copyParts, preview, visualParts } = prepared;
         // All expensive element discovery and initial transform setup is
         // finished before scrolling, not inside this viewport callback.
-        // Child content uses force3D:false: Safari otherwise promotes every
-        // text row and illustrated sublayer to its own GPU texture mid-scroll.
-        // The large card surface still moves independently.
+        // A single copy wrapper moves from the opposing side. The labels
+        // fade in one at a time inside it, avoiding multiple moving glyph
+        // textures and forced WebKit compositing at the card boundary.
         const timeline = gsap.timeline({
           defaults: { ease: "power3.out" },
           onComplete: () => {
             states.set(card, "done");
             card.dataset.gsapPhase = "complete";
             card.dataset.gsapShown = "true";
-            gsap.set([card, ...(shell ? [shell] : []), ...copyParts, ...visualParts, ...(preview ? [preview] : [])], {
+            gsap.set([card, ...(shell ? [shell] : []), ...(copyContainer ? [copyContainer] : []), ...copyParts, ...visualParts, ...(preview ? [preview] : [])], {
               clearProps: "transform,opacity,visibility"
             });
             running.delete(timeline);
-            activeCard = null;
-            activeTimeline = null;
-            builders.delete(card);
-            requestAnimationFrame(drainQueue);
           }
         });
         running.add(timeline);
-        activeTimeline = timeline;
 
         // 01 outer shell: right, 02 outer shell: left, alternating globally.
         if (shell) {
           timeline.set(shell, { visibility: "visible" }, 0);
-          timeline.to(shell, { x: 0, duration: .48 }, 0);
+          timeline.to(shell, { x: 0, duration: .64 }, 0);
         }
-        // Opposing direction. Each number, title and description owns a slot.
+        // Opposing copy motion, with separate sequential text reveals.
+        if (copyContainer) timeline.to(copyContainer, {
+          x: 0, force3D: false, duration: .94
+        }, .52);
         copyParts.forEach((part, i) => timeline.to(part, {
-          x: 0, opacity: 1, force3D: false, duration: .28
-        }, .42 + i * .11));
+          opacity: 1, duration: .33
+        }, .52 + i * .14));
         if (preview) {
-          const previewAt = .42 + copyParts.length * .11 + .10;
+          const previewAt = .52 + copyParts.length * .14 + .12;
           timeline.set(preview, { visibility: "visible" }, previewAt);
-          timeline.to(preview, { x: 0, force3D: false, duration: .31 }, previewAt);
-          // Hide preview internals only right before the preview itself enters.
-          // This avoids allocating many nested compositing layers at the
-          // precise scroll frame that first activates the card.
-          timeline.set(visualParts, { x: -12 * direction, opacity: 0, force3D: false }, previewAt - .12);
+          timeline.to(preview, { x: 0, force3D: false, duration: .67 }, previewAt);
+          // The phone travels in the opposing direction. Each illustrated
+          // row fades in its own ordered GSAP stage. For small screens its
+          // children do not each acquire a separate moving GPU texture.
+          const mobileLayers = innerWidth <= 640;
+          timeline.set(visualParts, {
+            x: mobileLayers ? 0 : -12 * direction,
+            opacity: 0, force3D: false
+          }, previewAt - .12);
           visualParts.forEach((part, i) => timeline.to(part, {
-            x: 0, opacity: 1, force3D: false, duration: .22, ease: "power2.out"
-          }, previewAt + .30 + i * .105));
+            ...(mobileLayers ? {} : { x: 0 }),
+            opacity: 1, force3D: false, duration: .25, ease: "power2.out"
+          }, previewAt + .27 + i * .13));
         }
       };
 
-      // Only one complicated Instagram preview assembles at a time.
-      builders.set(card, build);
-      queuedCards.push(card);
-      queuedCards.sort((a,b) => cards.indexOf(a) - cards.indexOf(b));
-      drainQueue();
+      // Paired cards must not produce two compositing bursts on the same frame.
+      const secondInRow = innerWidth > 600 &&
+        Array.from(card.parentElement?.children ?? []).indexOf(card) > 0;
+      if (secondInRow) {
+        const delayed = gsap.delayedCall(.82, () => {
+          delays.delete(delayed);
+          build();
+        });
+        delays.add(delayed);
+      } else build();
     };
 
     cards.forEach((card, index) => {
@@ -224,6 +193,7 @@ export function LandingInteractions() {
       states.set(card, "waiting");
       const opposite = -direction;
       const shell = card.querySelector<HTMLElement>(".ap-social-card__shell");
+      const copyContainer = card.querySelector<HTMLElement>(".ap-social-card__copy");
       const preview = card.querySelector<HTMLElement>(".ig-preview");
       const copyParts = unique([
         card.querySelector<HTMLElement>(".ap-social-card__index"),
@@ -239,7 +209,7 @@ export function LandingInteractions() {
         );
         return [child];
       }) : [];
-      preparedCards.set(card, { shell, copyParts, preview, visualParts });
+      preparedCards.set(card, { shell, copyContainer, copyParts, preview, visualParts });
       card.dataset.gsapStages = String(1 + copyParts.length + (preview ? 1 : 0) + visualParts.length);
       // Prepare only lightweight parent/label transforms once on mount.
       // Their actual GSAP entrance remains gated by the card observer.
@@ -247,8 +217,12 @@ export function LandingInteractions() {
         affected.add(shell);
         gsap.set(shell, { x: 54 * direction, visibility: "hidden" });
       }
+      if (copyContainer) {
+        affected.add(copyContainer);
+        gsap.set(copyContainer, { x: 22 * opposite, force3D: false });
+      }
       for (const part of copyParts) affected.add(part);
-      gsap.set(copyParts, { x: 22 * opposite, opacity: 0, force3D: false });
+      gsap.set(copyParts, { opacity: 0 });
       if (preview) {
         affected.add(preview);
         gsap.set(preview, { x: 20 * opposite, visibility: "hidden", force3D: false });
@@ -344,10 +318,7 @@ export function LandingInteractions() {
       cardObserver.disconnect();
       footerObservers.forEach(observer => observer.disconnect());
       headingTrigger?.kill();
-      queuedCards.length = 0;
-      builders.clear();
-      activeCard = null;
-      activeTimeline = null;
+      delays.forEach(tween => tween.kill());
       running.forEach(animation => animation.kill());
       for (const node of affected) gsap.set(node, {
         clearProps: "transform,opacity,visibility"
