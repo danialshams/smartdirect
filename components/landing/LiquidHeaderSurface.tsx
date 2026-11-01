@@ -50,6 +50,8 @@ export function LiquidHeaderSurface() {
   const backdropRef = useRef<HTMLCanvasElement | null>(null);
   const [sourceBound, setSourceBound] = useState(false);
   const [captureReady, setCaptureReady] = useState(false);
+  const captureReadyRef = useRef(captureReady);
+  captureReadyRef.current = captureReady;
   const [everReady, setEverReady] = useState(false);
   const [strategy, setStrategy] = useState("pending");
 
@@ -116,7 +118,7 @@ export function LiquidHeaderSurface() {
         const settled = at - lastMove > 150;
         // Keep the underlying WebGL renderer alive; as soon as it presents a
         // fresh canvas and the capture is ready, show it without re-mounting.
-        if (settled && captureReady && (updated || at - started > 1800)) {
+        if (settled && captureReadyRef.current && (updated || at - started > 1800)) {
           active = false;
           frame.dataset.glassFastStale = "false";
           return;
@@ -150,7 +152,7 @@ export function LiquidHeaderSurface() {
       cancelAnimationFrame(raf);
       frame.dataset.glassFastStale = "false";
     };
-  }, [strategy, sourceBound, captureReady]);
+  }, [strategy, sourceBound]);
 
   const onDiagnosticsChange = useCallback((next: RenderingDiagnostics) => {
     setStrategy(previous => previous === next.strategy ? previous : next.strategy);
