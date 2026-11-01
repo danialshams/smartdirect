@@ -14,6 +14,9 @@ const reset = read("app/api/auth/password/reset/route.ts");
 const page = read("app/login/page.tsx");
 const schema = read("prisma/schema.prisma");
 const instagram = read("prisma/schema.prisma");
+const legalTerms = read("src/lib/legal/terms.ts");
+const termsPage=read("app/terms/page.tsx");
+const deletionRequest=read("app/api/data-deletion/request/route.ts");
 
 assert.equal(normalizePhone("۰۹۱۲ ۳۴۵ ۶۷۸۹"), "+989123456789");
 assert.equal(normalizePhone("00989123456789"), "+989123456789");
@@ -70,4 +73,11 @@ assert.ok(request.includes("providerConfigured:false") && request.includes("isSm
 assert.ok(signup.includes("bcrypt.hash(password, 12)") && signup.includes("authSignupAttempt"));
 assert.ok(reset.includes('consumeOtp(users[0].id,phone,"reset"'));
 assert.ok(!read("src/lib/sms/provider.ts").includes("console.log"), "SMS code must never be logged");
+assert.ok(ui.includes('checked={termsAccepted}') && ui.includes('screen==="signup" && !termsAccepted'),"Agreement required before signup");
+assert.ok(ui.includes('href="/terms"') && ui.includes('href="/privacy-policy"'),"Terms and privacy must be accessible from signup");
+assert.ok(signup.includes("termsAccepted !== true") && signup.includes("termsVersion !== TERMS_VERSION"),"Server must reject signup without agreement");
+assert.ok(signup.includes("termsAcceptedAt: new Date()"),"Server records agreement time");
+assert.ok(schema.includes("termsAcceptedAt") && schema.includes("termsVersion"));
+assert.ok(legalTerms.includes("2026-11-02") && termsPage.includes("بازپرداخت"));
+assert.ok(deletionRequest.includes("sameOrigin") && deletionRequest.includes("authSmsChallenge") === false);
 console.log("DAIRA AUTH STUDIO PASS: RTL design, mobile signup and recovery, password login, one-time SMS security");

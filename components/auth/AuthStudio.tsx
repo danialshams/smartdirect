@@ -6,6 +6,7 @@ import { ArrowLeft, CheckCircle2, ContactRound, Eye, EyeOff, Fingerprint, KeyRou
 import Link from "next/link";
 import { asciiDigits } from "@/lib/auth/phone";
 import { ShineBorder } from "./ShineBorder";
+import { TERMS_VERSION } from "@/lib/legal/terms";
 import "./auth-studio.css";
 
 type Screen = "login" | "signup" | "forgot" | "verify";
@@ -57,6 +58,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -136,6 +138,9 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
     setStatus({type:"success",message:"اگر شماره تأییدشده باشد، کد برای آن ارسال می‌شود."});
   };
   const registerAccount = async () => {
+    if (!termsAccepted) {
+      setStatus({type:"error",message:"برای ثبت‌نام، قوانین و مقررات را تأیید کنید."}); return;
+    }
     if (!firstName.trim() || !lastName.trim() || !phone.trim()) {
       setStatus({type:"error",message:"نام، نام خانوادگی و شماره موبایل الزامی است."}); return;
     }
@@ -146,7 +151,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
       setStatus({type:"error",message:"تکرار رمز عبور با رمز اصلی یکسان نیست."}); return;
     }
     const {status:http,data}=await postJson("/api/auth/register",{
-      firstName,lastName,phone,password,confirmPassword:confirm
+      firstName,lastName,phone,password,confirmPassword:confirm,termsAccepted,termsVersion:TERMS_VERSION
     });
     if (http >= 400 || !data.success) {
       setStatus({type:"error",message:data.message || "ثبت‌نام انجام نشد."}); return;
@@ -259,6 +264,10 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
               {screen==="signup" && <>
                 {renderPassword(password,setPassword,"رمز عبور جدید","new-password")}
                 {renderPassword(confirm,setConfirm,"تکرار رمز عبور","new-password")}
+                <label className="da-auth-terms">
+                  <input type="checkbox" checked={termsAccepted} onChange={e=>setTermsAccepted(e.target.checked)} required aria-label="تأیید مطالعه قوانین و مقررات" />
+                  <span><Link href="/terms" target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()}>قوانین و مقررات</Link> و <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()}>حریم خصوصی</Link> را مطالعه کرده‌ام و می‌پذیرم.</span>
+                </label>
               </>}
               {screen==="forgot" && <>{codeSent && <>
                 <label className="da-auth-field"><span>کد تأیید شش‌رقمی</span><span className="da-auth-input">
@@ -290,7 +299,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
               {status && <div role="alert" className={`da-auth-alert da-auth-alert--${status.type}`}>
                 {status.type==="success"?<CheckCircle2 size={17}/>:<ShieldCheck size={17}/>}<span>{status.message}</span>
               </div>}
-              <button type="submit" className="da-auth-submit" disabled={busy || (!smsEnabled && (screen==="forgot" || screen==="verify" || (screen==="login" && method==="sms")))}>
+              <button type="submit" className="da-auth-submit" disabled={busy || (screen==="signup" && !termsAccepted) || (!smsEnabled && (screen==="forgot" || screen==="verify" || (screen==="login" && method==="sms")))}>
                 <span>{busy?"در حال انجام...":screen==="signup"?"ثبت‌نام":screen==="verify"?"تأیید و ورود":
                   screen==="forgot"?(codeSent?"تغییر رمز عبور":"دریافت کد بازیابی"):
                   method==="sms"?(codeSent?"ورود با کد":"دریافت کد"):"ورود"}</span>

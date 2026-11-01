@@ -8,6 +8,7 @@ import { InstagramPreview } from "@/components/landing/InstagramPreview";
 import { featureDetails, getFeatureDetail } from "@/components/landing/feature-detail-data";
 import { showcaseScenes } from "@/components/landing/showcase-scenes";
 import "../features.css";
+import "@/app/landing-instagram.css";
 
 type Props={params:Promise<{slug:string}>};
 export function generateStaticParams(){return featureDetails.map(item=>({slug:item.id}));}

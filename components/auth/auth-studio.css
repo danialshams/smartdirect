@@ -69,3 +69,9 @@
 
 /* Prevent automatic zoom on focus in iOS Safari without affecting the desktop rhythm. */
 @media(max-width:760px){.da-auth-input input{font-size:16px}}
+
+/* Explicit agreement for new account creation, accessible and unprechecked. */
+.da-auth-terms{display:flex;gap:10px;align-items:flex-start;color:#64748b;line-height:1.95;font-size:12px;cursor:pointer}
+.da-auth-terms>input{flex:none;appearance:auto;accent-color:#326be9;width:17px;height:17px;margin-top:4px;cursor:pointer}
+.da-auth-terms a{color:#2c61d4;text-decoration:underline;text-underline-offset:3px}
+.da-auth-terms a:focus-visible{outline:2px solid #3979f2;outline-offset:2px}
