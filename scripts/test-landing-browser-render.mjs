@@ -227,38 +227,39 @@ try {
   assert.equal(roots.lens,"auto","A nested isolated lens also traps the backdrop");
   assert.ok(!roots.blueFill.includes("241, 249, 255"),"Header must not have a blue tint");
 
-  // The RTL headline animates each word's OPACITY, with the right-most
-  // Persian word first. Test by restarting the CSS animation in isolation,
-  // rather than racing with actual font loading and hydration timing.
-  await evaluate(`document.documentElement.dataset.dairaHero="done"`);
-  await sleep(80);
-  await evaluate(`document.documentElement.dataset.dairaHero="pending"`);
-  await sleep(380);
+  // The first-load headline must be an actual GSAP timeline, NOT the
+  // pre-hydration CSS keyframe which finished while remote fonts were loading.
+  await waitFor(async()=>await evaluate(
+    'document.querySelector("[data-hero-assembly]")?.dataset.gsapHero==="complete"'
+  ),7000);
   const hero=await evaluate(`(() => {
     const title=document.querySelector("[data-hero-assembly]");
     const words=[...title.querySelectorAll("[data-hero-word]")];
     const styles=words.map(word=>getComputedStyle(word));
-    return {count:words.length,text:title.textContent.replace(/\\s+/g," ").trim(),
-      animation:styles[0].animationName,
-      firstOpacity:Number(styles[0].opacity),
-      lastOpacity:Number(styles.at(-1).opacity),
-      transforms:styles.map(s=>s.transform),delays:styles.map(s=>s.animationDelay)};
+    return {
+      text:title.textContent.replace(/\\s+/g," ").trim(),
+      count:words.length,
+      state:title.dataset.gsapHero,
+      started:title.dataset.gsapHeroStarted,
+      elapsed:Number(title.dataset.gsapHeroElapsed),
+      opacities:styles.map(v=>Number(v.opacity)),
+      transforms:styles.map(v=>v.transform),
+      cssAnimations:styles.map(v=>v.animationName)
+    };
   })()`);
+  assert.equal(hero.text,"مدیریت کل پیجت رو بسپار به دایرا");
   assert.equal(hero.count,7);
-  assert.equal(hero.text,"مدیریت کل پیجت رو بسپار به دایرا",
-    "Persian words must remain in their natural RTL order with normal spaces");
-  assert.match(hero.animation,/daira-hero-rtl-fade/);
-  assert.ok(hero.firstOpacity>hero.lastOpacity,
-    "The rightmost Persian word must fade first, not the entire headline together");
-  assert.ok(hero.transforms.every(t=>t==="none"),
-    "No Persian word should scatter or slide during the soft opacity reveal");
-  assert.ok(parseFloat(hero.delays.at(-1))>parseFloat(hero.delays[0]),
-    "Each word needs a progressive RTL fade delay");
+  assert.equal(hero.state,"complete");
+  assert.ok(Number(hero.started)>0,"GSAP must actually start on first entry");
+  assert.ok(hero.elapsed>=1800 && hero.elapsed<5000,
+    "RTL GSAP stagger must run smoothly long enough to reveal words in sequence");
+  assert.ok(hero.opacities.every(v=>v===1),"Every hero word must finish fully visible");
+  assert.ok(hero.transforms.every(v=>v==="none"),"No scattered or sliding RTL words");
+  assert.ok(hero.cssAnimations.every(v=>v==="none"),
+    "Old CSS keyframes must not override the GSAP timeline");
+  assert.equal(await evaluate('document.querySelector("[data-hero-assembly]").hasAttribute("data-liquid-glass-ignore")'),false);
   const motionImage=(await send("Page.captureScreenshot",{format:"jpeg",quality:56,captureBeyondViewport:false})).data;
   console.log("DAIRA_DIAG_SCREENSHOT_HERO_MOTION="+motionImage);
-  await evaluate(`document.documentElement.dataset.dairaHero="done"`);
-  await sleep(80);
-  assert.equal(await evaluate('getComputedStyle(document.querySelector("[data-hero-word]")).opacity'),"1");
 
   // Contrast fixture under the header catches regressions where an SVG
   // backdrop-filter reports a valid URL but has no visual pixels to sample.
