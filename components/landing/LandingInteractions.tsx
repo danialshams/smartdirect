@@ -32,6 +32,13 @@ export function LandingInteractions() {
     }
 
     gsap.registerPlugin(ScrollTrigger);
+    // Production bundles omit these ablations entirely. The WebKit CI
+    // profiler builds with this flag to isolate heading vs feature cost.
+    const profile = process.env.NEXT_PUBLIC_DAIRA_PROFILE === "1"
+      ? new URLSearchParams(window.location.search).get("__daira_profile")
+      : null;
+    const skipCards = profile === "no-cards" || profile === "no-both";
+    const skipHeading = profile === "no-heading" || profile === "no-both";
     root.dataset.gsapMotion = "true";
     const cards = [...root.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card")];
     const states = new Map<HTMLElement, CardState>();
@@ -177,6 +184,11 @@ export function LandingInteractions() {
     cards.forEach((card, index) => {
       const direction = index % 2 === 0 ? 1 : -1;
       card.dataset.gsapDirection = String(direction);
+      if (skipCards) {
+        states.set(card, "done");
+        card.dataset.gsapShown = "true";
+        return;
+      }
       if (card.dataset.gsapShown === "true") {
         states.set(card, "done");
         return;
@@ -243,7 +255,7 @@ export function LandingInteractions() {
     const title = root.querySelector<HTMLElement>(".ap-motion-reveal-title");
     const titleText = title?.querySelector<HTMLElement>("span");
     let headingTrigger: ScrollTrigger | undefined;
-    if (title && titleText && title.dataset.gsapShown !== "true") {
+    if (!skipHeading && title && titleText && title.dataset.gsapShown !== "true") {
       affected.add(titleText);
       gsap.set(titleText, { yPercent: 105 });
       headingTrigger = ScrollTrigger.create({
