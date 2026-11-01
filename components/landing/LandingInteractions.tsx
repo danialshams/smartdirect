@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChevronUp } from "lucide-react";
 
 export function LandingInteractions() {
@@ -10,121 +12,90 @@ export function LandingInteractions() {
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(".ap-site");
     if (!root) return;
-    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    // Use ONE GSAP clock for the landing. The previous dynamic imports,
+    // per-frame DOM exclusion attributes, and fast-velocity early returns
+    // made content pop in, disappear from Safari snapshots or never animate.
+    gsap.registerPlugin(ScrollTrigger);
     let active = true;
-    let revert = () => {};
-    // Explicit GSAP + ScrollTrigger for EVERY feature and footer entrance.
-    // No CSS keyframes, Web Animations API or hand-rolled observer animations.
-    // Keep future content PAINTED until it actually enters the viewport: an
-    // invisible WebKit snapshot would otherwise persist under the glass.
-    void Promise.all([import("gsap"), import("gsap/ScrollTrigger")])
-      .then(([gsapModule, triggerModule]) => {
-        if (!active) return;
-        const gsap = gsapModule.gsap;
-        const ScrollTrigger = triggerModule.ScrollTrigger;
-        gsap.registerPlugin(ScrollTrigger);
-        const ua = navigator.userAgent;
-        const snapshotEngine = /Firefox\/|FxiOS\/|iPhone|iPad|iPod/.test(ua) ||
-          (/Safari\//.test(ua) && !/Chrome\/|Chromium\/|Edg\/|OPR\//.test(ua));
-        // The Safari scene MutationObserver sees changes to inline styles.
-        // Exclude only the actively tweening targets from snapshots, then
-        // restore them in one mutation after GSAP completes. This prevents
-        // 60 separate expensive html-to-image captures per second.
-        const isolate = (items: HTMLElement[]) => {
-          if (snapshotEngine) items.forEach(item => item.setAttribute("data-liquid-glass-ignore", ""));
-        };
-        const revealToCapture = (items: HTMLElement[]) => {
-          if (snapshotEngine) items.forEach(item => item.removeAttribute("data-liquid-glass-ignore"));
-        };
+    root.dataset.gsapMotion = "true";
+    const context = gsap.context(() => {
+      for (const section of root.querySelectorAll<HTMLElement>(".ap-showcase-capture")) {
+        const intro = section.querySelector<HTMLElement>(".ap-showcase__intro");
+        const cards = [...section.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card")];
+        const targets = [...(intro ? [intro] : []), ...cards];
+        if (!targets.length) continue;
+        ScrollTrigger.create({
+          trigger: section,
+          start: "top 89%",
+          once: true,
+          onEnter: () => {
+            if (!active || section.dataset.gsapShown === "true") return;
+            // Cards are already painted for the Safari scene snapshot.
+            // Animate only the 1-3 top-level groups, not dozens of children.
+            section.dataset.gsapStarted = String(performance.now());
+            gsap.fromTo(targets,
+              { autoAlpha: 0, y: 22 },
+              {
+                autoAlpha: 1, y: 0,
+                duration: 0.92, stagger: 0.10,
+                ease: "power2.out",
+                overwrite: "auto",
+                onComplete: () => {
+                  gsap.set(targets, { clearProps: "opacity,visibility,transform" });
+                  if (active) section.dataset.gsapShown = "true";
+                }
+              }
+            );
+          }
+        });
+      }
 
-        root.dataset.gsapMotion = "true";
-        const context = gsap.context(() => {
-          const sections = Array.from(root.querySelectorAll<HTMLElement>(".ap-showcase-capture"));
-          const footer = root.querySelector<HTMLElement>(".ap-footer--extended");
-          for (const section of sections) {
-            const targets = Array.from(section.querySelectorAll<HTMLElement>(
-              ".ap-showcase__intro > .ap-showcase__eyebrow, .ap-showcase__intro > h2, .ap-showcase__intro > p, .ap-social-grid > .ap-social-card"
-            ));
-            if (!targets.length) continue;
-            ScrollTrigger.create({
-              trigger: section,
-              start: "top 85%",
-              once: true,
-              onEnter: self => {
-                if (!active) return;
-                // A fast multi-screen flick needs visible content immediately,
-                // not a late animation of a section already behind the user.
-                const fast = Math.abs(self.getVelocity()) > 2700 ||
-                  section.getBoundingClientRect().bottom < 80;
-                if (fast) {
-                  section.dataset.gsapShown = "true";
-                  return;
+      const footer = root.querySelector<HTMLElement>(".ap-footer--extended");
+      if (footer) {
+        const targets = [...footer.querySelectorAll<HTMLElement>(
+          ".ap-footer__brand, .ap-footer__links > a, .ap-footer__trust > div, .ap-footer__bottom > span"
+        )];
+        ScrollTrigger.create({
+          trigger: footer,
+          start: "top 88%",
+          once: true,
+          onEnter: () => {
+            if (!active || footer.dataset.gsapShown === "true") return;
+            footer.dataset.gsapStarted = String(performance.now());
+            gsap.fromTo(targets,
+              { autoAlpha: 0, y: 16 },
+              {
+                autoAlpha: 1, y: 0,
+                duration: 0.78,
+                stagger: 0.055,
+                ease: "power2.out",
+                overwrite: "auto",
+                onComplete: () => {
+                  gsap.set(targets, { clearProps: "opacity,visibility,transform" });
+                  if (active) footer.dataset.gsapShown = "true";
                 }
-                section.dataset.gsapStarted = String(performance.now());
-                isolate(targets);
-                gsap.fromTo(targets,
-                  { autoAlpha: 0, y: 23 },
-                  {
-                    autoAlpha: 1, y: 0,
-                    duration: 1.12,
-                    stagger: 0.11,
-                    ease: "power3.out",
-                    overwrite: "auto",
-                    clearProps: "opacity,visibility,transform",
-                    onComplete: () => { revealToCapture(targets); if (active) section.dataset.gsapShown = "true"; }
-                  }
-                );
               }
-            });
+            );
           }
-          if (footer) {
-            const items = Array.from(footer.querySelectorAll<HTMLElement>(
-              ".ap-footer__brand, .ap-footer__links > a, .ap-footer__trust > div, .ap-footer__bottom > span"
-            ));
-            ScrollTrigger.create({
-              trigger: footer,
-              start: "top 87%",
-              once: true,
-              onEnter: self => {
-                if (!active) return;
-                if (Math.abs(self.getVelocity()) > 2700) {
-                  footer.dataset.gsapShown = "true";
-                  return;
-                }
-                footer.dataset.gsapStarted = String(performance.now());
-                isolate(items);
-                gsap.fromTo(items,
-                  { autoAlpha: 0, y: 19 },
-                  {
-                    autoAlpha: 1, y: 0,
-                    duration: 1.02,
-                    stagger: 0.075,
-                    ease: "power3.out",
-                    overwrite: "auto",
-                    clearProps: "opacity,visibility,transform",
-                    onComplete: () => { revealToCapture(items); if (active) footer.dataset.gsapShown = "true"; }
-                  }
-                );
-              }
-            });
-          }
-        }, root);
-        revert = () => { context.revert(); delete root.dataset.gsapMotion; };
-        // Recalculate just once after any late font swap, not synchronously
-        // while the first hero frame and the WebKit capture boot are painting.
-        void document.fonts.ready.then(() => {
-          if (active) requestAnimationFrame(() => { if (active) ScrollTrigger.refresh(); });
-        }).catch(() => {});
-      }).catch(() => {
-        // JS chunk failure must never leave any content hidden.
-        delete root.dataset.gsapMotion;
+        });
+      }
+    }, root);
+
+    // Only refresh after a real font-layout change; do not block the hero or
+    // repeatedly refresh a complex scene while Safari's captures are busy.
+    let canceled = false;
+    void document.fonts.ready.then(() => {
+      if (active && !canceled) requestAnimationFrame(() => {
+        if (active && !canceled) ScrollTrigger.refresh();
       });
-
+    }).catch(() => {});
     return () => {
       active = false;
-      revert();
+      canceled = true;
+      context.revert();
+      delete root.dataset.gsapMotion;
     };
   }, []);
 
