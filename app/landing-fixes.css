@@ -32,31 +32,21 @@
   stroke: #fff !important;
 }
 
-/* Word-by-word RTL opacity reveal starts with the SSR first paint,
-   independent of React hydration and external JS. Keep final inline text
-   layout so Persian words never scatter, flip or jump between lines. */
+/* The initial HTML guard hides words until hydrated GSAP controls them.
+   Don't reintroduce CSS keyframes: they fight GSAP's inline styles in Safari.
+   All word boxes are laid out in their final RTL positions from first paint. */
 .ap-site .ap-hero__word,
 html[data-daira-hero] .ap-site .ap-hero__word {
   display:inline-block;
   white-space:normal;
   unicode-bidi:isolate;
   transform:none!important;
+  animation:none!important;
   transition:none!important;
   will-change:auto!important;
 }
-html[data-daira-hero="pending"] .ap-site .ap-hero__word {
-  animation:daira-hero-rtl-fade 1.18s cubic-bezier(.2,.67,.23,1) both!important;
-  animation-delay:var(--hero-delay,0ms)!important;
-}
-html[data-daira-hero="done"] .ap-site .ap-hero__word {
-  animation:none!important;
-  opacity:1!important;
-  transform:none!important;
-}
-@keyframes daira-hero-rtl-fade {
-  from {opacity:0;}
-  to {opacity:1;}
-}
+html[data-daira-hero="pending"] .ap-site .ap-hero__word {opacity:0;}
+html[data-daira-hero="done"] .ap-site .ap-hero__word {opacity:1!important;}
 @media(prefers-reduced-motion:reduce) {
   html[data-daira-hero] .ap-site .ap-hero__word {
     opacity:1!important;
@@ -64,6 +54,11 @@ html[data-daira-hero="done"] .ap-site .ap-hero__word {
   }
 }
 
+/* ScrollTrigger manages appearance. Legacy nested data-reveal transitions and
+   the former Safari blanket opacity:1!important rule blocked real GSAP. */
+.ap-site[data-gsap-motion="true"] .ap-social-showcase [data-reveal] {
+  transition:none!important;
+}
 /* One neutral, geometry-only shell. The lens's real displacement and caustic
    shader remain unmodified, but the library's separate inset WHITE box-shadow
    and gradient rim no longer paint an acrylic ring at the edges. */
@@ -121,17 +116,8 @@ html[data-daira-hero="done"] .ap-site .ap-hero__word {
   .ap-site .daira-library-glass-live-fallback {transition:none;}
 }
 
-/* In WebKit the HTML scene is a set of cached tiles, not a video of the DOM.
-   Many IntersectionObserver reveal mutations would invalidate those tiles
-   DURING scrolling and leave blank white pixels until capture finishes.
-   Keep all reveal content painted immediately on this WebGL-only path. */
-.ap-site[data-scene-capture-stable="true"] [data-reveal] {
-  opacity:1!important;
-  transform:none!important;
-  transition:none!important;
-  will-change:auto!important;
-}
-
+/* Safari captures real HTML tiles for WebGL. Avoid CSS display/opacity
+   overrides on animated elements: they used to silently cancel GSAP. */
 /* Keep the blue button translucent but eliminate the old CSS glow around it. */
 .ap-site .ap-backtop,
 .ap-site .ap-backtop__action,
