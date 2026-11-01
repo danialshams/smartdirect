@@ -4,6 +4,7 @@
  */
 import { webkit } from "playwright";
 import { spawn } from "node:child_process";
+import { mkdir, writeFile } from "node:fs/promises";
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const app = spawn("./node_modules/.bin/next", ["start", "-p", "3198"], {
@@ -19,6 +20,7 @@ try {
     await sleep(250);
   }
   if (!ready) throw Error("Next.js local server not ready");
+  await mkdir("artifacts/landing-webkit", { recursive: true });
   browser = await webkit.launch({ headless: true });
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -53,7 +55,13 @@ try {
       pageSections:liveSections.length,reflectionSections:reflectionSections.length,
       sameTop:liveSections.every((el,i)=>Math.abs(el.getBoundingClientRect().top-reflectionSections[i].getBoundingClientRect().top)<3),
       sameHeight:liveSections.every((el,i)=>Math.abs(el.getBoundingClientRect().height-reflectionSections[i].getBoundingClientRect().height)<3),
-      reflectionPreviews:source.querySelectorAll(".daira-glass-preview-facade").length,
+      reflectionPreviews:source.querySelectorAll(".ap-social-card__visual").length,
+      samePreviewContent:[...source.querySelectorAll(".ap-social-card__visual")].every((el,i) => {
+        const original=page.querySelectorAll(".ap-social-card__visual")[i];
+        return original && el.textContent===original.textContent &&
+          el.querySelectorAll("svg").length===original.querySelectorAll("svg").length &&
+          el.querySelectorAll("img").length===original.querySelectorAll("img").length;
+      }),
       originalPreviews:page.querySelectorAll(".ap-social-card__visual").length,
       sourceInert:source.inert && source.getAttribute("aria-hidden")==="true",
       noDuplicateIds:!source.querySelector("[id]"),
@@ -63,7 +71,8 @@ try {
   });
   console.log("WEBKIT_STATIC_REFLECTION="+JSON.stringify(mirror));
   if(mirror.pageSections<9 || mirror.pageSections!==mirror.reflectionSections || !mirror.sameTop ||
-    !mirror.sameHeight || mirror.reflectionPreviews!==mirror.originalPreviews || !mirror.sourceInert || !mirror.noDuplicateIds || !mirror.noHiddenHero || !mirror.sourceRootIsSeparate) {
+    !mirror.sameHeight || mirror.reflectionPreviews!==mirror.originalPreviews || !mirror.samePreviewContent ||
+    !mirror.sourceInert || !mirror.noDuplicateIds || !mirror.noHiddenHero || !mirror.sourceRootIsSeparate) {
     throw Error("Independent mirror must be visually aligned, static and inaccessible");
   }
 
@@ -103,7 +112,9 @@ try {
   console.log("WEBKIT_SCROLL_FRAMES="+JSON.stringify(frames));
   const times=frames.map(f=>f.frameMs).filter(ms=>ms>0).sort((a,b)=>a-b);
   const quantile=q=>Math.round((times[Math.min(times.length-1,Math.floor(q*(times.length-1)))]??0)*10)/10;
-  console.log("WEBKIT_FRAME_TIMING="+JSON.stringify({p50:quantile(.50),p95:quantile(.95),max:quantile(1),sampleCount:times.length}));
+  const frameTiming={p50:quantile(.50),p95:quantile(.95),max:quantile(1),sampleCount:times.length};
+  console.log("WEBKIT_FRAME_TIMING="+JSON.stringify(frameTiming));
+  await writeFile("artifacts/landing-webkit/frame-timing.json",JSON.stringify(frameTiming,null,2));
 
   // A real WebKit regression: do not generate new HTML snapshots merely
   // because the user scrolled across static page sections. The official
@@ -138,7 +149,7 @@ try {
   }
   if (settled.captures < 2) throw Error("No real scene tiles captured during scroll");
   const featureScreenshot=await page.screenshot({type:"jpeg",quality:63});
-  console.log("WEBKIT_GLASS_FEATURE_IMAGE="+featureScreenshot.toString("base64"));
+  await writeFile("artifacts/landing-webkit/feature-with-real-glass.jpg",featureScreenshot);
 
   // Revisiting a previously captured region must preserve optical rendering
   // without replacing the GPU canvas with the old 5px frosted material.
@@ -162,7 +173,7 @@ try {
   }
 
   const snapshot = await page.screenshot({type:"jpeg",quality:54});
-  console.log("WEBKIT_SCROLL_IMAGE="+snapshot.toString("base64"));
+  await writeFile("artifacts/landing-webkit/hero-with-real-glass.jpg",snapshot);
   const stable = first.stable === "true";
   if (!stable) throw Error("Safari screenshot-reveal animation suppression not engaged");
   if (first.edge !== "none") throw Error("Separate white border is still visible");
@@ -261,7 +272,8 @@ try {
     await item.scrollIntoViewIfNeeded();
     await page.waitForTimeout(1050);
     const bytes=await item.screenshot({type:'jpeg',quality:82,scale:'css',timeout:20000});
-    console.log('DAIRA_REFLECTION_ASSET_390_'+i+'='+bytes.toString('base64'));
+    await writeFile(`artifacts/landing-webkit/source-mobile-${i}.jpg`,bytes);
+    console.log('DAIRA_REFLECTION_ASSET_390_'+i+'=saved');
   }
 
   // Desktop Safari uses the same SVG/WebGL material but a different
@@ -273,7 +285,8 @@ try {
     await item.scrollIntoViewIfNeeded();
     await page.waitForTimeout(1050);
     const bytes=await item.screenshot({type:'jpeg',quality:82,scale:'css',timeout:25000});
-    console.log('DAIRA_REFLECTION_ASSET_1280_'+i+'='+bytes.toString('base64'));
+    await writeFile(`artifacts/landing-webkit/source-desktop-${i}.jpg`,bytes);
+    console.log('DAIRA_REFLECTION_ASSET_1280_'+i+'=saved');
   }
 
 } catch (error) {
