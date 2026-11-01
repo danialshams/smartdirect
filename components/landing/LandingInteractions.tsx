@@ -81,7 +81,19 @@ export function LandingInteractions() {
       if (idleTimer !== undefined) clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
         idleTimer = undefined;
-        requestAnimationFrame(flushDeferred);
+        // A WebKit long frame can outlive an idle timer even while a flick is
+        // still in progress. Require two successive stable paint opportunities
+        // before beginning any GSAP timeline. Otherwise the next scroll frame
+        // collides with the first expensive feature compositor allocation.
+        const y = window.scrollY;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (disposed || !deferred.size) return;
+          if (Math.abs(window.scrollY - y) > 1) {
+            scheduleIdle();
+            return;
+          }
+          flushDeferred();
+        }));
       }, 165);
     };
 
