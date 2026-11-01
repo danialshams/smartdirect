@@ -64,3 +64,6 @@
 .da-auth-submit>span,.da-auth-submit>svg{position:relative;z-index:1}
 .da-auth button:focus-visible,.da-auth-home:focus-visible{outline:2px solid #3979f2;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.da-auth-shine-border{animation:none}}
+
+/* Prevent automatic zoom on focus in iOS Safari without affecting the desktop rhythm. */
+@media(max-width:760px){.da-auth-input input{font-size:16px}}
