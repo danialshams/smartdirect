@@ -104,15 +104,15 @@ export function LandingInteractions() {
           }
           flushDeferred();
         }));
-      }, performance.now() < rapidJumpUntil ? 430 : 165);
+      }, performance.now() < rapidJumpUntil ? 430 : 85);
     };
 
     const cardObserver = new IntersectionObserver(entries => {
       for (const entry of entries) {
-        if (!entry.isIntersecting || entry.intersectionRatio < .24) continue;
+        if (!entry.isIntersecting || entry.intersectionRatio < .08) continue;
         startCard(entry.target as HTMLElement);
       }
-    }, { rootMargin: "0px 0px -27% 0px", threshold: [.24] });
+    }, { rootMargin: "0px 0px 42% 0px", threshold: [0, .08] });
 
     // WebKit may miss an observer after an instantaneous jump or resize.
     // Its fallback must NOT measure all pending card boxes on every scroll
@@ -124,9 +124,10 @@ export function LandingInteractions() {
       if (disposed) return;
       for (const card of pending) {
         const rect = card.getBoundingClientRect();
-        const visible = Math.max(0, Math.min(rect.bottom, innerHeight * .73) - Math.max(rect.top, 0));
-        if (rect.top <= innerHeight * .73 && rect.bottom > 0 &&
-            visible >= Math.min(rect.height, innerHeight * .73) * .24) startCard(card);
+        const leadEnd = innerHeight * 1.42;
+        const visible = Math.max(0, Math.min(rect.bottom, leadEnd) - Math.max(rect.top, 0));
+        if (rect.top <= leadEnd && rect.bottom > 0 &&
+            visible >= Math.min(rect.height, leadEnd) * .08) startCard(card);
       }
     };
     const scheduleProbe = () => {
@@ -152,7 +153,7 @@ export function LandingInteractions() {
       trailingProbeTimer = setTimeout(() => {
         trailingProbeTimer = undefined;
         scheduleProbe();
-      }, 145);
+      }, 95);
     };
     const onResize = () => {
       if (mobileWebKit && deferred.size) scheduleIdle();
@@ -209,17 +210,17 @@ export function LandingInteractions() {
         // Card content remains invisible until the background settles.
         timeline.to(card, {
           x: 0, opacity: 1, force3D: false,
-          duration: .7, ease: "power3.out"
+          duration: .42, ease: "power3.out"
         }, 0);
         // Opposing copy motion, with separate sequential text reveals.
         if (copyContainer) timeline.to(copyContainer, {
-          x: 0, force3D: false, duration: .56
-        }, .59);
+          x: 0, force3D: false, duration: .4
+        }, .26);
         copyParts.forEach((part, i) => timeline.to(part, {
-          opacity: 1, duration: .32
-        }, .64 + i * .16));
+          opacity: 1, duration: .22
+        }, .32 + i * .085));
         if (preview) {
-          const previewAt = .74 + copyParts.length * .16;
+          const previewAt = .43 + copyParts.length * .085;
           const mobileLayers = innerWidth <= 640;
           timeline.set(preview, { visibility: "visible" }, previewAt);
           // On narrow mobile WebKit, painting a moving illustrated phone
@@ -227,7 +228,7 @@ export function LandingInteractions() {
           // copy still slides from the opposite side; the phone builds in
           // place with separate, genuinely sequential GSAP row fades.
           timeline.to(preview, {
-            x: 0, opacity: 1, force3D: false, duration: .46
+            x: 0, opacity: 1, force3D: false, duration: .32
           }, previewAt);
           timeline.set(visualParts, {
             ...(mobileLayers ? {} : { x: -12 * direction, force3D: false }),
@@ -235,12 +236,15 @@ export function LandingInteractions() {
           }, previewAt - .12);
           visualParts.forEach((part, i) => timeline.to(part, {
             ...(mobileLayers ? {} : { x: 0, force3D: false }),
-            opacity: 1, duration: .25, ease: "power2.out"
-          }, previewAt + .27 + i * .13));
+            opacity: 1, duration: .17, ease: "power2.out"
+          }, previewAt + .12 + i * .065));
         }
       };
 
-      if (mobileWebKit) {
+      // For normal scroll, the feature can assemble while still below the
+      // viewport. Defer only during a large WebKit flick so the optical GPU
+      // renderer gets priority when many scene tiles jump simultaneously.
+      if (mobileWebKit && performance.now() < rapidJumpUntil) {
         deferred.set(card, build);
         scheduleIdle();
         return;
@@ -249,7 +253,7 @@ export function LandingInteractions() {
       const secondInRow = innerWidth > 600 &&
         Array.from(card.parentElement?.children ?? []).indexOf(card) > 0;
       if (secondInRow) {
-        const delayed = gsap.delayedCall(.82, () => {
+        const delayed = gsap.delayedCall(.24, () => {
           delays.delete(delayed);
           build();
         });
