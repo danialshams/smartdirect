@@ -19,6 +19,7 @@ export function HeroAssembly() {
     const finish = () => {
       html.dataset.dairaHero = "done";
       title.dataset.gsapHero = "complete";
+      if (title.dataset.gsapHeroStarted) title.dataset.gsapHeroElapsed = String(Math.round(performance.now() - Number(title.dataset.gsapHeroStarted)));
       title.removeAttribute("data-liquid-glass-ignore");
     };
 
@@ -42,6 +43,7 @@ export function HeroAssembly() {
         // right-most Persian word; opacity stagger gives the requested motion.
         gsap.set(words, { opacity: 0 });
         title.dataset.gsapHero = "playing";
+        title.dataset.gsapHeroStarted = String(performance.now());
         html.dataset.dairaHero = "playing";
         gsap.timeline({ onComplete: finish })
           .to(words, {
