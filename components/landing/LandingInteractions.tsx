@@ -56,7 +56,9 @@ export function LandingInteractions() {
         // Don't blank content already seen while JS is loading, or content
         // above the viewport reached via a quick scroll before hydration.
         if (rect.top > window.innerHeight + 80) {
-          gsap.set(node, { autoAlpha: 0, y: 26 });
+          // Keep the static layout PAINTED for the WebKit scene pre-capture.
+          // Hiding every upcoming row at load previously cached invisible
+          // snapshots and made the lens appear white on a fast flick.
           hidden.add(node);
         }
       }
@@ -64,7 +66,7 @@ export function LandingInteractions() {
         if (!hidden.delete(node)) return;
         observer?.unobserve(node);
         if (performance.now() < fastUntil) {
-          gsap.set(node, { clearProps: "opacity,visibility,transform" });
+          // Already-visible static content is preferable to a stale snapshot.
           node.dataset.gsapShown = "true";
           return;
         }
@@ -92,7 +94,10 @@ export function LandingInteractions() {
             animation.cancel();
           }).catch(() => {});
         } else {
-          gsap.to(node, {
+          gsap.fromTo(node, {
+            autoAlpha: 0,
+            y: 26
+          }, {
             autoAlpha: 1,
             y: 0,
             duration: 0.95,
