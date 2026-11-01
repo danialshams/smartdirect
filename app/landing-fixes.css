@@ -271,3 +271,12 @@ body > .daira-static-reflection > .daira-optical-tile > img {
   .ap-site .ap-motion-reveal-title>span{transform:none!important}
   .ap-site .ap-hero__cta::before{animation:none!important}
 }
+
+/* Initial HTML uses the same hidden baseline as the GSAP hero timeline.
+   This prevents the subtitle and CTA from flashing before hydration. */
+html[data-daira-hero="pending"] .ap-site .ap-hero__description,
+html[data-daira-hero="pending"] .ap-site .ap-hero__actions{opacity:0}
+@media(prefers-reduced-motion:reduce){
+  html[data-daira-hero="pending"] .ap-site .ap-hero__description,
+  html[data-daira-hero="pending"] .ap-site .ap-hero__actions{opacity:1}
+}
