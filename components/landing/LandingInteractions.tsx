@@ -21,7 +21,9 @@ export function LandingInteractions() {
     const context = gsap.context(() => {
       const reveal = (target: Element, options?: {start?: string; y?: number; duration?: number; delay?: number}) => {
         const node = target as HTMLElement;
-        gsap.set(node, {autoAlpha:0,y:options?.y ?? 16});
+        // Do not allocate transformed GPU layers for every offscreen card.
+        // Apply translateY only when that individual card enters the viewport.
+        gsap.set(node, {autoAlpha:0});
         const trigger = ScrollTrigger.create({
           trigger: node,
           start: options?.start ?? "top 83%",
