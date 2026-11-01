@@ -22,11 +22,12 @@ export async function POST(request: NextRequest) {
     // than an in-memory counter that resets on each serverless instance.
     const ipHash = hashRequestIp(clientIp(request));
     const since = new Date(Date.now() - 3600000);
-    const attempts = await prisma.authSmsChallenge.count({
+    const attempts = await prisma.authSignupAttempt.count({
       where: { ipHash, createdAt: { gt: since } }
     });
-    if (attempts > 24) return NextResponse.json({message:"تعداد درخواست‌ها زیاد است. بعداً تلاش کنید."},
+    if (attempts >= 8) return NextResponse.json({message:"تعداد درخواست‌ها زیاد است. بعداً تلاش کنید."},
       {status:429,headers:privateHeaders});
+    await prisma.authSignupAttempt.create({data:{ipHash}});
     const existing = await prisma.user.findFirst({ where: { phone }, select: { id: true } });
     if (existing) return NextResponse.json({message:"برای این شماره حسابی وجود دارد. وارد حساب شوید."},
       {status:409,headers:privateHeaders});
