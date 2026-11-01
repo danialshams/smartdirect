@@ -112,7 +112,7 @@ export function LandingInteractions() {
           // Hide preview internals only right before the preview itself enters.
           // This avoids allocating many nested compositing layers at the
           // precise scroll frame that first activates the card.
-          timeline.set(visualParts, { opacity: 0 }, previewAt - .12);
+          timeline.set(visualParts, { x: -12 * direction, opacity: 0 }, previewAt - .12);
           visualParts.forEach((part, i) => timeline.to(part, {
             x: 0, opacity: 1, duration: .28, ease: "power2.out"
           }, previewAt + .35 + i * .16));
