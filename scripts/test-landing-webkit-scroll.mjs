@@ -160,6 +160,25 @@ try {
       bound:document.querySelector(".daira-library-glass-frame")?.dataset.opticalSourceBound,
       captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0),
       gsapShown:document.querySelectorAll("[data-gsap-shown='true']").length,
+      // Capture cadence is NOT a proxy for freshness. Fingerprint the actual
+      // 2D backdrop source consumed by native WebGL at each jump.
+      backdrop: (() => {
+        const canvas=document.querySelector("canvas[data-liquid-glass-backdrop]");
+        if (!canvas || !canvas.width || !canvas.height) return null;
+        try {
+          const ctx=canvas.getContext("2d");
+          const row=Math.max(0,Math.floor(canvas.height/2)-30);
+          const pixels=ctx.getImageData(0,row,canvas.width,Math.min(60,canvas.height-row)).data;
+          let hash=2166136261;
+          const step=Math.max(4,Math.floor(pixels.length/2400/4)*4);
+          for(let i=0;i<pixels.length;i+=step) {
+            hash=Math.imul(hash ^ pixels[i],16777619);
+            hash=Math.imul(hash ^ pixels[i+1],16777619);
+            hash=Math.imul(hash ^ pixels[i+2],16777619);
+          }
+          return hash>>>0;
+        } catch { return "unreadable"; }
+      })(),
     })));
   }
   console.log("WEBKIT_FAST_JUMPS="+JSON.stringify(jumps));
