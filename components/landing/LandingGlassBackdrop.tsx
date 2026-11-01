@@ -95,6 +95,7 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
     let controller: Capture | undefined;
     let source: HTMLElement | undefined;
     let geometryObserver: ResizeObserver | undefined;
+    let updateImagesForViewport: (() => void) | undefined;
     try {
       source = createStaticReflection(page);
       // Capture only the static, inert optical source. No animation, React
@@ -109,7 +110,7 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
         child.matches("main, .ap-showcase-capture, footer.ap-footer--extended")) as HTMLElement[];
       const reflectionSections = Array.from(source.children).filter(child =>
         child.matches("main, .ap-showcase-capture, footer.ap-footer--extended")) as HTMLElement[];
-      const updateImagesForViewport = () => {
+      updateImagesForViewport = () => {
         const variant = window.matchMedia("(max-width: 700px)").matches ? "mobile" : "desktop";
         reflectionSections.forEach((tile, index) => {
           const image = tile.querySelector("img");
@@ -151,7 +152,7 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
       setCapture(null);
-      window.removeEventListener("resize", updateImagesForViewport);
+      if (updateImagesForViewport) window.removeEventListener("resize", updateImagesForViewport);
       geometryObserver?.disconnect();
       controller?.destroy();
       source?.remove();
