@@ -154,14 +154,7 @@ export async function GET(request: NextRequest) {
     const messageId = request.nextUrl.searchParams.get("messageId");
     const rawUrl = request.nextUrl.searchParams.get("url");
 
-    // Debug logs intentionally omitted: request URLs and participant IDs may be private.
-      void ({
-      debugId,
-      accountId,
-      participantId,
-      hasRawUrl: Boolean(rawUrl),
-      range: request.headers.get("range"),
-    });
+    // Private media request details intentionally not logged.
 
     let targetUrl: URL;
     let mediaAccessToken: string | null = null;
@@ -240,13 +233,7 @@ export async function GET(request: NextRequest) {
         upstreamHeaders.Range = range;
       }
 
-      void ({
-        debugId,
-        targetHost: targetUrl.hostname,
-        targetPath: targetUrl.pathname,
-        hasAuth: Boolean(mediaAccessToken),
-        range: range || null,
-      });
+      // Private media request details intentionally not logged.
 
       const response = await fetchAllowedMedia(targetUrl, {
         method: "GET",
@@ -255,15 +242,7 @@ export async function GET(request: NextRequest) {
         headers: upstreamHeaders,
       });
 
-      void ({
-        debugId,
-        status: response.status,
-        ok: response.ok,
-        contentType: response.headers.get("content-type"),
-        contentLength: response.headers.get("content-length"),
-        contentRange: response.headers.get("content-range"),
-        acceptRanges: response.headers.get("accept-ranges"),
-      });
+      // Private media request details intentionally not logged.
 
       if (!response.ok || !response.body) {
         const responseBody = await response.text().catch(() => "");
