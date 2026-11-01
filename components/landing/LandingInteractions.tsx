@@ -245,7 +245,7 @@ export function LandingInteractions() {
         timeline.to(parts, {
           opacity: 1, duration: .42, stagger: .14, ease: "power2.out"
         });
-      }, { rootMargin: "0px 0px -9% 0px", threshold: 0 });
+      }, { rootMargin: select === ":scope > span" ? "0px" : "0px 0px -9% 0px", threshold: 0 });
       footerObservers.add(observer);
       observer.observe(node);
     }
