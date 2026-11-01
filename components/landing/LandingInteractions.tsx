@@ -251,27 +251,53 @@ export function LandingInteractions() {
     addEventListener("resize", onResize, { passive: true });
     requestAnimationFrame(probe);
 
-    // Only the feature section headline gets the upward clipped text effect.
+    // The large masked heading caused >1s WebKit compositor stalls exactly
+    // at the hero/features boundary. Preserve the editorial upward mask on
+    // Chromium; on Safari use a small one-shot alpha reveal via native IO.
+    // This leaves original WebGL/SVG liquid optics and feature cards untouched.
+    const ua = navigator.userAgent;
+    const safariWebKit = /AppleWebKit/.test(ua) &&
+      (/iPhone|iPad|iPod/.test(ua) || (/Safari\\//.test(ua) && !/Chrome\\/|Chromium\\/|Edg\\/|OPR\\//.test(ua)));
     const title = root.querySelector<HTMLElement>(".ap-motion-reveal-title");
     const titleText = title?.querySelector<HTMLElement>("span");
     let headingTrigger: ScrollTrigger | undefined;
+    let headingObserver: IntersectionObserver | undefined;
     if (!skipHeading && title && titleText && title.dataset.gsapShown !== "true") {
       affected.add(titleText);
-      gsap.set(titleText, { yPercent: 105 });
-      headingTrigger = ScrollTrigger.create({
-        trigger: title, start: "top 75%", once: true,
-        onEnter: () => {
-          const tween = gsap.fromTo(titleText, { yPercent: 105 }, {
-            yPercent: 0, duration: .85, ease: "power3.out",
+      if (safariWebKit) {
+        headingObserver = new IntersectionObserver(entries => {
+          if (disposed || !entries.some(entry => entry.isIntersecting) ||
+              title.dataset.gsapStarted) return;
+          headingObserver?.disconnect();
+          title.dataset.gsapStarted = String(performance.now());
+          const tween = gsap.fromTo(titleText, { opacity: .58 }, {
+            opacity: 1, duration: .57, ease: "sine.out",
             onComplete: () => {
               title.dataset.gsapShown = "true";
-              gsap.set(titleText, { clearProps: "transform" });
+              gsap.set(titleText, { clearProps: "opacity" });
               running.delete(tween);
             }
           });
           running.add(tween);
-        }
-      });
+        }, { rootMargin: "0px 0px -25% 0px", threshold: 0 });
+        headingObserver.observe(title);
+      } else {
+        gsap.set(titleText, { yPercent: 105 });
+        headingTrigger = ScrollTrigger.create({
+          trigger: title, start: "top 75%", once: true,
+          onEnter: () => {
+            const tween = gsap.fromTo(titleText, { yPercent: 105 }, {
+              yPercent: 0, duration: .85, ease: "power3.out",
+              onComplete: () => {
+                title.dataset.gsapShown = "true";
+                gsap.set(titleText, { clearProps: "transform" });
+                running.delete(tween);
+              }
+            });
+            running.add(tween);
+          }
+        });
+      }
     }
 
     // Footer: each text/link/license badge is its own ordered GSAP stage.
@@ -320,7 +346,7 @@ export function LandingInteractions() {
     let canceled = false;
     void document.fonts.ready.then(() => {
       if (!canceled) requestAnimationFrame(() => {
-        if (!canceled) ScrollTrigger.refresh();
+        if (!canceled && !safariWebKit) ScrollTrigger.refresh();
       });
     }).catch(() => {});
 
@@ -334,6 +360,7 @@ export function LandingInteractions() {
       cardObserver.disconnect();
       footerObservers.forEach(observer => observer.disconnect());
       headingTrigger?.kill();
+      headingObserver?.disconnect();
       delays.forEach(tween => tween.kill());
       running.forEach(animation => animation.kill());
       for (const node of affected) gsap.set(node, {
