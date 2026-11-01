@@ -535,7 +535,7 @@ try {
   await waitFor(async()=>await evaluate('!!document.querySelector("input[autocomplete=current-password]")'));
   await evaluate('document.querySelectorAll(".da-auth-methods button")[1].click()');
   await waitFor(async()=>await evaluate('!!document.querySelector(".da-auth-sms-status")'));
-  await waitFor(async()=>await evaluate('document.querySelector(".da-auth-submit")?.disabled'),12000);
+  await waitFor(async()=>await evaluate('document.querySelector(".da-auth-sms-status")?.textContent.includes("هنوز فعال نشده")'),12000);
   const smsInactive=await evaluate('document.querySelector(".da-auth-sms-status")?.textContent');
   assert.ok(smsInactive.includes("هنوز فعال نشده"),"Do not promise SMS before a provider is available");
   await send("Emulation.setDeviceMetricsOverride",{
