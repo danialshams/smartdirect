@@ -26,6 +26,20 @@ export function LandingInteractions() {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced || !("IntersectionObserver" in window)) return;
     let active = true;
+    // A multi-viewport flick must never spend a full second animating cards
+    // that have already passed the header. Only normal-speed entrances animate.
+    let previousY = window.scrollY;
+    let previousTime = performance.now();
+    let fastUntil = 0;
+    const onMotionScroll = () => {
+      const now = performance.now(), y = window.scrollY;
+      const distance = Math.abs(y - previousY);
+      if (distance > 320 || distance / Math.max(12, now - previousTime) > 4.5) {
+        fastUntil = now + 260;
+      }
+      previousY = y; previousTime = now;
+    };
+    window.addEventListener("scroll", onMotionScroll, { passive: true });
     let observer: IntersectionObserver | undefined;
     const nodes = Array.from(root.querySelectorAll<HTMLElement>(
       ".ap-showcase-capture > .ap-showcase__inner, .ap-footer--extended > .ap-footer__hero"
@@ -47,6 +61,11 @@ export function LandingInteractions() {
       const show = (node: HTMLElement) => {
         if (!hidden.delete(node)) return;
         observer?.unobserve(node);
+        if (performance.now() < fastUntil) {
+          gsap.set(node, { clearProps: "opacity,visibility,transform" });
+          node.dataset.gsapShown = "true";
+          return;
+        }
         const finish = () => {
           if (!active) return;
           node.dataset.gsapShown = "true";
@@ -103,6 +122,7 @@ export function LandingInteractions() {
     });
     return () => {
       active = false;
+      window.removeEventListener("scroll", onMotionScroll);
       cancel();
     };
   }, []);
