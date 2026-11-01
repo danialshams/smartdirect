@@ -251,10 +251,11 @@ export function LandingInteractions() {
     addEventListener("resize", onResize, { passive: true });
     requestAnimationFrame(probe);
 
-    // The large masked heading caused >1s WebKit compositor stalls exactly
-    // at the hero/features boundary. Preserve the editorial upward mask on
-    // Chromium; on Safari use a small one-shot alpha reveal via native IO.
-    // This leaves original WebGL/SVG liquid optics and feature cards untouched.
+    // Real WebKit benchmarks show that even a small opacity tween on this
+    // large Persian heading can stall the first GPU scroll frame for >1s.
+    // Keep the text immediately legible on Safari; the original clipped
+    // GSAP heading remains on Chromium. Other GSAP card/footer entrances
+    // and the real liquid-glass shader are entirely unchanged.
     const ua = navigator.userAgent;
     const safariWebKit = ua.includes("AppleWebKit") &&
       (/iPhone|iPad|iPod/.test(ua) ||
@@ -262,43 +263,24 @@ export function LandingInteractions() {
     const title = root.querySelector<HTMLElement>(".ap-motion-reveal-title");
     const titleText = title?.querySelector<HTMLElement>("span");
     let headingTrigger: ScrollTrigger | undefined;
-    let headingObserver: IntersectionObserver | undefined;
-    if (!skipHeading && title && titleText && title.dataset.gsapShown !== "true") {
+    if (!skipHeading && !safariWebKit &&
+        title && titleText && title.dataset.gsapShown !== "true") {
       affected.add(titleText);
-      if (safariWebKit) {
-        headingObserver = new IntersectionObserver(entries => {
-          if (disposed || !entries.some(entry => entry.isIntersecting) ||
-              title.dataset.gsapStarted) return;
-          headingObserver?.disconnect();
-          title.dataset.gsapStarted = String(performance.now());
-          const tween = gsap.fromTo(titleText, { opacity: .58 }, {
-            opacity: 1, duration: .57, ease: "sine.out",
+      gsap.set(titleText, { yPercent: 105 });
+      headingTrigger = ScrollTrigger.create({
+        trigger: title, start: "top 75%", once: true,
+        onEnter: () => {
+          const tween = gsap.fromTo(titleText, { yPercent: 105 }, {
+            yPercent: 0, duration: .85, ease: "power3.out",
             onComplete: () => {
               title.dataset.gsapShown = "true";
-              gsap.set(titleText, { clearProps: "opacity" });
+              gsap.set(titleText, { clearProps: "transform" });
               running.delete(tween);
             }
           });
           running.add(tween);
-        }, { rootMargin: "0px 0px -25% 0px", threshold: 0 });
-        headingObserver.observe(title);
-      } else {
-        gsap.set(titleText, { yPercent: 105 });
-        headingTrigger = ScrollTrigger.create({
-          trigger: title, start: "top 75%", once: true,
-          onEnter: () => {
-            const tween = gsap.fromTo(titleText, { yPercent: 105 }, {
-              yPercent: 0, duration: .85, ease: "power3.out",
-              onComplete: () => {
-                title.dataset.gsapShown = "true";
-                gsap.set(titleText, { clearProps: "transform" });
-                running.delete(tween);
-              }
-            });
-            running.add(tween);
-          }
-        });
-      }
+        }
+      });
     }
 
     // Footer: each text/link/license badge is its own ordered GSAP stage.
@@ -361,12 +343,6 @@ export function LandingInteractions() {
       cardObserver.disconnect();
       footerObservers.forEach(observer => observer.disconnect());
       headingTrigger?.kill();
-      headingObserver?.disconnect();
-      // Strict Mode can tear down a partly faded title before onComplete.
-      // Clear its arm state so the next mount does not permanently skip it.
-      if (title && title.dataset.gsapShown !== "true") {
-        delete title.dataset.gsapStarted;
-      }
       delays.forEach(tween => tween.kill());
       running.forEach(animation => animation.kill());
       for (const node of affected) gsap.set(node, {
