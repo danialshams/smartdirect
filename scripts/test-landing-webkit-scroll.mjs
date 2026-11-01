@@ -255,7 +255,6 @@ try {
   // images; it still runs live on the GPU over them.
   await page.addStyleTag({content:
     '.ap-header,.ap-backtop,.daira-static-reflection{visibility:hidden!important;}'});
-  const selectors=['main#content',...Array.from({length:8},(_,i)=>'.ap-showcase-capture:nth-of-type('+(i+1)+')'),'footer.ap-footer--extended'];
   const exportItems=[page.locator('main#content'),...Array.from({length:8},(_,i)=>page.locator('.ap-showcase-capture').nth(i)),page.locator('footer.ap-footer--extended')];
   for(let i=0;i<exportItems.length;i++) {
     const item=exportItems[i];
