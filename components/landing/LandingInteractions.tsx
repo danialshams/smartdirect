@@ -20,6 +20,14 @@ const previewActions: Record<string, string> = {
 };
 
 function revealPreview(card: HTMLElement) {
+  // WebKit/Firefox use a genuine GPU Liquid Glass scene plus responsive
+  // raster captures. Additional nested preview transforms can monopolize
+  // their compositors when the user flicks through cards. Keep the primary
+  // per-card GSAP entrance and the two masked headings on those browsers;
+  // reserve tiny illustrative preview motions for Chromium.
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod|Firefox\\/|FxiOS\\//.test(ua) ||
+      (/Safari\\//.test(ua) && !/Chrome\\/|Chromium\\/|Edg\\/|OPR\\//.test(ua))) return;
   const kind = card.id.replace(/^feature-/, "");
   const selector = previewActions[kind];
   if (!selector) return;
@@ -94,7 +102,7 @@ export function LandingInteractions() {
       // next card is still off-screen (previous code used section top 89%).
       for (const card of root.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card")) {
         const section = card.closest<HTMLElement>(".ap-showcase-capture");
-        gsap.set(card, { autoAlpha: 0, y: 17 });
+        gsap.set(card, { autoAlpha: 0 });
         ScrollTrigger.create({
           trigger: card,
           start: "top 73%",
@@ -104,7 +112,7 @@ export function LandingInteractions() {
             if (!active || card.dataset.gsapShown === "true") return;
             card.dataset.gsapStarted = String(performance.now());
             if (section) section.dataset.gsapStarted ??= card.dataset.gsapStarted;
-            gsap.to(card, {
+            gsap.fromTo(card, { autoAlpha: 0, y: 17 }, {
               autoAlpha: 1, y: 0,
               duration: .72, ease: "power3.out",
               overwrite: "auto",
