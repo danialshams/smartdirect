@@ -80,6 +80,7 @@ export function LandingInteractions() {
           card.querySelector<HTMLElement>(".ap-social-card__copy h3"),
           card.querySelector<HTMLElement>(".ap-social-card__copy p")
         ]);
+        const shell = card.querySelector<HTMLElement>(".ap-social-card__shell");
         const preview = card.querySelector<HTMLElement>(".ig-preview");
         // Actual distinct blocks of the Instagram illustration, in DOM order.
         // Do not animate every leaf icon (too many Safari compositor layers).
@@ -93,12 +94,13 @@ export function LandingInteractions() {
         }) : [];
 
         card.dataset.gsapStages = String(1 + copyParts.length + (preview ? 1 : 0) + visualParts.length);
-        for (const element of [card, ...copyParts, ...visualParts, ...(preview ? [preview] : [])]) {
+        for (const element of [card, ...(shell ? [shell] : []), ...copyParts, ...visualParts, ...(preview ? [preview] : [])]) {
           affected.add(element);
         }
         // Everything is prepared while its parent card is still hidden.
         // Each stage begins ONLY after the previous stage has entered.
-        gsap.set(card, { x: 44 * direction, opacity: 0 });
+        gsap.set(card, { opacity: 1 });
+        if (shell) gsap.set(shell, { x: 54 * direction, opacity: 0 });
         gsap.set(copyParts, { x: 22 * opposite, opacity: 0 });
         if (preview) gsap.set(preview, { x: 20 * opposite, opacity: 0 });
         // The entire phone enters from the opposite direction. Its many
@@ -112,7 +114,7 @@ export function LandingInteractions() {
             states.set(card, "done");
             card.dataset.gsapPhase = "complete";
             card.dataset.gsapShown = "true";
-            gsap.set([card, ...copyParts, ...visualParts, ...(preview ? [preview] : [])], {
+            gsap.set([card, ...(shell ? [shell] : []), ...copyParts, ...visualParts, ...(preview ? [preview] : [])], {
               clearProps: "transform,opacity,visibility"
             });
             running.delete(timeline);
@@ -121,7 +123,7 @@ export function LandingInteractions() {
         running.add(timeline);
 
         // 01 outer shell: right, 02 outer shell: left, alternating globally.
-        timeline.to(card, { x: 0, opacity: 1, duration: .65 }, 0);
+        if (shell) timeline.to(shell, { x: 0, opacity: 1, duration: .64 }, 0);
         // Opposing direction. Each number, title and description owns a slot.
         copyParts.forEach((part, i) => timeline.to(part, {
           x: 0, opacity: 1, duration: .36
