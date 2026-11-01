@@ -182,6 +182,11 @@ try {
     })));
   }
   console.log("WEBKIT_FAST_JUMPS="+JSON.stringify(jumps));
+  const pixels=new Set(jumps.map(x=>x.backdrop).filter(x=>typeof x==="number"));
+  if (pixels.size<3) {
+    throw Error("Fast scrolling left the backdrop canvas frozen on stale pixels: "+JSON.stringify(jumps));
+  }
+  console.log("WEBKIT_BACKDROP_PIXELS_UPDATED_PASS="+pixels.size);
   if(jumps.some(x=>x.strategy!=="webgl"||x.bound!=="true")) {
     throw Error("Rapid scroll must retain the native refractive WebGL engine");
   }
