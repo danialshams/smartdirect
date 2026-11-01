@@ -97,9 +97,9 @@ export function LandingInteractions() {
       const footer = root.querySelector<HTMLElement>(".ap-footer--extended");
       if (footer) {
         const callout = footer.querySelector<HTMLElement>("[data-footer-callout]");
-        if (callout) fade(callout, .78);
+        if (callout) fade(callout, .78, true);
         footer.querySelectorAll<HTMLElement>(".ap-footer__brand, .ap-footer__links")
-          .forEach(node => fade(node, .62));
+          .forEach(node => fade(node, .62, true));
         const bottom = footer.querySelector<HTMLElement>(".ap-footer__bottom");
         if (bottom) fade(bottom, .55, true);
       }
