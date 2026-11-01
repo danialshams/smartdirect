@@ -129,7 +129,7 @@ export function LiquidHeaderSurface() {
           frame.dataset.glassFastStale = "false";
           return;
         }
-        if (at - started > 3200) {
+        if (at - lastMove > 2800) {
           active = false;
           frame.dataset.glassFastStale = "false";
           return;
@@ -143,7 +143,7 @@ export function LiquidHeaderSurface() {
       const delta = Math.abs(y - previousY);
       const velocity = delta / Math.max(12, at - previousAt);
       previousY = y; previousAt = at;
-      if (delta < 150 && velocity < 3.1 && !active) return;
+      if (delta < 150 && velocity < 1.15 && !active) return;
       lastMove = at;
       if (active) return;
       active = true;
