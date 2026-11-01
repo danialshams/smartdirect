@@ -118,6 +118,23 @@ html[data-daira-hero="done"] .ap-site .ap-hero__word {opacity:1!important;}
 
 /* Safari captures real HTML tiles for WebGL. Avoid CSS display/opacity
    overrides on animated elements: they used to silently cancel GSAP. */
+/* WebKit cannot refract a page region that has not yet been captured.
+   Only on multi-viewport fast flicks, temporarily show the LIVE backdrop
+   instead of a frozen old snapshot. The WebGL renderer stays mounted and
+   returns as soon as current pixels are ready. Ordinary scroll never changes
+   the genuine Liquid Glass lens. */
+.ap-site .daira-library-glass-frame[data-glass-fast-stale="true"]
+  .daira-library-liquid-header {
+  opacity:0!important;
+}
+.ap-site .daira-library-glass-frame[data-glass-fast-stale="true"]
+  .daira-library-glass-live-fallback {
+  z-index:2;
+  opacity:1!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.085),rgba(255,255,255,.025));
+  -webkit-backdrop-filter:blur(3px) saturate(145%) contrast(105%);
+  backdrop-filter:blur(3px) saturate(145%) contrast(105%);
+}
 /* Keep the blue button translucent but eliminate the old CSS glow around it. */
 .ap-site .ap-backtop,
 .ap-site .ap-backtop__action,
