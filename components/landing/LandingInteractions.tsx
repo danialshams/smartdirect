@@ -53,6 +53,7 @@ export function LandingInteractions() {
     // frame; doing so forces layout while the glass and GSAP are compositing.
     let scrollFrame = 0;
     let lastProbeAt = -Infinity;
+    let trailingProbeTimer: ReturnType<typeof setTimeout> | undefined;
     const probe = () => {
       scrollFrame = 0;
       for (const card of pending) {
@@ -62,12 +63,28 @@ export function LandingInteractions() {
             visible >= Math.min(rect.height, innerHeight * .73) * .24) startCard(card);
       }
     };
+    const scheduleProbe = () => {
+      if (disposed || !pending.size || scrollFrame) return;
+      lastProbeAt = performance.now();
+      scrollFrame = requestAnimationFrame(probe);
+    };
     const onScroll = () => {
       if (!pending.size || scrollFrame) return;
-      const now = performance.now();
-      if (now - lastProbeAt < 180) return;
-      lastProbeAt = now;
-      scrollFrame = requestAnimationFrame(probe);
+      const remaining = 180 - (performance.now() - lastProbeAt);
+      if (remaining <= 0) {
+        if (trailingProbeTimer !== undefined) {
+          clearTimeout(trailingProbeTimer);
+          trailingProbeTimer = undefined;
+        }
+        scheduleProbe();
+      } else if (trailingProbeTimer === undefined) {
+        // Never miss the last scroll position when WebKit drops an observer
+        // notification during a fast jump.
+        trailingProbeTimer = setTimeout(() => {
+          trailingProbeTimer = undefined;
+          scheduleProbe();
+        }, remaining);
+      }
     };
     const onResize = () => {
       lastProbeAt = -Infinity;
@@ -279,6 +296,7 @@ export function LandingInteractions() {
       removeEventListener("scroll", onScroll);
       removeEventListener("resize", onResize);
       if (scrollFrame) cancelAnimationFrame(scrollFrame);
+      if (trailingProbeTimer !== undefined) clearTimeout(trailingProbeTimer);
       cardObserver.disconnect();
       footerObservers.forEach(observer => observer.disconnect());
       headingTrigger?.kill();
