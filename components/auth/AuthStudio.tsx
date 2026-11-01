@@ -201,7 +201,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
         <KeyRound size={18} strokeWidth={1.9} aria-hidden="true"/>
         <input type={showPassword?"text":"password"} autoComplete={complete}
           value={value} onChange={event=>setValue(event.target.value)}
-          placeholder="حداقل ۸ کاراکتر" required minLength={8} maxLength={128} dir="ltr"/>
+          placeholder={complete==="current-password"?"رمز عبور":"حداقل ۸ کاراکتر"} required minLength={8} maxLength={128} dir="ltr"/>
         <button type="button" className="da-auth-show" onClick={()=>setShowPassword(v=>!v)}
           aria-label={showPassword?"پنهان‌کردن رمز":"نمایش رمز"}>
           {showPassword?<EyeOff size={18}/>:<Eye size={18}/>}
@@ -250,7 +250,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
                     placeholder="۰۹۱۲ ... یا ایمیل قبلی" required dir="auto" /></span>
                 </label>
                 {renderPassword(password,setPassword,"رمز عبور")}
-                <div className="da-auth-aside"><button type="button" onClick={()=>changeScreen("forgot")}>رمز عبورم رو فراموش کردم <ArrowLeft size={15}/></button></div>
+                <div className="da-auth-aside"><button type="button" onClick={()=>changeScreen("forgot")}>فراموشی رمز عبور <ArrowLeft size={15}/></button></div>
               </>}
               {(screen==="signup" || screen==="forgot" || (screen==="login" && method==="sms")) && <label className="da-auth-field">
                 <span>شماره موبایل</span>
@@ -304,7 +304,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
               ادامه با رمز عبور <ArrowLeft size={16}/>
             </button>}
             {screen==="forgot" && <button className="da-auth-back" onClick={()=>changeScreen("login")}>
-              <ArrowLeft size={16}/> بازگشت به ورود
+              بازگشت به ورود <ArrowLeft size={16}/>
             </button>}
             {screen==="signup" && <div className="da-auth-bottom">قبلاً حساب ساختی؟ <button onClick={()=>changeScreen("login")}>وارد شو</button></div>}
             {screen==="login" && <div className="da-auth-bottom">هنوز عضو دایرا نیستی؟ <button onClick={()=>changeScreen("signup")}>حساب بساز</button></div>}
