@@ -39,10 +39,31 @@ try {
       bound: document.querySelector(".daira-library-glass-frame")?.dataset.opticalSourceBound,
       sources: document.querySelectorAll("canvas[data-liquid-glass-backdrop]").length,
       scene: !!document.querySelector("[data-liquid-glass-scene]"),
-      captures: Number(document.querySelector("[data-liquid-glass-scene]")?.getAttribute("data-liquid-glass-captures") ?? 0),
+      captures: Number(document.querySelector(".daira-static-reflection")?.getAttribute("data-liquid-glass-captures") ?? 0),
       edge: getComputedStyle(lens.querySelector(".liquid-glass-border")).display };
   });
   console.log("WEBKIT_FIRST="+JSON.stringify(first));
+  await page.waitForFunction(() => document.querySelector(".daira-static-reflection")?.dataset.dairaGlassCaptureController==="static",null,{timeout:12000});
+  const mirror=await page.evaluate(() => {
+    const page=document.querySelector(".ap-site[data-liquid-glass-scene]");
+    const source=document.querySelector(".daira-static-reflection");
+    const liveSections=[...page.children].filter(node=>node.matches("main, .ap-showcase-capture, footer.ap-footer--extended"));
+    const reflectionSections=[...source.children].filter(node=>node.matches("main, .ap-showcase-capture, footer.ap-footer--extended"));
+    return {
+      pageSections:liveSections.length,reflectionSections:reflectionSections.length,
+      sameTop:liveSections.every((el,i)=>Math.abs(el.getBoundingClientRect().top-reflectionSections[i].getBoundingClientRect().top)<3),
+      sourceInert:source.inert && source.getAttribute("aria-hidden")==="true",
+      noDuplicateIds:!source.querySelector("[id]"),
+      noHiddenHero:[...source.querySelectorAll("[data-hero-word]")].every(el=>getComputedStyle(el).opacity==="1"),
+      sourceRootIsSeparate:source!==page && !page.contains(source)
+    };
+  });
+  console.log("WEBKIT_STATIC_REFLECTION="+JSON.stringify(mirror));
+  if(mirror.pageSections<9 || mirror.pageSections!==mirror.reflectionSections || !mirror.sameTop ||
+    !mirror.sourceInert || !mirror.noDuplicateIds || !mirror.noHiddenHero || !mirror.sourceRootIsSeparate) {
+    throw Error("Independent mirror must be visually aligned, static and inaccessible");
+  }
+
   // A scene can be ready while the library's deferred optical ref is not
   // mounted yet. Require the explicit source to bind and produce REAL optics
   // before exercising scrolling: otherwise a permanent missing-backdrop blur
@@ -71,7 +92,7 @@ try {
         reason: panel.dataset.glassReason,
         ready: document.querySelector(".daira-library-glass-frame").dataset.glassReady,
         ever: document.querySelector(".daira-library-glass-frame").dataset.opticalEverReady,
-        captures: Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures ?? 0),
+        captures: Number(document.querySelector(".daira-static-reflection")?.dataset.liquidGlassCaptures ?? 0),
       });
     }
     return samples;
@@ -101,7 +122,7 @@ try {
       opticalFilter:optical ? getComputedStyle(optical).backdropFilter : null,
       edgeShadow:getComputedStyle(frame).boxShadow,
       clip:getComputedStyle(frame).overflow,
-      captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0)
+      captures:Number(document.querySelector(".daira-static-reflection")?.dataset.liquidGlassCaptures??0)
     };
   });
   console.log("WEBKIT_SETTLED_CAPTURE="+JSON.stringify(settled));
@@ -125,7 +146,7 @@ try {
       nativeCanvas:!!lens?.querySelector("canvas[data-liquid-glass-webgl]") ||
         !!lens?.parentElement?.querySelector("canvas[data-liquid-glass-scene]"),
       filter:optical ? getComputedStyle(optical).backdropFilter : null,
-      captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0),
+      captures:Number(document.querySelector(".daira-static-reflection")?.dataset.liquidGlassCaptures??0),
       revisions:document.querySelectorAll("[data-daira-glass-viewport-revision]").length
     };
   });
@@ -165,7 +186,7 @@ try {
       y:scrollY,
       strategy:document.querySelector(".daira-library-liquid-header")?.dataset.glassStrategy,
       bound:document.querySelector(".daira-library-glass-frame")?.dataset.opticalSourceBound,
-      captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0),
+      captures:Number(document.querySelector(".daira-static-reflection")?.dataset.liquidGlassCaptures??0),
       gsapShown:document.querySelectorAll("[data-gsap-shown='true']").length,
       // Capture cadence is NOT a proxy for freshness. Fingerprint the actual
       // 2D backdrop source consumed by native WebGL at each jump.
