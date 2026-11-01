@@ -99,7 +99,6 @@ export function LandingInteractions() {
         }
         // Everything is prepared while its parent card is still hidden.
         // Each stage begins ONLY after the previous stage has entered.
-        gsap.set(card, { opacity: 1 });
         if (shell) gsap.set(shell, { x: 54 * direction, opacity: 0 });
         gsap.set(copyParts, { x: 22 * opposite, opacity: 0 });
         if (preview) gsap.set(preview, { x: 20 * opposite, opacity: 0 });
@@ -165,8 +164,19 @@ export function LandingInteractions() {
         return;
       }
       states.set(card, "waiting");
-      affected.add(card);
-      gsap.set(card, { opacity: 0 });
+      // Hide only lightweight independent surfaces. Hiding the entire card
+      // forces Safari to flatten/recapture all nested Instagram content.
+      // Each visual layer is now prepared independently without a giant
+      // opacity group, so GPU work remains bounded to each reveal stage.
+      const shell = card.querySelector<HTMLElement>(".ap-social-card__shell");
+      const preview = card.querySelector<HTMLElement>(".ig-preview");
+      const copyNodes = Array.from(card.querySelectorAll<HTMLElement>(
+        ".ap-social-card__index, .ap-social-card__count, .ap-social-card__copy h3, .ap-social-card__copy p"
+      ));
+      const prepared = [...(shell ? [shell] : []), ...copyNodes,
+        ...(preview ? [preview] : [])];
+      prepared.forEach(node => affected.add(node));
+      gsap.set(prepared, { opacity: 0 });
       pending.add(card);
       cardObserver.observe(card);
     });
