@@ -53,19 +53,13 @@ function createStaticReflection(page: HTMLElement): HTMLElement {
     tile.className = `${child.className} daira-optical-tile`;
     tile.setAttribute("aria-hidden", "true");
     tile.style.height = `${child.getBoundingClientRect().height}px`;
-    const picture = document.createElement("picture");
-    const mobile = document.createElement("source");
-    mobile.media = "(max-width: 700px)";
-    mobile.srcset = `/landing-reflection/mobile-${index}.jpg`;
-    picture.appendChild(mobile);
     const image = document.createElement("img");
-    image.src = `/landing-reflection/desktop-${index}.jpg`;
+    image.src = `/landing-reflection/${window.matchMedia("(max-width: 700px)").matches ? "mobile" : "desktop"}-${index}.jpg`;
     image.alt = "";
     image.decoding = "sync";
     image.loading = "eager";
     image.draggable = false;
-    picture.appendChild(image);
-    tile.appendChild(picture);
+    tile.appendChild(image);
     source.appendChild(tile);
   });
   document.body.appendChild(source);
@@ -115,6 +109,15 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
         child.matches("main, .ap-showcase-capture, footer.ap-footer--extended")) as HTMLElement[];
       const reflectionSections = Array.from(source.children).filter(child =>
         child.matches("main, .ap-showcase-capture, footer.ap-footer--extended")) as HTMLElement[];
+      const updateImagesForViewport = () => {
+        const variant = window.matchMedia("(max-width: 700px)").matches ? "mobile" : "desktop";
+        reflectionSections.forEach((tile, index) => {
+          const image = tile.querySelector("img");
+          if (!image) return;
+          const wanted = `/landing-reflection/${variant}-${index}.jpg`;
+          if (image.getAttribute("src") !== wanted) image.src = wanted;
+        });
+      };
       const syncGeometry = () => {
         const header = page.querySelector<HTMLElement>(".ap-header[data-landing-header]");
         const spacer = source?.firstElementChild as HTMLElement | null;
@@ -137,6 +140,7 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
       const header = page.querySelector<HTMLElement>(".ap-header[data-landing-header]");
       if (header) geometryObserver.observe(header);
       syncGeometry();
+      window.addEventListener("resize", updateImagesForViewport, { passive: true });
       setCapture(controller);
     } catch {
       geometryObserver?.disconnect();
@@ -147,6 +151,7 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
       setCapture(null);
+      window.removeEventListener("resize", updateImagesForViewport);
       geometryObserver?.disconnect();
       controller?.destroy();
       source?.remove();
