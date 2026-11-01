@@ -53,10 +53,10 @@ export function LandingInteractions() {
     // Its fallback must NOT measure all pending card boxes on every scroll
     // frame; doing so forces layout while the glass and GSAP are compositing.
     let scrollFrame = 0;
-    let lastProbeAt = -Infinity;
     let trailingProbeTimer: ReturnType<typeof setTimeout> | undefined;
     const probe = () => {
       scrollFrame = 0;
+      if (disposed) return;
       for (const card of pending) {
         const rect = card.getBoundingClientRect();
         const visible = Math.max(0, Math.min(rect.bottom, innerHeight * .73) - Math.max(rect.top, 0));
@@ -66,30 +66,25 @@ export function LandingInteractions() {
     };
     const scheduleProbe = () => {
       if (disposed || !pending.size || scrollFrame) return;
-      lastProbeAt = performance.now();
       scrollFrame = requestAnimationFrame(probe);
     };
     const onScroll = () => {
-      if (!pending.size || scrollFrame) return;
-      const remaining = 180 - (performance.now() - lastProbeAt);
-      if (remaining <= 0) {
-        if (trailingProbeTimer !== undefined) {
-          clearTimeout(trailingProbeTimer);
-          trailingProbeTimer = undefined;
-        }
+      // The native IntersectionObserver starts every normal entrance.
+      // Only check layout AFTER scrolling settles: WebKit cannot afford
+      // forced getBoundingClientRect() reads during live glass frames.
+      if (disposed || !pending.size) return;
+      if (trailingProbeTimer !== undefined) clearTimeout(trailingProbeTimer);
+      trailingProbeTimer = setTimeout(() => {
+        trailingProbeTimer = undefined;
         scheduleProbe();
-      } else if (trailingProbeTimer === undefined) {
-        // Never miss the last scroll position when WebKit drops an observer
-        // notification during a fast jump.
-        trailingProbeTimer = setTimeout(() => {
-          trailingProbeTimer = undefined;
-          scheduleProbe();
-        }, remaining);
-      }
+      }, 145);
     };
     const onResize = () => {
-      lastProbeAt = -Infinity;
-      onScroll();
+      if (trailingProbeTimer !== undefined) clearTimeout(trailingProbeTimer);
+      trailingProbeTimer = setTimeout(() => {
+        trailingProbeTimer = undefined;
+        scheduleProbe();
+      }, 80);
     };
 
     const unique = (nodes: (HTMLElement | null)[]) =>
