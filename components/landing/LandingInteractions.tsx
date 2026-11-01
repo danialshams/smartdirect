@@ -50,7 +50,7 @@ export function LandingInteractions() {
             if (!targets.length) continue;
             ScrollTrigger.create({
               trigger: section,
-              start: "top 93%",
+              start: "top 85%",
               once: true,
               onEnter: self => {
                 if (!active) return;
@@ -84,7 +84,7 @@ export function LandingInteractions() {
             ));
             ScrollTrigger.create({
               trigger: footer,
-              start: "top 91%",
+              start: "top 87%",
               once: true,
               onEnter: self => {
                 if (!active) return;
@@ -110,7 +110,11 @@ export function LandingInteractions() {
           }
         }, root);
         revert = () => { context.revert(); delete root.dataset.gsapMotion; };
-        ScrollTrigger.refresh();
+        // Recalculate just once after any late font swap, not synchronously
+        // while the first hero frame and the WebKit capture boot are painting.
+        void document.fonts.ready.then(() => {
+          if (active) requestAnimationFrame(() => { if (active) ScrollTrigger.refresh(); });
+        }).catch(() => {});
       }).catch(() => {
         // JS chunk failure must never leave any content hidden.
         delete root.dataset.gsapMotion;
