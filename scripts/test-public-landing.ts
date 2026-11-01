@@ -20,13 +20,17 @@ const landingFixes=read("app/landing-fixes.css");
 
 for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />",
   '<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'",
-  "جایگاه مجوزهای آینده","در آینده","مدیریت کل پیجت رو بسپار به دایرا","رایگان شروع کن",
+  "آماده‌ای مدیریت پیجت ساده‌تر بشه؟","مدیریت کل پیجت رو بسپار به دایرا","رایگان شروع کن",
   "./landing-instagram.css","./landing-optics-v2.css"])
   assert.ok(page.includes(item),"Missing landing contract: "+item);
 assert.doesNotMatch(page,/HeroMotion|<video|heroFragments|data-hero-fragment/);
 assert.match(page,/heroWords\.map/);
 assert.match(page,/data-hero-word/);
 assert.match(page,/data-reveal/);
+assert.match(page,/data-hero-description/);
+assert.match(page,/ap-footer__invitation/);
+assert.match(page,/landing-motion-polish\.css/);
+assert.ok(!page.includes("جایگاه مجوزهای آینده") && !page.includes("در آینده"), "Never show unearned or placeholder approval badges");
 for(const url of ["/login","/privacy-policy","/terms","/data-deletion","/contact","/about"])
   assert.ok(page.includes('href:"'+url+'"')||page.includes('href="'+url+'"'),"Missing link "+url);
 for(const route of ["terms","about","contact"])
@@ -183,6 +187,12 @@ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.doesNotMatch(css,/border:[^;]*solid\s+white|setInterval/);
 
 assert.match(features,/ap-showcase-capture/);
+assert.ok(features.includes("ap-social-card__number") && !features.includes("ap-social-card__icon"), "Feature headings must use 01-11 instead of pictograms");
+assert.equal((features.match(/data-text-reveal/g)||[]).length,1,"Masked text may only be used on the feature intro");
+assert.equal((page.match(/data-text-reveal/g)||[]).length,1,"Masked text may only be used on the footer call to action");
+assert.ok(interactions.includes('trigger: card') && interactions.includes('start: "top 73%"'),"Animate individual cards only when they enter view");
+assert.ok(!interactions.includes('start: "top 89%"'),"Never animate whole sections ahead of the viewport");
+assert.ok(interactions.includes("revealPreview(card)"),"Small preview movements should begin only once a card has appeared");
 assert.match(features,/InstagramPreview kind=\{scene\.id\}/);
 assert.equal((scenes.match(/no: "([۰-۹]+)"/g)||[]).length,11);
 for(const id of ["comment","story","direct","share","live","reminder","inbox","publishing","insights","menu","icebreaker"])
