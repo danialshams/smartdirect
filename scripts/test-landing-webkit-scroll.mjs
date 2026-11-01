@@ -46,6 +46,7 @@ try {
   });
   console.log("WEBKIT_FIRST="+JSON.stringify(first));
   await page.waitForFunction(() => document.querySelector(".daira-static-reflection")?.dataset.dairaGlassCaptureController==="static",null,{timeout:12000});
+  await page.waitForFunction(() => [...document.querySelectorAll(".daira-optical-tile picture img")].length===10 && [...document.querySelectorAll(".daira-optical-tile picture img")].every(img=>img.complete && img.naturalWidth>0),null,{timeout:15000});
   const mirror=await page.evaluate(() => {
     const page=document.querySelector(".ap-site[data-liquid-glass-scene]");
     const source=document.querySelector(".daira-static-reflection");
@@ -55,14 +56,11 @@ try {
       pageSections:liveSections.length,reflectionSections:reflectionSections.length,
       sameTop:liveSections.every((el,i)=>Math.abs(el.getBoundingClientRect().top-reflectionSections[i].getBoundingClientRect().top)<3),
       sameHeight:liveSections.every((el,i)=>Math.abs(el.getBoundingClientRect().height-reflectionSections[i].getBoundingClientRect().height)<3),
-      reflectionPreviews:source.querySelectorAll(".ap-social-card__visual").length,
-      samePreviewContent:[...source.querySelectorAll(".ap-social-card__visual")].every((el,i) => {
-        const original=page.querySelectorAll(".ap-social-card__visual")[i];
-        return original && el.textContent===original.textContent &&
-          el.querySelectorAll("svg").length===original.querySelectorAll("svg").length &&
-          el.querySelectorAll("img").length===original.querySelectorAll("img").length;
-      }),
-      originalPreviews:page.querySelectorAll(".ap-social-card__visual").length,
+      imageTiles:source.querySelectorAll(".daira-optical-tile picture img").length,
+      imagesReady:[...source.querySelectorAll(".daira-optical-tile picture img")].every(img=>img.complete && img.naturalWidth>0),
+      sourceMatches:[...source.querySelectorAll(".daira-optical-tile picture img")].every((img,i)=>
+        img.getAttribute("src")===`/landing-reflection/desktop-${i}.jpg` &&
+        img.previousElementSibling?.getAttribute("srcset")===`/landing-reflection/mobile-${i}.jpg`),
       sourceInert:source.inert && source.getAttribute("aria-hidden")==="true",
       noDuplicateIds:!source.querySelector("[id]"),
       noHiddenHero:[...source.querySelectorAll("[data-hero-word]")].every(el=>getComputedStyle(el).opacity==="1"),
@@ -71,9 +69,9 @@ try {
   });
   console.log("WEBKIT_STATIC_REFLECTION="+JSON.stringify(mirror));
   if(mirror.pageSections<9 || mirror.pageSections!==mirror.reflectionSections || !mirror.sameTop ||
-    !mirror.sameHeight || mirror.reflectionPreviews!==mirror.originalPreviews || !mirror.samePreviewContent ||
+    !mirror.sameHeight || mirror.imageTiles!==mirror.pageSections || !mirror.imagesReady || !mirror.sourceMatches ||
     !mirror.sourceInert || !mirror.noDuplicateIds || !mirror.noHiddenHero || !mirror.sourceRootIsSeparate) {
-    throw Error("Independent mirror must be visually aligned, static and inaccessible");
+    throw Error("Raster reflection source must be loaded, aligned and inaccessible");
   }
 
   // A scene can be ready while the library's deferred optical ref is not
