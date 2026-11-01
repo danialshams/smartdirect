@@ -42,7 +42,9 @@ try {
   browser = await webkit.launch({headless:true});
   // Three isolated cold-context comparisons fit within WebKit runner memory.
   // Further repetitions are intentionally separate CI runs, not concurrent tabs.
-  const modes = ["normal", "no-heading", "no-both"];
+  // Reverse the order: if the first cold context stalls regardless of mode,
+  // the previous apparent heading cost was a warmup confound, not causation.
+  const modes = ["no-heading", "normal", "no-both"];
   const results = [];
   for (const mode of modes) {
     const context = await browser.newContext({
