@@ -280,7 +280,7 @@ try {
   console.log("WEBKIT_FAST_SCROLL_RECOVERY_PASS");
   console.log("WEBKIT_SCROLL_PASS");
   // Verify the desktop responsive optical images, real WebGL lens and
-  // alignment before disabling the header for source-artwork exports.
+  // alignment without expensive repeated full-page screenshot exports.
   await page.setViewportSize({width:1280,height:900});
   await page.waitForFunction(() => {
     const sections=[...document.querySelectorAll(".daira-optical-tile img")];
@@ -299,33 +299,7 @@ try {
     img.getAttribute("src")===`/landing-reflection/mobile-${i}.jpg` && img.complete && img.naturalWidth>0),null,{timeout:15000});
   await page.waitForTimeout(250);
 
-  // Export exact, fully rendered static page artwork for the next optical
-  // experiment. The final transparent loupe shader is NOT part of these
-  // images; it still runs live on the GPU over them.
-  await page.addStyleTag({content:
-    '.ap-header,.ap-backtop,.daira-static-reflection{visibility:hidden!important;}'});
-  const exportItems=[page.locator('main#content'),...Array.from({length:8},(_,i)=>page.locator('.ap-showcase-capture').nth(i)),page.locator('.ap-site[data-liquid-glass-scene] > footer.ap-footer--extended')];
-  for(let i=0;i<exportItems.length;i++) {
-    const item=exportItems[i];
-    await item.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(1050);
-    const bytes=await item.screenshot({type:'jpeg',quality:82,scale:'css',timeout:20000});
-    await writeFile(`artifacts/landing-webkit/source-mobile-${i}.jpg`,bytes);
-    console.log('DAIRA_REFLECTION_ASSET_390_'+i+'=saved');
-  }
-
-  // Desktop Safari uses the same SVG/WebGL material but a different
-  // responsive layout. Export those exact static pixels independently.
-  await page.setViewportSize({width:1280,height:900});
-  await page.waitForTimeout(250);
-  for(let i=0;i<exportItems.length;i++) {
-    const item=exportItems[i];
-    await item.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(1050);
-    const bytes=await item.screenshot({type:'jpeg',quality:82,scale:'css',timeout:25000});
-    await writeFile(`artifacts/landing-webkit/source-desktop-${i}.jpg`,bytes);
-    console.log('DAIRA_REFLECTION_ASSET_1280_'+i+'=saved');
-  }
+  console.log("WEBKIT_RESPONSIVE_OPTICS_PASS");
 
 } catch (error) {
   console.error("WEBKIT_SCROLL_ERROR", error);
