@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import {decryptMetaToken} from "@/lib/security/meta-token";
@@ -30,16 +30,16 @@ function getMetric(
   );
 }
 
-export async function POST() {
+export async function POST(request:NextRequest) {
   try {
     const secret = process.env.CRON_SECRET;
 
-    if (!secret) {
+    if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
       return NextResponse.json(
         {
-          error: "CRON_SECRET تنظیم نشده است",
+          error: "Unauthorized",
         },
-        { status: 500 },
+        { status: 401 },
       );
     }
 

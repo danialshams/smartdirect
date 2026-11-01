@@ -25,4 +25,6 @@ assert.ok(!read("app/api/admin/deletion-requests/[id]/route.ts").includes('confi
 const signup=read("app/api/auth/register/route.ts"),auth=read("src/lib/auth.ts");
 assert.ok(signup.includes("phoneVerificationRequired:isSmsReady()"));
 assert.ok(auth.includes("phoneVerificationRequired && !user!.phoneVerifiedAt"));
+const snapshot=read("app/api/instagram/insights/snapshot/route.ts");
+assert.ok(snapshot.includes('request.headers.get("authorization") !== `Bearer ${secret}`'),"Snapshot Cron requires bearer secret");
 console.log("SECURITY PHASE II CONTRACT PASS");

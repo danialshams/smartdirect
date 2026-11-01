@@ -114,6 +114,7 @@ try {
     ["/api/admin/security/meta-token-migration","POST",401],
     ["/api/admin/deletion-requests/test-request/execute","POST",401],
     ["/api/account/data-deletion/verify","POST",401],
+    ["/api/instagram/insights/snapshot","POST",401],
   ];
   for(const [path,method,expected] of publicSecurityRoutes){
     const result=await fetch(base+path,{method,redirect:"manual",headers:{
