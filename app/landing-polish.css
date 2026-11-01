@@ -57,6 +57,22 @@
   -webkit-text-fill-color:transparent;
 }
 .ap-site .ap-hero__word{will-change:auto;white-space:pre;display:inline-block;transform-origin:center}
+.ap-site .ap-hero__sticker{
+  position:relative;display:inline-flex;align-items:center;vertical-align:baseline;
+  padding:.07em .035em;margin-block:-.07em;overflow:clip;
+  isolation:isolate;border-radius:.21em;
+}
+.ap-site .ap-hero__sticker-bg{
+  position:absolute;inset:0;z-index:-1;pointer-events:none;
+  border-radius:.2em;background:linear-gradient(105deg,rgba(158,198,255,.38),rgba(72,134,244,.16));
+  transform-origin:right center;opacity:0;
+}
+.ap-site .ap-hero__sticker:last-of-type .ap-hero__sticker-bg{
+  background:linear-gradient(110deg,rgba(83,142,255,.29),rgba(158,202,255,.39));
+}
+@media(prefers-reduced-motion:reduce){
+  .ap-site .ap-hero__sticker-bg{display:none}
+}
 .ap-site .ap-hero__cta::before{opacity:0;animation:ap-light-orbit 7s linear infinite}
 @keyframes ap-light-orbit{
   0%,7%{--ap-beam-angle:0deg;opacity:0}
@@ -132,7 +148,7 @@
   -webkit-text-fill-color:initial!important;
   color:#1a315a!important;
 }
-.ap-site .ap-hero__word:last-child{
+.ap-site .ap-hero__sticker:last-of-type .ap-hero__word{
   background:linear-gradient(110deg,#2260d8,#3a8bff);
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;

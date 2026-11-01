@@ -239,6 +239,8 @@ try {
     return {
       text:title.textContent.replace(/\\s+/g," ").trim(),
       count:words.length,
+      stickers:title.querySelectorAll("[data-hero-sticker]").length,
+      backgrounds:title.querySelectorAll(".ap-hero__sticker-bg").length,
       state:title.dataset.gsapHero,
       started:title.dataset.gsapHeroStarted,
       elapsed:Number(title.dataset.gsapHeroElapsed),
@@ -249,6 +251,8 @@ try {
   })()`);
   assert.equal(hero.text,"مدیریت کل پیجت رو بسپار به دایرا");
   assert.equal(hero.count,7);
+  assert.equal(hero.stickers,7,"Hero words should be individually masked sticker labels");
+  assert.equal(hero.backgrounds,7,"Each hero word has a brief sticker-wipe surface");
   assert.equal(hero.state,"complete");
   assert.ok(Number(hero.started)>0,"GSAP must actually start on first entry");
   assert.ok(hero.elapsed>=700 && hero.elapsed<3500,
@@ -405,16 +409,17 @@ try {
       const top=section.getBoundingClientRect().top+window.scrollY;
       window.scrollTo({top:Math.max(0,top-innerHeight*.73),behavior:"instant"});
       await sleep(90);
-      const opacities=[];
+      const opacities=[], cardTransforms=[];
       for (let i=0;i<11;i++) {
         window.scrollBy({top:48,behavior:"instant"});
         await sleep(85);
         opacities.push(Number(getComputedStyle(item).opacity));
+        cardTransforms.push(getComputedStyle(section).transform);
       }
       await sleep(2200);
       return {started:Number(section.dataset.gsapStarted??0),
         shown:section.dataset.gsapShown,
-        opacities,finalOpacity:Number(getComputedStyle(item).opacity)};
+        opacities,cardTransforms,finalOpacity:Number(getComputedStyle(item).opacity)};
     }
     const row=rows[Math.min(4,rows.length-1)];
     const card=row.querySelector(".ap-social-grid > .ap-social-card");
@@ -424,6 +429,8 @@ try {
   })()`);
   console.log("DAIRA_GSAP_ENTRANCES="+JSON.stringify(entrance));
   assert.equal(entrance.active,"true","Real GSAP ScrollTrigger must be initialized");
+  assert.ok(entrance.feature.cardTransforms.some(t=>t!=="none"),
+    "Entire real feature card must visibly translate; moving only a decorative halo is invalid");
   for (const [name,result] of Object.entries({feature:entrance.feature,footer:entrance.footer})) {
     assert.ok(result.started>0, name+" must start a genuine GSAP entrance");
     assert.equal(result.shown,"true",name+" GSAP timeline must finish");
@@ -439,6 +446,8 @@ try {
       stageCount:Number(card?.dataset.gsapStages??0),
       phase:card?.dataset.gsapPhase,
       shellOpacity:Number(getComputedStyle(card).opacity),
+      realSurface:getComputedStyle(card).backgroundImage.includes("gradient"),
+      removedShadowOnlyShell:card.querySelector(".ap-social-card__shell")===null,
       titleOpacity:Number(getComputedStyle(card.querySelector("h3")).opacity),
       previewOpacity:Number(getComputedStyle(preview).opacity),
       stagedParts:[...card.querySelectorAll(".ig-preview > *, .ap-social-card__index, .ap-social-card__count")].length
@@ -448,6 +457,8 @@ try {
   assert.ok(assembled.stageCount >= 5, "Each feature must sequence multiple real card internals");
   assert.equal(assembled.phase,"complete","GSAP must complete the inner UI assembly");
   assert.equal(assembled.shellOpacity,1);
+  assert.equal(assembled.realSurface,true,"Real feature article owns the animated card background");
+  assert.equal(assembled.removedShadowOnlyShell,true,"No decorative-only shell should animate instead of the card");
   assert.equal(assembled.titleOpacity,1);
   assert.equal(assembled.previewOpacity,1);
     const directionAudit = await evaluate(`(() => {

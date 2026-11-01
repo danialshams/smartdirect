@@ -57,6 +57,8 @@ export function LandingInteractions() {
     const delays = new Set<gsap.core.Tween>();
     const deferred = new Map<HTMLElement, () => void>();
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    let previousScrollY = window.scrollY;
+    let rapidJumpUntil = 0;
     let disposed = false;
 
     const flushDeferred = () => {
@@ -66,8 +68,16 @@ export function LandingInteractions() {
         if (states.get(card) !== "queued") continue;
         const rect = card.getBoundingClientRect();
         if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
-          // A card scrolled past during a continuous flick must never become
-          // blank or replay when the user scrolls back to it.
+          // A card scrolled past during a continuous flick must never remain
+          // transparent now that the REAL card (not an inert shell) is hidden.
+          // Restore its card and ALL inner elements before marking it played.
+          const prepared = preparedCards.get(card);
+          gsap.set([card,
+            ...(prepared?.copyContainer ? [prepared.copyContainer] : []),
+            ...(prepared?.copyParts ?? []),
+            ...(prepared?.preview ? [prepared.preview] : []),
+            ...(prepared?.visualParts ?? [])
+          ], { clearProps: "transform,opacity,visibility" });
           states.set(card, "done");
           card.dataset.gsapPhase = "complete";
           card.dataset.gsapShown = "true";
@@ -94,7 +104,7 @@ export function LandingInteractions() {
           }
           flushDeferred();
         }));
-      }, 165);
+      }, performance.now() < rapidJumpUntil ? 430 : 165);
     };
 
     const cardObserver = new IntersectionObserver(entries => {
@@ -124,7 +134,16 @@ export function LandingInteractions() {
       scrollFrame = requestAnimationFrame(probe);
     };
     const onScroll = () => {
-      if (mobileWebKit && deferred.size) scheduleIdle();
+      if (mobileWebKit) {
+        const y = window.scrollY;
+        if (Math.abs(y - previousScrollY) > 440) {
+          // Allow the native WebGL refractive canvas to catch up after a
+          // multi-screen flick before card transforms allocate textures.
+          rapidJumpUntil = performance.now() + 680;
+        }
+        previousScrollY = y;
+        if (deferred.size) scheduleIdle();
+      }
       // The native IntersectionObserver starts every normal entrance.
       // Only check layout AFTER scrolling settles: WebKit cannot afford
       // forced getBoundingClientRect() reads during live glass frames.
@@ -164,15 +183,9 @@ export function LandingInteractions() {
         const prepared = preparedCards.get(card);
         if (!prepared) return;
         const { shell, copyContainer, copyParts, preview, visualParts } = prepared;
-        if (mobileWebKit) {
-          // Do not pre-hide anything on Safari. Apply a subtle directional
-          // departure only after scroll idle, when the optical shader is not
-          // competing with the live scroll compositor.
-          if (shell) gsap.set(shell, { x: 38 * direction, opacity: .8, force3D: false });
-          if (copyContainer) gsap.set(copyContainer, { x: -16 * direction, force3D: false });
-          gsap.set(copyParts, { opacity: .68 });
-          if (preview) gsap.set(preview, { opacity: .86, visibility: "visible" });
-        }
+        // The REAL article starts off-canvas, not a decorative shadow.
+        // Children are pre-hidden at mount and enter from the other side
+        // only after the article's own colored background has arrived.
         // All expensive element discovery and initial transform setup is
         // finished before scrolling, not inside this viewport callback.
         // A single copy wrapper moves from the opposing side. The labels
@@ -184,7 +197,7 @@ export function LandingInteractions() {
             states.set(card, "done");
             card.dataset.gsapPhase = "complete";
             card.dataset.gsapShown = "true";
-            gsap.set([card, ...(shell ? [shell] : []), ...(copyContainer ? [copyContainer] : []), ...copyParts, ...visualParts, ...(preview ? [preview] : [])], {
+            gsap.set([card, ...(copyContainer ? [copyContainer] : []), ...copyParts, ...visualParts, ...(preview ? [preview] : [])], {
               clearProps: "transform,opacity,visibility"
             });
             running.delete(timeline);
@@ -192,37 +205,33 @@ export function LandingInteractions() {
         });
         running.add(timeline);
 
-        // 01 outer shell: right, 02 outer shell: left, alternating globally.
-        if (shell) {
-          timeline.set(shell, { visibility: "visible" }, 0);
-          timeline.to(shell, {
-            x: 0, ...(mobileWebKit ? { opacity: 1, force3D: false } : {}),
-            duration: .64
-          }, 0);
-        }
+        // The actual background, border, shadow and card box enter together.
+        // Card content remains invisible until the background settles.
+        timeline.to(card, {
+          x: 0, opacity: 1, force3D: false,
+          duration: .7, ease: "power3.out"
+        }, 0);
         // Opposing copy motion, with separate sequential text reveals.
         if (copyContainer) timeline.to(copyContainer, {
-          x: 0, force3D: false, duration: .94
-        }, .52);
+          x: 0, force3D: false, duration: .56
+        }, .59);
         copyParts.forEach((part, i) => timeline.to(part, {
-          opacity: 1, duration: .33
-        }, .52 + i * .14));
+          opacity: 1, duration: .32
+        }, .64 + i * .16));
         if (preview) {
-          const previewAt = .52 + copyParts.length * .14 + .12;
+          const previewAt = .74 + copyParts.length * .16;
           const mobileLayers = innerWidth <= 640;
           timeline.set(preview, { visibility: "visible" }, previewAt);
           // On narrow mobile WebKit, painting a moving illustrated phone
           // while animating its nested rows caused frame spikes. The numbered
           // copy still slides from the opposite side; the phone builds in
           // place with separate, genuinely sequential GSAP row fades.
-          if (mobileLayers) {
-            timeline.to(preview, { opacity: 1, duration: .34 }, previewAt);
-          } else {
-            timeline.to(preview, { x: 0, force3D: false, duration: .67 }, previewAt);
-          }
+          timeline.to(preview, {
+            x: 0, opacity: 1, force3D: false, duration: .46
+          }, previewAt);
           timeline.set(visualParts, {
             ...(mobileLayers ? {} : { x: -12 * direction, force3D: false }),
-            opacity: mobileWebKit ? .68 : 0
+            opacity: 0
           }, previewAt - .12);
           visualParts.forEach((part, i) => timeline.to(part, {
             ...(mobileLayers ? {} : { x: 0, force3D: false }),
@@ -271,7 +280,7 @@ export function LandingInteractions() {
       }
       states.set(card, "waiting");
       const opposite = -direction;
-      const shell = card.querySelector<HTMLElement>(".ap-social-card__shell");
+      const shell = card; // Full card is the visual surface, not an overlay.
       const copyContainer = card.querySelector<HTMLElement>(".ap-social-card__copy");
       const preview = card.querySelector<HTMLElement>(".ig-preview");
       const copyParts = unique([
@@ -292,25 +301,23 @@ export function LandingInteractions() {
       card.dataset.gsapStages = String(1 + copyParts.length + (preview ? 1 : 0) + visualParts.length);
       // Prepare only lightweight parent/label transforms once on mount.
       // Their actual GSAP entrance remains gated by the card observer.
-      if (shell) {
-        affected.add(shell);
-        if (!mobileWebKit) gsap.set(shell, { x: 54 * direction, visibility: "hidden" });
-      }
+      // Prepare every real article off to the side well before intersection.
+      // With CSS no longer overriding inline transforms, the whole card moves.
+      affected.add(card);
+      gsap.set(card, { x: (mobileWebKit ? 56 : 86) * direction,
+        opacity: 0, force3D: false });
       if (copyContainer) {
         affected.add(copyContainer);
-        if (!mobileWebKit) gsap.set(copyContainer, { x: 22 * opposite, force3D: false });
+        gsap.set(copyContainer, { x: (mobileWebKit ? 23 : 32) * opposite, force3D: false });
       }
       for (const part of copyParts) affected.add(part);
-      if (!mobileWebKit) gsap.set(copyParts, { opacity: 0 });
+      gsap.set(copyParts, { opacity: 0 });
       if (preview) {
         affected.add(preview);
-        if (!mobileWebKit) {
-          if (innerWidth <= 640) {
-            gsap.set(preview, { opacity: 0, visibility: "hidden" });
-          } else {
-            gsap.set(preview, { x: 20 * opposite, visibility: "hidden", force3D: false });
-          }
-        }
+        gsap.set(preview, {
+          x: (mobileWebKit ? 22 : 28) * opposite,
+          opacity: 0, visibility: "hidden", force3D: false
+        });
       }
       for (const part of visualParts) affected.add(part);
       pending.add(card);
