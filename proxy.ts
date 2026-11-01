@@ -31,7 +31,7 @@ export default function proxy(req:NextRequest,event:NextFetchEvent) {
   }
   return NextResponse.next();
  }
- return pagesGuard(req,event);
+ return pagesGuard(req as NextAuthRequest,event);
 }
 export const config={
  matcher:["/dashboard/:path*","/rickandmorty/:path*","/api/:path*"],
