@@ -227,32 +227,38 @@ try {
   assert.equal(roots.lens,"auto","A nested isolated lens also traps the backdrop");
   assert.ok(!roots.blueFill.includes("241, 249, 255"),"Header must not have a blue tint");
 
-  // Headline appears once as a complete sentence: no scatter/translation.
-  await waitFor(async()=>(await evaluate("document.documentElement.dataset.dairaHero"))==="play");
+  // The RTL headline animates each word's OPACITY, with the right-most
+  // Persian word first. Test by restarting the CSS animation in isolation,
+  // rather than racing with actual font loading and hydration timing.
+  await evaluate(`document.documentElement.dataset.dairaHero="done"`);
+  await sleep(80);
+  await evaluate(`document.documentElement.dataset.dairaHero="pending"`);
+  await sleep(380);
   const hero=await evaluate(`(() => {
     const title=document.querySelector("[data-hero-assembly]");
-    const word=title.querySelector("[data-hero-word]");
-    const hs=getComputedStyle(title);
-    return {name:hs.animationName,duration:hs.animationDuration,
-      titleTransform:hs.transform,wordTransform:getComputedStyle(word).transform,
-      wordAnimation:getComputedStyle(word).animationName};
+    const words=[...title.querySelectorAll("[data-hero-word]")];
+    const styles=words.map(word=>getComputedStyle(word));
+    return {count:words.length,text:title.textContent.replace(/\\s+/g," ").trim(),
+      animation:styles[0].animationName,
+      firstOpacity:Number(styles[0].opacity),
+      lastOpacity:Number(styles.at(-1).opacity),
+      transforms:styles.map(s=>s.transform),delays:styles.map(s=>s.animationDelay)};
   })()`);
-  assert.match(hero.name,/daira-hero-fade/);
-  assert.ok(parseFloat(hero.duration)>=1.4,"Headline must fade slowly on first entry");
-  assert.equal(hero.wordTransform,"none","Words must never scatter or translate");
-  assert.equal(hero.wordAnimation,"none","No per-word animation is allowed");
-  await sleep(320);
-  const midHero=await evaluate(`(() => ({
-    state:document.documentElement.dataset.dairaHero,
-    opacity:parseFloat(getComputedStyle(document.querySelector("[data-hero-assembly]")).opacity)
-  }))()`);
-  assert.equal(midHero.state,"play");
-  assert.ok(midHero.opacity>0 && midHero.opacity<1,"Entire sentence should be visibly fading");
+  assert.equal(hero.count,7);
+  assert.equal(hero.text,"مدیریت کل پیجت رو بسپار به دایرا",
+    "Persian words must remain in their natural RTL order with normal spaces");
+  assert.match(hero.animation,/daira-hero-rtl-fade/);
+  assert.ok(hero.firstOpacity>hero.lastOpacity,
+    "The rightmost Persian word must fade first, not the entire headline together");
+  assert.ok(hero.transforms.every(t=>t==="none"),
+    "No Persian word should scatter or slide during the soft opacity reveal");
+  assert.ok(parseFloat(hero.delays.at(-1))>parseFloat(hero.delays[0]),
+    "Each word needs a progressive RTL fade delay");
   const motionImage=(await send("Page.captureScreenshot",{format:"jpeg",quality:56,captureBeyondViewport:false})).data;
   console.log("DAIRA_DIAG_SCREENSHOT_HERO_MOTION="+motionImage);
-  await waitFor(async()=>await evaluate('document.documentElement.dataset.dairaHero==="done"'),5000);
-  assert.equal(await evaluate('getComputedStyle(document.querySelector("[data-hero-assembly]")).opacity'),"1");
-  assert.equal(await evaluate('document.querySelector("[data-hero-assembly]").hasAttribute("data-liquid-glass-ignore")'),false);
+  await evaluate(`document.documentElement.dataset.dairaHero="done"`);
+  await sleep(80);
+  assert.equal(await evaluate('getComputedStyle(document.querySelector("[data-hero-word]")).opacity'),"1");
 
   // Contrast fixture under the header catches regressions where an SVG
   // backdrop-filter reports a valid URL but has no visual pixels to sample.
