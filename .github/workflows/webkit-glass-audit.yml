@@ -8,14 +8,17 @@ on:
       - fix/landing-scroll-gsap-hero-20261101
       - fix/gsap-unified-scroll-glass-20261101
       - fix/landing-performance-optics-20261101
-      - fix/daira-static-reflection-architecture-20261101
       - fix/landing-webgl-capture-stability-20261101
+
+  pull_request:
+    branches: [master]
 
 permissions:
   contents: read
 
 jobs:
   webkit-mobile:
+    if: github.event_name == 'push' || github.head_ref == 'fix/daira-static-reflection-architecture-20261101'
     # Playwright WebKit currently does not ship binaries for Ubuntu 26.04.
     runs-on: ubuntu-24.04
     timeout-minutes: 18
