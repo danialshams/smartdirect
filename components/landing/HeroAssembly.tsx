@@ -3,38 +3,62 @@
 import { useEffect } from "react";
 
 /**
- * Text is always in its final RTL layout. Native per-word opacity keyframes
- * run from the very first paint, even before hydration or GSAP downloads.
- * The first Persian word on the RIGHT appears first; no word moves or reflows.
+ * The RTL sentence is laid out at its final position before hydration.
+ * GSAP alone controls the first-entry opacity of each word from RIGHT to LEFT.
+ * No CSS keyframes, translates, layout animation or repeated scroll replay.
  */
 export function HeroAssembly() {
   useEffect(() => {
-    const html = document.documentElement;
     const title = document.querySelector<HTMLElement>("[data-hero-assembly]");
-    if (!title) return;
-    const words = title.querySelectorAll<HTMLElement>("[data-hero-word]");
-    const last = words.item(words.length - 1);
-    let finished = false;
+    const html = document.documentElement;
+    if (!title) { html.dataset.dairaHero = "done"; return; }
+    const words = Array.from(title.querySelectorAll<HTMLElement>("[data-hero-word]"));
+    let active = true;
+    let release: (() => void) | undefined;
+    let safety: ReturnType<typeof setTimeout> | undefined;
     const finish = () => {
-      if (finished) return;
-      finished = true;
       html.dataset.dairaHero = "done";
+      title.dataset.gsapHero = "complete";
       title.removeAttribute("data-liquid-glass-ignore");
     };
-    if (!last || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+
+    if (!words.length || matchMedia("(prefers-reduced-motion: reduce)").matches) {
       finish();
       return;
     }
-    const onEnd = (event: AnimationEvent) => {
-      if (event.target === last && event.animationName === "daira-hero-rtl-fade") finish();
-    };
-    last.addEventListener("animationend", onEnd);
-    // A CSS animation still works without hydration. If WebKit loses an
-    // animationend during page restoration, don't leave the title hidden.
-    const safety = window.setTimeout(finish, 3500);
+
+    // Don't block the entire page on remote font downloads. This brief grace
+    // period avoids the old font swap mid-animation on most connections.
+    const fonts = Promise.race([
+      document.fonts.ready.catch(() => undefined),
+      new Promise<void>(resolve => setTimeout(resolve, 900)),
+    ]);
+    safety = setTimeout(() => { if (active) finish(); }, 5000);
+    void Promise.all([import("gsap"), fonts]).then(([module]) => {
+      if (!active) return;
+      const gsap = module.gsap;
+      const context = gsap.context(() => {
+        // Keep word boxes in normal RTL text flow. The first span is the
+        // right-most Persian word; opacity stagger gives the requested motion.
+        gsap.set(words, { opacity: 0 });
+        title.dataset.gsapHero = "playing";
+        html.dataset.dairaHero = "playing";
+        gsap.timeline({ onComplete: finish })
+          .to(words, {
+            opacity: 1,
+            duration: 1.22,
+            stagger: 0.19,
+            ease: "power2.out",
+            overwrite: "auto"
+          }, 0);
+      }, title);
+      release = () => context.revert();
+    }).catch(() => { if (active) finish(); });
+
     return () => {
-      last.removeEventListener("animationend", onEnd);
-      clearTimeout(safety);
+      active = false;
+      if (safety !== undefined) clearTimeout(safety);
+      release?.();
       finish();
     };
   }, []);
