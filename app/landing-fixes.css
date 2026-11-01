@@ -46,7 +46,7 @@ html[data-daira-hero] .ap-site .ap-hero__word {
 }
 html[data-daira-hero="pending"] .ap-site .ap-hero__word {
   animation:daira-hero-rtl-fade 1.18s cubic-bezier(.2,.67,.23,1) both!important;
-  animation-delay:calc(120ms + var(--hero-word-index,0) * 170ms)!important;
+  animation-delay:var(--hero-delay,0ms)!important;
 }
 html[data-daira-hero="done"] .ap-site .ap-hero__word {
   animation:none!important;
