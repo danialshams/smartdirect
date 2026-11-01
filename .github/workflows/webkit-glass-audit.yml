@@ -41,6 +41,8 @@ jobs:
       NODE_ENV: production
       VERCEL: "1"
       VERCEL_ENV: production
+      # Only candidate CI builds can enable diagnostic query ablations.
+      NEXT_PUBLIC_DAIRA_PROFILE: ${{ matrix.source == 'candidate' && '1' || '0' }}
       NEXTAUTH_URL: http://127.0.0.1:3198
       NEXTAUTH_SECRET: ci-only-placeholder-secret-with-more-than-32-characters
       CRON_SECRET: ci-only-placeholder-cron-secret-with-more-than-32-characters
@@ -68,6 +70,9 @@ jobs:
           npx playwright install --with-deps webkit
       - name: Build real landing code
         run: npm run build
+      - name: Profile feature and heading GSAP separately in real WebKit
+        if: matrix.source == 'candidate'
+        run: node scripts/profile-landing-webkit.mjs
       - name: Record actual WebKit mobile scene while scrolling 75 animation frames
         run: node scripts/test-landing-webkit-scroll.mjs
       - name: Archive Safari optical comparison and frame timing
