@@ -42,7 +42,7 @@ assert.ok(otp.includes('createHmac("sha256"') && otp.includes("randomInt(0, 1_00
 assert.ok(otp.includes("MAX_ATTEMPTS = 5") && otp.includes("consumedAt: now"));
 assert.ok(otp.includes("OTP_LIFETIME_SECONDS = 120"));
 assert.ok(otp.includes('if (!provider) throw new Error("SMS_NOT_CONFIGURED")'));
-assert.ok(request.includes("providerConfigured:false") && request.includes("SMS") && request.includes("isSmsReady()"));
+assert.ok(request.includes("providerConfigured:false") && request.includes("isSmsReady()") && request.includes("status:503"));
 assert.ok(signup.includes("bcrypt.hash(password, 12)") && signup.includes("authSignupAttempt"));
 assert.ok(reset.includes('consumeOtp(users[0].id,phone,"reset"'));
 assert.ok(!read("src/lib/sms/provider.ts").includes("console.log"), "SMS code must never be logged");
