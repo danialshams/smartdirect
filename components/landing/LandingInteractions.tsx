@@ -124,25 +124,25 @@ export function LandingInteractions() {
               });
             }
           });
-          gsap.set(card, { opacity: .14 });
+          gsap.set(card, { opacity: .82 });
           copyParts.forEach((part, index) => gsap.set(part, {
             opacity: 0, ...(index === 0 || index === 2 ? { y: 10 } : {})
           }));
           if (preview) gsap.set(preview, { opacity: 0 });
           gsap.set(visualParts, { opacity: 0 });
-          timeline.to(card, { opacity: 1, duration: .42 }, 0);
+          timeline.to(card, { opacity: 1, duration: .22 }, 0);
           // Build order: number -> count -> title -> description.
           copyParts.forEach((part, index) => timeline.to(part, {
             opacity: 1,
             ...(index === 0 || index === 2 ? { y: 0 } : {}),
-            duration: .44, ease: "power3.out"
-          }, .12 + index * .12));
+            duration: .34, ease: "power3.out"
+          }, .12 + index * .14));
           if (preview) {
             // Phone-shaped stage, followed by its real internal UI controls.
-            timeline.to(preview, { opacity: 1, duration: .30 }, .48);
+            timeline.to(preview, { opacity: 1, duration: .22 }, .52);
             timeline.to(visualParts, {
-              opacity: 1, duration: .38, stagger: .085, ease: "power2.out"
-            }, .62);
+              opacity: 1, duration: .23, stagger: .22, ease: "power2.out"
+            }, .72);
           }
           };
           // Two neighbouring cards never build complex previews on the
