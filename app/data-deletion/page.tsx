@@ -1,105 +1,22 @@
-export const metadata = {
-  title: "حذف اطلاعات | SmartDirect",
-  description: "دستورالعمل حذف اطلاعات کاربران SmartDirect",
-};
+import type { Metadata } from "next";
+import Link from "next/link";
+import { PublicInfoPage } from "@/components/landing/PublicInfoPage";
+import { DataDeletionRequestForm } from "@/components/legal/DataDeletionRequestForm";
+import "../legal-pages.css";
 
-export default function DataDeletionPage() {
-  return (
-    <main
-      dir="rtl"
-      className="min-h-screen bg-white text-slate-900"
-    >
-      <div className="mx-auto max-w-4xl px-6 py-16 sm:px-8">
-        <header className="mb-12 border-b border-slate-200 pb-8">
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            دستورالعمل حذف اطلاعات
-          </h1>
-
-          <p className="mt-4 text-sm leading-7 text-slate-500">
-            SmartDirect
-          </p>
-        </header>
-
-        <div className="space-y-10 text-[15px] leading-8 text-slate-700">
-          <section>
-            <h2 className="mb-3 text-xl font-semibold text-slate-900">
-              حذف حساب و اطلاعات
-            </h2>
-
-            <p>
-              کاربران SmartDirect می‌توانند درخواست حذف اطلاعات حساب
-              کاربری و اطلاعات مربوط به اتصال Instagram خود را ارسال کنند.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="mb-3 text-xl font-semibold text-slate-900">
-              اطلاعاتی که می‌توان درخواست حذف آن‌ها را داد
-            </h2>
-
-            <ul className="list-disc space-y-2 pr-6">
-              <li>اطلاعات حساب کاربری SmartDirect</li>
-              <li>اطلاعات اتصال حساب Instagram</li>
-              <li>اطلاعات مربوط به اتوماسیون‌های ایجادشده توسط کاربر</li>
-              <li>اطلاعات ذخیره‌شده مرتبط با پیام‌ها و نظرات، در صورت وجود</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="mb-3 text-xl font-semibold text-slate-900">
-              نحوه درخواست حذف
-            </h2>
-
-            <p>
-              برای درخواست حذف اطلاعات، کاربر باید از طریق کانال رسمی
-              پشتیبانی SmartDirect درخواست خود را ارسال کند.
-            </p>
-
-            <p className="mt-3">
-              درخواست باید شامل ایمیلی باشد که با حساب SmartDirect
-              استفاده شده است تا امکان شناسایی حساب و پردازش درخواست
-              وجود داشته باشد.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="mb-3 text-xl font-semibold text-slate-900">
-              قطع اتصال Instagram
-            </h2>
-
-            <p>
-              کاربر همچنین می‌تواند اتصال حساب Instagram خود را از
-              SmartDirect قطع کند. قطع اتصال باعث توقف دسترسی فعال سرویس
-              به حساب متصل خواهد شد، اما حذف کامل اطلاعات ذخیره‌شده ممکن
-              است نیازمند ارسال درخواست حذف اطلاعات باشد.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="mb-3 text-xl font-semibold text-slate-900">
-              پردازش درخواست
-            </h2>
-
-            <p>
-              پس از دریافت درخواست معتبر، اطلاعات مربوط به حساب مطابق
-              سیاست‌های نگهداری اطلاعات SmartDirect بررسی و برای حذف
-              پردازش می‌شوند؛ مگر اینکه نگهداری بخشی از اطلاعات به دلیل
-              الزامات قانونی یا امنیتی ضروری باشد.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="mb-3 text-xl font-semibold text-slate-900">
-              تماس
-            </h2>
-
-            <p>
-              برای ارسال درخواست حذف اطلاعات، از اطلاعات تماس رسمی
-              SmartDirect استفاده کنید.
-            </p>
-          </section>
-        </div>
-      </div>
-    </main>
-  );
+export const metadata:Metadata={title:"حذف اطلاعات و داده‌های کاربر | دایرا",description:"مسیر عمومی ثبت و پیگیری درخواست حذف اطلاعات دایرا و داده‌های دریافتی از اینستاگرام و متا."};
+export default function DataDeletionPage(){
+ return <PublicInfoPage eyebrow="حذف اطلاعات کاربران" title="درخواست حذف داده‌ها" description="برای درخواست حذف اطلاعات مرتبط با حساب دایرا یا اتصال اینستاگرام، بدون نیاز به ورود فرم زیر را تکمیل کنید.">
+  <div className="da-legal">
+   <section><h2>چه اطلاعاتی می‌توان حذف کرد؟</h2><p>اطلاعات شناسایی و حساب دایرا، توکن و داده‌های اتصال پیج، پاسخ‌های خودکار، محتوا و پیام‌های ذخیره‌شده و سایر اطلاعات پردازش‌شده از طریق مجوزهای متا، با رعایت الزامات قانونی.</p></section>
+   <section><h2>روش ثبت درخواست</h2><ol style={{listStyle:"decimal"}}>
+    <li>ایمیل یا شماره تماس مرتبط و در صورت امکان نام کاربری اینستاگرام را وارد کنید.</li>
+    <li>درخواست را ثبت کنید و کد پیگیری را نزد خود نگه دارید.</li>
+    <li>برای حفظ امنیت داده‌ها، مالکیت حساب و هویت درخواست‌کننده پیش از حذف بررسی می‌شود.</li>
+    <li>پس از تأیید درخواست، اطلاعات قابل حذف بدون تأخیر غیرضروری حذف یا بی‌هویت می‌شوند. وضعیت را با کد پیگیری بررسی کنید.</li>
+   </ol><DataDeletionRequestForm/></section>
+   <section><h2>قطع اتصال و حذف در خود اینستاگرام</h2><p>می‌توانید دسترسی برنامه را در تنظیمات حساب Meta/Instagram نیز لغو کنید. این کار لزوماً داده‌های پیش‌تر ذخیره‌شده در دایرا را پاک نمی‌کند. حذف اطلاعات از دایرا نیز محتوای منتشرشده داخل خود اینستاگرام را حذف نمی‌کند.</p></section>
+   <section><h2>استثناهای قانونی</h2><p>اطلاعاتی که نگهداری آن‌ها طبق قانون لازم است، فقط در حد الزام قانونی و با محدودکردن دسترسی حفظ می‌شوند. برای آگاهی بیشتر <Link href="/privacy-policy">سیاست حریم خصوصی</Link> را مطالعه کنید. همچنین می‌توانید از <Link href="/dashboard/tickets/new">پشتیبانی حساب دایرا</Link> کمک بگیرید.</p></section>
+  </div>
+ </PublicInfoPage>;
 }
