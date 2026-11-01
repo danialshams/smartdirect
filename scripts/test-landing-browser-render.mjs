@@ -394,6 +394,44 @@ try {
   await sleep(340);
   assert.equal(await evaluate('document.querySelector(".ap-menu").classList.contains("ap-menu--open")'),false);
 
+  // Verify ACTUAL ScrollTrigger launches a staged feature reveal and
+  // individually animated footer links (not just GSAP loaded in memory).
+  const entrance = await evaluate(`(async () => {
+    const sleep = ms => new Promise(resolve=>setTimeout(resolve,ms));
+    const root=document.querySelector(".ap-site");
+    const rows=[...document.querySelectorAll(".ap-showcase-capture")];
+    const footer=document.querySelector(".ap-footer--extended");
+    async function exercise(section, item) {
+      const top=section.getBoundingClientRect().top+window.scrollY;
+      window.scrollTo({top:Math.max(0,top-innerHeight*1.18),behavior:"instant"});
+      await sleep(500);
+      const opacities=[];
+      for (let i=0;i<11;i++) {
+        window.scrollBy({top:48,behavior:"instant"});
+        await sleep(115);
+        opacities.push(Number(getComputedStyle(item).opacity));
+      }
+      await sleep(2200);
+      return {started:Number(section.dataset.gsapStarted??0),
+        shown:section.dataset.gsapShown,
+        opacities,finalOpacity:Number(getComputedStyle(item).opacity)};
+    }
+    const row=rows[Math.min(4,rows.length-1)];
+    const card=row.querySelector(".ap-social-grid > .ap-social-card");
+    const feature=await exercise(row,card);
+    const link=footer.querySelector(".ap-footer__links > a");
+    const foot=await exercise(footer,link);
+    return {active:root.dataset.gsapMotion,feature,footer:foot};
+  })()`);
+  console.log("DAIRA_GSAP_ENTRANCES="+JSON.stringify(entrance));
+  assert.equal(entrance.active,"true","Real GSAP ScrollTrigger must be initialized");
+  for (const [name,result] of Object.entries({feature:entrance.feature,footer:entrance.footer})) {
+    assert.ok(result.started>0, name+" must start a genuine GSAP entrance");
+    assert.equal(result.shown,"true",name+" GSAP timeline must finish");
+    assert.ok(result.opacities.some(x=>x<0.98),
+      name+" must show actual intermediate opacity during the entrance");
+    assert.equal(result.finalOpacity,1,name+" must remain fully visible after entrance");
+  }
   // A Firefox user-agent spoof inside Chromium does not test WebKit rendering.
   // The official shared scene makes WebGL background capture available on iOS.
   assert.equal(await evaluate("document.querySelectorAll('[data-liquid-glass-scene]').length"),1);

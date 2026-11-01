@@ -62,6 +62,7 @@ export function LandingInteractions() {
                   section.dataset.gsapShown = "true";
                   return;
                 }
+                section.dataset.gsapStarted = String(performance.now());
                 isolate(targets);
                 gsap.fromTo(targets,
                   { autoAlpha: 0, y: 23 },
@@ -92,6 +93,7 @@ export function LandingInteractions() {
                   footer.dataset.gsapShown = "true";
                   return;
                 }
+                footer.dataset.gsapStarted = String(performance.now());
                 isolate(items);
                 gsap.fromTo(items,
                   { autoAlpha: 0, y: 19 },
