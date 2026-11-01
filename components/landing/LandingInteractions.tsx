@@ -5,163 +5,235 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChevronUp } from "lucide-react";
 
+type CardState = "waiting" | "queued" | "playing" | "done";
+
 export function LandingInteractions() {
   const [showTop, setShowTop] = useState(false);
   const [hasShown, setHasShown] = useState(false);
+
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(".ap-site");
     if (!root) return;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
       root.dataset.gsapMotion = "reduced";
+      root.querySelectorAll<HTMLElement>(".ap-social-card").forEach(card => {
+        card.dataset.gsapShown = "true";
+      });
       return;
     }
-    // GSAP drives motion; one native observer decides when a feature is visible.
-    // Avoid eleven ScrollTrigger checks on every Safari WebGL scroll frame.
+
     gsap.registerPlugin(ScrollTrigger);
     root.dataset.gsapMotion = "true";
-    const animated = new Set<HTMLElement>();
-    const delayedCards: gsap.core.Tween[] = [];
-    const featureCards = new Set<HTMLElement>();
-    const callbacks = new Map<Element, () => void>();
-    const enter = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+    const cards = [...root.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card")];
+    const states = new Map<HTMLElement, CardState>();
+    const running = new Set<gsap.core.Animation>();
+    const affected = new Set<HTMLElement>();
+    const pending = new Set<HTMLElement>();
+    const delays = new Set<gsap.core.Tween>();
+    let disposed = false;
+
+    const cardObserver = new IntersectionObserver(entries => {
       for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        observer.unobserve(entry.target);
-        const play = callbacks.get(entry.target);
-        callbacks.delete(entry.target);
-        play?.();
+        if (!entry.isIntersecting || entry.intersectionRatio < .24) continue;
+        startCard(entry.target as HTMLElement);
+      }
+    }, { rootMargin: "0px 0px -27% 0px", threshold: [.24] });
+
+    // Some WebKit versions miss an observer callback after an instantaneous
+    // jump/resize. One passive, RAF-coalesced fallback checks ONLY queued cards.
+    let scrollFrame = 0;
+    const probe = () => {
+      scrollFrame = 0;
+      for (const card of pending) {
+        const rect = card.getBoundingClientRect();
+        const visible = Math.max(0, Math.min(rect.bottom, innerHeight * .73) - Math.max(rect.top, 0));
+        if (rect.top <= innerHeight * .73 && rect.bottom > 0 &&
+            visible >= Math.min(rect.height, innerHeight * .73) * .24) startCard(card);
       }
     };
-    const observer = new IntersectionObserver(enter, {
-      rootMargin: "0px 0px -22% 0px", threshold: 0
-    });
-    // End-of-document strip cannot reach a 78% viewport threshold.
-    const bottomObserver = new IntersectionObserver(enter, { threshold: 0 });
-    const watch = (node: HTMLElement, play: () => void, bottom = false) => {
-      if (node.dataset.gsapShown === "true") return;
-      callbacks.set(node, play);
-      (bottom ? bottomObserver : observer).observe(node);
+    const onScroll = () => {
+      if (!scrollFrame) scrollFrame = requestAnimationFrame(probe);
     };
-    const fade = (node: HTMLElement, duration = .58, bottom = false) => {
-      if (node.dataset.gsapShown === "true") return;
-      animated.add(node);
-      // Content is visible by default. If Safari skips an intersection
-      // after a fast jump or breakpoint resize, no text remains invisible.
-      watch(node, () => {
-        node.dataset.gsapStarted = String(performance.now());
-        gsap.fromTo(node, { opacity: .55 }, { opacity: 1, duration, ease: "power2.out", overwrite: "auto",
-          onComplete: () => {
-            node.dataset.gsapShown = "true";
-            gsap.set(node, { clearProps: "opacity" });
-          }
-        });
-      }, bottom);
-    };
-    const ctx = gsap.context(() => {
-      const title = root.querySelector<HTMLElement>(".ap-motion-reveal-title");
-      const titleText = title?.querySelector<HTMLElement>("span");
-      if (title && titleText) {
-        gsap.set(titleText, { yPercent: 105 });
-        animated.add(titleText);
-        // Selective upward mask belongs ONLY to the main features heading.
-        ScrollTrigger.create({
-          trigger: title, start: "top 82%", once: true,
-          onEnter: () => {
-            gsap.fromTo(titleText, { yPercent: 105 }, {
-              yPercent: 0, duration: .86, ease: "power3.out", overwrite: "auto",
-              onComplete: () => {
-                title.dataset.gsapShown = "true";
-                gsap.set(titleText, { clearProps: "transform" });
-              }
-            });
-          }
-        });
-      }
-      root.querySelectorAll<HTMLElement>(".ap-showcase__intro .ap-showcase__eyebrow, .ap-showcase__intro p")
-        .forEach(node => fade(node, .52));
-      root.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card").forEach(card => {
-        featureCards.add(card);
-        if (card.dataset.gsapShown === "true") return;
-        const copyParts = [
+
+    const unique = (nodes: (HTMLElement | null)[]) =>
+      nodes.filter((node): node is HTMLElement => Boolean(node));
+
+    const startCard = (card: HTMLElement) => {
+      if (disposed || states.get(card) !== "waiting") return;
+      states.set(card, "queued");
+      card.dataset.gsapPhase = "queued";
+      pending.delete(card);
+      cardObserver.unobserve(card);
+
+      const build = () => {
+        if (disposed || states.get(card) !== "queued") return;
+        states.set(card, "playing");
+        card.dataset.gsapStarted = String(performance.now());
+        card.dataset.gsapPhase = "building";
+
+        const direction = Number(card.dataset.gsapDirection) || 1;
+        const opposite = -direction;
+        const copyParts = unique([
           card.querySelector<HTMLElement>(".ap-social-card__index"),
           card.querySelector<HTMLElement>(".ap-social-card__count"),
           card.querySelector<HTMLElement>(".ap-social-card__copy h3"),
           card.querySelector<HTMLElement>(".ap-social-card__copy p")
-        ].filter((node): node is HTMLElement => Boolean(node));
+        ]);
         const preview = card.querySelector<HTMLElement>(".ig-preview");
-        // Animate the *actual Instagram UI pieces*, not a single preview fade.
-        // Expanding a few layout groups reveals rows, chat bubbles and panels
-        // in meaningful order without animating the heavy whole-card transform.
-        const expanded = ".ig-chat, .ig-story, .ig-live, .ig-photo-grid, .ig-insights-bars, .ig-menu-sheet";
+        // Actual distinct blocks of the Instagram illustration, in DOM order.
+        // Do not animate every leaf icon (too many Safari compositor layers).
+        const groups = ".ig-chat, .ig-story, .ig-live, .ig-photo-grid, .ig-insights-bars, .ig-menu-sheet";
         const visualParts = preview ? Array.from(preview.children).flatMap(child => {
           if (!(child instanceof HTMLElement)) return [];
-          if (child.matches(expanded)) return Array.from(child.children).filter(
+          if (child.matches(groups)) return Array.from(child.children).filter(
             (part): part is HTMLElement => part instanceof HTMLElement
           );
           return [child];
         }) : [];
-        const stages = [...copyParts, ...visualParts];
-        card.dataset.gsapStages = String(stages.length);
-        animated.add(card);
-        stages.forEach(part => animated.add(part));
-        if (preview) animated.add(preview);
-        watch(card, () => {
-          if (card.dataset.gsapQueued || card.dataset.gsapStarted) return;
-          card.dataset.gsapQueued = "true";
-          const buildCard = () => {
-          card.dataset.gsapStarted = String(performance.now());
-          card.dataset.gsapPhase = "building";
-          // Crucial: hide only AFTER the card actually becomes visible.
-          // An unvisited card or a WebKit missed observer stays fully legible.
-          const timeline = gsap.timeline({
-            defaults: { ease: "power2.out", overwrite: "auto" },
+
+        card.dataset.gsapStages = String(1 + copyParts.length + (preview ? 1 : 0) + visualParts.length);
+        for (const element of [card, ...copyParts, ...visualParts, ...(preview ? [preview] : [])]) {
+          affected.add(element);
+        }
+        // Everything is prepared while its parent card is still hidden.
+        // Each stage begins ONLY after the previous stage has entered.
+        gsap.set(card, { x: 44 * direction, opacity: 0 });
+        gsap.set(copyParts, { x: 22 * opposite, opacity: 0 });
+        if (preview) gsap.set(preview, { x: 20 * opposite, opacity: 0 });
+        gsap.set(visualParts, { x: 14 * opposite, opacity: 0 });
+
+        const timeline = gsap.timeline({
+          defaults: { ease: "power3.out" },
+          onComplete: () => {
+            states.set(card, "done");
+            card.dataset.gsapPhase = "complete";
+            card.dataset.gsapShown = "true";
+            gsap.set([card, ...copyParts, ...visualParts, ...(preview ? [preview] : [])], {
+              clearProps: "transform,opacity,visibility"
+            });
+            running.delete(timeline);
+          }
+        });
+        running.add(timeline);
+
+        // 01 outer shell: right, 02 outer shell: left, alternating globally.
+        timeline.to(card, { x: 0, opacity: 1, duration: .65 }, 0);
+        // Opposing direction. Each number, title and description owns a slot.
+        copyParts.forEach((part, i) => timeline.to(part, {
+          x: 0, opacity: 1, duration: .36
+        }, .56 + i * .16));
+        if (preview) {
+          const previewAt = .56 + copyParts.length * .16 + .20;
+          timeline.to(preview, { x: 0, opacity: 1, duration: .38 }, previewAt);
+          visualParts.forEach((part, i) => timeline.to(part, {
+            x: 0, opacity: 1, duration: .29
+          }, previewAt + .39 + i * .16));
+        }
+      };
+
+      // Paired cards must not produce two compositing bursts on the same frame.
+      const secondInRow = Array.from(card.parentElement?.children ?? []).indexOf(card) > 0;
+      if (secondInRow) {
+        const delayed = gsap.delayedCall(.28, () => {
+          delays.delete(delayed);
+          build();
+        });
+        delays.add(delayed);
+      } else build();
+    };
+
+    cards.forEach((card, index) => {
+      const direction = index % 2 === 0 ? 1 : -1;
+      card.dataset.gsapDirection = String(direction);
+      if (card.dataset.gsapShown === "true") {
+        states.set(card, "done");
+        return;
+      }
+      const rect = card.getBoundingClientRect();
+      // Deep-link or restored scroll: already-visible content must not vanish
+      // on hydration. Only cards still approaching the viewport are armed.
+      if (rect.top < innerHeight * .72 && rect.bottom > 0) {
+        states.set(card, "done");
+        card.dataset.gsapShown = "true";
+        card.dataset.gsapPhase = "complete";
+        return;
+      }
+      states.set(card, "waiting");
+      affected.add(card);
+      gsap.set(card, { opacity: 0 });
+      pending.add(card);
+      cardObserver.observe(card);
+    });
+    addEventListener("scroll", onScroll, { passive: true });
+    addEventListener("resize", onScroll, { passive: true });
+    requestAnimationFrame(probe);
+
+    // Only the feature section headline gets the upward clipped text effect.
+    const title = root.querySelector<HTMLElement>(".ap-motion-reveal-title");
+    const titleText = title?.querySelector<HTMLElement>("span");
+    let headingTrigger: ScrollTrigger | undefined;
+    if (title && titleText && title.dataset.gsapShown !== "true") {
+      affected.add(titleText);
+      gsap.set(titleText, { yPercent: 105 });
+      headingTrigger = ScrollTrigger.create({
+        trigger: title, start: "top 75%", once: true,
+        onEnter: () => {
+          const tween = gsap.fromTo(titleText, { yPercent: 105 }, {
+            yPercent: 0, duration: .85, ease: "power3.out",
             onComplete: () => {
-              card.dataset.gsapShown = "true";
-              card.dataset.gsapPhase = "complete";
-              gsap.set([card, ...stages, ...(preview ? [preview] : [])], {
-                clearProps: "opacity,visibility,transform"
-              });
+              title.dataset.gsapShown = "true";
+              gsap.set(titleText, { clearProps: "transform" });
+              running.delete(tween);
             }
           });
-          gsap.set(card, { opacity: .82 });
-          copyParts.forEach((part, index) => gsap.set(part, {
-            opacity: 0, ...(index === 0 || index === 2 ? { y: 10 } : {})
-          }));
-          if (preview) gsap.set(preview, { opacity: 0 });
-          gsap.set(visualParts, { opacity: 0 });
-          timeline.to(card, { opacity: 1, duration: .22 }, 0);
-          // Build order: number -> count -> title -> description.
-          copyParts.forEach((part, index) => timeline.to(part, {
-            opacity: 1,
-            ...(index === 0 || index === 2 ? { y: 0 } : {}),
-            duration: .34, ease: "power3.out"
-          }, .12 + index * .14));
-          if (preview) {
-            // Phone-shaped stage, followed by its real internal UI controls.
-            timeline.to(preview, { opacity: 1, duration: .22 }, .52);
-            timeline.to(visualParts, {
-              opacity: 1, duration: .23, stagger: .22, ease: "power2.out"
-            }, .72);
-          }
-          };
-          // Two neighbouring cards never build complex previews on the
-          // same WebKit frame. Delay is scheduled *before* hiding anything.
-          const peerIndex = Array.from(card.parentElement?.children ?? []).indexOf(card);
-          if (peerIndex > 0) delayedCards.push(gsap.delayedCall(peerIndex * .48, buildCard));
-          else buildCard();
-        });
+          running.add(tween);
+        }
       });
-      const footer = root.querySelector<HTMLElement>(".ap-footer--extended");
-      if (footer) {
-        const callout = footer.querySelector<HTMLElement>("[data-footer-callout]");
-        if (callout) fade(callout, .78, true);
-        footer.querySelectorAll<HTMLElement>(".ap-footer__brand, .ap-footer__links")
-          .forEach(node => fade(node, .62, true));
-        const bottom = footer.querySelector<HTMLElement>(".ap-footer__bottom");
-        if (bottom) fade(bottom, .55, true);
-      }
-    }, root);
+    }
+
+    // Footer: each text/link/license badge is its own ordered GSAP stage.
+    // Keep everything visible until the corresponding group actually enters.
+    const footerGroups = [
+      { node: root.querySelector<HTMLElement>(".ap-footer__callout"),
+        select: "h2, p, a" },
+      { node: root.querySelector<HTMLElement>(".ap-footer__brand"),
+        select: ".ap-brand, p" },
+      { node: root.querySelector<HTMLElement>(".ap-footer__links"),
+        select: ":scope > a" },
+      { node: root.querySelector<HTMLElement>(".ap-footer__trust"),
+        select: ".ap-footer__trust-title, .ap-footer__trust-copy p, .ap-footer__badge-placeholder" },
+      { node: root.querySelector<HTMLElement>(".ap-footer__bottom"),
+        select: ":scope > span" }
+    ];
+    const footerObservers = new Set<IntersectionObserver>();
+    for (const { node, select } of footerGroups) {
+      if (!node || node.dataset.gsapShown === "true") continue;
+      const parts = Array.from(node.querySelectorAll<HTMLElement>(select));
+      if (!parts.length) continue;
+      const observer = new IntersectionObserver(entries => {
+        if (!entries.some(entry => entry.isIntersecting) || disposed ||
+            node.dataset.gsapStarted) return;
+        observer.disconnect();
+        footerObservers.delete(observer);
+        node.dataset.gsapStarted = String(performance.now());
+        for (const part of parts) affected.add(part);
+        gsap.set(parts, { opacity: 0 });
+        const timeline = gsap.timeline({
+          onComplete: () => {
+            node.dataset.gsapShown = "true";
+            gsap.set(parts, { clearProps: "opacity" });
+            running.delete(timeline);
+          }
+        });
+        running.add(timeline);
+        timeline.to(parts, {
+          opacity: 1, duration: .42, stagger: .14, ease: "power2.out"
+        });
+      }, { rootMargin: "0px 0px -9% 0px", threshold: 0 });
+      footerObservers.add(observer);
+      observer.observe(node);
+    }
 
     let canceled = false;
     void document.fonts.ready.then(() => {
@@ -169,49 +241,66 @@ export function LandingInteractions() {
         if (!canceled) ScrollTrigger.refresh();
       });
     }).catch(() => {});
+
     return () => {
+      disposed = true;
       canceled = true;
-      observer.disconnect();
-      bottomObserver.disconnect();
-      callbacks.clear();
-      delayedCards.forEach(tween => tween.kill());
-      for (const card of featureCards) {
-        delete card.dataset.gsapQueued;
+      removeEventListener("scroll", onScroll);
+      removeEventListener("resize", onScroll);
+      if (scrollFrame) cancelAnimationFrame(scrollFrame);
+      cardObserver.disconnect();
+      footerObservers.forEach(observer => observer.disconnect());
+      headingTrigger?.kill();
+      delays.forEach(tween => tween.kill());
+      running.forEach(animation => animation.kill());
+      for (const node of affected) gsap.set(node, {
+        clearProps: "transform,opacity,visibility"
+      });
+      for (const card of cards) {
+        // A completed card stays completed; unfinished animations may safely
+        // restart on React Strict Mode remount without a half-hidden card.
         if (card.dataset.gsapShown !== "true") {
           delete card.dataset.gsapStarted;
           delete card.dataset.gsapPhase;
         }
       }
-      ctx.revert();
-      for (const node of animated) {
-        gsap.killTweensOf(node);
-        gsap.set(node, { clearProps: "opacity,transform,visibility" });
-      }
       delete root.dataset.gsapMotion;
     };
-  },[]);
+  }, []);
 
-  useEffect(()=>{
-    let frame=0,displayed=false;
-    const check=()=>{
-      if(frame)return;
-      frame=requestAnimationFrame(()=>{
-        const next=scrollY>540;
-        if(next!==displayed){displayed=next;setShowTop(next);if(next)setHasShown(true);}
-        frame=0;
+  useEffect(() => {
+    let frame = 0, displayed = false;
+    const check = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        const next = scrollY > 540;
+        if (next !== displayed) {
+          displayed = next;
+          setShowTop(next);
+          if (next) setHasShown(true);
+        }
+        frame = 0;
       });
     };
     check();
-    addEventListener("scroll",check,{passive:true});
-    return ()=>{removeEventListener("scroll",check);if(frame)cancelAnimationFrame(frame);};
-  },[]);
+    addEventListener("scroll", check, { passive: true });
+    return () => {
+      removeEventListener("scroll", check);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
 
-  const goToTop=()=>window.scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+  const goToTop = () => window.scrollTo({
+    top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+  });
+
   return (
-    <div className={"ap-backtop"+(showTop?" ap-backtop--visible":"")} data-liquid-glass-ignore="">
+    <div className={"ap-backtop" + (showTop ? " ap-backtop--visible" : "")}
+      data-liquid-glass-ignore="">
       {hasShown && <span className="ap-backtop__lens ap-backtop__blue-blur" aria-hidden="true" />}
-      <button type="button" className="ap-backtop__action" aria-label="بازگشت به بالای صفحه" title="بازگشت به بالا"
-        disabled={!showTop} tabIndex={showTop?0:-1} onClick={goToTop}>
+      <button type="button" className="ap-backtop__action"
+        aria-label="بازگشت به بالای صفحه" title="بازگشت به بالا"
+        disabled={!showTop} tabIndex={showTop ? 0 : -1} onClick={goToTop}>
         <ChevronUp size={28} strokeWidth={2.8} aria-hidden="true"/>
       </button>
     </div>
