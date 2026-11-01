@@ -449,6 +449,7 @@ try {
       phase:card?.dataset.gsapPhase,
       shellOpacity:Number(getComputedStyle(card).opacity),
       realSurface:getComputedStyle(card).backgroundImage.includes("gradient"),
+      noUndersideShadow:getComputedStyle(card).boxShadow==="none",
       removedShadowOnlyShell:card.querySelector(".ap-social-card__shell")===null,
       titleOpacity:Number(getComputedStyle(card.querySelector("h3")).opacity),
       previewOpacity:Number(getComputedStyle(preview).opacity),
@@ -460,6 +461,7 @@ try {
   assert.equal(assembled.phase,"complete","GSAP must complete the inner UI assembly");
   assert.equal(assembled.shellOpacity,1);
   assert.equal(assembled.realSurface,true,"Real feature article owns the animated card background");
+  assert.equal(assembled.noUndersideShadow,true,"Feature card must have no linear shadow underneath");
   assert.equal(assembled.removedShadowOnlyShell,true,"No decorative-only shell should animate instead of the card");
   assert.equal(assembled.titleOpacity,1);
   assert.equal(assembled.previewOpacity,1);

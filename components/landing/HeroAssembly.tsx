@@ -73,7 +73,7 @@ export function HeroAssembly() {
     });
     // GSAP controls the character cadence: no React render per character,
     // no CSS word masks, no extra blue sticker elements.
-    const typeDuration = Math.min(2.65, Math.max(1.15, parts.length * .057));
+    const typeDuration = Math.min(1.3, Math.max(.85, parts.length * .034));
     timeline.to(model, {
       count: parts.length,
       duration: typeDuration,
@@ -85,10 +85,10 @@ export function HeroAssembly() {
       }
     }, 0);
     if (description) timeline.to(description, {
-      opacity: 1, duration: .34, ease: "sine.out"
+      opacity: 1, duration: .24, ease: "sine.out"
     }, typeDuration - .08);
     if (cta) timeline.to(cta, {
-      opacity: 1, duration: .38, ease: "sine.out"
+      opacity: 1, duration: .27, ease: "sine.out"
     }, typeDuration + .08);
     // A short caret blink while typing, then it disappears at completion.
     const cursorTween = caret ? gsap.to(caret, {
