@@ -342,3 +342,31 @@ html[data-daira-hero="pending"] .ap-site .ap-hero__actions{opacity:0}
 .ap-site[data-gsap-motion="true"] .ap-hero__word {
   transition:none!important;
 }
+
+/* Move the lightweight *empty card surface*, never its nested Instagram UI.
+   The real content stays in normal layout, avoiding multi-second iOS
+   compositing stalls that came from translating entire feature cards. */
+.ap-site .ap-social-showcase .ap-social-card,
+.ap-site .ap-social-showcase .ap-social-card:hover {
+  background:transparent!important;
+  border:1px solid transparent!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+.ap-site .ap-social-showcase .ap-social-card__shell {
+  position:absolute;
+  inset:-1px;
+  z-index:0;
+  pointer-events:none;
+  border-radius:inherit;
+  border:1px solid rgba(221,230,244,.74);
+  background:#fff;
+  box-shadow:0 11px 35px rgba(39,72,124,.065);
+}
+.ap-site .ap-social-showcase .ap-social-card__visual {
+  position:relative;
+  z-index:1;
+}
+@media(prefers-reduced-motion:reduce){
+  .ap-site .ap-social-showcase .ap-social-card__shell {transform:none!important;opacity:1!important}
+}
