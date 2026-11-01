@@ -44,7 +44,8 @@ const optics = {
   background: "rgba(255,255,255,.01)",
 };
 
-export function LiquidHeaderSurface() {
+export function LiquidHeaderSurface({ variant = "header" }: { variant?: "header" | "menu" }) {
+  const menu = variant === "menu";
   const capture = useLandingGlassCapture();
   const frameRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLCanvasElement | null>(null);
@@ -91,7 +92,7 @@ export function LiquidHeaderSurface() {
   const ready = opticalReady && (everReady || !capture || captureReady);
 
   return (
-    <div ref={frameRef} className="daira-library-glass-frame"
+    <div ref={frameRef} className={menu ? "daira-menu-glass-frame" : "daira-library-glass-frame"}
       data-glass-ready={ready ? "true" : "false"}
       data-optical-strategy={strategy}
       data-optical-source-bound={sourceBound ? "true" : "false"}
@@ -100,9 +101,9 @@ export function LiquidHeaderSurface() {
       <LiquidGlass
         {...optics}
         backdropRef={backdropRef}
-        radius={26}
+        radius={menu ? 28 : 26}
         onDiagnosticsChange={onDiagnosticsChange}
-        className="daira-library-liquid-header"
+        className={menu ? "daira-menu-liquid-optics" : "daira-library-liquid-header"}
         style={{ position: "absolute", pointerEvents: "none" }}
         aria-hidden="true"
       />
