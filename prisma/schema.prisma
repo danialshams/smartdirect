@@ -21,6 +21,7 @@ model User {
   blockedReason                                                  String?
   phone                                                          String?
   phoneVerifiedAt                                               DateTime?
+  phoneVerificationRequired                                      Boolean               @default(false)
   smsConsentAt                                                  DateTime?
   termsAcceptedAt                                                DateTime?
   termsVersion                                                   String?
