@@ -99,11 +99,19 @@ export function LandingInteractions() {
         });
       }
 
-      // Each card is independent. Never trigger an entire section while its
-      // next card is still off-screen (previous code used section top 89%).
+      // Each card is triggered only when its own title actually enters view.
+      // Safari's real WebGL lens already composites the page: promoting an
+      // entire Instagram preview card into another animated layer causes
+      // multi-hundred-ms stalls. Move ONLY the small text group on WebKit;
+      // Chromium gets the full-card entrance and preview micro-animation.
+      const ua = navigator.userAgent;
+      const lightweightCards = /iPhone|iPad|iPod|Firefox|FxiOS/.test(ua) ||
+        (ua.includes("Safari/") && !/Chrome|Chromium|Edg|OPR/.test(ua));
       for (const card of root.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card")) {
         const section = card.closest<HTMLElement>(".ap-showcase-capture");
-        gsap.set(card, { autoAlpha: 0 });
+        const textGroup = card.querySelector<HTMLElement>(".ap-social-card__copy");
+        const movingElement = lightweightCards && textGroup ? textGroup : card;
+        gsap.set(movingElement, { autoAlpha: 0 });
         ScrollTrigger.create({
           trigger: card,
           start: "top 73%",
@@ -113,18 +121,21 @@ export function LandingInteractions() {
             if (!active || card.dataset.gsapShown === "true") return;
             card.dataset.gsapStarted = String(performance.now());
             if (section) section.dataset.gsapStarted ??= card.dataset.gsapStarted;
-            gsap.fromTo(card, { autoAlpha: 0, y: 17 }, {
-              autoAlpha: 1, y: 0,
-              duration: .72, ease: "power3.out",
-              overwrite: "auto",
-              onComplete: () => {
-                gsap.set(card, { clearProps: "opacity,visibility,transform" });
-                if (!active) return;
-                card.dataset.gsapShown = "true";
-                if (section) section.dataset.gsapShown = "true";
-                revealPreview(card);
-              }
-            });
+            gsap.fromTo(movingElement,
+              { autoAlpha: 0, y: lightweightCards ? 9 : 17 },
+              {
+                autoAlpha: 1, y: 0,
+                duration: lightweightCards ? .58 : .72,
+                ease: "power3.out",
+                overwrite: "auto",
+                onComplete: () => {
+                  gsap.set(movingElement, { clearProps: "opacity,visibility,transform" });
+                  if (!active) return;
+                  card.dataset.gsapShown = "true";
+                  if (section) section.dataset.gsapShown = "true";
+                  revealPreview(card);
+                }
+              });
           }
         });
       }
