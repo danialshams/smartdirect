@@ -139,7 +139,7 @@ export function LandingInteractions() {
           // First reveal only changes two compositor properties, not visibility
           // (which forced an expensive first-paint layer in mobile WebKit).
           timeline.to(shell, {
-            x: 0, opacity: 1, force3D: false, duration: .64
+            x: 0, opacity: 1, force3D: card === cards[0], duration: .64
           }, 0);
         }
         // Opposing copy motion, with separate sequential text reveals.
@@ -232,7 +232,9 @@ export function LandingInteractions() {
       if (shell) {
         affected.add(shell);
         gsap.set(shell, {
-          x: 54 * direction, opacity: 0, force3D: false,
+          // Cache only the first, lightweight EMPTY shell on the GPU before
+          // scroll. Unlike the heavy preview, this contains no moving text.
+          x: 54 * direction, opacity: 0, force3D: index === 0,
           ...(index === 0 ? { willChange: "transform,opacity" } : {})
         });
       }
