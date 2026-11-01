@@ -42,10 +42,10 @@ export function FeatureShowcase() {
           >
             <div className="ap-shell ap-showcase__inner">
               {rowIndex === 0 && (
-                <div className="ap-showcase__intro" data-reveal>
+                <div className="ap-showcase__intro">
                   <span className="ap-showcase__eyebrow">امکانات دایرا</span>
                   <h2 id="ap-features-title" className="daira-text-mask" data-text-reveal><span className="daira-text-mask__inner">از یک پیام ساده، تا مدیریت کل پیج</span></h2>
-                  <p data-reveal>هر قابلیت، در محیطی آشنا شبیه اینستاگرام.</p>
+                  <p>هر قابلیت، در محیطی آشنا شبیه اینستاگرام.</p>
                 </div>
               )}
               <div className="ap-social-grid">
