@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { ArrowLeft, ArrowUpLeft, CheckCircle2, Eye, EyeOff, Fingerprint, KeyRound, MessageCircleMore, Phone, ShieldCheck, UserRound } from "lucide-react";
 import Link from "next/link";
 import { asciiDigits } from "@/lib/auth/phone";
+import { ShineBorder } from "./ShineBorder";
 import "./auth-studio.css";
 
 type Screen = "login" | "signup" | "forgot" | "verify";
@@ -219,6 +220,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
         </header>
         <div className="da-auth-formwrap">
           <div key={screen} className="da-auth-panel">
+            <ShineBorder duration={16} borderWidth={1} />
             <h1>{headline[screen]}</h1>
             {screen!=="forgot" && screen!=="verify" && <div className="da-auth-main-tabs" role="tablist" aria-label="ورود یا ثبت‌نام">
               <button type="button" role="tab" aria-selected={screen==="login"} className={screen==="login"?"active":""} onClick={()=>changeScreen("login")}>ورود به حساب</button>
