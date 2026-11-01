@@ -362,6 +362,11 @@ export function LandingInteractions() {
       footerObservers.forEach(observer => observer.disconnect());
       headingTrigger?.kill();
       headingObserver?.disconnect();
+      // Strict Mode can tear down a partly faded title before onComplete.
+      // Clear its arm state so the next mount does not permanently skip it.
+      if (title && title.dataset.gsapShown !== "true") {
+        delete title.dataset.gsapStarted;
+      }
       delays.forEach(tween => tween.kill());
       running.forEach(animation => animation.kill());
       for (const node of affected) gsap.set(node, {
