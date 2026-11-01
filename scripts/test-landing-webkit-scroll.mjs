@@ -147,6 +147,27 @@ try {
   if (settled.captures < 2) throw Error("No real scene tiles captured during scroll");
   const featureScreenshot=await page.screenshot({type:"jpeg",quality:63});
   await writeFile("artifacts/landing-webkit/feature-with-real-glass.jpg",featureScreenshot);
+  // A regression previously kept the WebGL strategy alive but displayed a
+  // nearly white header because <picture> data was not embedded in the
+  // foreignObject. Check ACTUAL output pixels in an area where the original
+  // live scene shows the pink Instagram preview behind the lens.
+  const opticsPixel=await page.evaluate(async data => {
+    const image=new Image();
+    image.src="data:image/jpeg;base64,"+data;
+    await image.decode();
+    const canvas=document.createElement("canvas");
+    canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+    const ctx=canvas.getContext("2d",{willReadFrequently:true});
+    if(!ctx) throw Error("Screenshot sampler unavailable");
+    ctx.drawImage(image,0,0);
+    return [...ctx.getImageData(520,78,1,1).data].slice(0,3);
+  },featureScreenshot.toString("base64"));
+  console.log("WEBKIT_ACTUAL_GLASS_PINK_PIXEL="+JSON.stringify(opticsPixel));
+  if(opticsPixel[0]-opticsPixel[1]<25 || opticsPixel[1]>220) {
+    throw Error("WebGL header lost the real pink content behind it: white/matte reflection regression");
+  }
+  console.log("WEBKIT_OPTICS_PINK_REFRACTION_PASS");
+
 
   // Revisiting a previously captured region must preserve optical rendering
   // without replacing the GPU canvas with the old 5px frosted material.
@@ -258,6 +279,26 @@ try {
   console.log("WEBKIT_NATIVE_OPTICS_UNINTERRUPTED_PASS");
   console.log("WEBKIT_FAST_SCROLL_RECOVERY_PASS");
   console.log("WEBKIT_SCROLL_PASS");
+  // Verify the desktop responsive optical images, real WebGL lens and
+  // alignment before disabling the header for source-artwork exports.
+  await page.setViewportSize({width:1280,height:900});
+  await page.waitForFunction(() => {
+    const sections=[...document.querySelectorAll(".daira-optical-tile img")];
+    const live=[...document.querySelector(".ap-site[data-liquid-glass-scene]").children]
+      .filter(el=>el.matches("main, .ap-showcase-capture, footer.ap-footer--extended"));
+    return sections.length===10 && sections.every((img,i)=>
+      img.getAttribute("src")===`/landing-reflection/desktop-${i}.jpg` &&
+      img.complete && img.naturalWidth>0 &&
+      Math.abs(img.closest(".daira-optical-tile").getBoundingClientRect().top-live[i].getBoundingClientRect().top)<3);
+  },null,{timeout:15000});
+  await page.evaluate(() => window.scrollTo({top:2100,behavior:"instant"}));
+  await page.waitForTimeout(500);
+  await writeFile("artifacts/landing-webkit/desktop-with-real-glass.jpg",await page.screenshot({type:"jpeg",quality:78}));
+  await page.setViewportSize({width:390,height:844});
+  await page.waitForFunction(() => [...document.querySelectorAll(".daira-optical-tile img")].every((img,i)=>
+    img.getAttribute("src")===`/landing-reflection/mobile-${i}.jpg` && img.complete && img.naturalWidth>0),null,{timeout:15000});
+  await page.waitForTimeout(250);
+
   // Export exact, fully rendered static page artwork for the next optical
   // experiment. The final transparent loupe shader is NOT part of these
   // images; it still runs live on the GPU over them.
