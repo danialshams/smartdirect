@@ -21,6 +21,7 @@ export function LandingInteractions() {
     gsap.registerPlugin(ScrollTrigger);
     root.dataset.gsapMotion = "true";
     const animated = new Set<HTMLElement>();
+    const delayedCards: gsap.core.Tween[] = [];
     const callbacks = new Map<Element, () => void>();
     const enter = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
       for (const entry of entries) {
@@ -104,7 +105,9 @@ export function LandingInteractions() {
         stages.forEach(part => animated.add(part));
         if (preview) animated.add(preview);
         watch(card, () => {
-          if (card.dataset.gsapStarted) return;
+          if (card.dataset.gsapQueued || card.dataset.gsapStarted) return;
+          card.dataset.gsapQueued = "true";
+          const buildCard = () => {
           card.dataset.gsapStarted = String(performance.now());
           card.dataset.gsapPhase = "building";
           // Crucial: hide only AFTER the card actually becomes visible.
@@ -120,14 +123,18 @@ export function LandingInteractions() {
             }
           });
           gsap.set(card, { opacity: .14 });
-          gsap.set(copyParts, { opacity: 0, y: 12 });
+          copyParts.forEach((part, index) => gsap.set(part, {
+            opacity: 0, ...(index === 0 || index === 2 ? { y: 10 } : {})
+          }));
           if (preview) gsap.set(preview, { opacity: 0 });
           gsap.set(visualParts, { opacity: 0 });
           timeline.to(card, { opacity: 1, duration: .42 }, 0);
           // Build order: number -> count -> title -> description.
-          timeline.to(copyParts, {
-            opacity: 1, y: 0, duration: .46, stagger: .11, ease: "power3.out"
-          }, .10);
+          copyParts.forEach((part, index) => timeline.to(part, {
+            opacity: 1,
+            ...(index === 0 || index === 2 ? { y: 0 } : {}),
+            duration: .44, ease: "power3.out"
+          }, .12 + index * .12));
           if (preview) {
             // Phone-shaped stage, followed by its real internal UI controls.
             timeline.to(preview, { opacity: 1, duration: .30 }, .48);
@@ -135,6 +142,12 @@ export function LandingInteractions() {
               opacity: 1, duration: .38, stagger: .085, ease: "power2.out"
             }, .62);
           }
+          };
+          // Two neighbouring cards never build complex previews on the
+          // same WebKit frame. Delay is scheduled *before* hiding anything.
+          const peerIndex = Array.from(card.parentElement?.children ?? []).indexOf(card);
+          if (peerIndex > 0) delayedCards.push(gsap.delayedCall(peerIndex * .48, buildCard));
+          else buildCard();
         });
       });
       const footer = root.querySelector<HTMLElement>(".ap-footer--extended");
@@ -159,6 +172,7 @@ export function LandingInteractions() {
       observer.disconnect();
       bottomObserver.disconnect();
       callbacks.clear();
+      delayedCards.forEach(tween => tween.kill());
       ctx.revert();
       for (const node of animated) {
         gsap.killTweensOf(node);
