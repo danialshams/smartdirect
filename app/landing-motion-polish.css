@@ -115,6 +115,12 @@ html[data-daira-hero="pending"] .ap-site [data-hero-cta] {opacity:0}
 .ap-site[data-gsap-motion="true"] .ap-social-card {
   transition:box-shadow .3s ease,border-color .3s ease!important;
 }
+.ap-site[data-gsap-motion="true"] .ap-social-card[data-gsap-shown="true"] {
+  /* Hover motion is enabled only AFTER the GSAP entrance has finished;
+     during entry CSS transitions must not fight the GSAP transform. */
+  transition:transform .32s cubic-bezier(.2,.76,.2,1),
+    box-shadow .3s ease,border-color .3s ease!important;
+}
 .ap-site[data-gsap-motion="true"] [data-text-reveal] {transition:none!important}
 
 /* Dark editorial footer: no oversized glass panels or empty license marks. */
