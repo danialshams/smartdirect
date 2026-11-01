@@ -113,6 +113,9 @@ export function LandingInteractions() {
         const { shell, copyParts, preview, visualParts } = prepared;
         // All expensive element discovery and initial transform setup is
         // finished before scrolling, not inside this viewport callback.
+        // Child content uses force3D:false: Safari otherwise promotes every
+        // text row and illustrated sublayer to its own GPU texture mid-scroll.
+        // The large card surface still moves independently.
         const timeline = gsap.timeline({
           defaults: { ease: "power3.out" },
           onComplete: () => {
@@ -134,18 +137,18 @@ export function LandingInteractions() {
         }
         // Opposing direction. Each number, title and description owns a slot.
         copyParts.forEach((part, i) => timeline.to(part, {
-          x: 0, opacity: 1, duration: .36
+          x: 0, opacity: 1, force3D: false, duration: .36
         }, .56 + i * .16));
         if (preview) {
           const previewAt = .56 + copyParts.length * .16 + .20;
           timeline.set(preview, { visibility: "visible" }, previewAt);
-          timeline.to(preview, { x: 0, duration: .38 }, previewAt);
+          timeline.to(preview, { x: 0, force3D: false, duration: .38 }, previewAt);
           // Hide preview internals only right before the preview itself enters.
           // This avoids allocating many nested compositing layers at the
           // precise scroll frame that first activates the card.
-          timeline.set(visualParts, { x: -12 * direction, opacity: 0 }, previewAt - .12);
+          timeline.set(visualParts, { x: -12 * direction, opacity: 0, force3D: false }, previewAt - .12);
           visualParts.forEach((part, i) => timeline.to(part, {
-            x: 0, opacity: 1, duration: .28, ease: "power2.out"
+            x: 0, opacity: 1, force3D: false, duration: .28, ease: "power2.out"
           }, previewAt + .35 + i * .16));
         }
       };
@@ -204,10 +207,10 @@ export function LandingInteractions() {
         gsap.set(shell, { x: 54 * direction, visibility: "hidden" });
       }
       for (const part of copyParts) affected.add(part);
-      gsap.set(copyParts, { x: 22 * opposite, opacity: 0 });
+      gsap.set(copyParts, { x: 22 * opposite, opacity: 0, force3D: false });
       if (preview) {
         affected.add(preview);
-        gsap.set(preview, { x: 20 * opposite, visibility: "hidden" });
+        gsap.set(preview, { x: 20 * opposite, visibility: "hidden", force3D: false });
       }
       for (const part of visualParts) affected.add(part);
       pending.add(card);
