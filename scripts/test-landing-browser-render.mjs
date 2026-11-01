@@ -251,8 +251,8 @@ try {
   assert.equal(hero.count,7);
   assert.equal(hero.state,"complete");
   assert.ok(Number(hero.started)>0,"GSAP must actually start on first entry");
-  assert.ok(hero.elapsed>=1800 && hero.elapsed<5000,
-    "RTL GSAP stagger must run smoothly long enough to reveal words in sequence");
+  assert.ok(hero.elapsed>=700 && hero.elapsed<3500,
+    "RTL GSAP entrance must be short, legible, and actually complete");
   assert.ok(hero.opacities.every(v=>v===1),"Every hero word must finish fully visible");
   assert.ok(hero.transforms.every(v=>v==="none"),"No scattered or sliding RTL words");
   assert.ok(hero.cssAnimations.every(v=>v==="none"),
@@ -394,8 +394,8 @@ try {
   await sleep(340);
   assert.equal(await evaluate('document.querySelector(".ap-menu").classList.contains("ap-menu--open")'),false);
 
-  // Verify ACTUAL ScrollTrigger launches a staged feature reveal and
-  // individually animated footer links (not just GSAP loaded in memory).
+  // Verify real GSAP tweens are driven by per-card native visibility, while
+  // the masked feature headline remains driven by ScrollTrigger.
   const entrance = await evaluate(`(async () => {
     const sleep = ms => new Promise(resolve=>setTimeout(resolve,ms));
     const root=document.querySelector(".ap-site");
@@ -403,12 +403,12 @@ try {
     const footer=document.querySelector(".ap-footer--extended");
     async function exercise(section, item) {
       const top=section.getBoundingClientRect().top+window.scrollY;
-      window.scrollTo({top:Math.max(0,top-innerHeight*1.18),behavior:"instant"});
-      await sleep(500);
+      window.scrollTo({top:Math.max(0,top-innerHeight*.73),behavior:"instant"});
+      await sleep(90);
       const opacities=[];
       for (let i=0;i<11;i++) {
         window.scrollBy({top:48,behavior:"instant"});
-        await sleep(115);
+        await sleep(85);
         opacities.push(Number(getComputedStyle(item).opacity));
       }
       await sleep(2200);
@@ -418,9 +418,8 @@ try {
     }
     const row=rows[Math.min(4,rows.length-1)];
     const card=row.querySelector(".ap-social-grid > .ap-social-card");
-    const feature=await exercise(row,card);
-    const link=footer.querySelector(".ap-footer__links > a");
-    const foot=await exercise(footer,link);
+    const feature=await exercise(card,card.querySelector(".ap-social-card__copy"));
+    const foot=await exercise(footer.querySelector(".ap-footer__links"),footer.querySelector(".ap-footer__links"));
     return {active:root.dataset.gsapMotion,feature,footer:foot};
   })()`);
   console.log("DAIRA_GSAP_ENTRANCES="+JSON.stringify(entrance));

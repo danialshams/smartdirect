@@ -197,3 +197,86 @@ body > .daira-static-reflection > .daira-optical-tile > img {
   max-width: none !important;
   object-fit: fill !important;
 }
+
+/* 2026 landing editorial motion: visual UI only. Preserve the optical engine. */
+.ap-site .ap-hero__description{
+  max-width:580px;text-align:center;font-size:clamp(12px,1.3vw,15px);
+  line-height:2.15;color:#61728f;margin:20px auto 0!important;
+}
+.ap-site .ap-hero__actions{margin-top:28px!important}
+.ap-site .ap-hero__cta{
+  box-shadow:0 11px 29px rgba(40,91,217,.24),0 0 23px rgba(116,184,255,.19)!important;
+}
+.ap-site .ap-hero__cta::before{
+  background:conic-gradient(from var(--ap-beam-angle),
+    transparent 0deg,transparent 255deg,rgba(145,203,255,.48) 282deg,
+    #fff 308deg,#a8d8ff 337deg,transparent 360deg);
+  animation-duration:7.5s;
+}
+.ap-site .ap-showcase-capture{background:#f7faff!important}
+.ap-site .ap-showcase-capture--alternate{background:#f7faff!important}
+.ap-site .ap-social-showcase .ap-social-card{
+  background:#fff!important;border:1px solid rgba(221,230,244,.74)!important;
+  box-shadow:0 11px 35px rgba(39,72,124,.065)!important;
+  border-radius:27px!important;transition:box-shadow .25s ease!important;
+}
+.ap-site .ap-social-showcase .ap-social-card:hover{
+  transform:none!important;box-shadow:0 15px 40px rgba(39,72,124,.09)!important;
+}
+.ap-site .ap-social-card__icon{display:none!important}
+.ap-site .ap-social-card__index{
+  display:block;font:750 clamp(34px,4.1vw,52px)/1.2 Arial,sans-serif;
+  color:#3064eb;letter-spacing:-1.5px;direction:ltr;width:max-content;
+}
+.ap-site .ap-social-card__copy h3{margin-top:10px!important}
+.ap-site .ap-social-card__count{top:40px}
+.ap-site .ap-social-showcase [data-reveal]{
+  transition:none!important;transition-delay:0ms!important;
+}
+.ap-site .ap-motion-reveal-title{overflow:hidden;display:block}
+.ap-site .ap-motion-reveal-title>span{display:inline-block;will-change:auto}
+.ap-site .ap-footer--extended{
+  background:#101e38!important;color:#edf3ff!important;
+  border:0!important;
+}
+.ap-site .ap-footer__halo{display:none!important}
+.ap-site .ap-footer__callout{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  gap:12px;padding:78px 0 55px;border-bottom:1px solid rgba(196,215,247,.13);
+}
+.ap-site .ap-footer__callout h2{
+  font-size:clamp(25px,3.1vw,39px);font-weight:850;line-height:1.6;color:#f6f9ff;
+}
+.ap-site .ap-footer__callout p{font-size:13px;color:#b4c4df;line-height:2}
+.ap-site .ap-footer__cta{
+  margin-top:12px;background:#3064eb!important;color:white!important;border:0!important;
+  box-shadow:0 9px 25px rgba(46,105,231,.24);
+}
+.ap-site .ap-footer--extended .ap-footer__hero{padding-block:45px 38px!important;gap:24px!important}
+.ap-site .ap-footer--extended .ap-brand{color:#f6f9ff!important}
+.ap-site .ap-footer__brand p{color:#b2c0d8!important}
+.ap-site .ap-footer__links>a{color:#b7c6df!important}
+.ap-site .ap-footer__links>a:hover{color:#fff!important}
+.ap-site .ap-footer--extended .ap-footer__bottom{
+  border-top:1px solid rgba(196,215,247,.12)!important;
+  color:#91a3c1!important;
+}
+@media(max-width:600px){
+  .ap-site .ap-hero__description{padding-inline:14px;font-size:12px;max-width:350px}
+  .ap-site .ap-social-card__index{font-size:34px}
+  .ap-site .ap-social-card__count{top:35px}
+  .ap-site .ap-footer__callout{padding-block:55px 39px}
+}
+@media(prefers-reduced-motion:reduce){
+  .ap-site .ap-motion-reveal-title>span{transform:none!important}
+  .ap-site .ap-hero__cta::before{animation:none!important}
+}
+
+/* Initial HTML uses the same hidden baseline as the GSAP hero timeline.
+   This prevents the subtitle and CTA from flashing before hydration. */
+html[data-daira-hero="pending"] .ap-site .ap-hero__description,
+html[data-daira-hero="pending"] .ap-site .ap-hero__actions{opacity:0}
+@media(prefers-reduced-motion:reduce){
+  html[data-daira-hero="pending"] .ap-site .ap-hero__description,
+  html[data-daira-hero="pending"] .ap-site .ap-hero__actions{opacity:1}
+}

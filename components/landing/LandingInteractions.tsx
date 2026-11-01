@@ -8,129 +8,146 @@ import { ChevronUp } from "lucide-react";
 export function LandingInteractions() {
   const [showTop, setShowTop] = useState(false);
   const [hasShown, setHasShown] = useState(false);
-
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(".ap-site");
     if (!root) return;
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    // Use ONE GSAP clock for the landing. The previous dynamic imports,
-    // per-frame DOM exclusion attributes, and fast-velocity early returns
-    // made content pop in, disappear from Safari snapshots or never animate.
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      root.dataset.gsapMotion = "reduced";
+      return;
+    }
+    // GSAP drives motion; one native observer decides when a feature is visible.
+    // Avoid eleven ScrollTrigger checks on every Safari WebGL scroll frame.
     gsap.registerPlugin(ScrollTrigger);
-    let active = true;
     root.dataset.gsapMotion = "true";
-    const context = gsap.context(() => {
-      for (const section of root.querySelectorAll<HTMLElement>(".ap-showcase-capture")) {
-        const intro = section.querySelector<HTMLElement>(".ap-showcase__intro");
-        const cards = [...section.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card")];
-        const targets = [...(intro ? [intro] : []), ...cards];
-        if (!targets.length) continue;
+    const animated = new Set<HTMLElement>();
+    const callbacks = new Map<Element, () => void>();
+    const enter = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        observer.unobserve(entry.target);
+        const play = callbacks.get(entry.target);
+        callbacks.delete(entry.target);
+        play?.();
+      }
+    };
+    const observer = new IntersectionObserver(enter, {
+      rootMargin: "0px 0px -22% 0px", threshold: 0
+    });
+    // End-of-document strip cannot reach a 78% viewport threshold.
+    const bottomObserver = new IntersectionObserver(enter, { threshold: 0 });
+    const watch = (node: HTMLElement, play: () => void, bottom = false) => {
+      if (node.dataset.gsapShown === "true") return;
+      callbacks.set(node, play);
+      (bottom ? bottomObserver : observer).observe(node);
+    };
+    const fade = (node: HTMLElement, duration = .58, bottom = false) => {
+      if (node.dataset.gsapShown === "true") return;
+      animated.add(node);
+      // Content is visible by default. If Safari skips an intersection
+      // after a fast jump or breakpoint resize, no text remains invisible.
+      watch(node, () => {
+        node.dataset.gsapStarted = String(performance.now());
+        gsap.fromTo(node, { opacity: .55 }, { opacity: 1, duration, ease: "power2.out", overwrite: "auto",
+          onComplete: () => {
+            node.dataset.gsapShown = "true";
+            gsap.set(node, { clearProps: "opacity" });
+          }
+        });
+      }, bottom);
+    };
+    const ctx = gsap.context(() => {
+      const title = root.querySelector<HTMLElement>(".ap-motion-reveal-title");
+      const titleText = title?.querySelector<HTMLElement>("span");
+      if (title && titleText) {
+        gsap.set(titleText, { yPercent: 105 });
+        animated.add(titleText);
+        // Selective upward mask belongs ONLY to the main features heading.
         ScrollTrigger.create({
-          trigger: section,
-          start: "top 89%",
-          once: true,
+          trigger: title, start: "top 82%", once: true,
           onEnter: () => {
-            if (!active || section.dataset.gsapShown === "true") return;
-            // Cards are already painted for the Safari scene snapshot.
-            // Animate only the 1-3 top-level groups, not dozens of children.
-            section.dataset.gsapStarted = String(performance.now());
-            gsap.fromTo(targets,
-              { autoAlpha: 0, y: 22 },
-              {
-                autoAlpha: 1, y: 0,
-                duration: 0.92, stagger: 0.10,
-                ease: "power2.out",
-                overwrite: "auto",
-                onComplete: () => {
-                  gsap.set(targets, { clearProps: "opacity,visibility,transform" });
-                  if (active) section.dataset.gsapShown = "true";
-                }
+            gsap.fromTo(titleText, { yPercent: 105 }, {
+              yPercent: 0, duration: .86, ease: "power3.out", overwrite: "auto",
+              onComplete: () => {
+                title.dataset.gsapShown = "true";
+                gsap.set(titleText, { clearProps: "transform" });
               }
-            );
+            });
           }
         });
       }
-
+      root.querySelectorAll<HTMLElement>(".ap-showcase__intro .ap-showcase__eyebrow, .ap-showcase__intro p")
+        .forEach(node => fade(node, .52));
+      root.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card").forEach(card => {
+        const copy = card.querySelector<HTMLElement>(".ap-social-card__copy");
+        if (!copy || card.dataset.gsapShown === "true") return;
+        animated.add(copy);
+        // Do not pre-hide an offscreen card: WebKit can miss native observer
+        // callbacks during a resize or an instant long scroll jump.
+        watch(card, () => {
+          card.dataset.gsapStarted = String(performance.now());
+          // Fade just one text wrapper; the Instagram preview and full card
+          // never create transformed GPU layers on the Safari scroll path.
+          gsap.fromTo(copy, { opacity: .42 }, { opacity: 1, duration: .65, ease: "power2.out", overwrite: "auto",
+            onComplete: () => {
+              card.dataset.gsapShown = "true";
+              gsap.set(copy, { clearProps: "opacity" });
+            }
+          });
+        });
+      });
       const footer = root.querySelector<HTMLElement>(".ap-footer--extended");
       if (footer) {
-        const targets = [...footer.querySelectorAll<HTMLElement>(
-          ".ap-footer__brand, .ap-footer__links > a, .ap-footer__trust > div, .ap-footer__bottom > span"
-        )];
-        ScrollTrigger.create({
-          trigger: footer,
-          start: "top 88%",
-          once: true,
-          onEnter: () => {
-            if (!active || footer.dataset.gsapShown === "true") return;
-            footer.dataset.gsapStarted = String(performance.now());
-            gsap.fromTo(targets,
-              { autoAlpha: 0, y: 16 },
-              {
-                autoAlpha: 1, y: 0,
-                duration: 0.78,
-                stagger: 0.055,
-                ease: "power2.out",
-                overwrite: "auto",
-                onComplete: () => {
-                  gsap.set(targets, { clearProps: "opacity,visibility,transform" });
-                  if (active) footer.dataset.gsapShown = "true";
-                }
-              }
-            );
-          }
-        });
+        const callout = footer.querySelector<HTMLElement>("[data-footer-callout]");
+        if (callout) fade(callout, .78, true);
+        footer.querySelectorAll<HTMLElement>(".ap-footer__brand, .ap-footer__links")
+          .forEach(node => fade(node, .62, true));
+        const bottom = footer.querySelector<HTMLElement>(".ap-footer__bottom");
+        if (bottom) fade(bottom, .55, true);
       }
     }, root);
 
-    // Only refresh after a real font-layout change; do not block the hero or
-    // repeatedly refresh a complex scene while Safari's captures are busy.
     let canceled = false;
     void document.fonts.ready.then(() => {
-      if (active && !canceled) requestAnimationFrame(() => {
-        if (active && !canceled) ScrollTrigger.refresh();
+      if (!canceled) requestAnimationFrame(() => {
+        if (!canceled) ScrollTrigger.refresh();
       });
     }).catch(() => {});
     return () => {
-      active = false;
       canceled = true;
-      context.revert();
+      observer.disconnect();
+      bottomObserver.disconnect();
+      callbacks.clear();
+      ctx.revert();
+      for (const node of animated) {
+        gsap.killTweensOf(node);
+        gsap.set(node, { clearProps: "opacity,transform,visibility" });
+      }
       delete root.dataset.gsapMotion;
     };
-  }, []);
+  },[]);
 
-  useEffect(() => {
-    let frame=0;
-    let displayed=false;
+  useEffect(()=>{
+    let frame=0,displayed=false;
     const check=()=>{
       if(frame)return;
-      frame=window.requestAnimationFrame(()=>{
-        const next=window.scrollY>540;
+      frame=requestAnimationFrame(()=>{
+        const next=scrollY>540;
         if(next!==displayed){displayed=next;setShowTop(next);if(next)setHasShown(true);}
         frame=0;
       });
     };
     check();
-    window.addEventListener("scroll",check,{passive:true});
-    return ()=>{window.removeEventListener("scroll",check);if(frame)window.cancelAnimationFrame(frame);};
+    addEventListener("scroll",check,{passive:true});
+    return ()=>{removeEventListener("scroll",check);if(frame)cancelAnimationFrame(frame);};
   },[]);
 
-  const goToTop=()=>{
-    const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
-  };
-
+  const goToTop=()=>window.scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
   return (
     <div className={"ap-backtop"+(showTop?" ap-backtop--visible":"")} data-liquid-glass-ignore="">
       {hasShown && <span className="ap-backtop__lens ap-backtop__blue-blur" aria-hidden="true" />}
-      <button type="button"
-        className="ap-backtop__action"
-        aria-label="بازگشت به بالای صفحه"
-        title="بازگشت به بالا"
-        disabled={!showTop}
-        tabIndex={showTop?0:-1}
-        onClick={goToTop}
-      >
+      <button type="button" className="ap-backtop__action" aria-label="بازگشت به بالای صفحه" title="بازگشت به بالا"
+        disabled={!showTop} tabIndex={showTop?0:-1} onClick={goToTop}>
         <ChevronUp size={28} strokeWidth={2.8} aria-hidden="true"/>
       </button>
     </div>

@@ -293,6 +293,22 @@ try {
   },null,{timeout:15000});
   await page.evaluate(() => window.scrollTo({top:2100,behavior:"instant"}));
   await page.waitForTimeout(500);
+  const visibleCopies=await page.evaluate(() => {
+    return [...document.querySelectorAll(".ap-social-grid > .ap-social-card")]
+      .filter(card => {
+        const rect=card.getBoundingClientRect();
+        return rect.top < innerHeight && rect.bottom > 0;
+      })
+      .map(card => ({
+        name:card.querySelector("h3")?.textContent?.trim() ?? "",
+        alpha:Number(getComputedStyle(card.querySelector(".ap-social-card__copy")).opacity),
+        started:!!card.dataset.gsapStarted
+      }));
+  });
+  console.log("WEBKIT_VISIBLE_FEATURE_COPIES="+JSON.stringify(visibleCopies));
+  if(!visibleCopies.length || visibleCopies.some(card=>card.alpha<.3)) {
+    throw Error("A visible feature card is blank after Safari viewport resize or scroll jump");
+  }
   await writeFile("artifacts/landing-webkit/desktop-with-real-glass.jpg",await page.screenshot({type:"jpeg",quality:78}));
   await page.setViewportSize({width:390,height:844});
   await page.waitForFunction(() => [...document.querySelectorAll(".daira-optical-tile img")].every((img,i)=>

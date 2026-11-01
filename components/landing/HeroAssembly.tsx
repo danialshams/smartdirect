@@ -17,8 +17,11 @@ export function HeroAssembly() {
     const html = document.documentElement;
     if (!title) { html.dataset.dairaHero = "done"; return; }
     const words = Array.from(title.querySelectorAll<HTMLElement>("[data-hero-word]"));
+    const description = document.querySelector<HTMLElement>("[data-hero-description]");
+    const cta = document.querySelector<HTMLElement>("[data-hero-cta]");
     if (heroEntranceFinished) {
       gsap.set(words, { clearProps: "opacity" });
+      gsap.set([description, cta].filter(Boolean), { clearProps: "opacity,transform" });
       html.dataset.dairaHero = "done";
       title.dataset.gsapHero = "complete";
       title.removeAttribute("data-liquid-glass-ignore");
@@ -30,6 +33,7 @@ export function HeroAssembly() {
       completed = true;
       heroEntranceFinished = true;
       gsap.set(words, { clearProps: "opacity" });
+      gsap.set([description, cta].filter(Boolean), { clearProps: "opacity,transform" });
       html.dataset.dairaHero = "done";
       title.dataset.gsapHero = "complete";
       if (title.dataset.gsapHeroStarted) {
@@ -51,10 +55,12 @@ export function HeroAssembly() {
     const timeline = gsap.timeline({ onComplete: finish, defaults: { ease: "power2.out" } });
     timeline.to(words, {
       opacity: 1,
-      duration: 1.18,
-      stagger: { each: 0.16, from: "start" },
+      duration: 0.84,
+      stagger: { each: 0.055, from: "start" },
       overwrite: "auto"
     }, 0);
+    if (description) timeline.fromTo(description, {opacity:0,y:7},{opacity:1,y:0,duration:.72,ease:"power2.out"},.17);
+    if (cta) timeline.fromTo(cta, {opacity:0,y:6},{opacity:1,y:0,duration:.65,ease:"power2.out"},.31);
 
     return () => {
       timeline.kill();
@@ -62,6 +68,7 @@ export function HeroAssembly() {
       // Strict Mode. Allow the surviving timeline to run normally.
       if (!completed) {
         gsap.set(words, { clearProps: "opacity" });
+        gsap.set([description, cta].filter(Boolean), { clearProps: "opacity,transform" });
         html.dataset.dairaHero = "pending";
         title.dataset.gsapHero = "pending";
         title.removeAttribute("data-gsap-hero-started");
