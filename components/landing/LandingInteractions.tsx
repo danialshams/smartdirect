@@ -17,6 +17,7 @@ type CardParts = {
 
 export function LandingInteractions() {
   const [showTop, setShowTop] = useState(false);
+  const [hasShown, setHasShown] = useState(false);
 
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(".ap-site");
@@ -31,6 +32,14 @@ export function LandingInteractions() {
     }
 
     gsap.registerPlugin(ScrollTrigger);
+    const ua = navigator.userAgent;
+    const safariWebKit = ua.includes("AppleWebKit") &&
+      (/iPhone|iPad|iPod/.test(ua) ||
+        (ua.includes("Safari") && !["Chrome", "Chromium", "Edg", "OPR"].some(token => ua.includes(token))));
+    // Safari's GPU compositor stalls on large GSAP layers while the user is
+    // actively dragging the page. Stage mobile entrances only when scrolling
+    // settles; leave the REAL card content visible until then.
+    const mobileWebKit = safariWebKit && window.innerWidth <= 640;
     // Production bundles omit these ablations entirely. The WebKit CI
     // profiler builds with this flag to isolate heading vs feature cost.
     const profile = process.env.NEXT_PUBLIC_DAIRA_PROFILE === "1"
@@ -46,7 +55,35 @@ export function LandingInteractions() {
     const affected = new Set<HTMLElement>();
     const pending = new Set<HTMLElement>();
     const delays = new Set<gsap.core.Tween>();
+    const deferred = new Map<HTMLElement, () => void>();
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
     let disposed = false;
+
+    const flushDeferred = () => {
+      if (disposed) return;
+      for (const [card, build] of deferred) {
+        deferred.delete(card);
+        if (states.get(card) !== "queued") continue;
+        const rect = card.getBoundingClientRect();
+        if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
+          // A card scrolled past during a continuous flick must never become
+          // blank or replay when the user scrolls back to it.
+          states.set(card, "done");
+          card.dataset.gsapPhase = "complete";
+          card.dataset.gsapShown = "true";
+          continue;
+        }
+        build();
+      }
+    };
+    const scheduleIdle = () => {
+      if (!mobileWebKit || disposed || !deferred.size) return;
+      if (idleTimer !== undefined) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        idleTimer = undefined;
+        requestAnimationFrame(flushDeferred);
+      }, 165);
+    };
 
     const cardObserver = new IntersectionObserver(entries => {
       for (const entry of entries) {
@@ -75,6 +112,7 @@ export function LandingInteractions() {
       scrollFrame = requestAnimationFrame(probe);
     };
     const onScroll = () => {
+      if (mobileWebKit && deferred.size) scheduleIdle();
       // The native IntersectionObserver starts every normal entrance.
       // Only check layout AFTER scrolling settles: WebKit cannot afford
       // forced getBoundingClientRect() reads during live glass frames.
@@ -86,6 +124,7 @@ export function LandingInteractions() {
       }, 145);
     };
     const onResize = () => {
+      if (mobileWebKit && deferred.size) scheduleIdle();
       if (trailingProbeTimer !== undefined) clearTimeout(trailingProbeTimer);
       trailingProbeTimer = setTimeout(() => {
         trailingProbeTimer = undefined;
@@ -113,6 +152,15 @@ export function LandingInteractions() {
         const prepared = preparedCards.get(card);
         if (!prepared) return;
         const { shell, copyContainer, copyParts, preview, visualParts } = prepared;
+        if (mobileWebKit) {
+          // Do not pre-hide anything on Safari. Apply a subtle directional
+          // departure only after scroll idle, when the optical shader is not
+          // competing with the live scroll compositor.
+          if (shell) gsap.set(shell, { x: 38 * direction, opacity: .8, force3D: false });
+          if (copyContainer) gsap.set(copyContainer, { x: -16 * direction, force3D: false });
+          gsap.set(copyParts, { opacity: .68 });
+          if (preview) gsap.set(preview, { opacity: .86, visibility: "visible" });
+        }
         // All expensive element discovery and initial transform setup is
         // finished before scrolling, not inside this viewport callback.
         // A single copy wrapper moves from the opposing side. The labels
@@ -135,7 +183,10 @@ export function LandingInteractions() {
         // 01 outer shell: right, 02 outer shell: left, alternating globally.
         if (shell) {
           timeline.set(shell, { visibility: "visible" }, 0);
-          timeline.to(shell, { x: 0, duration: .64 }, 0);
+          timeline.to(shell, {
+            x: 0, ...(mobileWebKit ? { opacity: 1, force3D: false } : {}),
+            duration: .64
+          }, 0);
         }
         // Opposing copy motion, with separate sequential text reveals.
         if (copyContainer) timeline.to(copyContainer, {
@@ -159,7 +210,7 @@ export function LandingInteractions() {
           }
           timeline.set(visualParts, {
             ...(mobileLayers ? {} : { x: -12 * direction, force3D: false }),
-            opacity: 0
+            opacity: mobileWebKit ? .68 : 0
           }, previewAt - .12);
           visualParts.forEach((part, i) => timeline.to(part, {
             ...(mobileLayers ? {} : { x: 0, force3D: false }),
@@ -168,6 +219,11 @@ export function LandingInteractions() {
         }
       };
 
+      if (mobileWebKit) {
+        deferred.set(card, build);
+        scheduleIdle();
+        return;
+      }
       // Paired cards must not produce two compositing bursts on the same frame.
       const secondInRow = innerWidth > 600 &&
         Array.from(card.parentElement?.children ?? []).indexOf(card) > 0;
@@ -226,20 +282,22 @@ export function LandingInteractions() {
       // Their actual GSAP entrance remains gated by the card observer.
       if (shell) {
         affected.add(shell);
-        gsap.set(shell, { x: 54 * direction, visibility: "hidden" });
+        if (!mobileWebKit) gsap.set(shell, { x: 54 * direction, visibility: "hidden" });
       }
       if (copyContainer) {
         affected.add(copyContainer);
-        gsap.set(copyContainer, { x: 22 * opposite, force3D: false });
+        if (!mobileWebKit) gsap.set(copyContainer, { x: 22 * opposite, force3D: false });
       }
       for (const part of copyParts) affected.add(part);
-      gsap.set(copyParts, { opacity: 0 });
+      if (!mobileWebKit) gsap.set(copyParts, { opacity: 0 });
       if (preview) {
         affected.add(preview);
-        if (innerWidth <= 640) {
-          gsap.set(preview, { opacity: 0, visibility: "hidden" });
-        } else {
-          gsap.set(preview, { x: 20 * opposite, visibility: "hidden", force3D: false });
+        if (!mobileWebKit) {
+          if (innerWidth <= 640) {
+            gsap.set(preview, { opacity: 0, visibility: "hidden" });
+          } else {
+            gsap.set(preview, { x: 20 * opposite, visibility: "hidden", force3D: false });
+          }
         }
       }
       for (const part of visualParts) affected.add(part);
@@ -255,10 +313,6 @@ export function LandingInteractions() {
     // Keep the text immediately legible on Safari; the original clipped
     // GSAP heading remains on Chromium. Other GSAP card/footer entrances
     // and the real liquid-glass shader are entirely unchanged.
-    const ua = navigator.userAgent;
-    const safariWebKit = ua.includes("AppleWebKit") &&
-      (/iPhone|iPad|iPod/.test(ua) ||
-        (ua.includes("Safari") && !["Chrome", "Chromium", "Edg", "OPR"].some(token => ua.includes(token))));
     const title = root.querySelector<HTMLElement>(".ap-motion-reveal-title");
     const titleText = title?.querySelector<HTMLElement>("span");
     let headingTrigger: ScrollTrigger | undefined;
@@ -339,6 +393,8 @@ export function LandingInteractions() {
       removeEventListener("resize", onResize);
       if (scrollFrame) cancelAnimationFrame(scrollFrame);
       if (trailingProbeTimer !== undefined) clearTimeout(trailingProbeTimer);
+      if (idleTimer !== undefined) clearTimeout(idleTimer);
+      deferred.clear();
       cardObserver.disconnect();
       footerObservers.forEach(observer => observer.disconnect());
       headingTrigger?.kill();
@@ -368,6 +424,7 @@ export function LandingInteractions() {
         if (next !== displayed) {
           displayed = next;
           setShowTop(next);
+          if (next) setHasShown(true);
         }
         frame = 0;
       });
@@ -387,7 +444,7 @@ export function LandingInteractions() {
   return (
     <div className={"ap-backtop" + (showTop ? " ap-backtop--visible" : "")}
       data-liquid-glass-ignore="">
-      <span className="ap-backtop__lens ap-backtop__blue-blur" aria-hidden="true" />
+      {hasShown && <span className="ap-backtop__lens ap-backtop__blue-blur" aria-hidden="true" />}
       <button type="button" className="ap-backtop__action"
         aria-label="بازگشت به بالای صفحه" title="بازگشت به بالا"
         disabled={!showTop} tabIndex={showTop ? 0 : -1} onClick={goToTop}>
