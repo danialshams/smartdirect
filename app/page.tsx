@@ -69,7 +69,10 @@ export default function Home() {
             <h1 id="ap-hero-title" dir="rtl" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly data-liquid-glass-ignore="">
               {heroWords.map((word,index)=>(
                 <Fragment key={word}>
-                  <span className="ap-hero__word" data-hero-word style={{"--hero-delay":`${index*170}ms`} as CSSProperties}>{word}</span>
+                  <span className="ap-hero__sticker" data-hero-sticker>
+                    <span className="ap-hero__sticker-bg" aria-hidden="true" />
+                    <span className="ap-hero__word" data-hero-word style={{"--hero-delay":`${index*145}ms`} as CSSProperties}>{word}</span>
+                  </span>
                   {index<heroWords.length-1?" ":""}
                 </Fragment>
               ))}
