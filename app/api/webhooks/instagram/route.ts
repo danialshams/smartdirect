@@ -1182,7 +1182,7 @@ async function processMessagingEventLocked(
 
     console.log("Message ID:", messageId);
 
-    console.log("Message text:", messageText);
+    // Message bodies are private user content and must never be written to runtime logs.
 
     console.log("Quick reply payload:", quickReplyPayload);
 
@@ -1415,7 +1415,7 @@ async function processMessagingEventLocked(
 
     console.log("Sender Instagram-scoped ID:", senderId);
 
-    console.log("Incoming message:", messageText || "[non-text message]");
+    // Message bodies are private user content and must never be written to runtime logs.
 
     // =======================================================
     // Prevent duplicate message processing
@@ -1881,7 +1881,7 @@ async function processInstagramStoryReply(
 
     console.log("Story URL:", storyUrl);
 
-    console.log("Story Reply text:", messageText);
+    // Message bodies are private user content and must never be written to runtime logs.
 
     console.log("Attachments:", attachments.length);
 

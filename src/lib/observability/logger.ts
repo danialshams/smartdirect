@@ -21,6 +21,9 @@ const SENSITIVE_KEYS = new Set([
   "client_secret",
   "appSecret",
   "app_secret",
+  "otp", "code", "smscode", "session", "secret", "clientip",
+  "messagetext", "messagetext", "rawbody", "requestbody",
+  "responsebody", "body", "payload", "email", "phone",
 ]);
 
 function redact(value: unknown, depth = 0): Record<string, unknown> | unknown[] | unknown {
@@ -34,7 +37,7 @@ function redact(value: unknown, depth = 0): Record<string, unknown> | unknown[] 
     const result: Record<string, unknown> = {};
 
     for (const [key, item] of Object.entries(value)) {
-      result[key] = SENSITIVE_KEYS.has(key)
+      result[key] = SENSITIVE_KEYS.has(key.toLowerCase().replace(/[-_\s]/g, ""))
         ? "[REDACTED]"
         : redact(item, depth + 1);
     }

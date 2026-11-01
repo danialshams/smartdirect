@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const guard=await requireAdmin();
+  if(guard.response)return guard.response;
   const startedAt = Date.now();
 
   try {
@@ -17,7 +20,7 @@ export async function GET() {
           service: "upstash-rest",
           ok: false,
           configured: false,
-          error: "Upstash REST environment variables are not configured",
+          error: "Service unavailable",
           timestamp: new Date().toISOString(),
         },
         { status: 503 },
@@ -46,7 +49,7 @@ export async function GET() {
         ok: false,
         configured: true,
         latencyMs: Date.now() - startedAt,
-        error: error instanceof Error ? error.message : "Unknown Upstash REST error",
+        error: "Service unavailable",
         timestamp: new Date().toISOString(),
       },
       { status: 503 },
