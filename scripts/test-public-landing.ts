@@ -26,7 +26,7 @@ for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase
 assert.doesNotMatch(page,/HeroMotion|<video|heroFragments|data-hero-fragment/);
 assert.match(page,/heroWords\.map/);
 assert.match(page,/data-hero-word/);
-assert.match(page,/data-reveal/);
+assert.doesNotMatch(page,/data-reveal/,"Landing footer must not use obsolete CSS reveal attributes");
 for(const url of ["/login","/privacy-policy","/terms","/data-deletion","/contact","/about"])
   assert.ok(page.includes('href:"'+url+'"')||page.includes('href="'+url+'"'),"Missing link "+url);
 for(const route of ["terms","about","contact"])
@@ -80,11 +80,11 @@ assert.ok(page.includes('"--hero-delay"'));
 assert.ok(interactions.includes('import { gsap } from "gsap"'), "Sections should not wait for late GSAP chunks");
 assert.ok(interactions.includes('import { ScrollTrigger } from "gsap/ScrollTrigger"'), "Features and footer need real ScrollTrigger");
 assert.ok(interactions.includes(".ap-social-grid > .ap-social-card"), "GSAP must animate feature cards");
-assert.ok(interactions.includes(".ap-footer__links"), "GSAP must animate footer links as one group");
-assert.ok(interactions.includes('rootMargin: "0px 0px -22% 0px"'),"Feature observer must wait until individual card approaches 78% viewport line");
-assert.ok(interactions.includes("IntersectionObserver"),"One native observer replaces expensive per-card ScrollTriggers");
-assert.ok(interactions.includes("timeline.to(visualParts") && interactions.includes("copyParts.forEach((part, index) => timeline.to(part"),"GSAP assembles copy and real preview internals sequentially");
-assert.ok(interactions.includes("gsap.timeline") && interactions.includes("timeline.to(visualParts"),"Each feature uses a staged GSAP timeline for its real UI elements");
+assert.ok(interactions.includes(".ap-footer__links") && interactions.includes("select: \":scope > a\""),"Each footer link must have an individual GSAP fade");
+assert.ok(interactions.includes('rootMargin: "0px 0px -27% 0px"') && interactions.includes("threshold: [.24]"),"Cards should enter only when a meaningful portion is visible");
+assert.ok(interactions.includes("IntersectionObserver") && interactions.includes('states.set(card, "queued")'),"Card visibility state should prevent replay or premature entry");
+assert.ok(interactions.includes("copyParts.forEach((part, i) => timeline.to(part") && interactions.includes("visualParts.forEach((part, i) => timeline.to(part"),"Independent copy and preview controls must animate sequentially");
+assert.ok(interactions.includes("gsap.timeline") && interactions.includes("timeline.to(card") && interactions.includes("gsapDirection"),"Card shell slides from alternating sides before its opposing inner assembly");
 assert.ok(features.includes("ap-social-card__index") && !features.includes("ap-social-card__icon"),"Feature card uses numbers rather than icons");
 assert.ok(landingFixes.includes("font-family:\"DairaVazir\""),"Feature numbers must use actual Vazir typeface");
 assert.ok(page.includes("ap-footer__callout") && page.includes("جایگاه مجوزهای آینده") && page.includes("اینماد") && page.includes("در آینده"),"Footer includes CTA and clearly labelled future license placeholders");
@@ -120,7 +120,7 @@ assert.doesNotMatch(interactions,/LiveOpticalSurface/);
 assert.match(interactions,/onEnter: \(\) =>/);
 assert.ok(!interactions.includes("getVelocity()"),"Do not skip requested animations solely due to scroll velocity");
 assert.ok(!interactions.includes('setAttribute("data-liquid-glass-ignore"'),"No per-frame scene exclusions for animating content");
-assert.match(interactions,/passive:true/);
+assert.match(interactions,/passive:\s*true/);
 assert.match(interactions,/ChevronUp/);
 assert.doesNotMatch(interactions,/LiquidGlass|simple-liquid-glass/);
 
@@ -198,3 +198,7 @@ for(const id of ["comment","story","direct","share","live","reminder","inbox","p
 for(const label of ["ig-menu-sheet","ig-quickreplies","ig-live__badge","ig-comment-answer","ig-schedule"])
   assert.ok(previews.includes(label),"Missing Instagram-like preview "+label);
 console.log("DAIRA GLASS PASS: genuine unmodified library optics restored, iOS scene connected, CSS only positions the lens, all 11 homepage features preserved.");
+
+assert.ok(hero.includes("timeline.to(title"),"Hero title must have a single smooth fade rather than seven expensive word tweens");
+assert.ok(!hero.includes("timeline.to(words"),"Never animate all hero words independently in Safari");
+assert.ok(!features.includes("data-reveal"),"Feature card animations must not conflict with obsolete CSS data-reveal transitions");
