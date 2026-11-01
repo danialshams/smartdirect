@@ -47,6 +47,29 @@ function createStaticReflection(page: HTMLElement): HTMLElement {
     const copy = child.cloneNode(true) as HTMLElement;
     copy.removeAttribute("id");
     copy.querySelectorAll<HTMLElement>("[id]").forEach(node => node.removeAttribute("id"));
+    // Preserve each section's pixel geometry even though its optical-only
+    // preview is a lightweight representation, not a second interactive app.
+    // The actual user's detailed Instagram previews are NEVER changed.
+    if (child.matches(".ap-showcase-capture")) {
+      const height = child.getBoundingClientRect().height;
+      copy.style.height = `${height}px`;
+      copy.style.minHeight = `${height}px`;
+      copy.querySelectorAll<HTMLElement>(".ap-social-card__visual").forEach(visual => {
+        const facade = document.createElement("div");
+        facade.className = "daira-glass-preview-facade";
+        const kind = visual.closest<HTMLElement>(".ap-social-card")?.id.replace("feature-", "") ?? "direct";
+        facade.dataset.kind = kind;
+        // Fixed number of native CSS rectangles instead of re-rasterizing
+        // hundreds of SVG icons and deeply nested interactive mock screens.
+        // The same card shape, salient color blocks and copy are preserved.
+        facade.innerHTML =
+          '<div class="daira-glass-preview-top"><i></i><span></span><i></i></div>' +
+          '<div class="daira-glass-preview-screen"><span></span><b></b><i></i></div>' +
+          '<div class="daira-glass-preview-bottom"><span></span><span></span></div>';
+        visual.replaceChildren(facade);
+      });
+    }
+
     copy.querySelectorAll<HTMLElement>("[data-liquid-glass-ignore]").forEach(node =>
       node.removeAttribute("data-liquid-glass-ignore"));
     copy.querySelectorAll<HTMLElement>("[data-hero-word]").forEach(node => {
