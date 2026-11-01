@@ -101,7 +101,10 @@ export function LandingInteractions() {
         gsap.set(card, { x: 44 * direction, opacity: 0 });
         gsap.set(copyParts, { x: 22 * opposite, opacity: 0 });
         if (preview) gsap.set(preview, { x: 20 * opposite, opacity: 0 });
-        gsap.set(visualParts, { x: 14 * opposite, opacity: 0 });
+        // The entire phone enters from the opposite direction. Its many
+        // internal rows build one by one using alpha only to avoid creating
+        // a separate Safari GPU transform layer for every illustrated row.
+        gsap.set(visualParts, { opacity: 0 });
 
         const timeline = gsap.timeline({
           defaults: { ease: "power3.out" },
@@ -127,15 +130,15 @@ export function LandingInteractions() {
           const previewAt = .56 + copyParts.length * .16 + .20;
           timeline.to(preview, { x: 0, opacity: 1, duration: .38 }, previewAt);
           visualParts.forEach((part, i) => timeline.to(part, {
-            x: 0, opacity: 1, duration: .29
-          }, previewAt + .39 + i * .16));
+            opacity: 1, duration: .26, ease: "power2.out"
+          }, previewAt + .35 + i * .14));
         }
       };
 
       // Paired cards must not produce two compositing bursts on the same frame.
       const secondInRow = Array.from(card.parentElement?.children ?? []).indexOf(card) > 0;
       if (secondInRow) {
-        const delayed = gsap.delayedCall(.28, () => {
+        const delayed = gsap.delayedCall(.82, () => {
           delays.delete(delayed);
           build();
         });
