@@ -21,6 +21,7 @@ export function LandingInteractions() {
     const context = gsap.context(() => {
       const reveal = (target: Element, options?: {start?: string; y?: number; duration?: number; delay?: number}) => {
         const node = target as HTMLElement;
+        gsap.set(node, {autoAlpha:0,y:options?.y ?? 16});
         const trigger = ScrollTrigger.create({
           trigger: node,
           start: options?.start ?? "top 83%",
@@ -44,6 +45,7 @@ export function LandingInteractions() {
         const heading = intro.querySelector<HTMLElement>(".ap-motion-reveal-title > span");
         const title = intro.querySelector<HTMLElement>(".ap-motion-reveal-title");
         if(title && heading) {
+          gsap.set(heading, {yPercent:105});
           ScrollTrigger.create({
             trigger: title, start: "top 82%", once: true,
             onEnter: () => {
