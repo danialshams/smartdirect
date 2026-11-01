@@ -44,6 +44,10 @@ assert.ok(landingFixes.includes(".daira-library-liquid-header > .liquid-glass-bo
 assert.ok(landingFixes.includes("display: none !important"));
 assert.ok(landingFixes.includes(".daira-library-glass-frame"));
 assert.ok(landingFixes.includes("box-shadow:none!important"));
+assert.ok(landingFixes.includes('data-glass-fast-stale="true"'),"Fast Safari snapshots must never ghost over the new section");
+assert.ok(liquidHeader.includes("fingerprint()"),"Detect stale canvas pixels without replacing the GPU renderer");
+assert.ok(liquidHeader.includes("captureReadyRef.current"),"Wait for native capture readiness before revealing WebGL again");
+
 assert.ok(landingFixes.includes("data-glass-ready"));
 assert.ok(landingFixes.includes("data-scene-capture-stable"));
 assert.ok(landingFixes.includes("backdrop-filter: blur(15px) saturate(155%)"));
