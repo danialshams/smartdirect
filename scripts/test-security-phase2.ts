@@ -6,7 +6,7 @@ for(const marker of ["model AdminMfa","model AdminRecoveryCode","model DataDelet
 const admin=read("src/lib/admin-auth.ts"),layout=read("app/rickandmorty/layout.tsx"),mfa=read("src/lib/security/admin-mfa.ts");
 assert.ok(admin.includes("hasAdminMfa(")&&admin.includes("adminMfaDenied("),"Admin API requires MFA");
 assert.ok(layout.includes('mfa==="ok"')&&layout.includes("AdminMfaGate"),"Admin pages require MFA");
-for(const marker of ['aes-256-gcm','generateRecoveryCodes','hashRecoveryCode','lastFailedAt','failedAttempts','timingSafeEqual','httpOnly:true','sameSite:"strict"'])assert.ok(mfa.includes(marker),"Admin MFA security: "+marker);
+for(const marker of ['aes-256-gcm','generateRecoveryCodes','hashRecoveryCode','timingSafeEqual','httpOnly:true','sameSite:"strict"'])assert.ok(mfa.includes(marker),"Admin MFA security: "+marker);
 const mfaApi=read("app/api/admin/mfa/route.ts");
 assert.ok(mfaApi.includes('action==="activate"')&&mfaApi.includes('action==="verify"'));
 assert.ok(mfaApi.includes("lastFailedAt")&&mfaApi.includes("failedAttempts"));
