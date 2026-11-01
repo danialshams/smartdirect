@@ -17,7 +17,6 @@ type CardParts = {
 
 export function LandingInteractions() {
   const [showTop, setShowTop] = useState(false);
-  const [hasShown, setHasShown] = useState(false);
 
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(".ap-site");
@@ -369,7 +368,6 @@ export function LandingInteractions() {
         if (next !== displayed) {
           displayed = next;
           setShowTop(next);
-          if (next) setHasShown(true);
         }
         frame = 0;
       });
@@ -389,7 +387,7 @@ export function LandingInteractions() {
   return (
     <div className={"ap-backtop" + (showTop ? " ap-backtop--visible" : "")}
       data-liquid-glass-ignore="">
-      {hasShown && <span className="ap-backtop__lens ap-backtop__blue-blur" aria-hidden="true" />}
+      <span className="ap-backtop__lens ap-backtop__blue-blur" aria-hidden="true" />
       <button type="button" className="ap-backtop__action"
         aria-label="بازگشت به بالای صفحه" title="بازگشت به بالا"
         disabled={!showTop} tabIndex={showTop ? 0 : -1} onClick={goToTop}>
