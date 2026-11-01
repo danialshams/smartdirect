@@ -11,6 +11,8 @@ model User {
   id                                                             String                @id @default(cuid())
   email                                                          String                @unique
   name                                                           String
+  firstName                                                      String?
+  lastName                                                       String?
   password                                                       String
   role                                                           Role                  @default(USER)
   isBlocked                                                      Boolean               @default(false)
@@ -37,6 +39,25 @@ model User {
   storageObjects InstagramStorageObject[]
   savedAutomationResponses SavedAutomationResponse[]
   smartReminderRules SmartReminderRule[]
+  smsChallenges AuthSmsChallenge[]
+}
+
+model AuthSmsChallenge {
+  id            String    @id @default(cuid())
+  userId        String
+  phone         String
+  purpose       String    @db.VarChar(16)
+  codeHash      String
+  attempts      Int       @default(0)
+  expiresAt     DateTime
+  consumedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  ipHash        String?
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([phone, purpose, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([expiresAt])
 }
 
 model InstagramAccount {
