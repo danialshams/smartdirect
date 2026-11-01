@@ -137,6 +137,9 @@ try {
     throw Error("Visible white rim must be clipped without an outer shadow");
   }
   if (settled.captures < 2) throw Error("No real scene tiles captured during scroll");
+  const featureScreenshot=await page.screenshot({type:"jpeg",quality:63});
+  console.log("WEBKIT_GLASS_FEATURE_IMAGE="+featureScreenshot.toString("base64"));
+
   // Revisiting a previously captured region must preserve optical rendering
   // without replacing the GPU canvas with the old 5px frosted material.
   await page.evaluate(() => window.scrollTo({top:0,behavior:"instant"}));
