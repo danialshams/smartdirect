@@ -14,9 +14,12 @@ export function HeroAssembly() {
     if (!title) { html.dataset.dairaHero = "done"; return; }
     const words = Array.from(title.querySelectorAll<HTMLElement>("[data-hero-word]"));
     let active = true;
+    let finished = false;
     let release: (() => void) | undefined;
     let safety: ReturnType<typeof setTimeout> | undefined;
     const finish = () => {
+      if (finished) return;
+      finished = true;
       html.dataset.dairaHero = "done";
       title.dataset.gsapHero = "complete";
       if (title.dataset.gsapHeroStarted) title.dataset.gsapHeroElapsed = String(Math.round(performance.now() - Number(title.dataset.gsapHeroStarted)));
@@ -36,7 +39,7 @@ export function HeroAssembly() {
     ]);
     safety = setTimeout(() => { if (active) finish(); }, 5000);
     void Promise.all([import("gsap"), fonts]).then(([module]) => {
-      if (!active) return;
+      if (!active || finished) return;
       const gsap = module.gsap;
       const context = gsap.context(() => {
         // Keep word boxes in normal RTL text flow. The first span is the
