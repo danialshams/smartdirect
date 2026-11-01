@@ -506,7 +506,7 @@ try {
   // This is a UI-only smoke check: it never sends credentials or creates users.
   await send("Page.navigate",{url:"http://127.0.0.1:"+port+"/login"});
   await waitFor(async()=>await evaluate('!!document.querySelector(".da-auth-formside")'),12000);
-  await waitFor(async()=>await evaluate('!!document.querySelector(".da-auth-main-tabs button")'));
+  await waitFor(async()=>await evaluate('!!document.querySelector(".da-auth-bottom button")'));
   const loginFrame=await evaluate(`(() => {
     const shell=document.querySelector(".da-auth-shell");
     const header=document.querySelector(".da-auth-panel h1");
@@ -522,6 +522,35 @@ try {
   assert.equal(loginFrame.shell,true);
   assert.ok(loginFrame.font.includes("Vazirmatn"),"Login must use Persian Vazir typography");
   assert.equal(loginFrame.darkPanel,false,"No promotional or dark showcase in minimal auth");
+  const loginNav=await evaluate(`(() => {
+    const logo=document.querySelector(".da-auth-brand-link");
+    const footer=document.querySelector(".da-auth-return-home");
+    const header=document.querySelector(".da-auth-header");
+    const submit=document.querySelector(".da-auth-submit");
+    const panel=document.querySelector(".da-auth-panel");
+    const logoBox=logo?.getBoundingClientRect();
+    const panelBox=panel?.getBoundingClientRect();
+    return {
+      noTabs:!document.querySelector(".da-auth-main-tabs"),
+      prompt:document.querySelector(".da-auth-bottom")?.textContent.trim(),
+      logoHref:logo?.getAttribute("href"),
+      footerHref:footer?.getAttribute("href"),
+      footerText:footer?.textContent.trim(),
+      logoCentered:Math.abs((logoBox?.left+logoBox?.right)/2-(panelBox?.left+panelBox?.right)/2)<2,
+      headerJustify:getComputedStyle(header).justifyContent,
+      submitJustify:getComputedStyle(submit).justifyContent,
+      submitHasIcon:!!submit.querySelector("svg")
+    };
+  })()`);
+  assert.equal(loginNav.noTabs,true);
+  assert.ok(loginNav.prompt.includes("حساب ندارید؟") && loginNav.prompt.includes("ساخت حساب"));
+  assert.equal(loginNav.logoHref,"/");
+  assert.equal(loginNav.footerHref,"/");
+  assert.equal(loginNav.footerText,"بازگشت به صفحه اصلی");
+  assert.equal(loginNav.logoCentered,true,"Logo must be centered over the form");
+  assert.equal(loginNav.headerJustify,"center");
+  assert.equal(loginNav.submitJustify,"center");
+  assert.equal(loginNav.submitHasIcon,false,"Primary action should have no arrow icon");
   const lightDesign=await evaluate(`(() => {
     const panel=document.querySelector(".da-auth-panel");
     const root=document.querySelector(".da-auth");
@@ -539,7 +568,7 @@ try {
   assert.equal(lightDesign.cardBackground,"rgb(255, 255, 255)");
   assert.equal(lightDesign.shinePresent,true,"Magic UI Shine Border should mount on the form");
   assert.ok(lightDesign.cardWidth<lightDesign.viewportWidth,"Desktop form remains a compact centered card");
-  await evaluate('document.querySelectorAll(".da-auth-main-tabs button")[1].click()');
+  await evaluate('document.querySelector(".da-auth-bottom button").click()');
   await waitFor(async()=>await evaluate('!!document.querySelector("input[autocomplete=given-name]")'));
   const signupFields=await evaluate(`(() => ({
     first:!!document.querySelector('input[autocomplete="given-name"]'),
@@ -549,7 +578,28 @@ try {
   }))()`);
   assert.ok(signupFields.first && signupFields.last && signupFields.tel);
   assert.equal(signupFields.passwords,2);
-  await evaluate('document.querySelectorAll(".da-auth-main-tabs button")[0].click()');
+  const signupVisual=await evaluate(`(() => {
+    const fields=[...document.querySelectorAll(".da-auth-field")];
+    const icons=fields.map(el=>el.querySelector(".da-auth-input > svg")?.getAttribute("class")).filter(Boolean);
+    const button=document.querySelector(".da-auth-submit");
+    return {
+      title:document.querySelector(".da-auth-panel h1")?.textContent,
+      prompt:document.querySelector(".da-auth-bottom")?.textContent.trim(),
+      iconClasses:icons,
+      iconsUnique:new Set(icons).size===icons.length,
+      buttonText:button?.textContent.trim(),
+      submitHasIcon:!!button.querySelector("svg"),
+      submitJustify:getComputedStyle(button).justifyContent
+    };
+  })()`);
+  assert.equal(signupVisual.title,"ثبت‌نام در دایرا");
+  assert.equal(signupVisual.buttonText,"ثبت‌نام");
+  assert.equal(signupVisual.submitJustify,"center");
+  assert.equal(signupVisual.submitHasIcon,false);
+  assert.ok(signupVisual.prompt.includes("حساب دارید؟") && signupVisual.prompt.includes("ورود"));
+  assert.equal(signupVisual.iconsUnique,true,
+    "Signup icons for given name, family name, phone, password and confirmation must differ");
+  await evaluate('document.querySelector(".da-auth-bottom button").click()');
   await waitFor(async()=>await evaluate('!!document.querySelector("input[autocomplete=current-password]")'));
   await evaluate('document.querySelectorAll(".da-auth-methods button")[1].click()');
   await waitFor(async()=>await evaluate('!!document.querySelector(".da-auth-sms-status")'));
@@ -578,6 +628,18 @@ try {
   assert.equal(mobileAuth.noShowcase,true);
   assert.ok(mobileAuth.formWidth<=392 && mobileAuth.panelWidth<=392 && mobileAuth.noHorizontalOverflow,
     "Mobile auth should fit without x-axis scrolling");
+  await evaluate('document.querySelector(".da-auth-bottom button").click()');
+  await waitFor(async()=>await evaluate('!!document.querySelector("input[autocomplete=family-name]")'));
+  const mobileSignup=await evaluate(`(() => ({
+    noOverflow:document.documentElement.scrollWidth<=innerWidth+2,
+    inputFont:getComputedStyle(document.querySelector('input[autocomplete="given-name"]')).fontSize,
+    buttonCentered:getComputedStyle(document.querySelector(".da-auth-submit")).justifyContent==="center",
+    footerVisible:!!document.querySelector(".da-auth-return-home")
+  }))()`);
+  assert.equal(mobileSignup.noOverflow,true,"Signup must fit narrow iPhone widths");
+  assert.equal(mobileSignup.inputFont,"16px","Prevent Safari input focus zoom");
+  assert.equal(mobileSignup.buttonCentered,true);
+  assert.equal(mobileSignup.footerVisible,true);
   console.log("DAIRA_AUTH_CHROME_SMOKE="+JSON.stringify({
     login:true,signup:true,smsFailClosed:true,mobile:mobileAuth
   }));

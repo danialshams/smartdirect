@@ -4,18 +4,17 @@
 .da-auth button,.da-auth input{font:inherit}
 .da-auth button{cursor:pointer}
 .da-auth-shell{width:min(480px,100%);min-width:0}
-.da-auth-formside{width:100%;min-width:0}
-.da-auth-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px;padding-inline:4px}
+.da-auth-formside{width:100%;min-width:0;display:flex;flex-direction:column}
+.da-auth-header{display:flex;align-items:center;justify-content:center;margin-bottom:25px;padding-inline:4px}
+.da-auth-brand-link{display:inline-flex;justify-content:center;align-items:center;border-radius:13px;text-decoration:none;transition:transform .22s cubic-bezier(.2,.7,.2,1),opacity .22s}
+.da-auth-brand-link:hover{transform:translateY(-2px)}
+.da-auth-brand-link:focus-visible{outline:2px solid #3979f2;outline-offset:5px}
 .da-auth-brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:850;letter-spacing:-.025em;color:#223750}
 .da-auth-brand__symbol{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#588bf6,#3068ed);color:#fff;font:800 24px/1 Arial,sans-serif;direction:ltr;box-shadow:0 5px 14px #3972ed20}
 .da-auth-brand__symbol span{color:#dce8ff;position:relative;top:3px}
-.da-auth-home{width:38px;height:38px;display:grid;place-items:center;border:1px solid #e7ebf2;background:#fff;border-radius:12px;color:#677a96;text-decoration:none;transition:color .18s,transform .18s,border-color .18s}
-.da-auth-home:hover{color:var(--a-blue);border-color:#c7d7fa;transform:translate(-2px,-2px)}
+
 .da-auth-panel{position:relative;padding:clamp(24px,5vw,38px);background:#fff;border:1px solid #e8edf4;border-radius:24px;box-shadow:0 16px 55px rgba(22,42,75,.045),0 2px 9px rgba(22,42,75,.025);animation:da-auth-enter .42s cubic-bezier(.18,.75,.24,1) both}
 .da-auth-panel h1{margin:0 0 24px;font-size:clamp(23px,4vw,28px);font-weight:850;letter-spacing:-.025em;line-height:1.5;color:#1e314c}
-.da-auth-main-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:#f5f7fa;border:1px solid #edf1f6;border-radius:13px;margin-bottom:20px}
-.da-auth-main-tabs button{height:41px;border:0;border-radius:10px;background:transparent;color:#8290a5;font-size:12px;font-weight:700;transition:background .2s,color .2s,box-shadow .2s}
-.da-auth-main-tabs button.active{background:white;color:#285bd2;box-shadow:0 1px 5px #203b6810}
 .da-auth-methods{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:22px}
 .da-auth-methods button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;border:1px solid #e8edf4;border-radius:11px;background:#fff;color:#7e8ca2;font-size:12px;font-weight:650;transition:background .2s,border-color .2s,color .2s}
 .da-auth-methods button.active{border-color:#c9d9fe;background:#f5f8ff;color:#2f64df}
@@ -35,13 +34,16 @@
 .da-auth-aside{display:flex;justify-content:flex-end;margin-top:-4px}
 .da-auth-aside button,.da-auth-bottom button,.da-auth-back,.da-auth-resend{padding:3px;border:0;background:none;color:#3266dd;font-size:12px;font-weight:650}
 .da-auth-aside button{display:flex;align-items:center;gap:5px}
-.da-auth-submit{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;height:49px;margin-top:4px;padding:0 16px;border:1px solid #2b61d8;border-radius:12px;color:white;background:#356ce9;font-size:13px;font-weight:750;box-shadow:0 6px 18px rgba(51,103,228,.15);transition:background .2s,transform .2s,box-shadow .2s}
+.da-auth-submit{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:49px;margin-top:4px;padding:0 16px;border:1px solid #2b61d8;border-radius:12px;color:white;background:#356ce9;font-size:13px;font-weight:750;box-shadow:0 6px 18px rgba(51,103,228,.15);transition:background .2s,transform .2s,box-shadow .2s}
 .da-auth-submit:before{content:"";position:absolute;z-index:-1;inset:0;transform:translateX(110%);background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.15) 48%,transparent 75%);transition:transform .65s cubic-bezier(.2,.8,.2,1)}
 .da-auth-submit:hover:not(:disabled):before{transform:translateX(-110%)}
 .da-auth-submit:hover:not(:disabled){background:#2c60d9;transform:translateY(-1px);box-shadow:0 9px 21px rgba(51,103,228,.19)}
 .da-auth-submit:active:not(:disabled){transform:translateY(0)}
 .da-auth-submit:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
 .da-auth-bottom{margin-top:19px;color:#8391a3;text-align:center;font-size:12px}
+.da-auth-footer{display:flex;justify-content:center;align-items:center;margin-top:22px;padding-bottom:5px}
+.da-auth-return-home{display:inline-block;padding:7px 12px;color:#72829a;text-decoration:none;font-size:12px;font-weight:600;border-radius:10px;transition:color .2s,background .2s}
+.da-auth-return-home:hover{color:#3266dd;background:#eff4ff}
 .da-auth-back{margin:16px auto 0;display:flex;align-items:center;gap:6px}
 .da-auth-alert{display:flex;align-items:flex-start;gap:8px;padding:11px 12px;border:1px solid;border-radius:11px;font-size:12px;line-height:1.8}
 .da-auth-alert svg{flex:none;margin-top:2px}
@@ -61,8 +63,8 @@
 .da-auth-shine-border{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;padding:var(--da-shine-width,1px);background-image:radial-gradient(transparent,transparent,rgba(102,154,242,.47),transparent,transparent);background-size:300% 300%;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:da-auth-shine var(--da-shine-duration,16s) linear infinite alternate}
 @keyframes da-auth-shine{from{background-position:100% 100%}to{background-position:0 0}}
 .da-auth-submit:before{z-index:0;pointer-events:none}
-.da-auth-submit>span,.da-auth-submit>svg{position:relative;z-index:1}
-.da-auth button:focus-visible,.da-auth-home:focus-visible{outline:2px solid #3979f2;outline-offset:3px}
+.da-auth-submit>span{position:relative;z-index:1;text-align:center}
+.da-auth button:focus-visible,.da-auth-return-home:focus-visible{outline:2px solid #3979f2;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.da-auth-shine-border{animation:none}}
 
 /* Prevent automatic zoom on focus in iOS Safari without affecting the desktop rhythm. */
