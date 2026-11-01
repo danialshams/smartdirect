@@ -971,3 +971,12 @@ model DataDeletionRequest {
   @@index([ipHash, createdAt])
   @@index([status, createdAt])
 }
+
+model PublicFormSubmissionAttempt {
+  id        String @id @default(cuid())
+  ipHash    String @db.VarChar(64)
+  formId    String
+  createdAt DateTime @default(now())
+  @@index([ipHash,createdAt])
+  @@index([formId,createdAt])
+}

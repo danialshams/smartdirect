@@ -1,6 +1,6 @@
 import { jwtVerify, SignJWT } from "jose";
 
-const FORM_TOKEN_EXPIRATION = "30d";
+const FORM_TOKEN_EXPIRATION = "24h";
 
 export type PublicFormTokenPayload = {
   formId: string;
