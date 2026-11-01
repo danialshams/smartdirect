@@ -16,8 +16,10 @@ export function LandingInteractions() {
     // GSAP animates only eight stable inner wrappers, not dozens of nested
     // card nodes. That avoids multiplying style mutations and section
     // invalidations in the Safari HTML -> WebGL capture queue.
-    const revealChildren = root.querySelectorAll<HTMLElement>("[data-reveal]");
-    revealChildren.forEach(element => element.setAttribute("data-visible", "true"));
+    // Legacy nested reveals are already visible unless data-motion-ready is
+    // present (we intentionally never set it). Do not add data-visible to
+    // dozens of children: that previously dirtied every Safari snapshot at
+    // first paint, delaying the actual optical scene.
     const ua = navigator.userAgent;
     const snapshotEngine = /Firefox\/|FxiOS\/|iPhone|iPad|iPod/.test(ua) ||
       (/Safari\//.test(ua) && !/Chrome\/|Chromium\/|Edg\/|OPR\//.test(ua));
