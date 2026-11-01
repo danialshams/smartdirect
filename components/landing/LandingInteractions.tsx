@@ -256,8 +256,9 @@ export function LandingInteractions() {
     // Chromium; on Safari use a small one-shot alpha reveal via native IO.
     // This leaves original WebGL/SVG liquid optics and feature cards untouched.
     const ua = navigator.userAgent;
-    const safariWebKit = /AppleWebKit/.test(ua) &&
-      (/iPhone|iPad|iPod/.test(ua) || (/Safari\\//.test(ua) && !/Chrome\\/|Chromium\\/|Edg\\/|OPR\\//.test(ua)));
+    const safariWebKit = ua.includes("AppleWebKit") &&
+      (/iPhone|iPad|iPod/.test(ua) ||
+        (ua.includes("Safari") && !["Chrome", "Chromium", "Edg", "OPR"].some(token => ua.includes(token))));
     const title = root.querySelector<HTMLElement>(".ap-motion-reveal-title");
     const titleText = title?.querySelector<HTMLElement>("span");
     let headingTrigger: ScrollTrigger | undefined;
