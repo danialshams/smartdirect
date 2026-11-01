@@ -101,7 +101,7 @@ assert.match(liquidHeader,/scale: 118/);
 assert.match(liquidHeader,/specular: 1\.03/);
 assert.match(liquidHeader,/sheen: \.88/);
 assert.doesNotMatch(liquidHeader,/displacementScale|ap-liquid-header__volume|ap-liquid-header__edge|ap-liquid-header__glint/);
-assert.match(liquidHeader,/className="daira-library-liquid-header"/);
+assert.match(liquidHeader,/menu \? "daira-menu-liquid-optics" : "daira-library-liquid-header"/,"Header and menu must use the same real LiquidGlass renderer");
 assert.match(liquidHeader,/capture\.register\(frame,/,"Capture source must bind to the stable outer frame");
 assert.match(liquidHeader,/ref=\{frameRef\}/,"Optical frame must be available before deferred lens mounts");
 assert.doesNotMatch(liquidHeader,/panelRef\.current\?\.element/,"Do not regress to one-shot ref lookup");
