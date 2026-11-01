@@ -84,7 +84,8 @@ assert.ok(interactions.includes(".ap-footer__links") && interactions.includes("s
 assert.ok(interactions.includes('rootMargin: "0px 0px -27% 0px"') && interactions.includes("threshold: [.24]"),"Cards should enter only when a meaningful portion is visible");
 assert.ok(interactions.includes("IntersectionObserver") && interactions.includes('states.set(card, "queued")'),"Card visibility state should prevent replay or premature entry");
 assert.ok(interactions.includes("copyParts.forEach((part, i) => timeline.to(part") && interactions.includes("visualParts.forEach((part, i) => timeline.to(part"),"Independent copy and preview controls must animate sequentially");
-assert.ok(interactions.includes("gsap.timeline") && interactions.includes("timeline.to(card") && interactions.includes("gsapDirection"),"Card shell slides from alternating sides before its opposing inner assembly");
+assert.ok(interactions.includes("gsap.timeline") && interactions.includes("timeline.to(shell") && interactions.includes("gsapDirection"),"Card shell slides from alternating sides before its opposing inner assembly");
+assert.ok(features.includes("ap-social-card__shell") && interactions.includes("gsap.set(shell"),"Slide the lightweight empty card shell, never the heavy Instagram subtree");
 assert.ok(features.includes("ap-social-card__index") && !features.includes("ap-social-card__icon"),"Feature card uses numbers rather than icons");
 assert.ok(landingFixes.includes("font-family:\"DairaVazir\""),"Feature numbers must use actual Vazir typeface");
 assert.ok(page.includes("ap-footer__callout") && page.includes("جایگاه مجوزهای آینده") && page.includes("اینماد") && page.includes("در آینده"),"Footer includes CTA and clearly labelled future license placeholders");
