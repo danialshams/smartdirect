@@ -116,7 +116,7 @@ assert.doesNotMatch(interactions,/LiveOpticalSurface/);
 assert.match(interactions,/onEnter: \(\) =>/);
 assert.ok(!interactions.includes("getVelocity()"),"Do not skip requested animations solely due to scroll velocity");
 assert.ok(!interactions.includes('setAttribute("data-liquid-glass-ignore"'),"No per-frame scene exclusions for animating content");
-assert.match(interactions,/passive:true/);
+assert.match(interactions,/passive:\\s*true/);
 assert.match(interactions,/ChevronUp/);
 assert.doesNotMatch(interactions,/LiquidGlass|simple-liquid-glass/);
 
