@@ -140,6 +140,9 @@ jobs:
       - name: Verify redesigned Daira authentication and secure SMS foundation
         run: npx tsx scripts/test-auth-studio.ts
 
+      - name: Verify security hardening contracts
+        run: npx tsx scripts/test-security-hardening.ts
+
       - name: Build application
         env:
           NODE_ENV: production

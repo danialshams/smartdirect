@@ -4,10 +4,12 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { normalizePhone } from "@/lib/auth/phone";
 import { consumeOtp } from "@/lib/auth/sms-otp";
+import { createHmac } from "node:crypto";
 
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60,
   },
   pages: {
     signIn: "/login",
@@ -19,37 +21,38 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("لطفاً ایمیل و رمز عبور را وارد کنید");
+      async authorize(credentials, request) {
+        const rawIdentifier=typeof credentials?.email==="string" ? credentials.email.trim() : "";
+        const password=typeof credentials?.password==="string" ? credentials.password : "";
+        if(!rawIdentifier || !password || rawIdentifier.length>254) return null;
+        const phone=normalizePhone(rawIdentifier);
+        const identifier=(phone||rawIdentifier.toLowerCase());
+        // One stable bucket per account, shared across serverless instances.
+        // Digest identifiers before storing them to avoid retaining emails/phones in the audit table.
+        const secret=process.env.NEXTAUTH_SECRET;
+        if(!secret || secret.length<32) throw new Error("LOGIN_SECURITY_NOT_CONFIGURED");
+        const identifierHash=createHmac("sha256",secret).update("login:"+identifier).digest("hex");
+        const since=new Date(Date.now()-15*60*1000);
+        const headers=request.headers as Record<string,string|string[]|undefined>;
+        const ip=(headers["x-vercel-forwarded-for"]||headers["x-real-ip"]||headers["x-forwarded-for"]||"unknown");
+        const sourceIp=(Array.isArray(ip)?ip[0]:ip).split(",")[0].trim().slice(0,80);
+        const ipHash=createHmac("sha256",secret).update("login-ip:"+sourceIp).digest("hex");
+        const [attempts,byIp]=await Promise.all([
+          prisma.authPasswordAttempt.count({where:{identifierHash,createdAt:{gt:since}}}),
+          prisma.authPasswordAttempt.count({where:{ipHash,createdAt:{gt:since}}}),
+        ]);
+        if(attempts>=8||byIp>=30)return null;
+        const user=phone
+          ? await prisma.user.findFirst({where:{phone},orderBy:{createdAt:"asc"}})
+          : await prisma.user.findUnique({where:{email:identifier}});
+        // A generic authentication result prevents simple account enumeration.
+        const valid=!!(user && !user.isBlocked && user.password && await bcrypt.compare(password,user.password));
+        if(!valid){
+          await prisma.authPasswordAttempt.create({data:{identifierHash,ipHash}});
+          return null;
         }
-
-        const rawIdentifier = credentials.email.trim();
-        const phone = normalizePhone(rawIdentifier);
-        const user = phone
-          ? await prisma.user.findFirst({ where: { phone }, orderBy: { createdAt: "asc" } })
-          : await prisma.user.findUnique({ where: { email: rawIdentifier.toLowerCase() } });
-
-        if (user?.isBlocked) throw new Error("دسترسی به این حساب موقتاً مسدود شده است.");
-        if (!user || !user.password) {
-          throw new Error("کاربری با این مشخصات یافت نشد");
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isPasswordValid) {
-          throw new Error("رمز عبور اشتباه است");
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role, // 👈 اضافه شد
-        };
+        await prisma.authPasswordAttempt.deleteMany({where:{identifierHash}});
+        return {id:user!.id,email:user!.email,name:user!.name,role:user!.role,sessionVersion:user!.sessionVersion};
       },
     }),
     CredentialsProvider({
@@ -70,7 +73,7 @@ export const authOptions: NextAuthOptions = {
         if (matches.length !== 1) return null;
         const user = matches[0];
         if (!await consumeOtp(user.id, phone, "login", credentials.code)) return null;
-        return { id: user.id, email: user.email, name: user.name, role: user.role };
+        return { id: user.id, email: user.email, name: user.name, role: user.role, sessionVersion: user.sessionVersion };
       }
     }),
   ],
@@ -80,13 +83,14 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role; // 👈 اضافه شد
         token.blocked = false;
+        token.sessionVersion = (user as {sessionVersion?:number}).sessionVersion ?? 0;
         token.accessCheckedAt = Date.now();
       }
       // Refresh persisted account access and role to invalidate already-issued JWTs.
       // The bounded interval avoids adding a DB query to every dashboard request.
       if (!user && typeof token.id === "string" && Date.now() - Number(token.accessCheckedAt || 0) > 10_000) {
-        const current = await prisma.user.findUnique({ where: { id: token.id }, select: { role: true, isBlocked: true } });
-        token.blocked = !current || current.isBlocked;
+        const current = await prisma.user.findUnique({ where: { id: token.id }, select: { role: true, isBlocked: true, sessionVersion: true } });
+        token.blocked = !current || current.isBlocked || token.sessionVersion !== current.sessionVersion;
         token.role = current?.role || "USER";
         token.accessCheckedAt = Date.now();
       }

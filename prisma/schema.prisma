@@ -15,6 +15,7 @@ model User {
   lastName                                                       String?
   password                                                       String
   role                                                           Role                  @default(USER)
+  sessionVersion                                                 Int                   @default(0)
   isBlocked                                                      Boolean               @default(false)
   blockedAt                                                      DateTime?
   blockedReason                                                  String?
@@ -42,6 +43,15 @@ model User {
   savedAutomationResponses SavedAutomationResponse[]
   smartReminderRules SmartReminderRule[]
   smsChallenges AuthSmsChallenge[]
+}
+
+model AuthPasswordAttempt {
+  id             String   @id @default(cuid())
+  identifierHash String   @db.VarChar(64)
+  ipHash         String   @db.VarChar(64)
+  createdAt      DateTime @default(now())
+  @@index([identifierHash, createdAt])
+  @@index([ipHash, createdAt])
 }
 
 model AuthSignupAttempt {
@@ -962,4 +972,13 @@ model DataDeletionRequest {
 
   @@index([ipHash, createdAt])
   @@index([status, createdAt])
+}
+
+model PublicFormSubmissionAttempt {
+  id        String @id @default(cuid())
+  ipHash    String @db.VarChar(64)
+  formId    String
+  createdAt DateTime @default(now())
+  @@index([ipHash,createdAt])
+  @@index([formId,createdAt])
 }

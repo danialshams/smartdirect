@@ -1,0 +1,35 @@
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const read=(path:string)=>readFileSync(path,"utf8");
+const p=JSON.parse(read("package.json"));
+const lock=JSON.parse(read("package-lock.json"));
+assert.equal(p.dependencies.next,"16.4.3");
+assert.equal(lock.packages["node_modules/next"].version,"16.4.3");
+assert.equal(lock.packages["node_modules/sharp"].version,"0.35.5");
+const legacy=read("app/api/instagram/test-message-reaction/route.ts");
+assert.ok(!legacy.includes("reactToInstagramMessage("),"Unauthenticated Meta test endpoint must be retired");
+const callback=read("app/api/instagram/facebook-callback/route.ts");
+assert.ok(!callback.includes("window.location.hash")&&!callback.includes("access_token"),"Legacy implicit OAuth must not handle URL tokens");
+const signed=read("src/lib/instagram/oauth-state.ts");
+assert.ok(signed.includes("timingSafeEqual")&&signed.includes("smartdirect:oauth-state:"));
+const instagram=read("app/api/instagram/route.ts");
+assert.ok(!instagram.includes("base64url")&&instagram.includes("410"),"Disable unsigned state generator");
+const form=read("app/api/forms/[id]/submissions/route.ts");
+for(const part of ["verifyPublicFormToken","formId!==id","instagramAccountId:verified.instagramAccountId","publicFormSubmissionAttempt","total>16*1024"])
+ assert.ok(form.includes(part),"Public form protection: "+part);
+assert.ok(!form.includes("username:typeof username"),"No client-provided Instagram identity");
+const auth=read("src/lib/auth.ts");
+for(const part of ["authPasswordAttempt.count","authPasswordAttempt.create","byIp>=30","sessionVersion","7 * 24 * 60 * 60"])
+ assert.ok(auth.includes(part),"Login protection: "+part);
+assert.ok(read("app/api/auth/password/reset/route.ts").includes("sessionVersion:{increment:1}"));
+const proxy=read("proxy.ts");
+assert.ok(proxy.includes('"/api/:path*"')&&proxy.includes('site==="cross-site"')&&proxy.includes("pagesGuard"));
+const health=read("app/api/health/redis/route.ts")+read("app/api/health/upstash/route.ts");
+assert.ok((health.match(/requireAdmin\(\)/g)||[]).length===2,"Health endpoints require admin");
+const logs=read("app/api/webhooks/instagram/route.ts");
+assert.ok(!logs.includes('console.log("Message text:", messageText)'));
+assert.ok(!logs.includes('console.log("Incoming message:", messageText'));
+assert.ok(!logs.includes('console.log("Story Reply text:", messageText'));
+const cfg=read("next.config.ts");
+for(const header of ["Strict-Transport-Security","Content-Security-Policy","X-Content-Type-Options","Referrer-Policy"])assert.ok(cfg.includes(header));
+console.log("SECURITY HARDENING CONTRACT PASS");

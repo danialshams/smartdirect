@@ -23,6 +23,28 @@ function isAllowedInstagramHost(hostname: string) {
   );
 }
 
+/** Do not let an allowed CDN host redirect server-side fetches to arbitrary URLs.
+ * Never carry the Instagram bearer token to a redirected CDN. */
+async function fetchAllowedMedia(url:URL, options:RequestInit, depth=0):Promise<Response> {
+ if(url.protocol!=="https:"||!isAllowedInstagramHost(url.hostname))
+   return new Response("Media host not allowed",{status:403});
+ if(depth>=3)return new Response("Too many media redirects",{status:502});
+ const response=await fetch(url.toString(),{...options,redirect:"manual"});
+ if([301,302,303,307,308].includes(response.status)){
+   const location=response.headers.get("location");
+   if(!location)return new Response("Invalid upstream redirect",{status:502});
+   let target:URL;
+   try{target=new URL(location,url);}catch{return new Response("Invalid upstream redirect",{status:502});}
+   if(target.protocol!=="https:"||!isAllowedInstagramHost(target.hostname))
+     return new Response("Media redirect blocked",{status:403});
+   const headers=new Headers(options.headers);
+   if(target.hostname!=="graph.instagram.com")headers.delete("authorization");
+   await response.body?.cancel().catch(()=>undefined);
+   return fetchAllowedMedia(target,{...options,headers},depth+1);
+ }
+ return response;
+}
+
 async function fetchInstagramMessageMediaUrl(
   accountId: string,
   messageId: string,
@@ -132,13 +154,7 @@ export async function GET(request: NextRequest) {
     const messageId = request.nextUrl.searchParams.get("messageId");
     const rawUrl = request.nextUrl.searchParams.get("url");
 
-    console.info("[MEDIA_PROXY_DEBUG] request-start", {
-      debugId,
-      accountId,
-      participantId,
-      hasRawUrl: Boolean(rawUrl),
-      range: request.headers.get("range"),
-    });
+    // Private media request details intentionally not logged.
 
     let targetUrl: URL;
     let mediaAccessToken: string | null = null;
@@ -217,30 +233,16 @@ export async function GET(request: NextRequest) {
         upstreamHeaders.Range = range;
       }
 
-      console.info("[MEDIA_PROXY_DEBUG] upstream-start", {
-        debugId,
-        targetHost: targetUrl.hostname,
-        targetPath: targetUrl.pathname,
-        hasAuth: Boolean(mediaAccessToken),
-        range: range || null,
-      });
+      // Private media request details intentionally not logged.
 
-      const response = await fetch(targetUrl.toString(), {
+      const response = await fetchAllowedMedia(targetUrl, {
         method: "GET",
         cache: "no-store",
         signal: controller.signal,
         headers: upstreamHeaders,
       });
 
-      console.info("[MEDIA_PROXY_DEBUG] upstream-response", {
-        debugId,
-        status: response.status,
-        ok: response.ok,
-        contentType: response.headers.get("content-type"),
-        contentLength: response.headers.get("content-length"),
-        contentRange: response.headers.get("content-range"),
-        acceptRanges: response.headers.get("accept-ranges"),
-      });
+      // Private media request details intentionally not logged.
 
       if (!response.ok || !response.body) {
         const responseBody = await response.text().catch(() => "");
@@ -258,7 +260,7 @@ export async function GET(request: NextRequest) {
               isAllowedInstagramHost(freshTarget.hostname)
             ) {
               const retryHeaders = { ...upstreamHeaders };
-              const retryResponse = await fetch(freshTarget.toString(), {
+              const retryResponse = await fetchAllowedMedia(freshTarget, {
                 method: "GET",
                 cache: "no-store",
                 signal: controller.signal,
