@@ -137,6 +137,9 @@ jobs:
       - name: Verify public Daira homepage scene and navigation contracts
         run: npx tsx scripts/test-public-landing.ts
 
+      - name: Verify redesigned Daira authentication and secure SMS foundation
+        run: npx tsx scripts/test-auth-studio.ts
+
       - name: Build application
         env:
           NODE_ENV: production
@@ -193,6 +196,13 @@ jobs:
           # declaration; do not rewrite applied production migration history.
           npx prisma db push
           npx tsx scripts/test-durable-webhook-migration.ts
+
+      - name: Verify persisted signup profile, connected Instagram account and OTP data
+        env:
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          NODE_ENV: test
+        run: npx tsx scripts/test-auth-persistence.ts
 
       - name: Test admin database pagination, effective plans, bulk selection and account access
         env:

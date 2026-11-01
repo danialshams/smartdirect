@@ -501,6 +501,59 @@ try {
   // The official shared scene makes WebGL background capture available on iOS.
   assert.equal(await evaluate("document.querySelectorAll('[data-liquid-glass-scene]').length"),1);
   console.log("DAIRA BROWSER PASS: original simple-liquid-glass loupe, native rim, real refraction, iOS scene, menu and backtop.");
+
+  // Also inspect the rebuilt /login experience in a real Chromium frame.
+  // This is a UI-only smoke check: it never sends credentials or creates users.
+  await send("Page.navigate",{url:"http://127.0.0.1:"+port+"/login"});
+  await waitFor(async()=>await evaluate('!!document.querySelector(".da-auth-formside")'),12000);
+  await waitFor(async()=>await evaluate('!!document.querySelector(".da-auth-main-tabs button")'));
+  const loginFrame=await evaluate(`(() => {
+    const shell=document.querySelector(".da-auth-shell");
+    const header=document.querySelector(".da-auth-panel h1");
+    const form=document.querySelector(".da-auth-form");
+    return {title:header?.textContent,form:!!form,shell:!!shell,
+      font:getComputedStyle(form).fontFamily,
+      darkPanel:!!document.querySelector(".da-auth-showcase"),
+      password:!!document.querySelector('input[autocomplete="current-password"]')}
+  })()`);
+  assert.ok(loginFrame.title.includes("خوش برگشتی") && loginFrame.password);
+  assert.equal(loginFrame.form,true);
+  assert.equal(loginFrame.shell,true);
+  assert.ok(loginFrame.font.includes("Vazirmatn"),"Login must use Persian Vazir typography");
+  assert.equal(loginFrame.darkPanel,true);
+  await evaluate('document.querySelectorAll(".da-auth-main-tabs button")[1].click()');
+  await waitFor(async()=>await evaluate('!!document.querySelector("input[autocomplete=given-name]")'));
+  const signupFields=await evaluate(`(() => ({
+    first:!!document.querySelector('input[autocomplete="given-name"]'),
+    last:!!document.querySelector('input[autocomplete="family-name"]'),
+    tel:!!document.querySelector('input[autocomplete="tel"]'),
+    passwords:document.querySelectorAll('input[autocomplete="new-password"]').length
+  }))()`);
+  assert.ok(signupFields.first && signupFields.last && signupFields.tel);
+  assert.equal(signupFields.passwords,2);
+  await evaluate('document.querySelectorAll(".da-auth-main-tabs button")[0].click()');
+  await waitFor(async()=>await evaluate('!!document.querySelector("input[autocomplete=current-password]")'));
+  await evaluate('document.querySelectorAll(".da-auth-methods button")[1].click()');
+  await waitFor(async()=>await evaluate('!!document.querySelector(".da-auth-sms-status")'));
+  await waitFor(async()=>await evaluate('document.querySelector(".da-auth-sms-status")?.textContent.includes("هنوز فعال نشده")'),12000);
+  const smsInactive=await evaluate('document.querySelector(".da-auth-sms-status")?.textContent');
+  assert.ok(smsInactive.includes("هنوز فعال نشده"),"Do not promise SMS before a provider is available");
+  await send("Emulation.setDeviceMetricsOverride",{
+    width:390,height:844,deviceScaleFactor:1,mobile:true
+  });
+  await sleep(160);
+  const mobileAuth=await evaluate(`(() => ({
+    screenWidth:innerWidth,
+    artHidden:getComputedStyle(document.querySelector(".da-auth-showcase")).display==="none",
+    formWidth:document.querySelector(".da-auth-formside").getBoundingClientRect().width,
+    noHorizontalOverflow:document.documentElement.scrollWidth<=innerWidth+2
+  }))()`);
+  assert.equal(mobileAuth.artHidden,true);
+  assert.ok(mobileAuth.formWidth<=392 && mobileAuth.noHorizontalOverflow,
+    "Mobile auth should fit without x-axis scrolling");
+  console.log("DAIRA_AUTH_CHROME_SMOKE="+JSON.stringify({
+    login:true,signup:true,smsFailClosed:true,mobile:mobileAuth
+  }));
 } finally {
   try {socket?.close();} catch {}
   if (chrome && chrome.exitCode === null) {

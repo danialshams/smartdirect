@@ -2,6 +2,8 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { normalizePhone } from "@/lib/auth/phone";
+import { consumeOtp } from "@/lib/auth/sms-otp";
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -22,9 +24,11 @@ export const authOptions: NextAuthOptions = {
           throw new Error("لطفاً ایمیل و رمز عبور را وارد کنید");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        const rawIdentifier = credentials.email.trim();
+        const phone = normalizePhone(rawIdentifier);
+        const user = phone
+          ? await prisma.user.findFirst({ where: { phone }, orderBy: { createdAt: "asc" } })
+          : await prisma.user.findUnique({ where: { email: rawIdentifier.toLowerCase() } });
 
         if (user?.isBlocked) throw new Error("دسترسی به این حساب موقتاً مسدود شده است.");
         if (!user || !user.password) {
@@ -47,6 +51,27 @@ export const authOptions: NextAuthOptions = {
           role: user.role, // 👈 اضافه شد
         };
       },
+    }),
+    CredentialsProvider({
+      id: "sms",
+      name: "SMS one-time code",
+      credentials: {
+        phone: { label: "Phone", type: "text" },
+        code: { label: "Code", type: "text" }
+      },
+      async authorize(credentials) {
+        const phone = normalizePhone(credentials?.phone ?? "");
+        if (!phone || !credentials?.code) return null;
+        const matches = await prisma.user.findMany({
+          where: { phone, phoneVerifiedAt: { not: null }, isBlocked: false },
+          take: 2
+        });
+        // Never log in to a non-unique phone number or an unverified account.
+        if (matches.length !== 1) return null;
+        const user = matches[0];
+        if (!await consumeOtp(user.id, phone, "login", credentials.code)) return null;
+        return { id: user.id, email: user.email, name: user.name, role: user.role };
+      }
     }),
   ],
   callbacks: {
