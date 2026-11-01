@@ -7,6 +7,7 @@ on:
       - fix/header-edge-band-20261101
       - fix/landing-scroll-gsap-hero-20261101
       - fix/gsap-unified-scroll-glass-20261101
+      - fix/landing-performance-optics-20261101
       - fix/landing-webgl-capture-stability-20261101
 
 permissions:
