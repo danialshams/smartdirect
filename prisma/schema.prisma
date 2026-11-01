@@ -42,6 +42,14 @@ model User {
   smsChallenges AuthSmsChallenge[]
 }
 
+model AuthSignupAttempt {
+  id        String   @id @default(cuid())
+  ipHash    String
+  createdAt DateTime @default(now())
+
+  @@index([ipHash, createdAt])
+}
+
 model AuthSmsChallenge {
   id            String    @id @default(cuid())
   userId        String
