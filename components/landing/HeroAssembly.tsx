@@ -1,69 +1,54 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect, useRef } from "react";
+import { gsap } from "gsap";
 
-/**
- * The RTL sentence is laid out at its final position before hydration.
- * GSAP alone controls the first-entry opacity of each word from RIGHT to LEFT.
- * No CSS keyframes, translates, layout animation or repeated scroll replay.
- */
+/** A single, first-load-only GSAP timeline in natural RTL word order.
+ * No delayed dynamic import, document.fonts.ready gate, duplicate timeline,
+ * positional tween, CSS keyframes, or scroll-based replay. */
 export function HeroAssembly() {
-  useEffect(() => {
+  const played = useRef(false);
+
+  useLayoutEffect(() => {
     const title = document.querySelector<HTMLElement>("[data-hero-assembly]");
     const html = document.documentElement;
     if (!title) { html.dataset.dairaHero = "done"; return; }
+    if (played.current) return;
+    played.current = true;
     const words = Array.from(title.querySelectorAll<HTMLElement>("[data-hero-word]"));
-    let active = true;
-    let finished = false;
-    let release: (() => void) | undefined;
-    let safety: ReturnType<typeof setTimeout> | undefined;
+    let completed = false;
     const finish = () => {
-      if (finished) return;
-      finished = true;
+      if (completed) return;
+      completed = true;
+      gsap.set(words, { clearProps: "opacity" });
       html.dataset.dairaHero = "done";
       title.dataset.gsapHero = "complete";
-      if (title.dataset.gsapHeroStarted) title.dataset.gsapHeroElapsed = String(Math.round(performance.now() - Number(title.dataset.gsapHeroStarted)));
+      if (title.dataset.gsapHeroStarted) {
+        title.dataset.gsapHeroElapsed = String(Math.round(performance.now() - Number(title.dataset.gsapHeroStarted)));
+      }
       title.removeAttribute("data-liquid-glass-ignore");
     };
-
     if (!words.length || matchMedia("(prefers-reduced-motion: reduce)").matches) {
       finish();
       return;
     }
 
-    // Don't block the entire page on remote font downloads. This brief grace
-    // period avoids the old font swap mid-animation on most connections.
-    const fonts = Promise.race([
-      document.fonts.ready.catch(() => undefined),
-      new Promise<void>(resolve => setTimeout(resolve, 900)),
-    ]);
-    safety = setTimeout(() => { if (active) finish(); }, 5000);
-    void Promise.all([import("gsap"), fonts]).then(([module]) => {
-      if (!active || finished) return;
-      const gsap = module.gsap;
-      const context = gsap.context(() => {
-        // Keep word boxes in normal RTL text flow. The first span is the
-        // right-most Persian word; opacity stagger gives the requested motion.
-        gsap.set(words, { opacity: 0 });
-        title.dataset.gsapHero = "playing";
-        title.dataset.gsapHeroStarted = String(performance.now());
-        html.dataset.dairaHero = "playing";
-        gsap.timeline({ onComplete: finish })
-          .to(words, {
-            opacity: 1,
-            duration: 1.22,
-            stagger: 0.19,
-            ease: "power2.out",
-            overwrite: "auto"
-          }, 0);
-      }, title);
-      release = () => context.revert();
-    }).catch(() => { if (active) finish(); });
+    // Render already contains the final line layout. CSS hides only word
+    // opacity before hydration, so GSAP can start immediately and smoothly.
+    gsap.set(words, { opacity: 0 });
+    title.dataset.gsapHero = "playing";
+    title.dataset.gsapHeroStarted = String(performance.now());
+    html.dataset.dairaHero = "playing";
+    const timeline = gsap.timeline({ onComplete: finish, defaults: { ease: "power2.out" } });
+    timeline.to(words, {
+      opacity: 1,
+      duration: 1.18,
+      stagger: { each: 0.16, from: "start" },
+      overwrite: "auto"
+    }, 0);
 
     return () => {
-      active = false;
-      if (safety !== undefined) clearTimeout(safety);
-      release?.();
+      timeline.kill();
       finish();
     };
   }, []);
