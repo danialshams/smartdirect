@@ -34,8 +34,9 @@ for(const route of ["terms","about","contact"])
 
 assert.match(root,/LiquidGlassScene/);
 assert.ok(root.includes("createStaticReflection(page)"),"Safari optical source must be independent of moving HTML");
-assert.ok(root.includes('const copy = child.cloneNode(true)'),"Optical source must use exact original feature markup");
-assert.ok(!root.includes('daira-glass-preview-facade') && !landingFixes.includes('daira-glass-preview-facade'),"Optical reflection must never replace real artwork with placeholders");
+assert.ok(root.includes("landing-reflection/mobile-") && root.includes("landing-reflection/desktop-"),"WebKit must use pre-rendered original page pixels instead of a heavy live DOM snapshot");
+assert.ok(!root.includes("daira-glass-preview-facade") && !landingFixes.includes("daira-glass-preview-facade"),"No synthetic Instagram cards in original-page reflection");
+assert.ok(root.includes('fontEmbedCSS: ""'),"Raster optical captures must not re-embed all homepage fonts");
 assert.ok(root.includes("source.inert = true"),"Reflection source must be inaccessible to users and assistive tech");
 assert.ok(root.includes("createLiquidGlassBackdrop(source"),"Native WebGL must read from the static mirror, not animated DOM");
 assert.ok(!root.includes("createLiquidGlassBackdrop(element"),"Never capture live animated page in Safari");
