@@ -3,7 +3,6 @@ import { Fragment, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { preconnect, preload } from "react-dom";
-import { BadgeCheck, Check, ShieldCheck } from "lucide-react";
 import { LandingGlassBackdrop } from "../components/landing/LandingGlassBackdrop";
 import { SimpleHeader } from "../components/landing/SimpleHeader";
 import { LandingInteractions } from "../components/landing/LandingInteractions";
@@ -19,6 +18,7 @@ import "./landing-live-glass.css";
 import "./landing-optics-v2.css";
 import "./header-library-optics.css";
 import "./landing-fixes.css";
+import "./landing-motion-polish.css";
 
 export const metadata:Metadata = {
   title:"دایرا | همه تعاملات پیجت، در یک فضای ساده",
@@ -73,6 +73,7 @@ export default function Home() {
                 </Fragment>
               ))}
             </h1>
+            <p className="ap-hero__description" data-hero-description>از پاسخ خودکار و صندوق دایرکت تا انتشار محتوا؛ همه در یک فضای ساده.</p>
             <div className="ap-hero__actions" data-hero-cta>
               <Link className="ap-button ap-button--solid ap-hero__cta" href="/login">
                 رایگان شروع کن
@@ -88,6 +89,11 @@ export default function Home() {
 
       <footer className="ap-footer ap-footer--extended">
         <div className="ap-footer__halo" aria-hidden="true"/>
+        <div className="ap-shell ap-footer__invitation">
+          <h2 className="daira-text-mask" data-text-reveal><span className="daira-text-mask__inner">آماده‌ای مدیریت پیجت ساده‌تر بشه؟</span></h2>
+          <p>با دایرا شروع کن و تعاملات پیجت رو یک‌جا مدیریت کن.</p>
+          <Link className="ap-button ap-button--solid ap-footer__cta" href="/login">رایگان شروع کن</Link>
+        </div>
         <div className="ap-shell ap-footer__hero">
           <div className="ap-footer__brand" data-reveal>
             <Link href="/" className="ap-brand" aria-label="دایرا، صفحه اصلی">
@@ -100,15 +106,8 @@ export default function Home() {
             {footerLinks.map((item,index)=><Link href={item.href} key={item.href} data-reveal style={{"--link-index":index} as CSSProperties}>{item.label}</Link>)}
           </nav>
         </div>
-        <div className="ap-shell ap-footer__trust" data-reveal>
-          <div>
-            <span className="ap-footer__trust-title"><ShieldCheck size={17} aria-hidden="true"/> بخش مجوزها و اعتبارسنجی</span>
-            <p>پس از دریافت مجوز، نشان معتبر و لینک استعلام در این قسمت قرار می‌گیرد.</p>
-          </div>
-          <div className="ap-footer__badge-list" aria-label="جایگاه مجوزهای آینده">
-            <div className="ap-footer__badge-placeholder"><BadgeCheck size={23} aria-hidden="true"/><span>Meta</span><small>در آینده</small></div>
-            <div className="ap-footer__badge-placeholder"><Check size={23} aria-hidden="true"/><span>اینماد</span><small>در آینده</small></div>
-          </div>
+        <div className="ap-shell ap-footer__trust">
+          <p>اطلاعات مربوط به حریم خصوصی، قوانین و حذف اطلاعات در لینک‌های بالا در دسترس است.</p>
         </div>
         <div className="ap-shell ap-footer__bottom">
           <span>© {new Date().getFullYear()} دایرا</span>
