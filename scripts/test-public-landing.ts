@@ -83,7 +83,7 @@ assert.ok(interactions.includes(".ap-social-grid > .ap-social-card"), "GSAP must
 assert.ok(interactions.includes(".ap-footer__links"), "GSAP must animate footer links as one group");
 assert.ok(interactions.includes('rootMargin: "0px 0px -22% 0px"'),"Feature observer must wait until individual card approaches 78% viewport line");
 assert.ok(interactions.includes("IntersectionObserver"),"One native observer replaces expensive per-card ScrollTriggers");
-assert.ok(interactions.includes("gsap.to(copy"),"Only card text is animated, not the full Instagram preview");
+assert.match(interactions,/gsap\.(?:to|fromTo)\(copy/,"Only card text is animated, not the full Instagram preview");
 assert.ok(features.includes("ap-social-card__index") && !features.includes("ap-social-card__icon"),"Feature card uses numbers rather than icons");
 assert.ok(page.includes("ap-footer__callout") && !page.includes("اپراتور رسمی متا"),"Clean footer must include signup call to action");
 assert.match(interactions,/yPercent:\s*105/,"Only major feature heading gets the GSAP mask reveal");
