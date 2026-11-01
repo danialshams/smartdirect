@@ -126,7 +126,7 @@ export function LandingInteractions() {
             card.dataset.gsapPhase = "complete";
             card.dataset.gsapShown = "true";
             gsap.set([card, ...(shell ? [shell] : []), ...(copyContainer ? [copyContainer] : []), ...copyParts, ...visualParts, ...(preview ? [preview] : [])], {
-              clearProps: "transform,opacity,visibility,willChange"
+              clearProps: "transform,opacity,visibility"
             });
             running.delete(timeline);
           }
@@ -135,12 +135,8 @@ export function LandingInteractions() {
 
         // 01 outer shell: right, 02 outer shell: left, alternating globally.
         if (shell) {
-          // The empty surface has been opacity-prepared before scrolling.
-          // First reveal only changes two compositor properties, not visibility
-          // (which forced an expensive first-paint layer in mobile WebKit).
-          timeline.to(shell, {
-            x: 0, opacity: 1, force3D: card === cards[0], duration: .64
-          }, 0);
+          timeline.set(shell, { visibility: "visible" }, 0);
+          timeline.to(shell, { x: 0, duration: .64 }, 0);
         }
         // Opposing copy motion, with separate sequential text reveals.
         if (copyContainer) timeline.to(copyContainer, {
@@ -231,19 +227,11 @@ export function LandingInteractions() {
       // Their actual GSAP entrance remains gated by the card observer.
       if (shell) {
         affected.add(shell);
-        gsap.set(shell, {
-          // Cache only the first, lightweight EMPTY shell on the GPU before
-          // scroll. Unlike the heavy preview, this contains no moving text.
-          x: 54 * direction, opacity: 0, force3D: index === 0,
-          ...(index === 0 ? { willChange: "transform,opacity" } : {})
-        });
+        gsap.set(shell, { x: 54 * direction, visibility: "hidden" });
       }
       if (copyContainer) {
         affected.add(copyContainer);
-        gsap.set(copyContainer, {
-          x: 22 * opposite, force3D: false,
-          ...(index === 0 ? { willChange: "transform" } : {})
-        });
+        gsap.set(copyContainer, { x: 22 * opposite, force3D: false });
       }
       for (const part of copyParts) affected.add(part);
       gsap.set(copyParts, { opacity: 0 });
@@ -382,7 +370,7 @@ export function LandingInteractions() {
       delays.forEach(tween => tween.kill());
       running.forEach(animation => animation.kill());
       for (const node of affected) gsap.set(node, {
-        clearProps: "transform,opacity,visibility,willChange"
+        clearProps: "transform,opacity,visibility"
       });
       for (const card of cards) {
         // A completed card stays completed; unfinished animations may safely
