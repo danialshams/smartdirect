@@ -120,6 +120,7 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
     let mounted = true;
     let controller: Capture | undefined;
     let source: HTMLElement | undefined;
+    let geometryObserver: ResizeObserver | undefined;
     try {
       source = createStaticReflection(page);
       // Capture only the static, inert optical source. No animation, React
@@ -128,8 +129,38 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
         maxCacheBytes: 64 * 1024 * 1024, onCaptureError
       });
       source.dataset.dairaGlassCaptureController = "static";
+      // Keep the static source pixel-aligned after responsive layout changes.
+      // This runs only on actual element resize, not on GSAP frames or scroll.
+      const originalSections = Array.from(page.children).filter(child =>
+        child.matches("main, .ap-showcase-capture, footer.ap-footer--extended")) as HTMLElement[];
+      const reflectionSections = Array.from(source.children).filter(child =>
+        child.matches("main, .ap-showcase-capture, footer.ap-footer--extended")) as HTMLElement[];
+      const syncGeometry = () => {
+        const header = page.querySelector<HTMLElement>(".ap-header[data-landing-header]");
+        const spacer = source?.firstElementChild as HTMLElement | null;
+        if (header && spacer) {
+          const h = header.offsetHeight;
+          if (Math.abs(spacer.offsetHeight - h) > 1) spacer.style.height = `${h}px`;
+        }
+        originalSections.forEach((section, index) => {
+          if (!section.matches(".ap-showcase-capture")) return;
+          const mirror = reflectionSections[index];
+          if (!mirror) return;
+          const height = section.offsetHeight;
+          if (Math.abs(mirror.offsetHeight - height) > 1) {
+            mirror.style.height = `${height}px`;
+            mirror.style.minHeight = `${height}px`;
+          }
+        });
+      };
+      geometryObserver = new ResizeObserver(syncGeometry);
+      originalSections.forEach(section => geometryObserver?.observe(section));
+      const header = page.querySelector<HTMLElement>(".ap-header[data-landing-header]");
+      if (header) geometryObserver.observe(header);
+      syncGeometry();
       setCapture(controller);
     } catch {
+      geometryObserver?.disconnect();
       controller?.destroy();
       source?.remove();
       if (mounted) setCapture(null);
@@ -137,6 +168,7 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
       setCapture(null);
+      geometryObserver?.disconnect();
       controller?.destroy();
       source?.remove();
     };
