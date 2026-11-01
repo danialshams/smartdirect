@@ -241,10 +241,11 @@ export function LandingInteractions() {
         }
       };
 
-      // For normal scroll, the feature can assemble while still below the
-      // viewport. Defer only during a large WebKit flick so the optical GPU
-      // renderer gets priority when many scene tiles jump simultaneously.
-      if (mobileWebKit && performance.now() < rapidJumpUntil) {
+      // Safari's live WebGL refraction cannot afford a new animated card
+      // compositor layer on the same scroll frame. Trigger 42% of a viewport
+      // EARLIER, then begin at the first short idle moment (85ms). Desktop
+      // Chromium/Edge enters immediately with the fast timeline.
+      if (mobileWebKit) {
         deferred.set(card, build);
         scheduleIdle();
         return;
