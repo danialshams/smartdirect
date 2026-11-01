@@ -9,6 +9,7 @@ assert.ok(layout.includes('mfa==="ok"')&&layout.includes("AdminMfaGate"),"Admin 
 for(const marker of ['aes-256-gcm','generateRecoveryCodes','hashRecoveryCode','lastFailedAt','failedAttempts','timingSafeEqual','httpOnly:true','sameSite:"strict"'])assert.ok(mfa.includes(marker),"Admin MFA security: "+marker);
 const mfaApi=read("app/api/admin/mfa/route.ts");
 assert.ok(mfaApi.includes('action==="activate"')&&mfaApi.includes('action==="verify"'));
+assert.ok(mfaApi.includes("lastFailedAt")&&mfaApi.includes("failedAttempts"));
 assert.ok(mfaApi.includes("bcrypt.compare")&&mfaApi.includes("adminRecoveryCode.updateMany"));
 const token=read("src/lib/security/meta-token.ts"),manager=read("src/lib/instagram/token-manager.ts"),callback=read("app/api/instagram/callback/route.ts");
 assert.ok(token.includes('aes-256-gcm')&&token.includes('hkdfSync')&&token.includes('daira-meta-enc1:'));
