@@ -404,11 +404,11 @@ try {
     async function exercise(section, item) {
       const top=section.getBoundingClientRect().top+window.scrollY;
       window.scrollTo({top:Math.max(0,top-innerHeight*.73),behavior:"instant"});
-      await sleep(500);
+      await sleep(90);
       const opacities=[];
       for (let i=0;i<11;i++) {
         window.scrollBy({top:48,behavior:"instant"});
-        await sleep(115);
+        await sleep(85);
         opacities.push(Number(getComputedStyle(item).opacity));
       }
       await sleep(2200);
