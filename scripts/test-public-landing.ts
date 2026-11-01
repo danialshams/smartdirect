@@ -34,6 +34,8 @@ for(const route of ["terms","about","contact"])
 
 assert.match(root,/LiquidGlassScene/);
 assert.ok(root.includes("createStaticReflection(page)"),"Safari optical source must be independent of moving HTML");
+assert.ok(root.includes('const copy = child.cloneNode(true)'),"Optical source must use exact original feature markup");
+assert.ok(!root.includes('daira-glass-preview-facade') && !landingFixes.includes('daira-glass-preview-facade'),"Optical reflection must never replace real artwork with placeholders");
 assert.ok(root.includes("source.inert = true"),"Reflection source must be inaccessible to users and assistive tech");
 assert.ok(root.includes("createLiquidGlassBackdrop(source"),"Native WebGL must read from the static mirror, not animated DOM");
 assert.ok(!root.includes("createLiquidGlassBackdrop(element"),"Never capture live animated page in Safari");
@@ -62,6 +64,9 @@ assert.ok(landingFixes.includes("inset:-1.6px!important"));
 assert.ok(landingFixes.includes("prefers-reduced-motion"));
 assert.ok(hero.includes('import { gsap } from "gsap"'), "Preload GSAP on the same first-paint bundle as hero");
 assert.ok(hero.includes("gsap.timeline"), "Hero must animate by GSAP timeline");
+assert.ok(hero.includes("heroEntranceFinished = true"),"Only a completed hero entrance may suppress future replay");
+assert.ok(!hero.includes("if (played.current) return"),"Strict Mode cleanup must not permanently suppress GSAP entrance");
+assert.ok(!hero.includes("timeline.kill();\\n      finish();"),"Cancelled GSAP timeline must not be marked as finished");
 assert.ok(!hero.includes("word-assemble"));
 assert.ok(!root.includes("section.dataset.dairaGlassViewportRevision"), "Do not invalidate static scene tiles on scroll");
 assert.ok(!landingFixes.includes('[data-glass-ready="false"]\n  .daira-library-liquid-header > div'),"Do not replace native lens with CSS blur mid-scroll");
