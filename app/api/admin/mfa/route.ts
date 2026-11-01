@@ -19,7 +19,7 @@ export async function POST(req:NextRequest){
  const user=await authenticatedAdmin();
  if(!user)return NextResponse.json({message:"دسترسی غیرمجاز است."},{status:403,headers:privateHeaders});
  const raw=await req.text();if(Buffer.byteLength(raw)>2048)return NextResponse.json({message:"درخواست بزرگ است."},{status:413,headers:privateHeaders});
- let body:Record<string,unknown>={};try{body=JSON.parse(raw);}catch{return NextResponse.json({message:"درخواست نامعتبر است."},{status:400,headers:privateHeaders});}
+ let body:Record<string,unknown>={};try{const parsed=JSON.parse(raw);if(!parsed||typeof parsed!=="object"||Array.isArray(parsed))throw Error();body=parsed;}catch{return NextResponse.json({message:"درخواست نامعتبر است."},{status:400,headers:privateHeaders});}
  const action=body.action;
  const existing=await prisma.adminMfa.findUnique({where:{userId:user.id}});
  if(action==="begin"){
