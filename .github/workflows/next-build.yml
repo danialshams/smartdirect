@@ -137,6 +137,9 @@ jobs:
       - name: Verify public Daira homepage scene and navigation contracts
         run: npx tsx scripts/test-public-landing.ts
 
+      - name: Verify redesigned Daira authentication and secure SMS foundation
+        run: npx tsx scripts/test-auth-studio.ts
+
       - name: Build application
         env:
           NODE_ENV: production
