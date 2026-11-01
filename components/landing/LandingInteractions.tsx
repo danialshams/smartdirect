@@ -57,6 +57,8 @@ export function LandingInteractions() {
     const delays = new Set<gsap.core.Tween>();
     const deferred = new Map<HTMLElement, () => void>();
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    let previousScrollY = window.scrollY;
+    let rapidJumpUntil = 0;
     let disposed = false;
 
     const flushDeferred = () => {
@@ -102,7 +104,7 @@ export function LandingInteractions() {
           }
           flushDeferred();
         }));
-      }, 165);
+      }, performance.now() < rapidJumpUntil ? 430 : 165);
     };
 
     const cardObserver = new IntersectionObserver(entries => {
@@ -132,7 +134,16 @@ export function LandingInteractions() {
       scrollFrame = requestAnimationFrame(probe);
     };
     const onScroll = () => {
-      if (mobileWebKit && deferred.size) scheduleIdle();
+      if (mobileWebKit) {
+        const y = window.scrollY;
+        if (Math.abs(y - previousScrollY) > 440) {
+          // Allow the native WebGL refractive canvas to catch up after a
+          // multi-screen flick before card transforms allocate textures.
+          rapidJumpUntil = performance.now() + 680;
+        }
+        previousScrollY = y;
+        if (deferred.size) scheduleIdle();
+      }
       // The native IntersectionObserver starts every normal entrance.
       // Only check layout AFTER scrolling settles: WebKit cannot afford
       // forced getBoundingClientRect() reads during live glass frames.
