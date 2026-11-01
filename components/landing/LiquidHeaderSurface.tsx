@@ -50,8 +50,6 @@ export function LiquidHeaderSurface() {
   const backdropRef = useRef<HTMLCanvasElement | null>(null);
   const [sourceBound, setSourceBound] = useState(false);
   const [captureReady, setCaptureReady] = useState(false);
-  const captureReadyRef = useRef(captureReady);
-  captureReadyRef.current = captureReady;
   const [everReady, setEverReady] = useState(false);
   const [strategy, setStrategy] = useState("pending");
 
@@ -76,90 +74,8 @@ export function LiquidHeaderSurface() {
     };
   }, [capture]);
 
-  useEffect(() => {
-    // WebKit cannot sample a live webpage for SVG backdrop displacement.
-    // During a VERY FAST jump its WebGL engine may retain the last captured
-    // frame while html-to-image prepares the newly visible tile. Avoid
-    // displaying those old pixels as though they belonged to the new area.
-    // This only activates during high-velocity scrolls; normal glass remains
-    // native WebGL at full optical strength.
-    if (strategy !== "webgl" || !sourceBound) return;
-    const frame = frameRef.current;
-    const canvas = backdropRef.current;
-    if (!frame || !canvas) return;
-    let previousY = scrollY;
-    let previousAt = performance.now();
-    let lastMove = 0;
-    let started = 0;
-    let originalHash: number | undefined;
-    let initialCaptureCount = 0;
-    let active = false;
-    let raf = 0;
-    let lastSample = 0;
-    const fingerprint = () => {
-      try {
-        const context = canvas.getContext("2d");
-        if (!context || !canvas.width || !canvas.height) return 0;
-        let hash = 2166136261;
-        // Three thin strips catch changes in different parts of the lens;
-        // one row often contained only the page's repeated white background.
-        for (const part of [0.28, 0.5, 0.72]) {
-          const y = Math.max(0, Math.min(canvas.height - 1, Math.floor(canvas.height * part)));
-          const bytes = context.getImageData(0, y, canvas.width, 1).data;
-          for (let i = 0; i < bytes.length; i += 12) {
-            hash = Math.imul(hash ^ bytes[i], 16777619);
-            hash = Math.imul(hash ^ bytes[i+1], 16777619);
-            hash = Math.imul(hash ^ bytes[i+2], 16777619);
-          }
-        }
-        return hash >>> 0;
-      } catch { return 0; }
-    };
-    const tick = (at: number) => {
-      if (!active) return;
-      if (at-lastSample > 90) {
-        lastSample = at;
-        const updated = originalHash !== undefined && fingerprint() !== originalHash;
-        const capturedNew = Number(document.querySelector(".ap-site[data-liquid-glass-scene]")?.getAttribute("data-liquid-glass-captures") ?? 0) > initialCaptureCount;
-        const settled = at - lastMove > 150;
-        // Keep the underlying WebGL renderer alive; as soon as it presents a
-        // fresh canvas and the capture is ready, show it without re-mounting.
-        if (settled && captureReadyRef.current && (updated || capturedNew)) {
-          active = false;
-          frame.dataset.glassFastStale = "false";
-          return;
-        }
-        if (at - lastMove > 2800) {
-          active = false;
-          frame.dataset.glassFastStale = "false";
-          return;
-        }
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    const onScroll = () => {
-      const at = performance.now();
-      const y = scrollY;
-      const delta = Math.abs(y - previousY);
-      const velocity = delta / Math.max(12, at - previousAt);
-      previousY = y; previousAt = at;
-      if (delta < 150 && velocity < 1.15 && !active) return;
-      lastMove = at;
-      if (active) return;
-      active = true;
-      started = at;
-      originalHash = fingerprint();
-      initialCaptureCount = Number(document.querySelector(".ap-site[data-liquid-glass-scene]")?.getAttribute("data-liquid-glass-captures") ?? 0);
-      frame.dataset.glassFastStale = "true";
-      raf = requestAnimationFrame(tick);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(raf);
-      frame.dataset.glassFastStale = "false";
-    };
-  }, [strategy, sourceBound]);
+  // Refractive frames remain mounted; no canvas readbacks, scroll-driven
+  // fingerprinting or forced CSS blur. The native renderer owns its source.
 
   const onDiagnosticsChange = useCallback((next: RenderingDiagnostics) => {
     setStrategy(previous => previous === next.strategy ? previous : next.strategy);

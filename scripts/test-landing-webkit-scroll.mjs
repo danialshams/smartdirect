@@ -59,10 +59,13 @@ try {
   const frames = await page.evaluate(async () => {
     const panel = document.querySelector(".daira-library-liquid-header");
     const samples = [];
+    let previousTimestamp = 0;
     for (let i=0; i<75; i++) {
-      await new Promise(resolve => requestAnimationFrame(resolve));
+      const timestamp = await new Promise(resolve => requestAnimationFrame(resolve));
+      const frameMs = previousTimestamp ? timestamp - previousTimestamp : 0;
+      previousTimestamp = timestamp;
       window.scrollBy(0, 28);
-      samples.push({
+      samples.push({ frameMs,
         y: scrollY,
         strategy: panel.dataset.glassStrategy,
         reason: panel.dataset.glassReason,
@@ -74,6 +77,10 @@ try {
     return samples;
   });
   console.log("WEBKIT_SCROLL_FRAMES="+JSON.stringify(frames));
+  const times=frames.map(f=>f.frameMs).filter(ms=>ms>0).sort((a,b)=>a-b);
+  const quantile=q=>Math.round((times[Math.min(times.length-1,Math.floor(q*(times.length-1)))]??0)*10)/10;
+  console.log("WEBKIT_FRAME_TIMING="+JSON.stringify({p50:quantile(.50),p95:quantile(.95),max:quantile(1),sampleCount:times.length}));
+
   // A real WebKit regression: do not generate new HTML snapshots merely
   // because the user scrolled across static page sections. The official
   // canvas must remain active and track scroll positions itself.
@@ -194,26 +201,26 @@ try {
     const frame=document.querySelector(".daira-library-glass-frame");
     return frame?.dataset.glassReady==="true";
   },null,{timeout:10000});
-  // Force another long flick and verify the native live fallback hides the
-  // *old* source only while the new WebKit texture is catching up.
-  await page.evaluate(() => window.scrollTo({ top: 1050, behavior: "instant" }));
-  await page.waitForFunction(() => {
+  // The former "ghost fix" hid the REAL WebGL lens and rendered a blur
+  // substitute for every fast scroll. This must never happen again.
+  await page.evaluate(() => window.scrollTo({top:1050,behavior:"instant"}));
+  await page.waitForTimeout(180);
+  const fastLens=await page.evaluate(() => {
     const frame=document.querySelector(".daira-library-glass-frame");
-    return frame?.dataset.glassFastStale==="true";
-  },null,{timeout:4000});
-  const liveMask=await page.evaluate(() => ({
-    lens:getComputedStyle(document.querySelector(".daira-library-liquid-header")).opacity,
-    fallback:getComputedStyle(document.querySelector(".daira-library-glass-live-fallback")).opacity,
-    gsap:document.querySelector(".ap-site")?.dataset.gsapMotion,
-  }));
-  console.log("WEBKIT_FAST_LIVE_MASK="+JSON.stringify(liveMask));
-  if(liveMask.lens!=="0" || liveMask.fallback!=="1" || liveMask.gsap!=="true")
-    throw Error("Safari fast-scrolling must show LIVE backdrop, not old glass pixels");
-  await page.waitForFunction(() => {
-    const frame=document.querySelector(".daira-library-glass-frame");
-    return frame?.dataset.glassFastStale==="false";
-  },null,{timeout:6000});
-  console.log("WEBKIT_FAST_LIVE_MASK_RECOVERY_PASS");
+    const lens=document.querySelector(".daira-library-liquid-header");
+    return {
+      strategy:lens?.dataset.glassStrategy,
+      visible:getComputedStyle(lens).opacity,
+      ready:frame?.dataset.glassReady,
+      forcedMatte:frame?.dataset.glassFastStale,
+      gsap:document.querySelector(".ap-site")?.dataset.gsapMotion
+    };
+  });
+  console.log("WEBKIT_FAST_NATIVE_LENS="+JSON.stringify(fastLens));
+  if(fastLens.strategy!=="webgl" || fastLens.visible==="0" || fastLens.forcedMatte==="true" || fastLens.gsap!=="true") {
+    throw Error("Fast scrolling must retain the true optical lens without forcing a blur substitute");
+  }
+  console.log("WEBKIT_NATIVE_OPTICS_UNINTERRUPTED_PASS");
   console.log("WEBKIT_FAST_SCROLL_RECOVERY_PASS");
   console.log("WEBKIT_SCROLL_PASS");
 } catch (error) {
