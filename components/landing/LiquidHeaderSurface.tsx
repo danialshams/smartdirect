@@ -92,6 +92,7 @@ export function LiquidHeaderSurface() {
     let lastMove = 0;
     let started = 0;
     let originalHash: number | undefined;
+    let initialCaptureCount = 0;
     let active = false;
     let raf = 0;
     let lastSample = 0;
@@ -99,13 +100,17 @@ export function LiquidHeaderSurface() {
       try {
         const context = canvas.getContext("2d");
         if (!context || !canvas.width || !canvas.height) return 0;
-        const y = Math.max(0, Math.floor(canvas.height / 2));
-        const bytes = context.getImageData(0, y, canvas.width, 1).data;
         let hash = 2166136261;
-        for (let i = 0; i < bytes.length; i += 12) {
-          hash = Math.imul(hash ^ bytes[i], 16777619);
-          hash = Math.imul(hash ^ bytes[i+1], 16777619);
-          hash = Math.imul(hash ^ bytes[i+2], 16777619);
+        // Three thin strips catch changes in different parts of the lens;
+        // one row often contained only the page's repeated white background.
+        for (const part of [0.28, 0.5, 0.72]) {
+          const y = Math.max(0, Math.min(canvas.height - 1, Math.floor(canvas.height * part)));
+          const bytes = context.getImageData(0, y, canvas.width, 1).data;
+          for (let i = 0; i < bytes.length; i += 12) {
+            hash = Math.imul(hash ^ bytes[i], 16777619);
+            hash = Math.imul(hash ^ bytes[i+1], 16777619);
+            hash = Math.imul(hash ^ bytes[i+2], 16777619);
+          }
         }
         return hash >>> 0;
       } catch { return 0; }
@@ -115,10 +120,11 @@ export function LiquidHeaderSurface() {
       if (at-lastSample > 90) {
         lastSample = at;
         const updated = originalHash !== undefined && fingerprint() !== originalHash;
+        const capturedNew = Number(document.querySelector(".ap-site[data-liquid-glass-scene]")?.getAttribute("data-liquid-glass-captures") ?? 0) > initialCaptureCount;
         const settled = at - lastMove > 150;
         // Keep the underlying WebGL renderer alive; as soon as it presents a
         // fresh canvas and the capture is ready, show it without re-mounting.
-        if (settled && captureReadyRef.current && (updated || at - started > 1800)) {
+        if (settled && captureReadyRef.current && (updated || capturedNew)) {
           active = false;
           frame.dataset.glassFastStale = "false";
           return;
@@ -143,6 +149,7 @@ export function LiquidHeaderSurface() {
       active = true;
       started = at;
       originalHash = fingerprint();
+      initialCaptureCount = Number(document.querySelector(".ap-site[data-liquid-glass-scene]")?.getAttribute("data-liquid-glass-captures") ?? 0);
       frame.dataset.glassFastStale = "true";
       raf = requestAnimationFrame(tick);
     };
