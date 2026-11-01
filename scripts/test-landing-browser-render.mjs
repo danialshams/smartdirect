@@ -239,6 +239,8 @@ try {
     return {
       text:title.textContent.replace(/\\s+/g," ").trim(),
       count:words.length,
+      stickers:title.querySelectorAll("[data-hero-sticker]").length,
+      backgrounds:title.querySelectorAll(".ap-hero__sticker-bg").length,
       state:title.dataset.gsapHero,
       started:title.dataset.gsapHeroStarted,
       elapsed:Number(title.dataset.gsapHeroElapsed),
@@ -249,6 +251,8 @@ try {
   })()`);
   assert.equal(hero.text,"مدیریت کل پیجت رو بسپار به دایرا");
   assert.equal(hero.count,7);
+  assert.equal(hero.stickers,7,"Hero words should be individually masked sticker labels");
+  assert.equal(hero.backgrounds,7,"Each hero word has a brief sticker-wipe surface");
   assert.equal(hero.state,"complete");
   assert.ok(Number(hero.started)>0,"GSAP must actually start on first entry");
   assert.ok(hero.elapsed>=700 && hero.elapsed<3500,
@@ -439,6 +443,8 @@ try {
       stageCount:Number(card?.dataset.gsapStages??0),
       phase:card?.dataset.gsapPhase,
       shellOpacity:Number(getComputedStyle(card).opacity),
+      realSurface:getComputedStyle(card).backgroundImage.includes("gradient"),
+      removedShadowOnlyShell:card.querySelector(".ap-social-card__shell")===null,
       titleOpacity:Number(getComputedStyle(card.querySelector("h3")).opacity),
       previewOpacity:Number(getComputedStyle(preview).opacity),
       stagedParts:[...card.querySelectorAll(".ig-preview > *, .ap-social-card__index, .ap-social-card__count")].length
@@ -448,6 +454,8 @@ try {
   assert.ok(assembled.stageCount >= 5, "Each feature must sequence multiple real card internals");
   assert.equal(assembled.phase,"complete","GSAP must complete the inner UI assembly");
   assert.equal(assembled.shellOpacity,1);
+  assert.equal(assembled.realSurface,true,"Real feature article owns the animated card background");
+  assert.equal(assembled.removedShadowOnlyShell,true,"No decorative-only shell should animate instead of the card");
   assert.equal(assembled.titleOpacity,1);
   assert.equal(assembled.previewOpacity,1);
     const directionAudit = await evaluate(`(() => {
