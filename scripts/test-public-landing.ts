@@ -37,7 +37,7 @@ assert.match(root,/maxCacheBytes/);
 assert.match(root,/onCaptureError/);
 assert.ok(page.includes("dataset.sceneCaptureStable='true'"),"WebKit scene should be stabilized before hydration");
 assert.match(root,/dairaGlassRetry/);
-assert.match(root,/Math.min\(30000/);
+assert.match(root,/Math.min\(5500/);
 assert.ok(root.includes("maxCacheBytes={64 * 1024 * 1024}"));
 assert.ok(page.includes('import "./landing-fixes.css";'));
 assert.ok(landingFixes.includes(".daira-library-liquid-header > .liquid-glass-border"));
