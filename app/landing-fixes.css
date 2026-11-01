@@ -187,8 +187,7 @@ body > .daira-static-reflection > .daira-optical-tile {
   overflow: hidden !important;
   contain: layout paint !important;
 }
-body > .daira-static-reflection > .daira-optical-tile > picture,
-body > .daira-static-reflection > .daira-optical-tile > picture > img {
+body > .daira-static-reflection > .daira-optical-tile > img {
   display: block !important;
   width: 100% !important;
   height: 100% !important;
