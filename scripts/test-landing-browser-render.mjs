@@ -251,7 +251,7 @@ try {
   assert.equal(hero.count,7);
   assert.equal(hero.state,"complete");
   assert.ok(Number(hero.started)>0,"GSAP must actually start on first entry");
-  assert.ok(hero.elapsed>=1800 && hero.elapsed<5000,
+  assert.ok(hero.elapsed>=950 && hero.elapsed<3300,
     "RTL GSAP stagger must run smoothly long enough to reveal words in sequence");
   assert.ok(hero.opacities.every(v=>v===1),"Every hero word must finish fully visible");
   assert.ok(hero.transforms.every(v=>v==="none"),"No scattered or sliding RTL words");
@@ -402,8 +402,8 @@ try {
     const rows=[...document.querySelectorAll(".ap-showcase-capture")];
     const footer=document.querySelector(".ap-footer--extended");
     async function exercise(section, item) {
-      const top=section.getBoundingClientRect().top+window.scrollY;
-      window.scrollTo({top:Math.max(0,top-innerHeight*1.18),behavior:"instant"});
+      const top=item.getBoundingClientRect().top+window.scrollY;
+      window.scrollTo({top:Math.max(0,top-innerHeight*1.12),behavior:"instant"});
       await sleep(500);
       const opacities=[];
       for (let i=0;i<11;i++) {

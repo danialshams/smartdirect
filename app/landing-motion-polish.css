@@ -1,0 +1,218 @@
+/*
+ * Daira landing: restrained, single-owner GSAP motion and a unified card
+ * surface. This intentionally does NOT touch the Liquid Glass header shader,
+ * its canvas, optical capture controller, or mobile back-to-top lens.
+ */
+
+/* Keep the hero's type dominant. The explanatory sentence never competes. */
+.ap-site .ap-hero__content {max-width:1050px}
+.ap-site .ap-hero__description {
+  margin:17px auto 0!important;
+  max-width:610px;
+  color:#667995;
+  font-size:clamp(12px,1.35vw,15px);
+  line-height:2.05;
+  text-align:center;
+  text-wrap:pretty;
+  font-weight:500;
+}
+.ap-site .ap-hero__actions {margin-top:25px!important;isolation:isolate}
+html[data-daira-hero="pending"] .ap-site .ap-hero__description,
+html[data-daira-hero="pending"] .ap-site [data-hero-cta] {opacity:0}
+
+/* A soft icy-blue light moves only along the edge, with one fixed faint
+ * diffusion outside the chip. Never an extra white border or neon halo. */
+.ap-site .ap-hero__cta {
+  overflow:visible!important;
+  isolation:isolate;
+  border:0!important;
+  border-radius:999px;
+  box-shadow:0 10px 26px rgba(41,93,225,.19),0 0 18px rgba(106,169,248,.14)!important;
+  transition:box-shadow .26s ease,background-color .26s ease;
+}
+.ap-site .ap-hero__cta::before {
+  inset:-1px!important;
+  z-index:1!important;
+  padding:1.65px!important;
+  opacity:.86;
+  background:conic-gradient(from var(--ap-beam-angle),
+    transparent 0deg,transparent 245deg,
+    rgba(130,195,255,.16) 265deg,
+    rgba(168,216,255,.94) 307deg,
+    rgba(233,250,255,.93) 318deg,
+    rgba(138,198,255,.46) 345deg,transparent 360deg)!important;
+}
+.ap-site .ap-hero__cta::after {z-index:0!important;pointer-events:none}
+.ap-site .ap-hero__cta:hover {
+  box-shadow:0 12px 27px rgba(41,93,225,.22),0 0 23px rgba(117,183,250,.22)!important;
+}
+
+/* The text-mask is reserved for precisely two editorial headings:
+ * feature intro and the final footer invitation. No paragraphs or cards use
+ * this treatment. With JavaScript disabled the content stays fully visible. */
+.ap-site .daira-text-mask {
+  display:block;
+  overflow:clip;
+  padding-block:4px;
+}
+.ap-site .daira-text-mask__inner {display:block;will-change:auto}
+
+/* Eleven cards share exactly one neutral surface, one outer shadow,
+ * no inset streaks and no alternating card tints. */
+.ap-site > .ap-showcase-capture {
+  background:#f8faff!important;
+}
+.ap-site .ap-social-grid {gap:19px}
+.ap-site .ap-social-card {
+  border:1px solid rgba(222,232,247,.82)!important;
+  background:#fff!important;
+  box-shadow:0 15px 38px rgba(38,76,135,.065)!important;
+  outline:0!important;
+  border-radius:27px!important;
+  transition:box-shadow .3s ease,border-color .3s ease;
+}
+.ap-site .ap-social-card::before,
+.ap-site .ap-social-card::after {box-shadow:none!important}
+.ap-site .ap-social-card:hover {
+  border-color:rgba(177,201,241,.82)!important;
+  box-shadow:0 18px 43px rgba(38,76,135,.095)!important;
+}
+.ap-site .ap-social-card__copy {padding-top:28px}
+.ap-site .ap-social-card__number {
+  display:block;
+  width:fit-content;
+  direction:ltr;
+  color:#3273ee;
+  font:700 clamp(34px,3.1vw,43px)/1.2 Arial,sans-serif;
+  letter-spacing:-1px;
+  font-variant-numeric:tabular-nums;
+}
+.ap-site .ap-social-card__copy h3 {
+  margin-top:15px!important;
+  color:#1c304d;
+}
+.ap-site .ap-social-card__copy p {color:#6e819b}
+.ap-site .ap-social-card .ig-preview {
+  border:1px solid #e8edf6!important;
+  background:#fff!important;
+  box-shadow:0 9px 25px rgba(41,68,109,.085)!important;
+}
+.ap-site .ap-showcase__intro h2 {text-wrap:balance}
+.ap-site .ap-showcase__eyebrow {
+  display:inline-flex;
+  justify-content:center;
+  color:#3468d9;
+  letter-spacing:0;
+}
+
+/* Real GSAP is the only entrance owner. Old [data-reveal] CSS transitions
+ * remain loaded elsewhere for legacy pages; neutralize them locally. */
+.ap-site[data-gsap-motion="true"] [data-reveal],
+.ap-site[data-gsap-motion="true"] .ap-social-showcase [data-reveal] {
+  transition:none!important;
+  transition-delay:0ms!important;
+}
+.ap-site[data-gsap-motion="true"] .ap-social-card {
+  transition:box-shadow .3s ease,border-color .3s ease!important;
+}
+.ap-site[data-gsap-motion="true"] .ap-social-card[data-gsap-shown="true"] {
+  /* Hover motion is enabled only AFTER the GSAP entrance has finished;
+     during entry CSS transitions must not fight the GSAP transform. */
+  transition:transform .32s cubic-bezier(.2,.76,.2,1),
+    box-shadow .3s ease,border-color .3s ease!important;
+}
+.ap-site[data-gsap-motion="true"] [data-text-reveal] {transition:none!important}
+
+/* Dark editorial footer: no oversized glass panels or empty license marks. */
+.ap-site .ap-footer--extended {
+  background:#101d35!important;
+  color:#f1f5ff!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.ap-site .ap-footer__halo {
+  background:radial-gradient(ellipse 38% 48% at 50% 0%,rgba(51,100,196,.16),transparent 83%)!important;
+}
+.ap-site .ap-footer__invitation {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0;
+  padding:88px 0 59px;
+  text-align:center;
+  border-bottom:1px solid rgba(174,197,230,.13);
+}
+.ap-site .ap-footer__invitation h2 {
+  max-width:100%;
+  margin:0!important;
+  color:#f5f8ff!important;
+  font-size:clamp(27px,4vw,45px);
+  font-weight:850;
+  line-height:1.7;
+}
+.ap-site .ap-footer__invitation p {
+  margin:9px auto 0!important;
+  color:#aabbd7!important;
+  font-size:13px;line-height:2.1;
+}
+.ap-site .ap-footer__cta {
+  min-height:47px;
+  margin-top:27px;
+  padding:11px 26px!important;
+  border:0!important;
+  border-radius:999px;
+  color:#fff!important;
+  background:linear-gradient(130deg,#3d79fa,#2b5fdd)!important;
+  box-shadow:0 9px 23px rgba(41,100,220,.22)!important;
+  font-size:12px;font-weight:800;
+  transition:background .2s ease,box-shadow .25s ease;
+}
+.ap-site .ap-footer__cta:hover {box-shadow:0 13px 29px rgba(41,100,220,.34)!important}
+.ap-site .ap-footer--extended .ap-footer__hero {
+  padding:43px 0 31px!important;
+  gap:25px!important;
+}
+.ap-site .ap-footer--extended .ap-brand {color:#fff!important}
+.ap-site .ap-footer--extended .ap-footer__brand p {color:#acbbd4!important}
+.ap-site .ap-footer__links > a {color:#b5c3dc!important}
+.ap-site .ap-footer__links > a:hover {color:#fff!important}
+.ap-site .ap-footer--extended .ap-footer__trust {
+  border-top:1px solid rgba(174,197,230,.13)!important;
+  border-bottom:0!important;
+  padding:18px 0!important;
+}
+.ap-site .ap-footer--extended .ap-footer__trust p {
+  color:#8da0be!important;
+  margin:0!important;
+  font-size:11px;
+  text-align:center;
+}
+.ap-site .ap-footer--extended .ap-footer__bottom {
+  border-top:1px solid rgba(174,197,230,.13)!important;
+  padding:20px 0 28px!important;
+  color:#859bbd!important;
+}
+
+/* Content remains equally clear and uncluttered on narrow screens. */
+@media(max-width:600px) {
+  .ap-site .ap-hero__description {
+    max-width:338px;
+    margin-top:12px!important;
+    padding-inline:4px;
+    font-size:12px;
+    line-height:1.95;
+  }
+  .ap-site .ap-hero__actions {margin-top:23px!important}
+  .ap-site .ap-social-grid {gap:15px}
+  .ap-site .ap-social-card {border-radius:24px!important}
+  .ap-site .ap-social-card__number {font-size:37px}
+  .ap-site .ap-social-card__copy h3 {margin-top:12px!important}
+  .ap-site .ap-footer__invitation {padding:67px 0 49px}
+  .ap-site .ap-footer__invitation h2 {font-size:clamp(25px,6.5vw,35px)}
+  .ap-site .ap-footer__invitation p {max-width:320px;font-size:12px}
+  .ap-site .ap-footer--extended .ap-footer__hero {padding:36px 0 27px!important}
+}
+@media(prefers-reduced-motion:reduce) {
+  .ap-site .daira-text-mask__inner {transform:none!important;opacity:1!important}
+  .ap-site .ap-hero__cta::before {animation:none!important;opacity:.5!important}
+  html[data-daira-hero] .ap-site .ap-hero__description,
+  html[data-daira-hero] .ap-site [data-hero-cta] {opacity:1!important;transform:none!important}
+}

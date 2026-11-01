@@ -20,13 +20,17 @@ const landingFixes=read("app/landing-fixes.css");
 
 for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase />","<LandingInteractions />",
   '<main id="content">',"initialScrollGuard","history.scrollRestoration='manual'",
-  "جایگاه مجوزهای آینده","در آینده","مدیریت کل پیجت رو بسپار به دایرا","رایگان شروع کن",
+  "آماده‌ای مدیریت پیجت ساده‌تر بشه؟","مدیریت کل پیجت رو بسپار به دایرا","رایگان شروع کن",
   "./landing-instagram.css","./landing-optics-v2.css"])
   assert.ok(page.includes(item),"Missing landing contract: "+item);
 assert.doesNotMatch(page,/HeroMotion|<video|heroFragments|data-hero-fragment/);
 assert.match(page,/heroWords\.map/);
 assert.match(page,/data-hero-word/);
 assert.match(page,/data-reveal/);
+assert.match(page,/data-hero-description/);
+assert.match(page,/ap-footer__invitation/);
+assert.match(page,/landing-motion-polish\.css/);
+assert.ok(!page.includes("جایگاه مجوزهای آینده") && !page.includes("در آینده"), "Never show unearned or placeholder approval badges");
 for(const url of ["/login","/privacy-policy","/terms","/data-deletion","/contact","/about"])
   assert.ok(page.includes('href:"'+url+'"')||page.includes('href="'+url+'"'),"Missing link "+url);
 for(const route of ["terms","about","contact"])
@@ -78,7 +82,7 @@ assert.ok(page.includes("<Fragment key={word}>"));
 assert.ok(page.includes("dir=\"rtl\""));
 assert.ok(page.includes('"--hero-delay"'));
 assert.ok(interactions.includes('import { gsap } from "gsap"'), "Sections should not wait for late GSAP chunks");
-assert.ok(interactions.includes('import { ScrollTrigger } from "gsap/ScrollTrigger"'), "Features and footer need real ScrollTrigger");
+assert.ok(interactions.includes("new IntersectionObserver("), "Use an efficient one-shot viewport observer to trigger GSAP");
 assert.ok(interactions.includes(".ap-social-grid > .ap-social-card"), "GSAP must animate feature cards");
 assert.ok(interactions.includes(".ap-footer__links > a"), "GSAP must animate footer links");
 assert.ok(!interactions.includes("node.animate("), "No Web Animations API fallback on Safari");
@@ -98,7 +102,7 @@ assert.match(liquidHeader,/ref=\{frameRef\}/,"Optical frame must be available be
 assert.doesNotMatch(liquidHeader,/panelRef\.current\?\.element/,"Do not regress to one-shot ref lookup");
 assert.match(liquidHeader,/onDiagnosticsChange/);
 assert.match(liquidHeader,/daira-library-glass-live-fallback/);
-assert.match(interactions,/ScrollTrigger\.create/);
+assert.match(interactions,/observer\.observe\(el\)/);
 assert.doesNotMatch(liquidHeaderCSS,/liquid-glass-border|div\[style\*="backdrop-filter"\]|radial-gradient|box-shadow:[^;]+rgba\(/);
 assert.match(page,/import "\.\/header-library-optics\.css"/);
 assert.match(header,/aria-expanded=\{open\}/);
@@ -109,10 +113,10 @@ assert.match(header,/returnFocus\.current/);
 assert.doesNotMatch(header,/LiquidGlass|simple-liquid-glass|WebGL/);
 assert.match(interactions,/ap-backtop__blue-blur/);
 assert.doesNotMatch(interactions,/LiveOpticalSurface/);
-assert.match(interactions,/onEnter: \(\) =>/);
+assert.ok(interactions.includes("gsap.fromTo("), "GSAP must animate viewport-revealed content");
 assert.ok(!interactions.includes("getVelocity()"),"Do not skip requested animations solely due to scroll velocity");
 assert.ok(!interactions.includes('setAttribute("data-liquid-glass-ignore"'),"No per-frame scene exclusions for animating content");
-assert.match(interactions,/passive:true/);
+assert.match(interactions,/passive:\s*true/);
 assert.match(interactions,/ChevronUp/);
 assert.doesNotMatch(interactions,/LiquidGlass|simple-liquid-glass/);
 
@@ -183,6 +187,12 @@ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.doesNotMatch(css,/border:[^;]*solid\s+white|setInterval/);
 
 assert.match(features,/ap-showcase-capture/);
+assert.ok(features.includes("ap-social-card__number") && !features.includes("ap-social-card__icon"), "Feature headings must use 01-11 instead of pictograms");
+assert.equal((features.match(/data-text-reveal/g)||[]).length,1,"Masked text may only be used on the feature intro");
+assert.equal((page.match(/data-text-reveal/g)||[]).length,1,"Masked text may only be used on the footer call to action");
+assert.ok(interactions.includes('once(card, () =>') && interactions.includes('rootMargin: "0px 0px -27% 0px"'),"Animate individual cards only when they enter the final 73% viewport threshold");
+assert.ok(!interactions.includes('start: "top 89%"'),"Never animate whole sections ahead of the viewport");
+assert.ok(interactions.includes("revealPreview(card)"),"Small preview movements should begin only once a card has appeared");
 assert.match(features,/InstagramPreview kind=\{scene\.id\}/);
 assert.equal((scenes.match(/no: "([۰-۹]+)"/g)||[]).length,11);
 for(const id of ["comment","story","direct","share","live","reminder","inbox","publishing","insights","menu","icebreaker"])
