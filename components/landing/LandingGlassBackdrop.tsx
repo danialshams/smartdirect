@@ -12,8 +12,8 @@ export const useLandingGlassCapture = () => useContext(CaptureContext);
  * a tile every time GSAP updates descendant inline styles. That is the main
  * cause of the frame stalls and stale textures.
  *
- * A separate inert, static *visual source* retains the exact preview artwork,
- * markup and stylesheet to the SAME library's optical shader, but cannot be modified by
+ * The optical source uses raster captures of the original rendered UI,
+ * passed to the SAME library's optical shader, but cannot be modified by
  * GSAP, React hydration, menu or scroll-reveal state.
  *
  * The live site stays untouched and interactive. The reflection source is
@@ -30,9 +30,7 @@ function createStaticReflection(page: HTMLElement): HTMLElement {
     "position:absolute!important;top:0!important;left:0!important;right:0!important;" +
     "width:100%!important;pointer-events:none!important;z-index:-10!important;" +
     "overflow:visible!important;contain:none!important;";
-  // Header participates in page flow, but its sticky buttons and optical
-  // element must not be cloned. A block with the exact height aligns every
-  // later section with the real page at all responsive breakpoints.
+
   const header = page.querySelector<HTMLElement>(".ap-header[data-landing-header]");
   if (header) {
     const spacer = document.createElement("div");
@@ -41,40 +39,35 @@ function createStaticReflection(page: HTMLElement): HTMLElement {
     spacer.setAttribute("aria-hidden", "true");
     source.appendChild(spacer);
   }
-  // Each direct page section becomes one bounded, stable HTML-to-image tile.
-  for (const child of Array.from(page.children)) {
-    if (!child.matches("main, .ap-showcase-capture, footer.ap-footer--extended")) continue;
-    const copy = child.cloneNode(true) as HTMLElement;
-    copy.removeAttribute("id");
-    copy.querySelectorAll<HTMLElement>("[id]").forEach(node => node.removeAttribute("id"));
-    // Preserve original preview artwork in the optical source, including
-    // colors, icons and text: fake preview placeholders produce incorrect
-    // pixels through the actual refraction lens. The copy is inert and is
-    // rasterized by the library without GSAP touching it.
-    if (child.matches(".ap-showcase-capture")) {
-      const height = child.getBoundingClientRect().height;
-      copy.style.height = `${height}px`;
-      copy.style.minHeight = `${height}px`;
-    }
 
-    copy.querySelectorAll<HTMLElement>("[data-liquid-glass-ignore]").forEach(node =>
-      node.removeAttribute("data-liquid-glass-ignore"));
-    copy.querySelectorAll<HTMLElement>("[data-hero-word]").forEach(node => {
-      node.style.removeProperty("opacity");
-      node.style.removeProperty("visibility");
-      node.style.removeProperty("transform");
-    });
-    copy.querySelectorAll<HTMLElement>("[style]").forEach(node => {
-      // Inline GSAP opacity and transform captured during hydration must
-      // NEVER be part of the static optical material.
-      if (node.matches("[data-reveal], [data-hero-word]")) {
-        node.style.removeProperty("opacity");
-        node.style.removeProperty("visibility");
-        node.style.removeProperty("transform");
-      }
-    });
-    source.appendChild(copy);
-  }
+  // These are full-resolution source *pixels captured from the actual live UI*
+  // by the native WebKit audit, not approximations of Instagram previews.
+  // Keeping the scene as simple <img> tiles avoids serial html-to-image
+  // serialization of eleven complicated mockups during a user's scroll.
+  // The same unmodified GPU shader refracts these source pixels every frame.
+  const sections = Array.from(page.children).filter(child =>
+    child.matches("main, .ap-showcase-capture, footer.ap-footer--extended")
+  ) as HTMLElement[];
+  sections.forEach((child, index) => {
+    const tile = document.createElement(child.tagName.toLowerCase());
+    tile.className = `${child.className} daira-optical-tile`;
+    tile.setAttribute("aria-hidden", "true");
+    tile.style.height = `${child.getBoundingClientRect().height}px`;
+    const picture = document.createElement("picture");
+    const mobile = document.createElement("source");
+    mobile.media = "(max-width: 700px)";
+    mobile.srcset = `/landing-reflection/mobile-${index}.jpg`;
+    picture.appendChild(mobile);
+    const image = document.createElement("img");
+    image.src = `/landing-reflection/desktop-${index}.jpg`;
+    image.alt = "";
+    image.decoding = "sync";
+    image.loading = "eager";
+    image.draggable = false;
+    picture.appendChild(image);
+    tile.appendChild(picture);
+    source.appendChild(tile);
+  });
   document.body.appendChild(source);
   return source;
 }
@@ -113,7 +106,7 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
       // Capture only the static, inert optical source. No animation, React
       // state or DOM mutations can invalidate its cached section snapshots.
       controller = createLiquidGlassBackdrop(source, {
-        maxCacheBytes: 64 * 1024 * 1024, onCaptureError
+        fontEmbedCSS: "", maxCacheBytes: 64 * 1024 * 1024, onCaptureError
       });
       source.dataset.dairaGlassCaptureController = "static";
       // Keep the static source pixel-aligned after responsive layout changes.
@@ -130,7 +123,6 @@ export function LandingGlassBackdrop({ children }: { children: ReactNode }) {
           if (Math.abs(spacer.offsetHeight - h) > 1) spacer.style.height = `${h}px`;
         }
         originalSections.forEach((section, index) => {
-          if (!section.matches(".ap-showcase-capture")) return;
           const mirror = reflectionSections[index];
           if (!mirror) return;
           const height = section.offsetHeight;
