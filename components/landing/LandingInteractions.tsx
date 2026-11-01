@@ -66,8 +66,16 @@ export function LandingInteractions() {
         if (states.get(card) !== "queued") continue;
         const rect = card.getBoundingClientRect();
         if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
-          // A card scrolled past during a continuous flick must never become
-          // blank or replay when the user scrolls back to it.
+          // A card scrolled past during a continuous flick must never remain
+          // transparent now that the REAL card (not an inert shell) is hidden.
+          // Restore its card and ALL inner elements before marking it played.
+          const prepared = preparedCards.get(card);
+          gsap.set([card,
+            ...(prepared?.copyContainer ? [prepared.copyContainer] : []),
+            ...(prepared?.copyParts ?? []),
+            ...(prepared?.preview ? [prepared.preview] : []),
+            ...(prepared?.visualParts ?? [])
+          ], { clearProps: "transform,opacity,visibility" });
           states.set(card, "done");
           card.dataset.gsapPhase = "complete";
           card.dataset.gsapShown = "true";
