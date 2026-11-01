@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
 import { internalEmailForPhone, normalizePhone, validatePassword } from "../src/lib/auth/phone";
 
+async function main() {
 const phone = normalizePhone("+98910" + randomInt(1_000_000,9_999_999))!;
 const password = "SamplePass123";
 assert.ok(phone && validatePassword(password));
@@ -48,3 +49,6 @@ try {
   if(userId)await prisma.user.delete({where:{id:userId}}).catch(()=>{});
   await prisma.$disconnect();
 }
+
+}
+void main().catch(error=>{console.error(error);process.exitCode=1;});
