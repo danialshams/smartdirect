@@ -432,8 +432,8 @@ try {
     assert.equal(result.finalOpacity,1,name+" must remain fully visible after entrance");
   }
   const assembled = await evaluate(`(() => {
-    const cards=[...document.querySelectorAll(".ap-social-card")];
-    const card=cards[Math.min(4,cards.length-1)];
+    const rows=[...document.querySelectorAll(".ap-showcase-capture")];
+    const card=rows[Math.min(4,rows.length-1)]?.querySelector(".ap-social-grid > .ap-social-card");
     const preview=card?.querySelector(".ig-preview");
     return {
       stageCount:Number(card?.dataset.gsapStages??0),
