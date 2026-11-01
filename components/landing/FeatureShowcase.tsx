@@ -42,10 +42,10 @@ export function FeatureShowcase() {
           >
             <div className="ap-shell ap-showcase__inner">
               {rowIndex === 0 && (
-                <div className="ap-showcase__intro" data-reveal>
+                <div className="ap-showcase__intro">
                   <span className="ap-showcase__eyebrow">امکانات دایرا</span>
                   <h2 id="ap-features-title" className="ap-motion-reveal-title"><span>از یک پیام ساده، تا مدیریت کل پیج</span></h2>
-                  <p data-reveal>هر قابلیت، در محیطی آشنا شبیه اینستاگرام.</p>
+                  <p>هر قابلیت، در محیطی آشنا شبیه اینستاگرام.</p>
                 </div>
               )}
               <div className="ap-social-grid">
@@ -54,7 +54,6 @@ export function FeatureShowcase() {
                     key={scene.id}
                     id={"feature-" + scene.id}
                     className={"ap-social-card" + (scenes.length === 1 ? " ap-social-card--wide" : "")}
-                    data-reveal
                     style={{ "--reveal-index": index } as CSSProperties}
                     aria-labelledby={"feature-title-" + scene.id}
                   >
@@ -62,9 +61,9 @@ export function FeatureShowcase() {
                       <span className="ap-social-card__index" aria-hidden="true">{scene.no}</span>
                       <span className="ap-social-card__count" aria-hidden="true">{scene.no} / ۱۱</span>
                       <h3 id={"feature-title-" + scene.id}>{scene.title}</h3>
-                      <p data-reveal>{scene.tagline}</p>
+                      <p>{scene.tagline}</p>
                     </div>
-                    <div className="ap-social-card__visual" data-reveal>
+                    <div className="ap-social-card__visual">
                       <InstagramPreview kind={scene.id}/>
                     </div>
                   </article>
