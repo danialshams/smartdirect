@@ -48,9 +48,11 @@ export function LandingInteractions() {
       }
     }, { rootMargin: "0px 0px -27% 0px", threshold: [.24] });
 
-    // Some WebKit versions miss an observer callback after an instantaneous
-    // jump/resize. One passive, RAF-coalesced fallback checks ONLY queued cards.
+    // WebKit may miss an observer after an instantaneous jump or resize.
+    // Its fallback must NOT measure all pending card boxes on every scroll
+    // frame; doing so forces layout while the glass and GSAP are compositing.
     let scrollFrame = 0;
+    let lastProbeAt = -Infinity;
     const probe = () => {
       scrollFrame = 0;
       for (const card of pending) {
@@ -61,7 +63,15 @@ export function LandingInteractions() {
       }
     };
     const onScroll = () => {
-      if (!scrollFrame) scrollFrame = requestAnimationFrame(probe);
+      if (!pending.size || scrollFrame) return;
+      const now = performance.now();
+      if (now - lastProbeAt < 180) return;
+      lastProbeAt = now;
+      scrollFrame = requestAnimationFrame(probe);
+    };
+    const onResize = () => {
+      lastProbeAt = -Infinity;
+      onScroll();
     };
 
     const unique = (nodes: (HTMLElement | null)[]) =>
@@ -187,7 +197,7 @@ export function LandingInteractions() {
       cardObserver.observe(card);
     });
     addEventListener("scroll", onScroll, { passive: true });
-    addEventListener("resize", onScroll, { passive: true });
+    addEventListener("resize", onResize, { passive: true });
     requestAnimationFrame(probe);
 
     // Only the feature section headline gets the upward clipped text effect.
@@ -267,7 +277,7 @@ export function LandingInteractions() {
       disposed = true;
       canceled = true;
       removeEventListener("scroll", onScroll);
-      removeEventListener("resize", onScroll);
+      removeEventListener("resize", onResize);
       if (scrollFrame) cancelAnimationFrame(scrollFrame);
       cardObserver.disconnect();
       footerObservers.forEach(observer => observer.disconnect());
