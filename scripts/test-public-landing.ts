@@ -33,6 +33,14 @@ for(const route of ["terms","about","contact"])
   assert.ok(existsSync("app/"+route+"/page.tsx"),"Missing public route "+route);
 
 assert.match(root,/LiquidGlassScene/);
+assert.ok(root.includes("createStaticReflection(page)"),"Safari optical source must be independent of moving HTML");
+assert.ok(root.includes("/landing-reflection/") && root.includes('window.matchMedia("(max-width: 700px)")') && root.includes("updateImagesForViewport"),"WebKit must use original static source captures and respond to breakpoint changes");
+assert.ok(!root.includes("daira-glass-preview-facade") && !landingFixes.includes("daira-glass-preview-facade"),"No synthetic Instagram cards in original-page reflection");
+assert.ok(root.includes('fontEmbedCSS: ""'),"Raster optical captures must not re-embed all homepage fonts");
+assert.ok(root.includes("source.inert = true"),"Reflection source must be inaccessible to users and assistive tech");
+assert.ok(root.includes("createLiquidGlassBackdrop(source"),"Native WebGL must read from the static mirror, not animated DOM");
+assert.ok(!root.includes("createLiquidGlassBackdrop(element"),"Never capture live animated page in Safari");
+assert.ok(landingFixes.includes(".daira-static-reflection"),"Static source must always paint without GSAP fade");
 assert.match(root,/maxCacheBytes/);
 assert.match(root,/onCaptureError/);
 assert.ok(page.includes("dataset.sceneCaptureStable='true'"),"WebKit scene should be stabilized before hydration");
@@ -57,6 +65,9 @@ assert.ok(landingFixes.includes("inset:-1.6px!important"));
 assert.ok(landingFixes.includes("prefers-reduced-motion"));
 assert.ok(hero.includes('import { gsap } from "gsap"'), "Preload GSAP on the same first-paint bundle as hero");
 assert.ok(hero.includes("gsap.timeline"), "Hero must animate by GSAP timeline");
+assert.ok(hero.includes("heroEntranceFinished = true"),"Only a completed hero entrance may suppress future replay");
+assert.ok(!hero.includes("if (played.current) return"),"Strict Mode cleanup must not permanently suppress GSAP entrance");
+assert.doesNotMatch(hero,/timeline\.kill\(\);\s*finish\(\)/,"Cancelled GSAP timeline must not be marked as finished");
 assert.ok(!hero.includes("word-assemble"));
 assert.ok(!root.includes("section.dataset.dairaGlassViewportRevision"), "Do not invalidate static scene tiles on scroll");
 assert.ok(!landingFixes.includes('[data-glass-ready="false"]\n  .daira-library-liquid-header > div'),"Do not replace native lens with CSS blur mid-scroll");

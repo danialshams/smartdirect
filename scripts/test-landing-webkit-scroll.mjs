@@ -4,6 +4,7 @@
  */
 import { webkit } from "playwright";
 import { spawn } from "node:child_process";
+import { mkdir, writeFile } from "node:fs/promises";
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const app = spawn("./node_modules/.bin/next", ["start", "-p", "3198"], {
@@ -19,6 +20,7 @@ try {
     await sleep(250);
   }
   if (!ready) throw Error("Next.js local server not ready");
+  await mkdir("artifacts/landing-webkit", { recursive: true });
   browser = await webkit.launch({ headless: true });
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -39,10 +41,38 @@ try {
       bound: document.querySelector(".daira-library-glass-frame")?.dataset.opticalSourceBound,
       sources: document.querySelectorAll("canvas[data-liquid-glass-backdrop]").length,
       scene: !!document.querySelector("[data-liquid-glass-scene]"),
-      captures: Number(document.querySelector("[data-liquid-glass-scene]")?.getAttribute("data-liquid-glass-captures") ?? 0),
+      captures: Number(document.querySelector(".daira-static-reflection")?.getAttribute("data-liquid-glass-captures") ?? 0),
       edge: getComputedStyle(lens.querySelector(".liquid-glass-border")).display };
   });
   console.log("WEBKIT_FIRST="+JSON.stringify(first));
+  await page.waitForFunction(() => document.querySelector(".daira-static-reflection")?.dataset.dairaGlassCaptureController==="static",null,{timeout:12000});
+  await page.waitForFunction(() => [...document.querySelectorAll(".daira-optical-tile img")].length===10 && [...document.querySelectorAll(".daira-optical-tile img")].every(img=>img.complete && img.naturalWidth>0),null,{timeout:15000});
+  const mirror=await page.evaluate(() => {
+    const page=document.querySelector(".ap-site[data-liquid-glass-scene]");
+    const source=document.querySelector(".daira-static-reflection");
+    const liveSections=[...page.children].filter(node=>node.matches("main, .ap-showcase-capture, footer.ap-footer--extended"));
+    const reflectionSections=[...source.children].filter(node=>node.matches("main, .ap-showcase-capture, footer.ap-footer--extended"));
+    return {
+      pageSections:liveSections.length,reflectionSections:reflectionSections.length,
+      sameTop:liveSections.every((el,i)=>Math.abs(el.getBoundingClientRect().top-reflectionSections[i].getBoundingClientRect().top)<3),
+      sameHeight:liveSections.every((el,i)=>Math.abs(el.getBoundingClientRect().height-reflectionSections[i].getBoundingClientRect().height)<3),
+      imageTiles:source.querySelectorAll(".daira-optical-tile img").length,
+      imagesReady:[...source.querySelectorAll(".daira-optical-tile img")].every(img=>img.complete && img.naturalWidth>0),
+      sourceMatches:[...source.querySelectorAll(".daira-optical-tile img")].every((img,i)=>
+        img.getAttribute("src")===`/landing-reflection/mobile-${i}.jpg`),
+      sourceInert:source.inert && source.getAttribute("aria-hidden")==="true",
+      noDuplicateIds:!source.querySelector("[id]"),
+      noHiddenHero:[...source.querySelectorAll("[data-hero-word]")].every(el=>getComputedStyle(el).opacity==="1"),
+      sourceRootIsSeparate:source!==page && !page.contains(source)
+    };
+  });
+  console.log("WEBKIT_STATIC_REFLECTION="+JSON.stringify(mirror));
+  if(mirror.pageSections<9 || mirror.pageSections!==mirror.reflectionSections || !mirror.sameTop ||
+    !mirror.sameHeight || mirror.imageTiles!==mirror.pageSections || !mirror.imagesReady || !mirror.sourceMatches ||
+    !mirror.sourceInert || !mirror.noDuplicateIds || !mirror.noHiddenHero || !mirror.sourceRootIsSeparate) {
+    throw Error("Raster reflection source must be loaded, aligned and inaccessible");
+  }
+
   // A scene can be ready while the library's deferred optical ref is not
   // mounted yet. Require the explicit source to bind and produce REAL optics
   // before exercising scrolling: otherwise a permanent missing-backdrop blur
@@ -71,7 +101,7 @@ try {
         reason: panel.dataset.glassReason,
         ready: document.querySelector(".daira-library-glass-frame").dataset.glassReady,
         ever: document.querySelector(".daira-library-glass-frame").dataset.opticalEverReady,
-        captures: Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures ?? 0),
+        captures: Number(document.querySelector(".daira-static-reflection")?.dataset.liquidGlassCaptures ?? 0),
       });
     }
     return samples;
@@ -79,7 +109,9 @@ try {
   console.log("WEBKIT_SCROLL_FRAMES="+JSON.stringify(frames));
   const times=frames.map(f=>f.frameMs).filter(ms=>ms>0).sort((a,b)=>a-b);
   const quantile=q=>Math.round((times[Math.min(times.length-1,Math.floor(q*(times.length-1)))]??0)*10)/10;
-  console.log("WEBKIT_FRAME_TIMING="+JSON.stringify({p50:quantile(.50),p95:quantile(.95),max:quantile(1),sampleCount:times.length}));
+  const frameTiming={p50:quantile(.50),p95:quantile(.95),max:quantile(1),sampleCount:times.length};
+  console.log("WEBKIT_FRAME_TIMING="+JSON.stringify(frameTiming));
+  await writeFile("artifacts/landing-webkit/frame-timing.json",JSON.stringify(frameTiming,null,2));
 
   // A real WebKit regression: do not generate new HTML snapshots merely
   // because the user scrolled across static page sections. The official
@@ -101,7 +133,7 @@ try {
       opticalFilter:optical ? getComputedStyle(optical).backdropFilter : null,
       edgeShadow:getComputedStyle(frame).boxShadow,
       clip:getComputedStyle(frame).overflow,
-      captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0)
+      captures:Number(document.querySelector(".daira-static-reflection")?.dataset.liquidGlassCaptures??0)
     };
   });
   console.log("WEBKIT_SETTLED_CAPTURE="+JSON.stringify(settled));
@@ -113,6 +145,30 @@ try {
     throw Error("Visible white rim must be clipped without an outer shadow");
   }
   if (settled.captures < 2) throw Error("No real scene tiles captured during scroll");
+  const featureScreenshot=await page.screenshot({type:"jpeg",quality:63});
+  await writeFile("artifacts/landing-webkit/feature-with-real-glass.jpg",featureScreenshot);
+  // A regression previously kept the WebGL strategy alive but displayed a
+  // nearly white header because <picture> data was not embedded in the
+  // foreignObject. Check ACTUAL output pixels in an area where the original
+  // live scene shows the pink Instagram preview behind the lens.
+  const opticsPixel=await page.evaluate(async data => {
+    const image=new Image();
+    image.src="data:image/jpeg;base64,"+data;
+    await image.decode();
+    const canvas=document.createElement("canvas");
+    canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+    const ctx=canvas.getContext("2d",{willReadFrequently:true});
+    if(!ctx) throw Error("Screenshot sampler unavailable");
+    ctx.drawImage(image,0,0);
+    return [...ctx.getImageData(520,78,1,1).data].slice(0,3);
+  },featureScreenshot.toString("base64"));
+  console.log("WEBKIT_ACTUAL_GLASS_PINK_PIXEL="+JSON.stringify(opticsPixel));
+  if(opticsPixel[0]-opticsPixel[1]<25 || opticsPixel[1]>220) {
+    throw Error("WebGL header lost the real pink content behind it: white/matte reflection regression");
+  }
+  console.log("WEBKIT_OPTICS_PINK_REFRACTION_PASS");
+
+
   // Revisiting a previously captured region must preserve optical rendering
   // without replacing the GPU canvas with the old 5px frosted material.
   await page.evaluate(() => window.scrollTo({top:0,behavior:"instant"}));
@@ -125,7 +181,7 @@ try {
       nativeCanvas:!!lens?.querySelector("canvas[data-liquid-glass-webgl]") ||
         !!lens?.parentElement?.querySelector("canvas[data-liquid-glass-scene]"),
       filter:optical ? getComputedStyle(optical).backdropFilter : null,
-      captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0),
+      captures:Number(document.querySelector(".daira-static-reflection")?.dataset.liquidGlassCaptures??0),
       revisions:document.querySelectorAll("[data-daira-glass-viewport-revision]").length
     };
   });
@@ -135,7 +191,7 @@ try {
   }
 
   const snapshot = await page.screenshot({type:"jpeg",quality:54});
-  console.log("WEBKIT_SCROLL_IMAGE="+snapshot.toString("base64"));
+  await writeFile("artifacts/landing-webkit/hero-with-real-glass.jpg",snapshot);
   const stable = first.stable === "true";
   if (!stable) throw Error("Safari screenshot-reveal animation suppression not engaged");
   if (first.edge !== "none") throw Error("Separate white border is still visible");
@@ -165,7 +221,7 @@ try {
       y:scrollY,
       strategy:document.querySelector(".daira-library-liquid-header")?.dataset.glassStrategy,
       bound:document.querySelector(".daira-library-glass-frame")?.dataset.opticalSourceBound,
-      captures:Number(document.querySelector("[data-liquid-glass-scene]")?.dataset.liquidGlassCaptures??0),
+      captures:Number(document.querySelector(".daira-static-reflection")?.dataset.liquidGlassCaptures??0),
       gsapShown:document.querySelectorAll("[data-gsap-shown='true']").length,
       // Capture cadence is NOT a proxy for freshness. Fingerprint the actual
       // 2D backdrop source consumed by native WebGL at each jump.
@@ -223,6 +279,28 @@ try {
   console.log("WEBKIT_NATIVE_OPTICS_UNINTERRUPTED_PASS");
   console.log("WEBKIT_FAST_SCROLL_RECOVERY_PASS");
   console.log("WEBKIT_SCROLL_PASS");
+  // Verify the desktop responsive optical images, real WebGL lens and
+  // alignment without expensive repeated full-page screenshot exports.
+  await page.setViewportSize({width:1280,height:900});
+  await page.waitForFunction(() => {
+    const sections=[...document.querySelectorAll(".daira-optical-tile img")];
+    const live=[...document.querySelector(".ap-site[data-liquid-glass-scene]").children]
+      .filter(el=>el.matches("main, .ap-showcase-capture, footer.ap-footer--extended"));
+    return sections.length===10 && sections.every((img,i)=>
+      img.getAttribute("src")===`/landing-reflection/desktop-${i}.jpg` &&
+      img.complete && img.naturalWidth>0 &&
+      Math.abs(img.closest(".daira-optical-tile").getBoundingClientRect().top-live[i].getBoundingClientRect().top)<3);
+  },null,{timeout:15000});
+  await page.evaluate(() => window.scrollTo({top:2100,behavior:"instant"}));
+  await page.waitForTimeout(500);
+  await writeFile("artifacts/landing-webkit/desktop-with-real-glass.jpg",await page.screenshot({type:"jpeg",quality:78}));
+  await page.setViewportSize({width:390,height:844});
+  await page.waitForFunction(() => [...document.querySelectorAll(".daira-optical-tile img")].every((img,i)=>
+    img.getAttribute("src")===`/landing-reflection/mobile-${i}.jpg` && img.complete && img.naturalWidth>0),null,{timeout:15000});
+  await page.waitForTimeout(250);
+
+  console.log("WEBKIT_RESPONSIVE_OPTICS_PASS");
+
 } catch (error) {
   console.error("WEBKIT_SCROLL_ERROR", error);
   process.exitCode = 1;
