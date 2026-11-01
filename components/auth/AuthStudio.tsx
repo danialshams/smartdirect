@@ -9,14 +9,15 @@ import Link from "next/link";
 import { asciiDigits } from "@/lib/auth/phone";
 import "./auth-studio.css";
 
-type Screen = "login" | "signup" | "forgot";
+type Screen = "login" | "signup" | "forgot" | "verify";
 type LoginMethod = "password" | "sms";
 type Status = { type: "error" | "success" | "info"; message: string } | null;
 type ApiReply = { success?: boolean; message?: string; providerConfigured?: boolean };
 const headline = {
   login: ["خوش برگشتی", "دوباره به دایرا وصل شو و همه‌چیز رو یک‌جا مدیریت کن."],
   signup: ["شروع یک تجربه تازه", "حساب دایرات رو بساز. بقیه ماجرا از همین‌جا شروع می‌شه."],
-  forgot: ["رمزت رو فراموش کردی؟", "بعد از فعال‌شدن پیامک، رمز جدید رو با تأیید موبایل تنظیم کن."]
+  forgot: ["رمزت رو فراموش کردی؟", "بعد از فعال‌شدن پیامک، رمز جدید رو با تأیید موبایل تنظیم کن."],
+  verify: ["موبایلت رو تأیید کن", "برای امنیت حساب و ورود پیامکی، کدی که دریافت کردی رو وارد کن."]
 } as const;
 
 function safeDestination(input?: string | null) {
@@ -151,12 +152,29 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
     if (http >= 400 || !data.success) {
       setStatus({type:"error",message:data.message || "ثبت‌نام انجام نشد."}); return;
     }
+    if (smsEnabled) {
+      setScreen("verify");
+      await requestOtp("verify");
+      return;
+    }
+    await finishSignup();
+  };
+  const finishSignup = async () => {
     const result = await signIn("credentials",{redirect:false,email:phone,password});
     if (!result?.ok || result.error) {
       setScreen("login");setIdentifier(phone);setMethod("password");
       setStatus({type:"success",message:"حساب ساخته شد. حالا وارد شو."});return;
     }
     window.location.assign(safeDestination(callbackUrl));
+  };
+  const verifyPhone = async () => {
+    const { status:http,data }=await postJson("/api/auth/otp/verify",{
+      phone,code:asciiDigits(code)
+    });
+    if (http>=400 || !data.success) {
+      setStatus({type:"error",message:data.message || "تأیید موبایل انجام نشد."});return;
+    }
+    await finishSignup();
   };
   const resetPassword = async () => {
     if (!codeSent) { await requestOtp("reset"); return; }
@@ -173,7 +191,8 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     void run(screen==="signup"?registerAccount:
-      screen==="forgot"?resetPassword:method==="sms"?smsLogin:passwordLogin);
+      screen==="verify"?verifyPhone:screen==="forgot"?resetPassword:
+      method==="sms"?smsLogin:passwordLogin);
   };
   const renderPassword = (value: string, setValue: (value: string) => void,
     label: string, complete = "current-password") => (
@@ -205,7 +224,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
             <div className="da-auth-eyebrow"><span className="da-auth-dot"/> فضای شخصی تو در دایرا</div>
             <h1>{headline[screen][0]}<span className="da-auth-accent">.</span></h1>
             <p className="da-auth-subheading">{headline[screen][1]}</p>
-            {screen!=="forgot" && <div className="da-auth-main-tabs" role="tablist" aria-label="ورود یا ثبت‌نام">
+            {screen!=="forgot" && screen!=="verify" && <div className="da-auth-main-tabs" role="tablist" aria-label="ورود یا ثبت‌نام">
               <button type="button" role="tab" aria-selected={screen==="login"} className={screen==="login"?"active":""} onClick={()=>changeScreen("login")}>ورود به حساب</button>
               <button type="button" role="tab" aria-selected={screen==="signup"} className={screen==="signup"?"active":""} onClick={()=>changeScreen("signup")}>ایجاد حساب جدید</button>
             </div>}
@@ -235,7 +254,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
                 {renderPassword(password,setPassword,"رمز عبور")}
                 <div className="da-auth-aside"><button type="button" onClick={()=>changeScreen("forgot")}>رمز عبورم رو فراموش کردم <ArrowLeft size={15}/></button></div>
               </>}
-              {(screen!=="login" || method==="sms") && <label className="da-auth-field">
+              {(screen==="signup" || screen==="forgot" || (screen==="login" && method==="sms")) && <label className="da-auth-field">
                 <span>شماره موبایل</span>
                 <span className="da-auth-input"><Phone size={18}/>
                   <input autoComplete="tel" type="tel" inputMode="tel" dir="ltr"
@@ -255,32 +274,42 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
                 {renderPassword(newPassword,setNewPassword,"رمز عبور جدید","new-password")}
                 {renderPassword(confirm,setConfirm,"تکرار رمز جدید","new-password")}
               </>}</>}
+              {screen==="verify" && <label className="da-auth-field">
+                <span>کد تأیید موبایل {phone}</span><span className="da-auth-input">
+                  <Fingerprint size={18}/><input inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                    value={code} onChange={e=>setCode(asciiDigits(e.target.value).replace(/\\D/g,"").slice(0,6))}
+                    placeholder="۶ رقم" dir="ltr" required/>
+                </span>
+              </label>}
               {screen==="login" && method==="sms" && codeSent && <label className="da-auth-field">
                 <span>کد پیامک‌شده</span><span className="da-auth-input">
                   <Fingerprint size={18}/><input inputMode="numeric" autoComplete="one-time-code" maxLength={6}
                     value={code} onChange={e=>setCode(asciiDigits(e.target.value).replace(/\D/g,"").slice(0,6))} placeholder="۶ رقم" dir="ltr"/>
                 </span>
               </label>}
-              {(screen==="forgot" || (screen==="login" && method==="sms")) && <div className="da-auth-sms-status">
+              {(screen==="forgot" || screen==="verify" || (screen==="login" && method==="sms")) && <div className="da-auth-sms-status">
                 <MessageCircleMore size={17}/>
                 {smsChecked && !smsEnabled ? "زیرساخت پیامک آماده است؛ اتصال سرویس ارسال هنوز فعال نشده." :
                   codeSent ? "کد تا ۲ دقیقه اعتبار داره." : "برای شماره‌های تأییدشده کد یک‌بارمصرف ارسال می‌شه."}
               </div>}
-              {codeSent && (screen==="forgot" || method==="sms") && <button type="button"
+              {codeSent && (screen==="forgot" || screen==="verify" || method==="sms") && <button type="button"
                 className="da-auth-resend" disabled={busy || countdown>0 || !smsEnabled}
-                onClick={()=>void run(()=>requestOtp(screen==="forgot"?"reset":"login"))}>
+                onClick={()=>void run(()=>requestOtp(screen==="forgot"?"reset":screen==="verify"?"verify":"login"))}>
                 {countdown>0 ? `ارسال مجدد در ${countdown} ثانیه` : "ارسال مجدد کد"}
               </button>}
               {status && <div role="alert" className={`da-auth-alert da-auth-alert--${status.type}`}>
                 {status.type==="success"?<CheckCircle2 size={17}/>:<ShieldCheck size={17}/>}<span>{status.message}</span>
               </div>}
-              <button type="submit" className="da-auth-submit" disabled={busy || (!smsEnabled && (screen==="forgot" || (screen==="login" && method==="sms")))}>
-                <span>{busy?"در حال انجام...":screen==="signup"?"ساخت حساب دایرا":
+              <button type="submit" className="da-auth-submit" disabled={busy || (!smsEnabled && (screen==="forgot" || screen==="verify" || (screen==="login" && method==="sms")))}>
+                <span>{busy?"در حال انجام...":screen==="signup"?"ساخت حساب دایرا":screen==="verify"?"تأیید موبایل و ورود":
                   screen==="forgot"?(codeSent?"تغییر رمز عبور":"دریافت کد بازیابی"):
                   method==="sms"?(codeSent?"ورود با کد":"دریافت کد ورود"):"ورود به داشبورد"}</span>
                 <ArrowLeft size={20}/>
               </button>
             </form>
+            {screen==="verify" && <button className="da-auth-back" onClick={()=>void run(finishSignup)}>
+              ادامه با رمز عبور و تأیید موبایل در آینده <ArrowLeft size={16}/>
+            </button>}
             {screen==="forgot" && <button className="da-auth-back" onClick={()=>changeScreen("login")}>
               <ArrowLeft size={16}/> بازگشت به ورود
             </button>}
