@@ -70,4 +70,6 @@ jobs:
             exit 0
           fi
           git commit -m 'Refresh original Safari refractive source artwork for redesigned landing'
+          git fetch origin feature/landing-motion-cards-footer-20261101
+          git rebase origin/feature/landing-motion-cards-footer-20261101
           git push origin HEAD:feature/landing-motion-cards-footer-20261101
