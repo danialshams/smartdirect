@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
     const rawUrl = request.nextUrl.searchParams.get("url");
 
     // Debug logs intentionally omitted: request URLs and participant IDs may be private.
-      void ({ {
+      void ({
       debugId,
       accountId,
       participantId,
@@ -240,7 +240,7 @@ export async function GET(request: NextRequest) {
         upstreamHeaders.Range = range;
       }
 
-      void ({ {
+      void ({
         debugId,
         targetHost: targetUrl.hostname,
         targetPath: targetUrl.pathname,
@@ -255,7 +255,7 @@ export async function GET(request: NextRequest) {
         headers: upstreamHeaders,
       });
 
-      void ({ {
+      void ({
         debugId,
         status: response.status,
         ok: response.ok,
