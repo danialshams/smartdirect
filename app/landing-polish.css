@@ -148,7 +148,7 @@
   -webkit-text-fill-color:initial!important;
   color:#1a315a!important;
 }
-.ap-site .ap-hero__word:last-child{
+.ap-site .ap-hero__sticker:last-of-type .ap-hero__word{
   background:linear-gradient(110deg,#2260d8,#3a8bff);
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;
