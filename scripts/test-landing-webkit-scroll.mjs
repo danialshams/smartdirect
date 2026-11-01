@@ -264,6 +264,18 @@ try {
     console.log('DAIRA_REFLECTION_ASSET_390_'+i+'='+bytes.toString('base64'));
   }
 
+  // Desktop Safari uses the same SVG/WebGL material but a different
+  // responsive layout. Export those exact static pixels independently.
+  await page.setViewportSize({width:1280,height:900});
+  await page.waitForTimeout(250);
+  for(let i=0;i<exportItems.length;i++) {
+    const item=exportItems[i];
+    await item.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1050);
+    const bytes=await item.screenshot({type:'jpeg',quality:82,scale:'css',timeout:25000});
+    console.log('DAIRA_REFLECTION_ASSET_1280_'+i+'='+bytes.toString('base64'));
+  }
+
 } catch (error) {
   console.error("WEBKIT_SCROLL_ERROR", error);
   process.exitCode = 1;
