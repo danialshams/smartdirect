@@ -79,5 +79,11 @@ assert.ok(signup.includes("termsAccepted !== true") && signup.includes("termsVer
 assert.ok(signup.includes("termsAcceptedAt: new Date()"),"Server records agreement time");
 assert.ok(schema.includes("termsAcceptedAt") && schema.includes("termsVersion"));
 assert.ok(legalTerms.includes("2026-11-02") && termsPage.includes("بازپرداخت"));
-assert.ok(deletionRequest.includes("sameOrigin") && deletionRequest.includes("authSmsChallenge") === false);
+assert.ok(deletionRequest.includes("sameOrigin") && deletionRequest.includes("hashRequestIp"));
+assert.ok(deletionRequest.includes("maxPerDay:3") && deletionRequest.includes("maxBody:4096"),"Public requests must be bounded");
+assert.ok(read("app/data-deletion/page.tsx").includes("DataDeletionRequestForm"),"Deletion policy must have a real public intake form");
+assert.ok(read("app/privacy-policy/page.tsx").includes("دایرا") && read("app/privacy-policy/page.tsx").includes("Meta"));
+assert.ok(read("app/features/page.tsx").includes("featureDetails") && read("components/landing/feature-detail-data.ts").includes("icebreaker"));
+assert.ok(read("app/features/[slug]/page.tsx").includes("InstagramPreview"),"Each feature includes its dedicated preview");
+assert.ok(read("components/landing/FeatureShowcase.tsx").includes('href={"/features/" + scene.id}'));
 console.log("DAIRA AUTH STUDIO PASS: RTL design, mobile signup and recovery, password login, one-time SMS security");

@@ -578,6 +578,25 @@ try {
   }))()`);
   assert.ok(signupFields.first && signupFields.last && signupFields.tel);
   assert.equal(signupFields.passwords,2);
+  const termsAudit=await evaluate(`(() => {
+    const checkbox=document.querySelector(".da-auth-terms input[type=checkbox]");
+    const submit=document.querySelector(".da-auth-submit");
+    return {exists:!!checkbox,checked:checkbox?.checked,disabled:submit?.disabled,
+      termsLink:document.querySelector('.da-auth-terms a[href="/terms"]')?.getAttribute("href"),
+      privacyLink:document.querySelector('.da-auth-terms a[href="/privacy-policy"]')?.getAttribute("href")};
+  })()`);
+  assert.equal(termsAudit.exists,true);
+  assert.equal(termsAudit.checked,false,"Signup agreement must never be prechecked");
+  assert.equal(termsAudit.disabled,true,"Signup must be disabled until agreement");
+  assert.equal(termsAudit.termsLink,"/terms");
+  assert.equal(termsAudit.privacyLink,"/privacy-policy");
+  await evaluate('document.querySelector(".da-auth-terms input").click()');
+  assert.equal(await evaluate('document.querySelector(".da-auth-submit").disabled'),false,
+    "Agreement enables signup action");
+  await evaluate('document.querySelector(".da-auth-terms input").click()');
+  assert.equal(await evaluate('document.querySelector(".da-auth-submit").disabled'),true,
+    "Revoking agreement disables signup action again");
+
   const signupVisual=await evaluate(`(() => {
     const fields=[...document.querySelectorAll(".da-auth-field")];
     const icons=fields.map(el=>el.querySelector(".da-auth-input > svg")?.getAttribute("class")).filter(Boolean);
