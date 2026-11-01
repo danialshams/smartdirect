@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const users = await prisma.user.findMany({where:{phone,phoneVerifiedAt:{not:null},isBlocked:false},take:2});
     if (users.length !== 1 || !await consumeOtp(users[0].id,phone,"reset",body.code))
       return NextResponse.json({message:"کد اشتباه یا منقضی شده است."},{status:400,headers:privateHeaders});
-    await prisma.user.update({where:{id:users[0].id},data:{password:await bcrypt.hash(body.password,12)}});
+    await prisma.user.update({where:{id:users[0].id},data:{password:await bcrypt.hash(body.password,12),sessionVersion:{increment:1}}});
     return NextResponse.json({success:true,message:"رمز عبور تغییر کرد. با رمز جدید وارد شوید."},{headers:privateHeaders});
   } catch {
     return NextResponse.json({message:"تغییر رمز انجام نشد. دوباره تلاش کنید."},{status:500,headers:privateHeaders});

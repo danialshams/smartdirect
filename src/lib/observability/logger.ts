@@ -8,22 +8,11 @@ type LogLevel = "info" | "warn" | "error" | "debug";
 type LogFields = Record<string, unknown>;
 
 const SENSITIVE_KEYS = new Set([
-  "accessToken",
-  "access_token",
-  "token",
-  "refreshToken",
-  "refresh_token",
-  "authorization",
-  "cookie",
-  "set-cookie",
-  "password",
-  "clientSecret",
-  "client_secret",
-  "appSecret",
-  "app_secret",
-  "otp", "code", "smscode", "session", "secret", "clientip",
-  "messagetext", "messagetext", "rawbody", "requestbody",
-  "responsebody", "body", "payload", "email", "phone",
+  "accesstoken", "token", "refreshtoken", "authorization", "cookie", "setcookie",
+  "password", "clientsecret", "appsecret", "otp", "code", "smscode",
+  "session", "secret", "clientip", "messagetext", "rawbody",
+  "requestbody", "responsebody", "body", "payload", "email", "phone",
+  "signature", "authtoken"
 ]);
 
 function redact(value: unknown, depth = 0): Record<string, unknown> | unknown[] | unknown {

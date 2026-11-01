@@ -86,4 +86,7 @@ assert.ok(read("app/privacy-policy/page.tsx").includes("دایرا") && read("ap
 assert.ok(read("app/features/page.tsx").includes("featureDetails") && read("components/landing/feature-detail-data.ts").includes("icebreaker"));
 assert.ok(read("app/features/[slug]/page.tsx").includes("InstagramPreview"),"Each feature includes its dedicated preview");
 assert.ok(read("components/landing/FeatureShowcase.tsx").includes('href={"/features/" + scene.id}'));
+assert.ok(auth.includes("authPasswordAttempt.count") && auth.includes("authPasswordAttempt.create"),"Account login throttling");
+assert.ok(auth.includes("sessionVersion") && reset.includes("sessionVersion:{increment:1}"),"Reset must invalidate existing sessions");
+assert.ok(schema.includes("model AuthPasswordAttempt"));
 console.log("DAIRA AUTH STUDIO PASS: RTL design, mobile signup and recovery, password login, one-time SMS security");

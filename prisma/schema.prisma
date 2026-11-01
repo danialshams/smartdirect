@@ -15,6 +15,7 @@ model User {
   lastName                                                       String?
   password                                                       String
   role                                                           Role                  @default(USER)
+  sessionVersion                                                 Int                   @default(0)
   isBlocked                                                      Boolean               @default(false)
   blockedAt                                                      DateTime?
   blockedReason                                                  String?
@@ -42,6 +43,13 @@ model User {
   savedAutomationResponses SavedAutomationResponse[]
   smartReminderRules SmartReminderRule[]
   smsChallenges AuthSmsChallenge[]
+}
+
+model AuthPasswordAttempt {
+  id             String   @id @default(cuid())
+  identifierHash String   @db.VarChar(64)
+  createdAt      DateTime @default(now())
+  @@index([identifierHash, createdAt])
 }
 
 model AuthSignupAttempt {
