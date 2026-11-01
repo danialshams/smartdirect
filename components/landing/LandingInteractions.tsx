@@ -22,6 +22,7 @@ export function LandingInteractions() {
     root.dataset.gsapMotion = "true";
     const animated = new Set<HTMLElement>();
     const delayedCards: gsap.core.Tween[] = [];
+    const featureCards = new Set<HTMLElement>();
     const callbacks = new Map<Element, () => void>();
     const enter = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
       for (const entry of entries) {
@@ -80,6 +81,7 @@ export function LandingInteractions() {
       root.querySelectorAll<HTMLElement>(".ap-showcase__intro .ap-showcase__eyebrow, .ap-showcase__intro p")
         .forEach(node => fade(node, .52));
       root.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card").forEach(card => {
+        featureCards.add(card);
         if (card.dataset.gsapShown === "true") return;
         const copyParts = [
           card.querySelector<HTMLElement>(".ap-social-card__index"),
@@ -173,6 +175,13 @@ export function LandingInteractions() {
       bottomObserver.disconnect();
       callbacks.clear();
       delayedCards.forEach(tween => tween.kill());
+      for (const card of featureCards) {
+        delete card.dataset.gsapQueued;
+        if (card.dataset.gsapShown !== "true") {
+          delete card.dataset.gsapStarted;
+          delete card.dataset.gsapPhase;
+        }
+      }
       ctx.revert();
       for (const node of animated) {
         gsap.killTweensOf(node);
