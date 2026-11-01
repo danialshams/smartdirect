@@ -49,7 +49,7 @@ assert.ok(liquidHeader.includes("fingerprint()"),"Detect stale canvas pixels wit
 assert.ok(liquidHeader.includes("captureReadyRef.current"),"Wait for native capture readiness before revealing WebGL again");
 
 assert.ok(landingFixes.includes("data-glass-ready"));
-assert.ok(landingFixes.includes("data-scene-capture-stable"));
+assert.ok(!landingFixes.includes('[data-scene-capture-stable="true"] [data-reveal]'), "Safari must not override actual GSAP fades");
 assert.ok(landingFixes.includes("backdrop-filter: blur(15px) saturate(155%)"));
 assert.ok(landingFixes.includes('html[data-daira-hero="pending"] .ap-site .ap-hero__word {opacity:0;}'));
 assert.ok(landingFixes.includes("inset:-1.6px!important"));
