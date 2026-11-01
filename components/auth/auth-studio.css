@@ -11,7 +11,7 @@
 .da-auth-brand__symbol span{color:#dce8ff;position:relative;top:3px}
 .da-auth-home{width:38px;height:38px;display:grid;place-items:center;border:1px solid #e7ebf2;background:#fff;border-radius:12px;color:#677a96;text-decoration:none;transition:color .18s,transform .18s,border-color .18s}
 .da-auth-home:hover{color:var(--a-blue);border-color:#c7d7fa;transform:translate(-2px,-2px)}
-.da-auth-panel{padding:clamp(24px,5vw,38px);background:#fff;border:1px solid #e8edf4;border-radius:24px;box-shadow:0 16px 55px rgba(22,42,75,.045),0 2px 9px rgba(22,42,75,.025);animation:da-auth-enter .42s cubic-bezier(.18,.75,.24,1) both}
+.da-auth-panel{position:relative;padding:clamp(24px,5vw,38px);background:#fff;border:1px solid #e8edf4;border-radius:24px;box-shadow:0 16px 55px rgba(22,42,75,.045),0 2px 9px rgba(22,42,75,.025);animation:da-auth-enter .42s cubic-bezier(.18,.75,.24,1) both}
 .da-auth-panel h1{margin:0 0 24px;font-size:clamp(23px,4vw,28px);font-weight:850;letter-spacing:-.025em;line-height:1.5;color:#1e314c}
 .da-auth-main-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:#f5f7fa;border:1px solid #edf1f6;border-radius:13px;margin-bottom:20px}
 .da-auth-main-tabs button{height:41px;border:0;border-radius:10px;background:transparent;color:#8290a5;font-size:12px;font-weight:700;transition:background .2s,color .2s,box-shadow .2s}
@@ -56,3 +56,11 @@
 @media(max-width:520px){.da-auth{align-items:flex-start;padding:20px 16px;min-height:100svh}.da-auth-shell{margin:auto 0}.da-auth-header{margin-bottom:18px}.da-auth-panel{border-radius:19px;padding:23px 19px;box-shadow:0 10px 35px #233f6910}.da-auth-two{gap:8px}.da-auth-input{padding:0 10px}}
 @media(max-width:350px){.da-auth-two{grid-template-columns:1fr}.da-auth-panel{padding:20px 15px}}
 @media(prefers-reduced-motion:reduce){.da-auth *,.da-auth *:before,.da-auth *:after{animation:none!important;transition:none!important}}
+
+/* Magic UI Shine Border: one subtle optical accent, no extra layout layer. */
+.da-auth-shine-border{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;padding:var(--da-shine-width,1px);background-image:radial-gradient(transparent,transparent,rgba(102,154,242,.47),transparent,transparent);background-size:300% 300%;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:da-auth-shine var(--da-shine-duration,16s) linear infinite alternate}
+@keyframes da-auth-shine{from{background-position:100% 100%}to{background-position:0 0}}
+.da-auth-submit:before{z-index:0;pointer-events:none}
+.da-auth-submit>span,.da-auth-submit>svg{position:relative;z-index:1}
+.da-auth button:focus-visible,.da-auth-home:focus-visible{outline:2px solid #3979f2;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.da-auth-shine-border{animation:none}}
