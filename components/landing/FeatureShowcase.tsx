@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import Link from "next/link";
 import { showcaseScenes, type ShowcaseKind } from "./showcase-scenes";
 import { InstagramPreview } from "./InstagramPreview";
 
@@ -62,6 +63,7 @@ export function FeatureShowcase() {
                       <span className="ap-social-card__count" aria-hidden="true">{scene.no} / ۱۱</span>
                       <h3 id={"feature-title-" + scene.id}>{scene.title}</h3>
                       <p>{scene.tagline}</p>
+                      <Link className="ap-social-card__more" href={"/features/" + scene.id}>آشنایی با این قابلیت</Link>
                     </div>
                     <div className="ap-social-card__visual">
                       <InstagramPreview kind={scene.id}/>

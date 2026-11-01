@@ -7,7 +7,7 @@ import { LiquidHeaderSurface } from "./LiquidHeaderSurface";
 import { ArrowUpLeft, Menu, X } from "lucide-react";
 
 const menuItems = [
-  { href:"/#features", label:"امکانات" },
+  { href:"/features", label:"امکانات" },
   { href:"/privacy-policy", label:"حفظ حریم خصوصی" },
   { href:"/terms", label:"قوانین و مقررات" },
   { href:"/data-deletion", label:"حذف اطلاعات" },
