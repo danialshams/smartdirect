@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fragment, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BadgeCheck, Check, ShieldCheck } from "lucide-react";
@@ -37,7 +37,7 @@ export const metadata:Metadata = {
    at the hero even if the previous URL had a section hash. */
 const initialScrollGuard = "(function(){document.documentElement.dataset.dairaHero='pending';try{var ua=navigator.userAgent;var webglScene=/Firefox\\/|FxiOS\\/|iPhone|iPad|iPod/.test(ua)||(/Safari\\//.test(ua)&&!/Chrome\\/|Chromium\\/|Edg\\/|OPR\\//.test(ua));if(webglScene){var root=document.querySelector('.ap-site');if(root)root.dataset.sceneCaptureStable='true';}var n=performance.getEntriesByType('navigation')[0];var reload=n&&n.type==='reload';if(reload&&location.hash){history.replaceState(null,'',location.pathname+location.search);}if(reload||!location.hash){history.scrollRestoration='manual';scrollTo(0,0);addEventListener('pageshow',function(){if(!location.hash)scrollTo(0,0);},{once:true});}}catch(e){}})();";
 
-const heroWords=["مدیریت","کل","پیجت","رو","بسپار","به","دایرا"];
+const heroHeadline="مدیریت کل پیجت رو بسپار به دایرا";
 
 const footerLinks=[
   {label:"امکانات",href:"#features"},
@@ -66,16 +66,15 @@ export default function Home() {
         <section className="ap-hero" aria-labelledby="ap-hero-title">
           <div className="ap-hero__ambient" aria-hidden="true"/>
           <div className="ap-shell ap-hero__content">
-            <h1 id="ap-hero-title" dir="rtl" aria-label="مدیریت کل پیجت رو بسپار به دایرا" data-hero-assembly data-liquid-glass-ignore="">
-              {heroWords.map((word,index)=>(
-                <Fragment key={word}>
-                  <span className="ap-hero__sticker" data-hero-sticker>
-                    <span className="ap-hero__sticker-bg" aria-hidden="true" />
-                    <span className="ap-hero__word" data-hero-word style={{"--hero-delay":`${index*145}ms`} as CSSProperties}>{word}</span>
-                  </span>
-                  {index<heroWords.length-1?" ":""}
-                </Fragment>
-              ))}
+            <h1 id="ap-hero-title" dir="rtl" aria-label={heroHeadline}
+              data-hero-assembly data-liquid-glass-ignore="">
+              <span className="ap-hero__typewriter" data-hero-typewriter
+                data-full-text={heroHeadline} aria-hidden="true">
+                <span className="ap-hero__typewriter-ink">
+                  <span className="ap-hero__typed" data-hero-typed>{heroHeadline}</span>
+                  <span className="ap-hero__caret" aria-hidden="true" />
+                </span>
+              </span>
             </h1>
             <p className="ap-hero__description" data-hero-description>از پاسخ خودکار و صندوق دایرکت تا انتشار محتوا؛ همه در یک فضای ساده.</p>
             <div className="ap-hero__actions" data-hero-cta>

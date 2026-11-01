@@ -24,8 +24,8 @@ for(const item of ["<LandingGlassBackdrop>","<SimpleHeader />","<FeatureShowcase
   "./landing-instagram.css","./landing-optics-v2.css"])
   assert.ok(page.includes(item),"Missing landing contract: "+item);
 assert.doesNotMatch(page,/HeroMotion|<video|heroFragments|data-hero-fragment/);
-assert.match(page,/heroWords\.map/);
-assert.match(page,/data-hero-word/);
+assert.match(page,/data-hero-typewriter/);
+assert.match(page,/data-hero-typed/);
 assert.doesNotMatch(page,/data-reveal/,"Landing footer must not use obsolete CSS reveal attributes");
 for(const url of ["/login","/privacy-policy","/terms","/data-deletion","/contact","/about"])
   assert.ok(page.includes('href:"'+url+'"')||page.includes('href="'+url+'"'),"Missing link "+url);
@@ -60,7 +60,7 @@ assert.ok(!landingFixes.includes("blur(3px) saturate(145%)"),"Do not replace Liq
 assert.ok(landingFixes.includes("data-glass-ready"));
 assert.ok(!landingFixes.includes('[data-scene-capture-stable="true"] [data-reveal]'), "Safari must not override actual GSAP fades");
 assert.ok(landingFixes.includes("backdrop-filter: blur(15px) saturate(155%)"));
-assert.ok(landingFixes.includes('html[data-daira-hero="pending"] .ap-site .ap-hero__word {opacity:0;}'));
+assert.ok(landingFixes.includes('html[data-daira-hero="pending"] .ap-site .ap-hero__typed{visibility:hidden}'));
 assert.ok(landingFixes.includes("inset:-1.6px!important"));
 assert.ok(landingFixes.includes("prefers-reduced-motion"));
 assert.ok(hero.includes('import { gsap } from "gsap"'), "Preload GSAP on the same first-paint bundle as hero");
@@ -74,9 +74,9 @@ assert.ok(!landingFixes.includes('[data-glass-ready="false"]\n  .daira-library-l
 assert.ok(!landingFixes.includes('div:first-child[aria-hidden="true"]'),"Do not hide GPU renderer while snapshots update");
 assert.ok(hero.includes("data-liquid-glass-ignore"));
 assert.ok(hero.includes("gsapHeroElapsed"));
-assert.ok(page.includes("<Fragment key={word}>"));
+assert.ok(page.includes("data-full-text={heroHeadline}"));
 assert.ok(page.includes("dir=\"rtl\""));
-assert.ok(page.includes('"--hero-delay"'));
+assert.ok(page.includes("ap-hero__caret"));
 assert.ok(interactions.includes('import { gsap } from "gsap"'), "Sections should not wait for late GSAP chunks");
 assert.ok(interactions.includes('import { ScrollTrigger } from "gsap/ScrollTrigger"'), "Features and footer need real ScrollTrigger");
 assert.ok(interactions.includes(".ap-social-grid > .ap-social-card"), "GSAP must animate feature cards");
@@ -101,7 +101,7 @@ assert.match(liquidHeader,/scale: 118/);
 assert.match(liquidHeader,/specular: 1\.03/);
 assert.match(liquidHeader,/sheen: \.88/);
 assert.doesNotMatch(liquidHeader,/displacementScale|ap-liquid-header__volume|ap-liquid-header__edge|ap-liquid-header__glint/);
-assert.match(liquidHeader,/className="daira-library-liquid-header"/);
+assert.match(liquidHeader,/menu \? "daira-menu-liquid-optics" : "daira-library-liquid-header"/,"Header and menu must use the same real LiquidGlass renderer");
 assert.match(liquidHeader,/capture\.register\(frame,/,"Capture source must bind to the stable outer frame");
 assert.match(liquidHeader,/ref=\{frameRef\}/,"Optical frame must be available before deferred lens mounts");
 assert.doesNotMatch(liquidHeader,/panelRef\.current\?\.element/,"Do not regress to one-shot ref lookup");
@@ -200,6 +200,6 @@ for(const label of ["ig-menu-sheet","ig-quickreplies","ig-live__badge","ig-comme
   assert.ok(previews.includes(label),"Missing Instagram-like preview "+label);
 console.log("DAIRA GLASS PASS: genuine unmodified library optics restored, iOS scene connected, CSS only positions the lens, all 11 homepage features preserved.");
 
-assert.ok(hero.includes("words.forEach((word, i)") && hero.includes("timeline.to(word") && hero.includes("timeline.to(background"),"Hero must reveal each Persian word in ordered GSAP sticker-mask stages");
-assert.ok(hero.includes("force3D: false") && hero.includes("heroEntranceFinished = true"),"Hero sticker motion must stay lightweight and play only on first load");
+assert.ok(hero.includes("graphemes(fullText)") && hero.includes("timeline.to(model") && hero.includes("typed.textContent = parts.slice"),"Hero must type Persian graphemes with GSAP, not move sticker labels");
+assert.ok(hero.includes("heroEntranceFinished = true") && !page.includes("ap-hero__sticker-bg"),"Typewriter must play once and contain no previous blue sticker backgrounds");
 assert.ok(!features.includes("data-reveal"),"Feature card animations must not conflict with obsolete CSS data-reveal transitions");

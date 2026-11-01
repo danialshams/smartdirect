@@ -18,10 +18,19 @@ const menuItems = [
 /** The menu uses a single prepainted surface. Only the header refracts. */
 export function SimpleHeader() {
   const [open,setOpen]=useState(false);
+  const [glassMounted,setGlassMounted]=useState(false);
   const toggleRef=useRef<HTMLButtonElement>(null);
   const closeRef=useRef<HTMLButtonElement>(null);
   const menuRef=useRef<HTMLElement>(null);
   const returnFocus=useRef(true);
+
+  // Keep the *same native lens* alive throughout the exit animation.
+  // Unmounting it on the first close frame creates a distracting white flash.
+  useEffect(()=>{
+    if(open){setGlassMounted(true);return;}
+    const timer=window.setTimeout(()=>setGlassMounted(false),580);
+    return ()=>window.clearTimeout(timer);
+  },[open]);
 
   const closeOnNavigate=()=>{
     returnFocus.current=false;
@@ -69,7 +78,7 @@ export function SimpleHeader() {
           aria-label={open?"بستن منو":"باز کردن منو"}
           aria-controls="ap-menu"
           aria-expanded={open}
-          onClick={()=>{returnFocus.current=true;setOpen(value=>!value);}}
+          onClick={()=>{returnFocus.current=true;if(!open)setGlassMounted(true);setOpen(value=>!value);}}
         >
           <span className={"ap-menu-toggle__glyphs"+(open?" ap-menu-toggle__glyphs--open":"")} aria-hidden="true">
             <Menu size={21} className="ap-menu-toggle__hamburger"/>
@@ -111,6 +120,8 @@ export function SimpleHeader() {
         data-liquid-glass-ignore=""
       >
         <div className="ap-menu__liquid">
+          {glassMounted && <LiquidHeaderSurface variant="menu" />}
+          <span className="ap-menu__frost" aria-hidden="true" />
           <div className="ap-menu__content">
             <div className="ap-menu__top">
               <strong>دایرا</strong>

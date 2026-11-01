@@ -357,3 +357,100 @@ html[data-daira-hero="pending"] .ap-site .ap-hero__actions{opacity:0}
 @media(prefers-reduced-motion:reduce){
   .ap-site .ap-social-showcase .ap-social-card__shell {transform:none!important;opacity:1!important}
 }
+
+
+/* GSAP Persian typewriter. Pseudo-text reserves the complete final headline
+   footprint without adding duplicate DOM text or layout jumps on each letter. */
+.ap-site .ap-hero__typewriter{
+  display:block;position:relative;width:100%;min-width:0;direction:rtl;
+  white-space:normal;unicode-bidi:plaintext;
+}
+.ap-site .ap-hero__typewriter::before{
+  content:attr(data-full-text);display:block;visibility:hidden;
+  white-space:normal;pointer-events:none;
+}
+.ap-site .ap-hero__typewriter-ink{
+  position:absolute;inset:0;display:block;direction:rtl;
+  text-align:inherit;white-space:normal;
+}
+.ap-site .ap-hero__typed{display:inline;white-space:pre-wrap;unicode-bidi:plaintext;}
+.ap-site .ap-hero__caret{
+  display:inline-block;vertical-align:-.08em;width:2.5px;height:.84em;
+  margin-inline-start:.06em;border-radius:3px;
+  background:currentColor;opacity:0;
+}
+html[data-daira-hero="pending"] .ap-site .ap-hero__typed{visibility:hidden}
+html[data-daira-hero="done"] .ap-site .ap-hero__typed{visibility:visible}
+@media(prefers-reduced-motion:reduce){
+  .ap-site .ap-hero__typed{visibility:visible!important}
+  .ap-site .ap-hero__caret{display:none!important}
+}
+
+/* One native optical surface in the menu. The shader, GPU backdrop and lens
+   profile are IDENTICAL to the fixed header's LiquidHeaderSurface component.
+   A very light frost veil is placed ABOVE it for menu legibility, never a
+   CSS blur substituted for the refraction. */
+.ap-site .ap-menu__liquid{
+  position:relative!important;isolation:auto;
+  background:rgba(255,255,255,.035)!important;
+  border:0!important;box-shadow:0 19px 48px rgba(15,39,82,.14)!important;
+  border-radius:27px!important;overflow:hidden!important;
+}
+.ap-site .daira-menu-glass-frame{
+  position:absolute;inset:0;z-index:0;pointer-events:none;
+  border-radius:inherit;overflow:hidden;isolation:auto;
+}
+.ap-site .daira-menu-glass-frame .daira-menu-liquid-optics{
+  position:absolute!important;inset:0!important;
+  width:100%!important;height:100%!important;
+  border-radius:inherit!important;background:transparent!important;
+  box-shadow:none!important;border:0!important;pointer-events:none!important;
+}
+.ap-site .ap-menu__frost{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:rgba(243,249,255,.19);
+  -webkit-backdrop-filter:blur(2px) saturate(112%);
+  backdrop-filter:blur(2px) saturate(112%);
+}
+.ap-site .ap-menu__content{
+  position:relative;z-index:2;
+  background:rgba(249,252,255,.16)!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+.ap-site .ap-menu__nav .ap-menu__item{
+  background:rgba(248,252,255,.31)!important;
+  box-shadow:none!important;
+}
+.ap-site .ap-menu__nav .ap-menu__item:hover,
+.ap-site .ap-menu__nav .ap-menu__item:focus-visible{
+  background:rgba(220,236,255,.58)!important;
+}
+/* Opening and exit use the same transform & mask in reverse.
+   Refractive lens remains mounted until the exit animation completes. */
+.ap-site .ap-menu{
+  transform-origin:top center!important;
+  transform:translate3d(0,-12px,0) scale(.987)!important;
+  opacity:0;clip-path:inset(0 0 100% 0 round 27px);
+  transition:transform .43s cubic-bezier(.22,.78,.18,1),
+    opacity .35s ease,clip-path .48s cubic-bezier(.22,.78,.18,1),
+    visibility 0s linear .49s!important;
+}
+.ap-site .ap-menu--open{
+  transform:translate3d(0,0,0) scale(1)!important;
+  opacity:1;clip-path:inset(0 0 0 0 round 27px);
+  transition:transform .49s cubic-bezier(.18,.82,.21,1),
+    opacity .39s ease,clip-path .51s cubic-bezier(.18,.82,.21,1),
+    visibility 0s!important;
+}
+@media(max-width:600px){
+  .ap-site .ap-menu__frost{
+    background:rgba(243,249,255,.24);
+    -webkit-backdrop-filter:blur(2.5px) saturate(110%);
+    backdrop-filter:blur(2.5px) saturate(110%);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .ap-site .ap-menu,.ap-site .ap-menu--open{
+    transition:none!important;transform:none!important
+  }
+}
