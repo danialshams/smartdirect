@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
-import { ArrowLeft, ArrowUpLeft, Check, CheckCircle2, Eye, EyeOff,
-  Fingerprint, AtSign, KeyRound, MessageCircleMore,
-  Phone, ShieldCheck, Sparkles, UserRound, WandSparkles } from "lucide-react";
+import { ArrowLeft, ArrowUpLeft, CheckCircle2, Eye, EyeOff, Fingerprint, KeyRound, MessageCircleMore, Phone, ShieldCheck, UserRound } from "lucide-react";
 import Link from "next/link";
 import { asciiDigits } from "@/lib/auth/phone";
+import { ShineBorder } from "./ShineBorder";
 import "./auth-studio.css";
 
 type Screen = "login" | "signup" | "forgot" | "verify";
@@ -14,10 +13,10 @@ type LoginMethod = "password" | "sms";
 type Status = { type: "error" | "success" | "info"; message: string } | null;
 type ApiReply = { success?: boolean; message?: string; providerConfigured?: boolean };
 const headline = {
-  login: ["خوش برگشتی", "دوباره به دایرا وصل شو و همه‌چیز رو یک‌جا مدیریت کن."],
-  signup: ["شروع یک تجربه تازه", "حساب دایرات رو بساز. بقیه ماجرا از همین‌جا شروع می‌شه."],
-  forgot: ["رمزت رو فراموش کردی؟", "بعد از فعال‌شدن پیامک، رمز جدید رو با تأیید موبایل تنظیم کن."],
-  verify: ["موبایلت رو تأیید کن", "برای امنیت حساب و ورود پیامکی، کدی که دریافت کردی رو وارد کن."]
+  login: "ورود به دایرا",
+  signup: "ثبت‌نام در دایرا",
+  forgot: "بازیابی رمز عبور",
+  verify: "تأیید شماره موبایل"
 } as const;
 
 function safeDestination(input?: string | null) {
@@ -185,7 +184,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
       phone,code:asciiDigits(code),password:newPassword,confirmPassword:confirm
     });
     if (http >= 400) {setStatus({type:"error",message:data.message || "تغییر رمز انجام نشد."});return;}
-    changeScreen("login");setMethod("password");setIdentifier(phone);
+    setScreen("login");setCode("");setCodeSent(false);setCountdown(0);setMethod("password");setIdentifier(phone);
     setStatus({type:"success",message:"رمز تغییر کرد؛ با رمز جدید وارد شو."});
   };
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -202,7 +201,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
         <KeyRound size={18} strokeWidth={1.9} aria-hidden="true"/>
         <input type={showPassword?"text":"password"} autoComplete={complete}
           value={value} onChange={event=>setValue(event.target.value)}
-          placeholder="حداقل ۸ کاراکتر" required minLength={8} maxLength={128} dir="ltr"/>
+          placeholder={complete==="current-password"?"رمز عبور":"حداقل ۸ کاراکتر"} required minLength={8} maxLength={128} dir="ltr"/>
         <button type="button" className="da-auth-show" onClick={()=>setShowPassword(v=>!v)}
           aria-label={showPassword?"پنهان‌کردن رمز":"نمایش رمز"}>
           {showPassword?<EyeOff size={18}/>:<Eye size={18}/>}
@@ -212,18 +211,17 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
   );
 
   return <main className="da-auth" dir="rtl">
-    <div className="da-auth-grain" aria-hidden="true" />
+    
     <div className="da-auth-shell">
       <section className="da-auth-formside">
         <header className="da-auth-header">
           <BrandMark/>
-          <Link href="/" className="da-auth-home">صفحه اصلی <ArrowUpLeft size={17}/></Link>
+          <Link href="/" className="da-auth-home" aria-label="بازگشت به صفحه اصلی"><ArrowUpLeft size={19}/></Link>
         </header>
         <div className="da-auth-formwrap">
           <div key={screen} className="da-auth-panel">
-            <div className="da-auth-eyebrow"><span className="da-auth-dot"/> فضای شخصی تو در دایرا</div>
-            <h1>{headline[screen][0]}<span className="da-auth-accent">.</span></h1>
-            <p className="da-auth-subheading">{headline[screen][1]}</p>
+            <ShineBorder duration={16} borderWidth={1} />
+            <h1>{headline[screen]}</h1>
             {screen!=="forgot" && screen!=="verify" && <div className="da-auth-main-tabs" role="tablist" aria-label="ورود یا ثبت‌نام">
               <button type="button" role="tab" aria-selected={screen==="login"} className={screen==="login"?"active":""} onClick={()=>changeScreen("login")}>ورود به حساب</button>
               <button type="button" role="tab" aria-selected={screen==="signup"} className={screen==="signup"?"active":""} onClick={()=>changeScreen("signup")}>ایجاد حساب جدید</button>
@@ -252,7 +250,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
                     placeholder="۰۹۱۲ ... یا ایمیل قبلی" required dir="auto" /></span>
                 </label>
                 {renderPassword(password,setPassword,"رمز عبور")}
-                <div className="da-auth-aside"><button type="button" onClick={()=>changeScreen("forgot")}>رمز عبورم رو فراموش کردم <ArrowLeft size={15}/></button></div>
+                <div className="da-auth-aside"><button type="button" onClick={()=>changeScreen("forgot")}>فراموشی رمز عبور <ArrowLeft size={15}/></button></div>
               </>}
               {(screen==="signup" || screen==="forgot" || (screen==="login" && method==="sms")) && <label className="da-auth-field">
                 <span>شماره موبایل</span>
@@ -264,7 +262,6 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
               {screen==="signup" && <>
                 {renderPassword(password,setPassword,"رمز عبور جدید","new-password")}
                 {renderPassword(confirm,setConfirm,"تکرار رمز عبور","new-password")}
-                <p className="da-auth-hint"><ShieldCheck size={16}/> اطلاعاتت به‌صورت امن نگهداری می‌شه. اتصال پیج اینستاگرام بعد از ورود انجام می‌شه.</p>
               </>}
               {screen==="forgot" && <>{codeSent && <>
                 <label className="da-auth-field"><span>کد تأیید شش‌رقمی</span><span className="da-auth-input">
@@ -287,11 +284,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
                     value={code} onChange={e=>setCode(asciiDigits(e.target.value).replace(/\D/g,"").slice(0,6))} placeholder="۶ رقم" dir="ltr"/>
                 </span>
               </label>}
-              {(screen==="forgot" || screen==="verify" || (screen==="login" && method==="sms")) && <div className="da-auth-sms-status">
-                <MessageCircleMore size={17}/>
-                {smsChecked && !smsEnabled ? "زیرساخت پیامک آماده است؛ اتصال سرویس ارسال هنوز فعال نشده." :
-                  codeSent ? "کد تا ۲ دقیقه اعتبار داره." : "برای شماره‌های تأییدشده کد یک‌بارمصرف ارسال می‌شه."}
-              </div>}
+              {(screen==="forgot" || screen==="verify" || (screen==="login" && method==="sms")) && <div className="da-auth-sms-status"><MessageCircleMore size={16}/>{smsChecked && !smsEnabled ? "ارسال پیامک فعال نیست." : codeSent ? "اعتبار کد: ۲ دقیقه" : "کد تأیید به شماره شما ارسال می‌شود."}</div>}
               {codeSent && (screen==="forgot" || screen==="verify" || method==="sms") && <button type="button"
                 className="da-auth-resend" disabled={busy || countdown>0 || !smsEnabled}
                 onClick={()=>void run(()=>requestOtp(screen==="forgot"?"reset":screen==="verify"?"verify":"login"))}>
@@ -301,38 +294,23 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
                 {status.type==="success"?<CheckCircle2 size={17}/>:<ShieldCheck size={17}/>}<span>{status.message}</span>
               </div>}
               <button type="submit" className="da-auth-submit" disabled={busy || (!smsEnabled && (screen==="forgot" || screen==="verify" || (screen==="login" && method==="sms")))}>
-                <span>{busy?"در حال انجام...":screen==="signup"?"ساخت حساب دایرا":screen==="verify"?"تأیید موبایل و ورود":
+                <span>{busy?"در حال انجام...":screen==="signup"?"ثبت‌نام":screen==="verify"?"تأیید و ورود":
                   screen==="forgot"?(codeSent?"تغییر رمز عبور":"دریافت کد بازیابی"):
-                  method==="sms"?(codeSent?"ورود با کد":"دریافت کد ورود"):"ورود به داشبورد"}</span>
+                  method==="sms"?(codeSent?"ورود با کد":"دریافت کد"):"ورود"}</span>
                 <ArrowLeft size={20}/>
               </button>
             </form>
             {screen==="verify" && <button className="da-auth-back" onClick={()=>void run(finishSignup)}>
-              ادامه با رمز عبور و تأیید موبایل در آینده <ArrowLeft size={16}/>
+              ادامه با رمز عبور <ArrowLeft size={16}/>
             </button>}
             {screen==="forgot" && <button className="da-auth-back" onClick={()=>changeScreen("login")}>
-              <ArrowLeft size={16}/> بازگشت به ورود
+              بازگشت به ورود <ArrowLeft size={16}/>
             </button>}
             {screen==="signup" && <div className="da-auth-bottom">قبلاً حساب ساختی؟ <button onClick={()=>changeScreen("login")}>وارد شو</button></div>}
             {screen==="login" && <div className="da-auth-bottom">هنوز عضو دایرا نیستی؟ <button onClick={()=>changeScreen("signup")}>حساب بساز</button></div>}
           </div>
         </div>
-        <footer className="da-auth-foot"><span>© دایرا</span><span>سادگی، امنیت، کنترل بیشتر</span></footer>
       </section>
-      <aside className="da-auth-showcase" aria-label="معرفی فضای کار دایرا">
-        <div className="da-auth-showcase__glow" aria-hidden="true"/>
-        <div className="da-auth-showcase__grid" aria-hidden="true"/>
-        <div className="da-auth-side-top"><Sparkles size={17}/> YOUR CREATIVE SPACE <span>01 / 03</span></div>
-        <div className="da-auth-orbit" aria-hidden="true"><span className="da-auth-orbit__core">D</span><span className="da-auth-orbit__ring"/></div>
-        <div className="da-auth-float da-auth-float--one"><span className="da-auth-float__icon"><AtSign size={19}/></span><span><strong>اینستاگرام، متصل</strong><small>همه تعامل‌ها در یک نگاه</small></span><Check size={16}/></div>
-        <div className="da-auth-float da-auth-float--two"><span className="da-auth-float__icon"><MessageCircleMore size={19}/></span><span><strong>پاسخ‌های هوشمند</strong><small>با مدیریت ساده‌تر گفتگوها</small></span><span className="da-auth-float__live"/></div>
-        <div className="da-auth-side-copy"><div className="da-auth-side-line"><span/> تجربه‌ای متفاوت برای مدیریت پیج</div>
-          <h2>همه‌چیز<br/>روون‌تر،<br/><em>زیباتر.</em></h2>
-          <p>از اولین پیام تا آخرین تعامل؛ همه در یک فضای یکپارچه، ساده و دقیق.</p>
-          <div className="da-auth-side-pill"><WandSparkles size={18}/> ساخته‌شده برای مسیر حرفه‌ای تو <ArrowUpLeft size={17}/></div>
-        </div>
-        <div className="da-auth-side-bottom"><ShieldCheck size={17}/> مدیریت امن حساب و پیج‌های متصل <span>DAIRA / 2026</span></div>
-      </aside>
     </div>
   </main>;
 }

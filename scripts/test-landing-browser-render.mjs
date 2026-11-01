@@ -516,11 +516,29 @@ try {
       darkPanel:!!document.querySelector(".da-auth-showcase"),
       password:!!document.querySelector('input[autocomplete="current-password"]')}
   })()`);
-  assert.ok(loginFrame.title.includes("خوش برگشتی") && loginFrame.password);
+  assert.equal(loginFrame.title,"ورود به دایرا");
+  assert.equal(loginFrame.password,true);
   assert.equal(loginFrame.form,true);
   assert.equal(loginFrame.shell,true);
   assert.ok(loginFrame.font.includes("Vazirmatn"),"Login must use Persian Vazir typography");
-  assert.equal(loginFrame.darkPanel,true);
+  assert.equal(loginFrame.darkPanel,false,"No promotional or dark showcase in minimal auth");
+  const lightDesign=await evaluate(`(() => {
+    const panel=document.querySelector(".da-auth-panel");
+    const root=document.querySelector(".da-auth");
+    const shine=document.querySelector(".da-auth-shine-border");
+    return {
+      bodyBackground:getComputedStyle(root).backgroundColor,
+      cardBackground:getComputedStyle(panel).backgroundColor,
+      shinePresent:!!shine,
+      shineMotion:shine ? getComputedStyle(shine).animationName : "",
+      cardWidth:panel.getBoundingClientRect().width,
+      viewportWidth:innerWidth
+    };
+  })()`);
+  assert.equal(lightDesign.bodyBackground,"rgb(248, 250, 252)");
+  assert.equal(lightDesign.cardBackground,"rgb(255, 255, 255)");
+  assert.equal(lightDesign.shinePresent,true,"Magic UI Shine Border should mount on the form");
+  assert.ok(lightDesign.cardWidth<lightDesign.viewportWidth,"Desktop form remains a compact centered card");
   await evaluate('document.querySelectorAll(".da-auth-main-tabs button")[1].click()');
   await waitFor(async()=>await evaluate('!!document.querySelector("input[autocomplete=given-name]")'));
   const signupFields=await evaluate(`(() => ({
@@ -535,21 +553,30 @@ try {
   await waitFor(async()=>await evaluate('!!document.querySelector("input[autocomplete=current-password]")'));
   await evaluate('document.querySelectorAll(".da-auth-methods button")[1].click()');
   await waitFor(async()=>await evaluate('!!document.querySelector(".da-auth-sms-status")'));
-  await waitFor(async()=>await evaluate('document.querySelector(".da-auth-sms-status")?.textContent.includes("هنوز فعال نشده")'),12000);
+  await waitFor(async()=>await evaluate('document.querySelector(".da-auth-sms-status")?.textContent.includes("فعال نیست")'),12000);
   const smsInactive=await evaluate('document.querySelector(".da-auth-sms-status")?.textContent');
-  assert.ok(smsInactive.includes("هنوز فعال نشده"),"Do not promise SMS before a provider is available");
+  assert.ok(smsInactive.includes("فعال نیست"),"Do not promise SMS before a provider is available");
+  await evaluate('document.querySelectorAll(".da-auth-methods button")[0].click()');
+  await waitFor(async()=>await evaluate('!!document.querySelector("input[autocomplete=current-password]")'));
+  await evaluate('document.querySelector(".da-auth-aside button").click()');
+  await waitFor(async()=>await evaluate('document.querySelector(".da-auth-panel h1")?.textContent==="بازیابی رمز عبور"'));
+  assert.equal(await evaluate('document.querySelector(".da-auth-submit")?.disabled'),true,
+    "SMS recovery should fail closed when provider is not configured");
+  await evaluate('document.querySelector(".da-auth-back").click()');
+  await waitFor(async()=>await evaluate('document.querySelector(".da-auth-panel h1")?.textContent==="ورود به دایرا"'));
   await send("Emulation.setDeviceMetricsOverride",{
     width:390,height:844,deviceScaleFactor:1,mobile:true
   });
   await sleep(160);
   const mobileAuth=await evaluate(`(() => ({
     screenWidth:innerWidth,
-    artHidden:getComputedStyle(document.querySelector(".da-auth-showcase")).display==="none",
+    noShowcase:!document.querySelector(".da-auth-showcase"),
+    panelWidth:document.querySelector(".da-auth-panel").getBoundingClientRect().width,
     formWidth:document.querySelector(".da-auth-formside").getBoundingClientRect().width,
     noHorizontalOverflow:document.documentElement.scrollWidth<=innerWidth+2
   }))()`);
-  assert.equal(mobileAuth.artHidden,true);
-  assert.ok(mobileAuth.formWidth<=392 && mobileAuth.noHorizontalOverflow,
+  assert.equal(mobileAuth.noShowcase,true);
+  assert.ok(mobileAuth.formWidth<=392 && mobileAuth.panelWidth<=392 && mobileAuth.noHorizontalOverflow,
     "Mobile auth should fit without x-axis scrolling");
   console.log("DAIRA_AUTH_CHROME_SMOKE="+JSON.stringify({
     login:true,signup:true,smsFailClosed:true,mobile:mobileAuth
