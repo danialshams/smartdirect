@@ -1,0 +1,73 @@
+name: Refresh exact Safari optical source after landing redesign
+
+on:
+  push:
+    branches:
+      - feature/landing-motion-cards-footer-20261101
+    paths:
+      - .github/workflows/landing-asset-refresh.yml
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    if: github.repository == 'danialshams/smartdirect'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    services:
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: smartdirect
+        ports: ["5432:5432"]
+    env:
+      NODE_ENV: production
+      VERCEL: "1"
+      VERCEL_ENV: production
+      NEXTAUTH_URL: http://127.0.0.1:3199
+      NEXTAUTH_SECRET: ci-only-placeholder-secret-with-more-than-32-characters
+      CRON_SECRET: ci-only-placeholder-cron-secret-with-more-than-32-characters
+      DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+      DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+      REDIS_DRIVER: redis
+      REDIS_URL: redis://127.0.0.1:6379
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install exact app dependencies
+        env:
+          NODE_ENV: development
+        run: npm ci --no-audit --no-fund
+      - name: Install WebKit raster capture runtime
+        env:
+          NODE_ENV: development
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps webkit
+      - name: Build the actual redesigned homepage
+        run: npm run build
+      - name: Capture final source pixels in real WebKit at mobile and desktop widths
+        run: node scripts/export-landing-reflection.mjs
+      - name: Commit generated images only on feature branch
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/landing-reflection/mobile-*.jpg public/landing-reflection/desktop-*.jpg
+          if git diff --cached --quiet; then
+            echo 'Raster images already identical'
+            exit 0
+          fi
+          git commit -m 'Refresh original Safari refractive source artwork for redesigned landing'
+          git push origin HEAD:feature/landing-motion-cards-footer-20261101
