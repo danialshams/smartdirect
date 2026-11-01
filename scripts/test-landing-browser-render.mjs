@@ -419,7 +419,7 @@ try {
     const row=rows[Math.min(4,rows.length-1)];
     const card=row.querySelector(".ap-social-grid > .ap-social-card");
     const feature=await exercise(card,card.querySelector(".ap-social-card__copy h3"));
-    const foot=await exercise(footer.querySelector(".ap-footer__links"),footer.querySelector(".ap-footer__links"));
+    const foot=await exercise(footer.querySelector(".ap-footer__links"),footer.querySelector(".ap-footer__links > a"));
     return {active:root.dataset.gsapMotion,feature,footer:foot};
   })()`);
   console.log("DAIRA_GSAP_ENTRANCES="+JSON.stringify(entrance));
@@ -450,6 +450,38 @@ try {
   assert.equal(assembled.shellOpacity,1);
   assert.equal(assembled.titleOpacity,1);
   assert.equal(assembled.previewOpacity,1);
+    const directionAudit = await evaluate(`(() => {
+    const cards=[...document.querySelectorAll(".ap-social-grid > .ap-social-card")];
+    const triggered=cards.filter(card=>card.dataset.gsapShown==="true");
+    const active=cards.find(card=>card.dataset.gsapStarted);
+    return {
+      directions:cards.map(card=>Number(card.dataset.gsapDirection)),
+      allStages:cards.every(card=>card.dataset.gsapStages===undefined ||
+        Number(card.dataset.gsapStages)>=6),
+      visited:triggered.length,
+      activeCardId:active?.id,
+      activeStart:active?.dataset.gsapStarted,
+      firstCardState:cards[0]?.dataset.gsapPhase
+    };
+  })()`);
+  assert.deepEqual(directionAudit.directions,
+    directionAudit.directions.map((_,i)=>i%2===0?1:-1),
+    "The first card must enter from the right, then left, alternating globally");
+  assert.ok(directionAudit.allStages,"Each started card must have multiple independent GSAP stages");
+  console.log("DAIRA_CARD_DIRECTION_AUDIT="+JSON.stringify(directionAudit));
+  if(directionAudit.activeCardId) {
+    await evaluate('window.scrollTo({top:0,behavior:"instant"})');
+    await sleep(170);
+    await evaluate(`document.getElementById("${directionAudit.activeCardId}").scrollIntoView({block:"center",behavior:"instant"})`);
+    await sleep(550);
+    const replay=await evaluate(`(() => {
+      const el=document.getElementById("${directionAudit.activeCardId}");
+      return {started:el?.dataset.gsapStarted,phase:el?.dataset.gsapPhase};
+    })()`);
+    assert.equal(replay.started,directionAudit.activeStart,
+      "Returning to a completed card must not start a second entrance");
+    console.log("DAIRA_CARD_ONCE_PASS="+JSON.stringify(replay));
+  }
     // A Firefox user-agent spoof inside Chromium does not test WebKit rendering.
   // The official shared scene makes WebGL background capture available on iOS.
   assert.equal(await evaluate("document.querySelectorAll('[data-liquid-glass-scene]').length"),1);
