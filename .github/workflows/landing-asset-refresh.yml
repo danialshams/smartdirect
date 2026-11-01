@@ -59,6 +59,13 @@ jobs:
         run: npm run build
       - name: Capture final source pixels in real WebKit at mobile and desktop widths
         run: node scripts/export-landing-reflection.mjs
+      - name: Archive responsive source artwork for visual inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: daira-landing-source-${{ github.sha }}
+          path: public/landing-reflection/
+          if-no-files-found: error
+          retention-days: 7
       - name: Commit generated images only on feature branch
         run: |
           set -euo pipefail
