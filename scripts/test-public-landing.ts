@@ -66,7 +66,7 @@ assert.ok(hero.includes('import { gsap } from "gsap"'), "Preload GSAP on the sam
 assert.ok(hero.includes("gsap.timeline"), "Hero must animate by GSAP timeline");
 assert.ok(hero.includes("heroEntranceFinished = true"),"Only a completed hero entrance may suppress future replay");
 assert.ok(!hero.includes("if (played.current) return"),"Strict Mode cleanup must not permanently suppress GSAP entrance");
-assert.ok(!hero.includes("timeline.kill();\\n      finish();"),"Cancelled GSAP timeline must not be marked as finished");
+assert.doesNotMatch(hero,/timeline\.kill\(\);\s*finish\(\)/,"Cancelled GSAP timeline must not be marked as finished");
 assert.ok(!hero.includes("word-assemble"));
 assert.ok(!root.includes("section.dataset.dairaGlassViewportRevision"), "Do not invalidate static scene tiles on scroll");
 assert.ok(!landingFixes.includes('[data-glass-ready="false"]\n  .daira-library-liquid-header > div'),"Do not replace native lens with CSS blur mid-scroll");
