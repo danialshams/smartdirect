@@ -70,8 +70,10 @@ export default function Home() {
               data-hero-assembly data-liquid-glass-ignore="">
               <span className="ap-hero__typewriter" data-hero-typewriter
                 data-full-text={heroHeadline} aria-hidden="true">
-                <span className="ap-hero__typed" data-hero-typed>{heroHeadline}</span>
-                <span className="ap-hero__caret" aria-hidden="true" />
+                <span className="ap-hero__typewriter-ink">
+                  <span className="ap-hero__typed" data-hero-typed>{heroHeadline}</span>
+                  <span className="ap-hero__caret" aria-hidden="true" />
+                </span>
               </span>
             </h1>
             <p className="ap-hero__description" data-hero-description>از پاسخ خودکار و صندوق دایرکت تا انتشار محتوا؛ همه در یک فضای ساده.</p>
