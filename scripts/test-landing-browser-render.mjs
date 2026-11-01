@@ -418,7 +418,7 @@ try {
     }
     const row=rows[Math.min(4,rows.length-1)];
     const card=row.querySelector(".ap-social-grid > .ap-social-card");
-    const feature=await exercise(card,card);
+    const feature=await exercise(card,card.querySelector(".ap-social-card__copy h3"));
     const foot=await exercise(footer.querySelector(".ap-footer__links"),footer.querySelector(".ap-footer__links"));
     return {active:root.dataset.gsapMotion,feature,footer:foot};
   })()`);
