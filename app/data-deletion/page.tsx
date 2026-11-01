@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicInfoPage } from "@/components/landing/PublicInfoPage";
 import { DataDeletionRequestForm } from "@/components/legal/DataDeletionRequestForm";
+import {VerifyDeletionOwnership} from "@/components/legal/VerifyDeletionOwnership";
 import "../legal-pages.css";
 
 export const metadata:Metadata={title:"حذف اطلاعات و داده‌های کاربر | دایرا",description:"مسیر عمومی ثبت و پیگیری درخواست حذف اطلاعات دایرا و داده‌های دریافتی از اینستاگرام و متا."};
@@ -15,6 +16,7 @@ export default function DataDeletionPage(){
     <li>برای حفظ امنیت داده‌ها، مالکیت حساب و هویت درخواست‌کننده پیش از حذف بررسی می‌شود.</li>
     <li>پس از تأیید درخواست، اطلاعات قابل حذف بدون تأخیر غیرضروری حذف یا بی‌هویت می‌شوند. وضعیت را با کد پیگیری بررسی کنید.</li>
    </ol><DataDeletionRequestForm/></section>
+   <VerifyDeletionOwnership/>
    <section><h2>قطع اتصال و حذف در خود اینستاگرام</h2><p>می‌توانید دسترسی برنامه را در تنظیمات حساب Meta/Instagram نیز لغو کنید. این کار لزوماً داده‌های پیش‌تر ذخیره‌شده در دایرا را پاک نمی‌کند. حذف اطلاعات از دایرا نیز محتوای منتشرشده داخل خود اینستاگرام را حذف نمی‌کند.</p></section>
    <section><h2>استثناهای قانونی</h2><p>اطلاعاتی که نگهداری آن‌ها طبق قانون لازم است، فقط در حد الزام قانونی و با محدودکردن دسترسی حفظ می‌شوند. برای آگاهی بیشتر <Link href="/privacy-policy">سیاست حریم خصوصی</Link> را مطالعه کنید. همچنین می‌توانید از <Link href="/dashboard/tickets/new">پشتیبانی حساب دایرا</Link> کمک بگیرید.</p></section>
   </div>
