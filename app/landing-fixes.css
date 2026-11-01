@@ -280,3 +280,45 @@ html[data-daira-hero="pending"] .ap-site .ap-hero__actions{opacity:0}
   html[data-daira-hero="pending"] .ap-site .ap-hero__description,
   html[data-daira-hero="pending"] .ap-site .ap-hero__actions{opacity:1}
 }
+
+/* Feature counters must use the landing's loaded genuine Vazir, not Arial. */
+.ap-site .ap-social-showcase .ap-social-card__index,
+.ap-site .ap-social-showcase .ap-social-card__count{
+  font-family:"DairaVazir","Vazirmatn",sans-serif!important;
+  font-variant-numeric:normal;
+  font-feature-settings:"ss01" 0;
+}
+.ap-site .ap-social-showcase .ap-social-card__index{
+  font-weight:800;letter-spacing:0;direction:rtl;
+}
+.ap-site .ap-social-showcase .ap-social-card__count{
+  font-weight:500;letter-spacing:0;direction:rtl;
+}
+/* The original license placeholders are intentional, not claimed approvals. */
+.ap-site .ap-footer--extended .ap-footer__trust{
+  display:flex;align-items:center;justify-content:space-between;gap:26px;
+  padding-block:26px;
+  border-top:1px solid rgba(196,215,247,.13)!important;
+  border-bottom:1px solid rgba(196,215,247,.13)!important;
+}
+.ap-site .ap-footer--extended .ap-footer__trust-copy{max-width:470px}
+.ap-site .ap-footer--extended .ap-footer__trust-title{
+  color:#dae7fa!important;font-size:12px;
+}
+.ap-site .ap-footer--extended .ap-footer__trust p{
+  color:#9fb1cf!important;font-size:11px;line-height:1.9;
+}
+.ap-site .ap-footer--extended .ap-footer__badge-placeholder{
+  color:#b7c9e6!important;
+  border:1px dashed rgba(160,187,231,.38)!important;
+  background:rgba(255,255,255,.035)!important;
+  box-shadow:none!important;
+}
+.ap-site .ap-footer--extended .ap-footer__badge-placeholder small{
+  color:#93a9cb!important;
+}
+@media(max-width:640px){
+  .ap-site .ap-footer--extended .ap-footer__trust{
+    flex-direction:column;align-items:center;text-align:center;gap:18px;
+  }
+}

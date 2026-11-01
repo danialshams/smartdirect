@@ -21,6 +21,8 @@ export function LandingInteractions() {
     gsap.registerPlugin(ScrollTrigger);
     root.dataset.gsapMotion = "true";
     const animated = new Set<HTMLElement>();
+    const delayedCards: gsap.core.Tween[] = [];
+    const featureCards = new Set<HTMLElement>();
     const callbacks = new Map<Element, () => void>();
     const enter = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
       for (const entry of entries) {
@@ -79,21 +81,75 @@ export function LandingInteractions() {
       root.querySelectorAll<HTMLElement>(".ap-showcase__intro .ap-showcase__eyebrow, .ap-showcase__intro p")
         .forEach(node => fade(node, .52));
       root.querySelectorAll<HTMLElement>(".ap-social-grid > .ap-social-card").forEach(card => {
-        const copy = card.querySelector<HTMLElement>(".ap-social-card__copy");
-        if (!copy || card.dataset.gsapShown === "true") return;
-        animated.add(copy);
-        // Do not pre-hide an offscreen card: WebKit can miss native observer
-        // callbacks during a resize or an instant long scroll jump.
+        featureCards.add(card);
+        if (card.dataset.gsapShown === "true") return;
+        const copyParts = [
+          card.querySelector<HTMLElement>(".ap-social-card__index"),
+          card.querySelector<HTMLElement>(".ap-social-card__count"),
+          card.querySelector<HTMLElement>(".ap-social-card__copy h3"),
+          card.querySelector<HTMLElement>(".ap-social-card__copy p")
+        ].filter((node): node is HTMLElement => Boolean(node));
+        const preview = card.querySelector<HTMLElement>(".ig-preview");
+        // Animate the *actual Instagram UI pieces*, not a single preview fade.
+        // Expanding a few layout groups reveals rows, chat bubbles and panels
+        // in meaningful order without animating the heavy whole-card transform.
+        const expanded = ".ig-chat, .ig-story, .ig-live, .ig-photo-grid, .ig-insights-bars, .ig-menu-sheet";
+        const visualParts = preview ? Array.from(preview.children).flatMap(child => {
+          if (!(child instanceof HTMLElement)) return [];
+          if (child.matches(expanded)) return Array.from(child.children).filter(
+            (part): part is HTMLElement => part instanceof HTMLElement
+          );
+          return [child];
+        }) : [];
+        const stages = [...copyParts, ...visualParts];
+        card.dataset.gsapStages = String(stages.length);
+        animated.add(card);
+        stages.forEach(part => animated.add(part));
+        if (preview) animated.add(preview);
         watch(card, () => {
+          if (card.dataset.gsapQueued || card.dataset.gsapStarted) return;
+          card.dataset.gsapQueued = "true";
+          const buildCard = () => {
           card.dataset.gsapStarted = String(performance.now());
-          // Fade just one text wrapper; the Instagram preview and full card
-          // never create transformed GPU layers on the Safari scroll path.
-          gsap.fromTo(copy, { opacity: .42 }, { opacity: 1, duration: .65, ease: "power2.out", overwrite: "auto",
+          card.dataset.gsapPhase = "building";
+          // Crucial: hide only AFTER the card actually becomes visible.
+          // An unvisited card or a WebKit missed observer stays fully legible.
+          const timeline = gsap.timeline({
+            defaults: { ease: "power2.out", overwrite: "auto" },
             onComplete: () => {
               card.dataset.gsapShown = "true";
-              gsap.set(copy, { clearProps: "opacity" });
+              card.dataset.gsapPhase = "complete";
+              gsap.set([card, ...stages, ...(preview ? [preview] : [])], {
+                clearProps: "opacity,visibility,transform"
+              });
             }
           });
+          gsap.set(card, { opacity: .82 });
+          copyParts.forEach((part, index) => gsap.set(part, {
+            opacity: 0, ...(index === 0 || index === 2 ? { y: 10 } : {})
+          }));
+          if (preview) gsap.set(preview, { opacity: 0 });
+          gsap.set(visualParts, { opacity: 0 });
+          timeline.to(card, { opacity: 1, duration: .22 }, 0);
+          // Build order: number -> count -> title -> description.
+          copyParts.forEach((part, index) => timeline.to(part, {
+            opacity: 1,
+            ...(index === 0 || index === 2 ? { y: 0 } : {}),
+            duration: .34, ease: "power3.out"
+          }, .12 + index * .14));
+          if (preview) {
+            // Phone-shaped stage, followed by its real internal UI controls.
+            timeline.to(preview, { opacity: 1, duration: .22 }, .52);
+            timeline.to(visualParts, {
+              opacity: 1, duration: .23, stagger: .22, ease: "power2.out"
+            }, .72);
+          }
+          };
+          // Two neighbouring cards never build complex previews on the
+          // same WebKit frame. Delay is scheduled *before* hiding anything.
+          const peerIndex = Array.from(card.parentElement?.children ?? []).indexOf(card);
+          if (peerIndex > 0) delayedCards.push(gsap.delayedCall(peerIndex * .48, buildCard));
+          else buildCard();
         });
       });
       const footer = root.querySelector<HTMLElement>(".ap-footer--extended");
@@ -118,6 +174,14 @@ export function LandingInteractions() {
       observer.disconnect();
       bottomObserver.disconnect();
       callbacks.clear();
+      delayedCards.forEach(tween => tween.kill());
+      for (const card of featureCards) {
+        delete card.dataset.gsapQueued;
+        if (card.dataset.gsapShown !== "true") {
+          delete card.dataset.gsapStarted;
+          delete card.dataset.gsapPhase;
+        }
+      }
       ctx.revert();
       for (const node of animated) {
         gsap.killTweensOf(node);
