@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fragment, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { preconnect } from "react-dom";
 import { BadgeCheck, Check, ShieldCheck } from "lucide-react";
 import { LandingGlassBackdrop } from "../components/landing/LandingGlassBackdrop";
 import { SimpleHeader } from "../components/landing/SimpleHeader";
@@ -47,6 +48,9 @@ const footerLinks=[
 ] as const;
 
 export default function Home() {
+  // Start the font CDN connection before WebKit waits for font embedding.
+  // No new runtime SDK or homepage paint-blocking request is introduced.
+  preconnect("https://cdnjs.cloudflare.com", { crossOrigin: "anonymous" });
   return (
     <LandingGlassBackdrop>
       <script dangerouslySetInnerHTML={{__html:initialScrollGuard}} />
