@@ -48,8 +48,10 @@ model User {
 model AuthPasswordAttempt {
   id             String   @id @default(cuid())
   identifierHash String   @db.VarChar(64)
+  ipHash         String   @db.VarChar(64)
   createdAt      DateTime @default(now())
   @@index([identifierHash, createdAt])
+  @@index([ipHash, createdAt])
 }
 
 model AuthSignupAttempt {

@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const rawIdentifier=typeof credentials?.email==="string" ? credentials.email.trim() : "";
         const password=typeof credentials?.password==="string" ? credentials.password : "";
         if(!rawIdentifier || !password || rawIdentifier.length>254) return null;
@@ -33,15 +33,22 @@ export const authOptions: NextAuthOptions = {
         if(!secret || secret.length<32) throw new Error("LOGIN_SECURITY_NOT_CONFIGURED");
         const identifierHash=createHmac("sha256",secret).update("login:"+identifier).digest("hex");
         const since=new Date(Date.now()-15*60*1000);
-        const attempts=await prisma.authPasswordAttempt.count({where:{identifierHash,createdAt:{gt:since}}});
-        if(attempts>=8) return null;
+        const headers=request.headers as Record<string,string|string[]|undefined>;
+        const ip=(headers["x-vercel-forwarded-for"]||headers["x-real-ip"]||headers["x-forwarded-for"]||"unknown");
+        const sourceIp=(Array.isArray(ip)?ip[0]:ip).split(",")[0].trim().slice(0,80);
+        const ipHash=createHmac("sha256",secret).update("login-ip:"+sourceIp).digest("hex");
+        const [attempts,byIp]=await Promise.all([
+          prisma.authPasswordAttempt.count({where:{identifierHash,createdAt:{gt:since}}}),
+          prisma.authPasswordAttempt.count({where:{ipHash,createdAt:{gt:since}}}),
+        ]);
+        if(attempts>=8||byIp>=30)return null;
         const user=phone
           ? await prisma.user.findFirst({where:{phone},orderBy:{createdAt:"asc"}})
           : await prisma.user.findUnique({where:{email:identifier}});
         // A generic authentication result prevents simple account enumeration.
         const valid=!!(user && !user.isBlocked && user.password && await bcrypt.compare(password,user.password));
         if(!valid){
-          await prisma.authPasswordAttempt.create({data:{identifierHash}});
+          await prisma.authPasswordAttempt.create({data:{identifierHash,ipHash}});
           return null;
         }
         await prisma.authPasswordAttempt.deleteMany({where:{identifierHash}});
