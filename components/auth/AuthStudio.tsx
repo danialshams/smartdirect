@@ -2,9 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
-import { ArrowLeft, ArrowUpLeft, Check, CheckCircle2, Eye, EyeOff,
-  Fingerprint, AtSign, KeyRound, MessageCircleMore,
-  Phone, ShieldCheck, Sparkles, UserRound, WandSparkles } from "lucide-react";
+import { ArrowLeft, ArrowUpLeft, CheckCircle2, Eye, EyeOff, Fingerprint, KeyRound, MessageCircleMore, Phone, ShieldCheck, UserRound } from "lucide-react";
 import Link from "next/link";
 import { asciiDigits } from "@/lib/auth/phone";
 import "./auth-studio.css";
@@ -185,7 +183,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
       phone,code:asciiDigits(code),password:newPassword,confirmPassword:confirm
     });
     if (http >= 400) {setStatus({type:"error",message:data.message || "تغییر رمز انجام نشد."});return;}
-    changeScreen("login");setMethod("password");setIdentifier(phone);
+    setScreen("login");setCode("");setCodeSent(false);setCountdown(0);setMethod("password");setIdentifier(phone);
     setStatus({type:"success",message:"رمز تغییر کرد؛ با رمز جدید وارد شو."});
   };
   const submit = (event: FormEvent<HTMLFormElement>) => {
