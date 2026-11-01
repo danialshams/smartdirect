@@ -122,7 +122,7 @@ export function LandingInteractions() {
           gsap.set(card, { opacity: .14 });
           gsap.set(copyParts, { opacity: 0, y: 12 });
           if (preview) gsap.set(preview, { opacity: 0 });
-          gsap.set(visualParts, { opacity: 0, y: 7 });
+          gsap.set(visualParts, { opacity: 0 });
           timeline.to(card, { opacity: 1, duration: .42 }, 0);
           // Build order: number -> count -> title -> description.
           timeline.to(copyParts, {
@@ -132,7 +132,7 @@ export function LandingInteractions() {
             // Phone-shaped stage, followed by its real internal UI controls.
             timeline.to(preview, { opacity: 1, duration: .30 }, .48);
             timeline.to(visualParts, {
-              opacity: 1, y: 0, duration: .38, stagger: .085, ease: "power2.out"
+              opacity: 1, duration: .38, stagger: .085, ease: "power2.out"
             }, .62);
           }
         });
