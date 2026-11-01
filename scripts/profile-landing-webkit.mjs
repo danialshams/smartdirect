@@ -40,7 +40,9 @@ try {
   if (!ready) throw Error("Profiler server never became ready");
   await mkdir("artifacts/landing-webkit", {recursive:true});
   browser = await webkit.launch({headless:true});
-  const modes = ["normal", "no-both", "no-heading", "no-cards", "normal", "no-both"];
+  // Three isolated cold-context comparisons fit within WebKit runner memory.
+  // Further repetitions are intentionally separate CI runs, not concurrent tabs.
+  const modes = ["normal", "no-heading", "no-both"];
   const results = [];
   for (const mode of modes) {
     const context = await browser.newContext({
@@ -103,7 +105,7 @@ try {
     }));
     await context.close();
   }
-  const grouped=Object.fromEntries(["normal","no-heading","no-cards","no-both"].map(mode=>{
+  const grouped=Object.fromEntries(["normal","no-heading","no-both"].map(mode=>{
     const variants=results.filter(r=>r.mode===mode);
     return [mode,{runs:variants.length,
       max:variants.map(r=>r.summary.max),
