@@ -74,6 +74,84 @@ export function LiquidHeaderSurface() {
     };
   }, [capture]);
 
+  useEffect(() => {
+    // WebKit cannot sample a live webpage for SVG backdrop displacement.
+    // During a VERY FAST jump its WebGL engine may retain the last captured
+    // frame while html-to-image prepares the newly visible tile. Avoid
+    // displaying those old pixels as though they belonged to the new area.
+    // This only activates during high-velocity scrolls; normal glass remains
+    // native WebGL at full optical strength.
+    if (strategy !== "webgl" || !sourceBound) return;
+    const frame = frameRef.current;
+    const canvas = backdropRef.current;
+    if (!frame || !canvas) return;
+    let previousY = scrollY;
+    let previousAt = performance.now();
+    let lastMove = 0;
+    let started = 0;
+    let originalHash: number | undefined;
+    let active = false;
+    let raf = 0;
+    let lastSample = 0;
+    const fingerprint = () => {
+      try {
+        const context = canvas.getContext("2d");
+        if (!context || !canvas.width || !canvas.height) return 0;
+        const y = Math.max(0, Math.floor(canvas.height / 2));
+        const bytes = context.getImageData(0, y, canvas.width, 1).data;
+        let hash = 2166136261;
+        for (let i = 0; i < bytes.length; i += 12) {
+          hash = Math.imul(hash ^ bytes[i], 16777619);
+          hash = Math.imul(hash ^ bytes[i+1], 16777619);
+          hash = Math.imul(hash ^ bytes[i+2], 16777619);
+        }
+        return hash >>> 0;
+      } catch { return 0; }
+    };
+    const tick = (at: number) => {
+      if (!active) return;
+      if (at-lastSample > 90) {
+        lastSample = at;
+        const updated = originalHash !== undefined && fingerprint() !== originalHash;
+        const settled = at - lastMove > 150;
+        // Keep the underlying WebGL renderer alive; as soon as it presents a
+        // fresh canvas and the capture is ready, show it without re-mounting.
+        if (settled && captureReady && (updated || at - started > 1800)) {
+          active = false;
+          frame.dataset.glassFastStale = "false";
+          return;
+        }
+        if (at - started > 3200) {
+          active = false;
+          frame.dataset.glassFastStale = "false";
+          return;
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    const onScroll = () => {
+      const at = performance.now();
+      const y = scrollY;
+      const delta = Math.abs(y - previousY);
+      const velocity = delta / Math.max(12, at - previousAt);
+      previousY = y; previousAt = at;
+      if (delta < 150 && velocity < 3.1 && !active) return;
+      lastMove = at;
+      if (active) return;
+      active = true;
+      started = at;
+      originalHash = fingerprint();
+      frame.dataset.glassFastStale = "true";
+      raf = requestAnimationFrame(tick);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+      frame.dataset.glassFastStale = "false";
+    };
+  }, [strategy, sourceBound, captureReady]);
+
   const onDiagnosticsChange = useCallback((next: RenderingDiagnostics) => {
     setStrategy(previous => previous === next.strategy ? previous : next.strategy);
   }, []);
