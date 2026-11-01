@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   webkit-mobile:
-    if: github.event_name == 'push' || github.head_ref == 'fix/daira-static-reflection-architecture-20261101'
+    if: github.event_name == 'push' || (github.head_ref == 'fix/daira-static-reflection-architecture-20261101' || github.head_ref == 'feature/landing-motion-cards-footer-20261101')
     strategy:
       fail-fast: false
       matrix:
