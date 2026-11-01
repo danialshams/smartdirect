@@ -152,12 +152,12 @@ export function LandingInteractions() {
           // children do not each acquire a separate moving GPU texture.
           const mobileLayers = innerWidth <= 640;
           timeline.set(visualParts, {
-            x: mobileLayers ? 0 : -12 * direction,
-            opacity: 0, force3D: false
+            ...(mobileLayers ? {} : { x: -12 * direction, force3D: false }),
+            opacity: 0
           }, previewAt - .12);
           visualParts.forEach((part, i) => timeline.to(part, {
-            ...(mobileLayers ? {} : { x: 0 }),
-            opacity: 1, force3D: false, duration: .25, ease: "power2.out"
+            ...(mobileLayers ? {} : { x: 0, force3D: false }),
+            opacity: 1, duration: .25, ease: "power2.out"
           }, previewAt + .27 + i * .13));
         }
       };
