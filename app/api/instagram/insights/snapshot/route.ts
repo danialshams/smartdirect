@@ -54,9 +54,9 @@ export async function POST() {
     for (const account of accounts) {
       try {
         const [profile, insights] = await Promise.all([
-          getInstagramProfile(account.accessToken),
+          getInstagramProfile(decryptMetaToken(account.accessToken)),
 
-          getInstagramAccountInsights(account.igUserId, account.accessToken, 1),
+          getInstagramAccountInsights(account.igUserId, decryptMetaToken(account.accessToken), 1),
         ]);
 
         const today = new Date();

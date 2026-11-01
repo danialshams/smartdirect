@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import {encryptMetaToken} from "@/lib/security/meta-token";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -503,7 +504,7 @@ export async function GET(request: NextRequest) {
 
           igUsername: instagramUsername,
 
-          accessToken: accessToken,
+          accessToken: encryptMetaToken(accessToken),
 
           tokenExpiresAt: tokenExpiresAt,
 
@@ -521,7 +522,7 @@ export async function GET(request: NextRequest) {
 
           igUsername: instagramUsername,
 
-          accessToken: accessToken,
+          accessToken: encryptMetaToken(accessToken),
 
           tokenExpiresAt: tokenExpiresAt,
 

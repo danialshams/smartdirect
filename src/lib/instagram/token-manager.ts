@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import {encryptMetaToken,decryptMetaToken} from "@/lib/security/meta-token";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { deleteCachedJson, getCachedJson, setCachedJson, cacheKey } from "@/lib/cache/redis-cache";
 
@@ -222,7 +223,7 @@ export async function refreshInstagramToken(
     });
 
     return {
-      accessToken: account.accessToken,
+      accessToken: decryptMetaToken(account.accessToken),
       expiresAt: account.tokenExpiresAt,
     };
   }
@@ -241,7 +242,7 @@ export async function refreshInstagramToken(
     data = await fetchInstagram<InstagramTokenResponse>(
       {
         grant_type: "ig_refresh_token",
-        access_token: account.accessToken,
+        access_token: decryptMetaToken(account.accessToken),
       },
       { instagramAccountId, operation: "PROFILE_READ" },
     );
@@ -338,7 +339,7 @@ export async function refreshInstagramToken(
       id: instagramAccountId,
     },
     data: {
-      accessToken: data.access_token,
+      accessToken: encryptMetaToken(data.access_token),
       tokenExpiresAt: expiresAt,
       isConnected: true,
     },
@@ -352,7 +353,7 @@ export async function refreshInstagramToken(
 
   await setCachedJson(
     cacheKey("instagram-token", instagramAccountId),
-    { accessToken: data.access_token, expiresAt: expiresAt.toISOString() },
+    { accessToken: encryptMetaToken(data.access_token), expiresAt: expiresAt.toISOString() },
     Math.min(300, Math.max(1, expiresIn)),
   );
   await deleteCachedJson(cacheKey("instagram-account", instagramAccountId));
@@ -479,7 +480,7 @@ export async function getValidInstagramAccessToken(
     cachedToken &&
     new Date(cachedToken.expiresAt).getTime() - Date.now() > REFRESH_THRESHOLD_SECONDS * 1000
   ) {
-    return cachedToken.accessToken;
+    return decryptMetaToken(cachedToken.accessToken);
   }
 
   const account = await prisma.instagramAccount.findUnique({
@@ -539,7 +540,7 @@ export async function getValidInstagramAccessToken(
     remainingSeconds !== null &&
     remainingSeconds > REFRESH_THRESHOLD_SECONDS
   ) {
-    return account.accessToken;
+    return decryptMetaToken(account.accessToken);
   }
 
   /**
