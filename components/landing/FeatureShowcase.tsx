@@ -57,6 +57,7 @@ export function FeatureShowcase() {
                     style={{ "--reveal-index": index } as CSSProperties}
                     aria-labelledby={"feature-title-" + scene.id}
                   >
+                    <div className="ap-social-card__shell" aria-hidden="true"/>
                     <div className="ap-social-card__copy">
                       <span className="ap-social-card__index" aria-hidden="true">{scene.no}</span>
                       <span className="ap-social-card__count" aria-hidden="true">{scene.no} / ۱۱</span>
