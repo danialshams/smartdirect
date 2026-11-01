@@ -198,7 +198,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
     <label className="da-auth-field">
       <span>{label}</span>
       <span className="da-auth-input">
-        {label.startsWith("تکرار") ? <LockKeyhole size={18} strokeWidth={1.9} aria-hidden="true"/> : <KeyRound size={18} strokeWidth={1.9} aria-hidden="true"/>
+        {label.startsWith("تکرار") ? <LockKeyhole size={18} strokeWidth={1.9} aria-hidden="true"/> : <KeyRound size={18} strokeWidth={1.9} aria-hidden="true"/>}
         <input type={showPassword?"text":"password"} autoComplete={complete}
           value={value} onChange={event=>setValue(event.target.value)}
           placeholder={complete==="current-password"?"رمز عبور":"حداقل ۸ کاراکتر"} required minLength={8} maxLength={128} dir="ltr"/>
