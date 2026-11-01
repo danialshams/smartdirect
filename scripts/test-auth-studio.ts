@@ -37,7 +37,7 @@ assert.match(css,/@media\(max-width:760px\)/);
 assert.match(css,/prefers-reduced-motion:reduce/);
 assert.ok(schema.includes("firstName") && schema.includes("lastName"));
 assert.ok(schema.includes("model AuthSmsChallenge") && schema.includes("model AuthSignupAttempt"));
-assert.ok(instagram.includes("model InstagramAccount") && /model InstagramAccount \{[\\s\\S]*?userId\\s+String/.test(instagram));
+assert.ok(instagram.includes("model InstagramAccount") && instagram.includes("  userId             String"));
 assert.ok(otp.includes('createHmac("sha256"') && otp.includes("randomInt(0, 1_000_000)"));
 assert.ok(otp.includes("MAX_ATTEMPTS = 5") && otp.includes("consumedAt: now"));
 assert.ok(otp.includes("OTP_LIFETIME_SECONDS = 120"));
