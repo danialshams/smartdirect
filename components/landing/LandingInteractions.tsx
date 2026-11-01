@@ -49,7 +49,7 @@ export function LandingInteractions() {
           ScrollTrigger.create({
             trigger: title, start: "top 82%", once: true,
             onEnter: () => {
-              gsap.fromTo(heading,{yPercent:105},{yPercent:0,duration:.9,ease:"power3.out",overwrite:"auto",onComplete:()=>gsap.set(heading,{clearProps:"transform"})});
+              gsap.fromTo(heading,{yPercent:105},{yPercent:0,duration:.9,ease:"power3.out",overwrite:"auto",onComplete:()=>{gsap.set(heading,{clearProps:"transform"});}});
             }
           });
         }
