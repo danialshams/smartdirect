@@ -3,7 +3,7 @@ import {requireAdmin} from "@/lib/admin-auth";
 import {prisma} from "@/lib/prisma";
 import {sameOrigin,privateHeaders} from "@/lib/auth/request";
 import {getStorageProviderForObject} from "@/lib/storage/provider";
-import {writeAdminAudit} from "@/lib/admin-audit";
+
 export async function POST(req:NextRequest,{params}:{params:Promise<{id:string}>}){
  const guard=await requireAdmin();if(guard.response)return guard.response;
  if(!sameOrigin(req))return NextResponse.json({message:"درخواست نامعتبر است."},{status:403,headers:privateHeaders});
@@ -31,12 +31,12 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{id:string}>
    await tx.freeTrialClaim.deleteMany({where:{userId:user.id}});
    await tx.smsCampaign.deleteMany({where:{createdById:user.id}});
    await tx.user.delete({where:{id:user.id}});
+   await tx.auditLog.create({data:{actorUserId:guard.session!.user.id,action:"deletion.request.executed",targetType:"DataDeletionRequest",targetId:id,metadata:{result:"completed",trackedObjects:objects.length}}});
    await tx.dataDeletionRequest.update({
     where:{id},data:{status:"COMPLETED",completedAt:new Date(),
      verifiedUserId:null,contact:"[deleted]",instagramName:null,details:null,ipHash:"[deleted]"}
    });
   });
-  await writeAdminAudit({actorUserId:guard.session!.user.id,action:"deletion.request.executed",targetType:"DataDeletionRequest",targetId:id,metadata:{result:"completed",trackedObjects:objects.length}});
   return NextResponse.json({success:true},{headers:privateHeaders});
  }catch{
   await prisma.dataDeletionRequest.updateMany({where:{id,status:"PROCESSING"},data:{status:"VERIFYING"}});
