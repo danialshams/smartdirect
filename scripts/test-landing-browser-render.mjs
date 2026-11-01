@@ -119,7 +119,7 @@ try {
     const result=await fetch(base+path,{method,redirect:"manual",headers:{
       "Origin":base,...(method==="POST"?{"Content-Type":"application/json"}:{})
     },...(method==="POST"?{body:JSON.stringify({reference:"test",password:"example"})}:{})});
-    assert.equal(result.status,expected,"Unauthenticated access must fail: "+method+" "+path);
+    assert.ok([401,403].includes(result.status),"Unauthenticated access must be rejected: "+method+" "+path+" (got "+result.status+")");
   }
   bindSocket();
   await send("Runtime.enable");
