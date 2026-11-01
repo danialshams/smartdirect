@@ -348,7 +348,7 @@ html[data-daira-hero="pending"] .ap-site .ap-hero__actions{opacity:0}
 .ap-site .ap-social-showcase .ap-social-card:hover {
   background:linear-gradient(133deg,#fff,#f1f7ff)!important;
   border:1px solid rgba(221,230,244,.78)!important;
-  box-shadow:0 13px 37px rgba(39,72,124,.08)!important;
+  box-shadow:none!important;
 }
 .ap-site .ap-social-showcase .ap-social-card__visual {
   position:relative;
