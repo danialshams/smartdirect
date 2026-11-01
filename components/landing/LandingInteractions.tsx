@@ -26,8 +26,9 @@ function revealPreview(card: HTMLElement) {
   // per-card GSAP entrance and the two masked headings on those browsers;
   // reserve tiny illustrative preview motions for Chromium.
   const ua = navigator.userAgent;
-  if (/iPhone|iPad|iPod|Firefox\\/|FxiOS\\//.test(ua) ||
-      (/Safari\\//.test(ua) && !/Chrome\\/|Chromium\\/|Edg\\/|OPR\\//.test(ua))) return;
+  const isCaptureBrowser = /iPhone|iPad|iPod|Firefox|FxiOS/.test(ua) ||
+    (ua.includes("Safari/") && !/Chrome|Chromium|Edg|OPR/.test(ua));
+  if (isCaptureBrowser) return;
   const kind = card.id.replace(/^feature-/, "");
   const selector = previewActions[kind];
   if (!selector) return;
