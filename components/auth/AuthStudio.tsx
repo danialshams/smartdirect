@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { ArrowLeft, ArrowUpLeft, Check, CheckCircle2, Eye, EyeOff,
-  Fingerprint, Instagram, KeyRound, LockKeyhole, MessageCircleMore,
+  Fingerprint, AtSign, KeyRound, MessageCircleMore,
   Phone, ShieldCheck, Sparkles, UserRound, WandSparkles } from "lucide-react";
 import Link from "next/link";
 import { asciiDigits } from "@/lib/auth/phone";
@@ -295,7 +295,7 @@ export default function AuthStudio({ callbackUrl }: { callbackUrl?: string | nul
         <div className="da-auth-showcase__grid" aria-hidden="true"/>
         <div className="da-auth-side-top"><Sparkles size={17}/> YOUR CREATIVE SPACE <span>01 / 03</span></div>
         <div className="da-auth-orbit" aria-hidden="true"><span className="da-auth-orbit__core">D</span><span className="da-auth-orbit__ring"/></div>
-        <div className="da-auth-float da-auth-float--one"><span className="da-auth-float__icon"><Instagram size={19}/></span><span><strong>اینستاگرام، متصل</strong><small>همه تعامل‌ها در یک نگاه</small></span><Check size={16}/></div>
+        <div className="da-auth-float da-auth-float--one"><span className="da-auth-float__icon"><AtSign size={19}/></span><span><strong>اینستاگرام، متصل</strong><small>همه تعامل‌ها در یک نگاه</small></span><Check size={16}/></div>
         <div className="da-auth-float da-auth-float--two"><span className="da-auth-float__icon"><MessageCircleMore size={19}/></span><span><strong>پاسخ‌های هوشمند</strong><small>با مدیریت ساده‌تر گفتگوها</small></span><span className="da-auth-float__live"/></div>
         <div className="da-auth-side-copy"><div className="da-auth-side-line"><span/> تجربه‌ای متفاوت برای مدیریت پیج</div>
           <h2>همه‌چیز<br/>روون‌تر،<br/><em>زیباتر.</em></h2>
