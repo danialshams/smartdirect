@@ -44,10 +44,11 @@ export function LandingInteractions() {
     const fade = (node: HTMLElement, duration = .58, bottom = false) => {
       if (node.dataset.gsapShown === "true") return;
       animated.add(node);
-      gsap.set(node, { opacity: 0 });
+      // Content is visible by default. If Safari skips an intersection
+      // after a fast jump or breakpoint resize, no text remains invisible.
       watch(node, () => {
         node.dataset.gsapStarted = String(performance.now());
-        gsap.to(node, { opacity: 1, duration, ease: "power2.out", overwrite: "auto",
+        gsap.fromTo(node, { opacity: .55 }, { opacity: 1, duration, ease: "power2.out", overwrite: "auto",
           onComplete: () => {
             node.dataset.gsapShown = "true";
             gsap.set(node, { clearProps: "opacity" });
@@ -81,12 +82,13 @@ export function LandingInteractions() {
         const copy = card.querySelector<HTMLElement>(".ap-social-card__copy");
         if (!copy || card.dataset.gsapShown === "true") return;
         animated.add(copy);
-        gsap.set(copy, { opacity: 0 });
+        // Do not pre-hide an offscreen card: WebKit can miss native observer
+        // callbacks during a resize or an instant long scroll jump.
         watch(card, () => {
           card.dataset.gsapStarted = String(performance.now());
           // Fade just one text wrapper; the Instagram preview and full card
           // never create transformed GPU layers on the Safari scroll path.
-          gsap.to(copy, { opacity: 1, duration: .65, ease: "power2.out", overwrite: "auto",
+          gsap.fromTo(copy, { opacity: .42 }, { opacity: 1, duration: .65, ease: "power2.out", overwrite: "auto",
             onComplete: () => {
               card.dataset.gsapShown = "true";
               gsap.set(copy, { clearProps: "opacity" });
