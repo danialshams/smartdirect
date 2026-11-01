@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fragment, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { BadgeCheck, Check, ShieldCheck } from "lucide-react";
 import { preconnect, preload } from "react-dom";
 
 import { LandingGlassBackdrop } from "../components/landing/LandingGlassBackdrop";
@@ -105,6 +106,16 @@ export default function Home() {
           <nav className="ap-footer__links" aria-label="راهنمای سایت">
             {footerLinks.map((item,index)=><Link href={item.href} key={item.href} data-reveal style={{"--link-index":index} as CSSProperties}>{item.label}</Link>)}
           </nav>
+        </div>
+        <div className="ap-shell ap-footer__trust" aria-label="جایگاه مجوزهای آینده">
+          <div className="ap-footer__trust-copy">
+            <span className="ap-footer__trust-title"><ShieldCheck size={17} aria-hidden="true"/> بخش مجوزها و اعتبارسنجی</span>
+            <p>پس از دریافت هر مجوز، نشان معتبر و لینک استعلام آن در همین بخش قرار می‌گیرد.</p>
+          </div>
+          <div className="ap-footer__badge-list">
+            <div className="ap-footer__badge-placeholder"><BadgeCheck size={23} aria-hidden="true"/><span>Meta</span><small>در آینده</small></div>
+            <div className="ap-footer__badge-placeholder"><Check size={23} aria-hidden="true"/><span>اینماد</span><small>در آینده</small></div>
+          </div>
         </div>
         <div className="ap-shell ap-footer__bottom">
           <span>© {new Date().getFullYear()} دایرا</span>
