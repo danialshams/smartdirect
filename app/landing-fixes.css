@@ -454,3 +454,7 @@ html[data-daira-hero="done"] .ap-site .ap-hero__typed{visibility:visible}
     transition:none!important;transform:none!important
   }
 }
+
+/* The feature detail link belongs to each card and shares its GSAP copy reveal. */
+.ap-site .ap-social-card__more{display:inline-flex;width:max-content;max-width:100%;font-size:12px;font-weight:800;color:#2863e1;text-decoration:none;border-bottom:1px solid rgba(40,99,225,.32);padding:6px 0;margin-top:11px;transition:color .18s,border-color .18s!important}
+.ap-site .ap-social-card__more:hover{color:#194bb8;border-color:currentColor}

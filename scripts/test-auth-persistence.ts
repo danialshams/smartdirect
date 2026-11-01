@@ -3,6 +3,7 @@ import { randomInt, randomUUID, createHmac } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
 import { internalEmailForPhone, normalizePhone, validatePassword } from "../src/lib/auth/phone";
+import { TERMS_VERSION } from "../src/lib/legal/terms";
 
 async function main() {
 const phone = normalizePhone("+98910" + randomInt(1_000_000,9_999_999))!;
@@ -12,10 +13,13 @@ let userId: string | undefined;
 try {
   const created = await prisma.user.create({data:{
     name:"نیلوفر آزمون",firstName:"نیلوفر",lastName:"آزمون",
-    phone,email:internalEmailForPhone(phone),password:await bcrypt.hash(password,12)
+    phone,email:internalEmailForPhone(phone),password:await bcrypt.hash(password,12),
+    termsAcceptedAt:new Date(),termsVersion:TERMS_VERSION
   }});
   userId=created.id;
   assert.equal(created.phone,phone);
+  assert.ok(created.termsAcceptedAt && created.termsAcceptedAt instanceof Date);
+  assert.equal(created.termsVersion,TERMS_VERSION);
   assert.equal(created.firstName,"نیلوفر");
   assert.equal(created.lastName,"آزمون");
   assert.equal(created.phoneVerifiedAt,null,"Registration cannot mark an unverified phone as verified");

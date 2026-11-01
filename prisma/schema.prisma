@@ -21,6 +21,8 @@ model User {
   phone                                                          String?
   phoneVerifiedAt                                               DateTime?
   smsConsentAt                                                  DateTime?
+  termsAcceptedAt                                                DateTime?
+  termsVersion                                                   String?
   createdAt                                                      DateTime              @default(now())
   updatedAt                                                      DateTime              @updatedAt
   comments                                                       Comment[]
@@ -944,4 +946,20 @@ enum InstagramPublishStatus {
 enum InstagramMediaType {
   IMAGE
   VIDEO
+}
+
+
+/// Public request intake only. Staff must verify identity and perform deletion separately.
+model DataDeletionRequest {
+  id             String   @id @default(cuid())
+  contact        String   @db.VarChar(190)
+  instagramName  String?  @db.VarChar(80)
+  details        String?  @db.VarChar(600)
+  status         String   @default("PENDING") @db.VarChar(20)
+  ipHash         String   @db.VarChar(64)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([ipHash, createdAt])
+  @@index([status, createdAt])
 }

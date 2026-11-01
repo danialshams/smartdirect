@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { internalEmailForPhone, normalizePhone, validatePassword } from "@/lib/auth/phone";
 import { clientIp, sameOrigin, privateHeaders } from "@/lib/auth/request";
 import { hashRequestIp } from "@/lib/auth/sms-otp";
+import { TERMS_VERSION } from "@/lib/legal/terms";
 
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return NextResponse.json({message:"درخواست نامعتبر است."},{status:403,headers:privateHeaders});
@@ -12,6 +13,10 @@ export async function POST(request: NextRequest) {
   const lastName = typeof body?.lastName === "string" ? body.lastName.trim() : "";
   const phone = normalizePhone(body?.phone ?? "");
   const password = body?.password;
+  if (body?.termsAccepted !== true || body?.termsVersion !== TERMS_VERSION) {
+    return NextResponse.json({message:"برای ساخت حساب باید قوانین و مقررات جاری را مطالعه و تأیید کنید."},
+      {status:400,headers:privateHeaders});
+  }
   if (!firstName || !lastName || firstName.length > 60 || lastName.length > 60 || !phone ||
       !validatePassword(password) || password !== body?.confirmPassword) {
     return NextResponse.json({message:"نام، نام خانوادگی، موبایل و رمز عبور را بررسی کنید. رمز باید حداقل ۸ کاراکتر شامل حرف و عدد باشد."},
@@ -34,7 +39,8 @@ export async function POST(request: NextRequest) {
     const hash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
       data: { firstName, lastName, name: `${firstName} ${lastName}`,
-        phone, email: internalEmailForPhone(phone), password: hash }
+        phone, email: internalEmailForPhone(phone), password: hash,
+        termsAcceptedAt: new Date(), termsVersion: TERMS_VERSION }
     });
     return NextResponse.json({success:true,userId:user.id,phoneVerified:false},
       {status:201,headers:privateHeaders});

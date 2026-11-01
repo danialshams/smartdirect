@@ -104,7 +104,7 @@ export function LandingInteractions() {
           }
           flushDeferred();
         }));
-      }, performance.now() < rapidJumpUntil ? 430 : 85);
+      }, performance.now() < rapidJumpUntil ? 165 : 38);
     };
 
     const cardObserver = new IntersectionObserver(entries => {
@@ -112,7 +112,7 @@ export function LandingInteractions() {
         if (!entry.isIntersecting || entry.intersectionRatio < .08) continue;
         startCard(entry.target as HTMLElement);
       }
-    }, { rootMargin: "0px 0px 42% 0px", threshold: [0, .08] });
+    }, { rootMargin: "0px 0px 68% 0px", threshold: [0, .08] });
 
     // WebKit may miss an observer after an instantaneous jump or resize.
     // Its fallback must NOT measure all pending card boxes on every scroll
@@ -124,7 +124,7 @@ export function LandingInteractions() {
       if (disposed) return;
       for (const card of pending) {
         const rect = card.getBoundingClientRect();
-        const leadEnd = innerHeight * 1.42;
+        const leadEnd = innerHeight * 1.68;
         const visible = Math.max(0, Math.min(rect.bottom, leadEnd) - Math.max(rect.top, 0));
         if (rect.top <= leadEnd && rect.bottom > 0 &&
             visible >= Math.min(rect.height, leadEnd) * .08) startCard(card);
@@ -140,7 +140,7 @@ export function LandingInteractions() {
         if (Math.abs(y - previousScrollY) > 440) {
           // Allow the native WebGL refractive canvas to catch up after a
           // multi-screen flick before card transforms allocate textures.
-          rapidJumpUntil = performance.now() + 680;
+          rapidJumpUntil = performance.now() + 260;
         }
         previousScrollY = y;
         if (deferred.size) scheduleIdle();
@@ -153,7 +153,7 @@ export function LandingInteractions() {
       trailingProbeTimer = setTimeout(() => {
         trailingProbeTimer = undefined;
         scheduleProbe();
-      }, 95);
+      }, 55);
     };
     const onResize = () => {
       if (mobileWebKit && deferred.size) scheduleIdle();
@@ -210,17 +210,17 @@ export function LandingInteractions() {
         // Card content remains invisible until the background settles.
         timeline.to(card, {
           x: 0, opacity: 1, force3D: false,
-          duration: .42, ease: "power3.out"
+          duration: .31, ease: "power3.out"
         }, 0);
         // Opposing copy motion, with separate sequential text reveals.
         if (copyContainer) timeline.to(copyContainer, {
-          x: 0, force3D: false, duration: .4
-        }, .26);
+          x: 0, force3D: false, duration: .28
+        }, .16);
         copyParts.forEach((part, i) => timeline.to(part, {
-          opacity: 1, duration: .22
-        }, .32 + i * .085));
+          opacity: 1, duration: .16
+        }, .2 + i * .045));
         if (preview) {
-          const previewAt = .43 + copyParts.length * .085;
+          const previewAt = .25 + copyParts.length * .045;
           const mobileLayers = innerWidth <= 640;
           timeline.set(preview, { visibility: "visible" }, previewAt);
           // On narrow mobile WebKit, painting a moving illustrated phone
@@ -228,16 +228,16 @@ export function LandingInteractions() {
           // copy still slides from the opposite side; the phone builds in
           // place with separate, genuinely sequential GSAP row fades.
           timeline.to(preview, {
-            x: 0, opacity: 1, force3D: false, duration: .32
+            x: 0, opacity: 1, force3D: false, duration: .24
           }, previewAt);
           timeline.set(visualParts, {
             ...(mobileLayers ? {} : { x: -12 * direction, force3D: false }),
             opacity: 0
-          }, previewAt - .12);
+          }, previewAt - .08);
           visualParts.forEach((part, i) => timeline.to(part, {
             ...(mobileLayers ? {} : { x: 0, force3D: false }),
-            opacity: 1, duration: .17, ease: "power2.out"
-          }, previewAt + .12 + i * .065));
+            opacity: 1, duration: .13, ease: "power2.out"
+          }, previewAt + .08 + i * .034));
         }
       };
 
@@ -254,7 +254,7 @@ export function LandingInteractions() {
       const secondInRow = innerWidth > 600 &&
         Array.from(card.parentElement?.children ?? []).indexOf(card) > 0;
       if (secondInRow) {
-        const delayed = gsap.delayedCall(.24, () => {
+        const delayed = gsap.delayedCall(.08, () => {
           delays.delete(delayed);
           build();
         });
@@ -292,7 +292,8 @@ export function LandingInteractions() {
         card.querySelector<HTMLElement>(".ap-social-card__index"),
         card.querySelector<HTMLElement>(".ap-social-card__count"),
         card.querySelector<HTMLElement>(".ap-social-card__copy h3"),
-        card.querySelector<HTMLElement>(".ap-social-card__copy p")
+        card.querySelector<HTMLElement>(".ap-social-card__copy p"),
+        card.querySelector<HTMLElement>(".ap-social-card__more")
       ]);
       const groups = ".ig-chat, .ig-story, .ig-live, .ig-photo-grid, .ig-insights-bars, .ig-menu-sheet";
       const visualParts = preview ? Array.from(preview.children).flatMap(child => {

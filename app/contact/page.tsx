@@ -10,6 +10,8 @@ export default function ContactPage(){
       <Link href="/dashboard/tickets">رفتن به پشتیبانی</Link>
       <Link href="/login">ورود به پنل</Link>
     </div>
-    <p className="ap-info__note">برای جلوگیری از نمایش اطلاعات تماس تأییدنشده، در این صفحه آدرس ایمیل یا شماره تلفن ساختگی قرار داده نشده است.</p>
+    <h2>درخواست حریم خصوصی و حذف اطلاعات</h2>
+    <p>برای حذف داده‌های ثبت‌شده در دایرا، حتی بدون ورود به حساب، می‌توانید درخواست ثبت کنید و کد پیگیری دریافت کنید.</p>
+    <div className="ap-info__actions"><Link href="/data-deletion">درخواست حذف اطلاعات</Link><Link href="/privacy-policy">حریم خصوصی</Link></div>
   </PublicInfoPage>;
 }

@@ -40,7 +40,7 @@ const initialScrollGuard = "(function(){document.documentElement.dataset.dairaHe
 const heroHeadline="مدیریت کل پیجت رو بسپار به دایرا";
 
 const footerLinks=[
-  {label:"امکانات",href:"#features"},
+  {label:"امکانات",href:"/features"},
   {label:"حفظ حریم خصوصی",href:"/privacy-policy"},
   {label:"قوانین و مقررات",href:"/terms"},
   {label:"حذف اطلاعات",href:"/data-deletion"},
