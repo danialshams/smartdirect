@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { exchangeInstagramToken } from "@/lib/instagram/token-manager";
 import { verifyInstagramOAuthState } from "@/lib/instagram/oauth-state";
@@ -213,6 +215,12 @@ export async function GET(request: NextRequest) {
         message.includes("expired") ? "state_expired" : "invalid_state",
       );
     }
+
+    // A signed OAuth state belongs to the live authenticated browser session.
+    // An old captured state cannot reconnect accounts after the session was revoked.
+    const currentSession=await getServerSession(authOptions);
+    if(!currentSession?.user?.id || currentSession.user.id!==stateData.userId)
+      return redirectToDashboard(request,"invalid_session");
 
     // =========================================================
     // 7. Environment Variables
