@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { Camera } from "lucide-react";
 import { showcaseScenes, type ShowcaseKind } from "./showcase-scenes";
 import { InstagramPreview } from "./InstagramPreview";
 
@@ -44,8 +43,8 @@ export function FeatureShowcase() {
             <div className="ap-shell ap-showcase__inner">
               {rowIndex === 0 && (
                 <div className="ap-showcase__intro" data-reveal>
-                  <span className="ap-showcase__eyebrow"><Camera size={17} aria-hidden="true"/> امکانات دایرا</span>
-                  <h2 id="ap-features-title" data-reveal>از یک پیام ساده، تا مدیریت کل پیج</h2>
+                  <span className="ap-showcase__eyebrow">امکانات دایرا</span>
+                  <h2 id="ap-features-title" className="daira-text-mask" data-text-reveal><span className="daira-text-mask__inner">از یک پیام ساده، تا مدیریت کل پیج</span></h2>
                   <p data-reveal>هر قابلیت، در محیطی آشنا شبیه اینستاگرام.</p>
                 </div>
               )}
@@ -60,12 +59,11 @@ export function FeatureShowcase() {
                     aria-labelledby={"feature-title-" + scene.id}
                   >
                     <div className="ap-social-card__copy">
-                      <span className="ap-social-card__icon" aria-hidden="true"><scene.Icon size={22} strokeWidth={1.8}/></span>
-                      <span className="ap-social-card__count" aria-hidden="true">{scene.no} / ۱۱</span>
-                      <h3 id={"feature-title-" + scene.id} data-reveal>{scene.title}</h3>
-                      <p data-reveal>{scene.tagline}</p>
+                      <span className="ap-social-card__number" aria-hidden="true">{scene.no}</span>
+                      <h3 id={"feature-title-" + scene.id}>{scene.title}</h3>
+                      <p>{scene.tagline}</p>
                     </div>
-                    <div className="ap-social-card__visual" data-reveal>
+                    <div className="ap-social-card__visual">
                       <InstagramPreview kind={scene.id}/>
                     </div>
                   </article>
