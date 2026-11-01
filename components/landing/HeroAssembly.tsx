@@ -21,6 +21,7 @@ export function HeroAssembly() {
     const cta = document.querySelector<HTMLElement>("[data-hero-cta]");
     if (heroEntranceFinished) {
       gsap.set(words, { clearProps: "opacity" });
+      gsap.set(title, { clearProps: "opacity" });
       gsap.set([description, cta].filter(Boolean), { clearProps: "opacity,transform" });
       html.dataset.dairaHero = "done";
       title.dataset.gsapHero = "complete";
@@ -48,19 +49,24 @@ export function HeroAssembly() {
 
     // Render already contains the final line layout. CSS hides only word
     // opacity before hydration, so GSAP can start immediately and smoothly.
-    gsap.set(words, { opacity: 0 });
+    // A single composited alpha fade is markedly cheaper than seven
+    // concurrent word tweens over the live optical header in Safari.
+    gsap.set(words, { opacity: 1 });
+    gsap.set(title, { opacity: 0 });
     title.dataset.gsapHero = "playing";
     title.dataset.gsapHeroStarted = String(performance.now());
     html.dataset.dairaHero = "playing";
     const timeline = gsap.timeline({ onComplete: finish, defaults: { ease: "power2.out" } });
-    timeline.to(words, {
+    timeline.to(title, {
       opacity: 1,
-      duration: 0.84,
-      stagger: { each: 0.055, from: "start" },
+      duration: .92,
+      ease: "sine.out",
       overwrite: "auto"
     }, 0);
-    if (description) timeline.fromTo(description, {opacity:0,y:7},{opacity:1,y:0,duration:.72,ease:"power2.out"},.17);
-    if (cta) timeline.fromTo(cta, {opacity:0,y:6},{opacity:1,y:0,duration:.65,ease:"power2.out"},.31);
+    if (description) timeline.fromTo(description,
+      { opacity: 0 }, { opacity: 1, duration: .68, ease: "sine.out" }, .17);
+    if (cta) timeline.fromTo(cta,
+      { opacity: 0 }, { opacity: 1, duration: .62, ease: "sine.out" }, .32);
 
     return () => {
       timeline.kill();

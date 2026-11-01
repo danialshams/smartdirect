@@ -315,6 +315,28 @@ try {
     img.getAttribute("src")===`/landing-reflection/mobile-${i}.jpg` && img.complete && img.naturalWidth>0),null,{timeout:15000});
   await page.waitForTimeout(250);
 
+  // Regressive scroll stalls are a release blocker even when the WebGL
+  // refraction and DOM assertions remain technically correct. This mobile
+  // WebKit budget is intentionally loose enough for CI variation but fails
+  // the previously observed 1.0–2.6s freezes and p95 >300ms.
+  const headingMotion=await page.evaluate(() => {
+    const title=document.querySelector(".ap-motion-reveal-title > span");
+    if (!title) return null;
+    const style=getComputedStyle(title);
+    return {opacity:Number(style.opacity),transform:style.transform};
+  });
+  console.log("WEBKIT_SAFARI_HEADING="+JSON.stringify(headingMotion));
+  if (!headingMotion || headingMotion.opacity<.99 || headingMotion.transform!=="none") {
+    throw Error("Safari heading must remain readable and free of expensive masked transforms");
+  }
+  console.log("WEBKIT_SCROLL_PERFORMANCE_BUDGET="+JSON.stringify({
+    p95:frameTiming.p95,max:frameTiming.max,p95Limit:250,maxLimit:900
+  }));
+  if (frameTiming.p95>250 || frameTiming.max>900) {
+    throw Error("Real WebKit scroll exceeded performance budget: "+
+      JSON.stringify(frameTiming));
+  }
+  console.log("WEBKIT_SCROLL_PERFORMANCE_PASS");
   console.log("WEBKIT_RESPONSIVE_OPTICS_PASS");
 
 } catch (error) {

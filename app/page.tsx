@@ -96,7 +96,7 @@ export default function Home() {
           <Link href="/login" className="ap-button ap-button--solid ap-footer__cta">رایگان شروع کن</Link>
         </div>
         <div className="ap-shell ap-footer__hero">
-          <div className="ap-footer__brand" data-reveal>
+          <div className="ap-footer__brand">
             <Link href="/" className="ap-brand" aria-label="دایرا، صفحه اصلی">
               <Image src="/daira-header-logo-hd.webp" alt="" width={42} height={42}/>
               <span>دایرا</span>
@@ -104,7 +104,7 @@ export default function Home() {
             <p>مدیریت ساده‌تر تعامل‌ها، گفتگوها و محتوای اینستاگرام.</p>
           </div>
           <nav className="ap-footer__links" aria-label="راهنمای سایت">
-            {footerLinks.map((item,index)=><Link href={item.href} key={item.href} data-reveal style={{"--link-index":index} as CSSProperties}>{item.label}</Link>)}
+            {footerLinks.map((item,index)=><Link href={item.href} key={item.href} style={{"--link-index":index} as CSSProperties}>{item.label}</Link>)}
           </nav>
         </div>
         <div className="ap-shell ap-footer__trust" aria-label="جایگاه مجوزهای آینده">

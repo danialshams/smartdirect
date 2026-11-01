@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   webkit-mobile:
-    if: github.event_name == 'push' || github.head_ref == 'feature/daira-sequential-card-build-and-license-20261101'
+    if: github.event_name == 'push' || github.head_ref == 'fix/daira-directional-card-gsap-once-20261101'
     strategy:
       fail-fast: false
       matrix:
