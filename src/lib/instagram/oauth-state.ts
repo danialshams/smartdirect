@@ -93,13 +93,13 @@ export async function verifyInstagramOAuthState(state: string): Promise<Instagra
 
   const redisKey = `smartdirect:oauth-state:${payload.nonce}`;
   const redis = getRedisClient();
-  const exists = await redis.get<string>(redisKey);
-
-  if (!exists) {
-    throw new Error("Instagram OAuth state already used or not found");
-  }
-
-  await redis.del(redisKey);
+  // Atomic consume. A GET followed by DEL allowed simultaneous callback
+  // requests to redeem the same state before either one deleted it.
+  const consumed=await redis.eval<string|null>(
+    "local v=redis.call('GET',KEYS[1]); if v then redis.call('DEL',KEYS[1]); end; return v",
+    [redisKey], []
+  );
+  if(!consumed)throw new Error("Instagram OAuth state already used or not found");
 
   return payload;
 }
