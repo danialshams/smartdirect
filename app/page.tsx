@@ -20,6 +20,7 @@ import "./landing-live-glass.css";
 import "./landing-optics-v2.css";
 import "./header-library-optics.css";
 import "./landing-fixes.css";
+import "./public-redesign.css";
 
 export const metadata:Metadata = {
   title:"دایرا | همه تعاملات پیجت، در یک فضای ساده",
