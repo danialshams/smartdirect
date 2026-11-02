@@ -81,15 +81,8 @@ try{
     await evalPage(`(async()=>{
       await document.fonts.ready;
       const css=document.createElement("style");
-      css.textContent=`
-        .ap-header,.ap-backtop,.daira-static-reflection{visibility:hidden!important}
-        .ap-site [data-dv-reveal],.ap-site [data-reveal],.ap-site [data-footer-callout],
-        .ap-site .ap-social-card,.ap-site .ap-motion-reveal-title>span,
-        .ap-site .ap-hero__typed{opacity:1!important;visibility:visible!important;
-          transform:none!important;transition:none!important;animation:none!important}
-        .ap-site .dv-aurora,.ap-site .dv-aurora *{animation:none!important}
-        html{scroll-behavior:auto!important}
-      `;
+      css.textContent=".ap-header,.ap-backtop,.daira-static-reflection{visibility:hidden!important} .ap-site [data-dv-reveal],.ap-site [data-reveal],.ap-site [data-footer-callout], .ap-site .ap-social-card,.ap-site .ap-motion-reveal-title>span, .ap-site .ap-hero__typed{opacity:1!important;visibility:visible!important;transform:none!important;transition:none!important;animation:none!important} .ap-site .dv-aurora,.ap-site .dv-aurora *{animation:none!important} html{scroll-behavior:auto!important}";
+
       document.head.appendChild(css);
       const images=[...document.querySelectorAll(".ap-site:not(.daira-static-reflection) img")];
       for(const img of images){img.loading="eager";img.decoding="sync"}
