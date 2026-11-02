@@ -44,6 +44,42 @@ export function HeroAssembly() {
       return;
     }
 
+    if (title.dataset.heroEntrance === "fade") {
+      // Minimal Motion: animate the complete Persian heading, never glyphs.
+      typed.textContent = fullText;
+      if (caret) caret.style.display = "none";
+      html.dataset.dairaHero = "playing";
+      title.dataset.gsapHero = "playing";
+      title.dataset.gsapHeroStarted = String(performance.now());
+      gsap.set(title, { opacity: 0 });
+      gsap.set(cta, { opacity: 0 });
+      let finished = false;
+      const entrance = gsap.timeline({
+        onComplete: () => {
+          finished = true;
+          heroEntranceFinished = true;
+          title.dataset.gsapHero = "complete";
+          title.dataset.gsapHeroElapsed = String(Math.round(
+            performance.now()-Number(title.dataset.gsapHeroStarted)));
+          html.dataset.dairaHero = "done";
+          title.removeAttribute("data-liquid-glass-ignore");
+          gsap.set(title, { clearProps: "opacity,visibility,transform" });
+          gsap.set(cta, { clearProps: "opacity,transform" });
+        }
+      });
+      entrance.to(title, { opacity: 1, duration: .84, ease: "sine.out" }, 0);
+      if (cta) entrance.to(cta, { opacity: 1, duration: .42, ease: "sine.out" }, .35);
+      return () => {
+        entrance.kill();
+        if (!finished) {
+          gsap.set(title, { clearProps: "opacity,visibility,transform" });
+          gsap.set(cta, { clearProps: "opacity,transform" });
+          html.dataset.dairaHero = "pending";
+          title.dataset.gsapHero = "pending";
+        }
+      };
+    }
+
     // Keep the complete final headline's dimensions using a CSS ::before
     // measure. Only the ink updates, never the outer layout or glass shader.
     // Pre-hydration guard hides the original full ink until this effect runs.
