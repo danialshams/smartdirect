@@ -80,9 +80,28 @@ assert.ok(page.includes("ap-hero__caret"));
 assert.ok(interactions.includes('import { gsap } from "gsap"'), "Sections should not wait for late GSAP chunks");
 assert.ok(interactions.includes('import { ScrollTrigger } from "gsap/ScrollTrigger"'), "Features and footer need real ScrollTrigger");
 assert.ok(interactions.includes(".ap-social-grid > .ap-social-card"), "GSAP must animate feature cards");
-assert.ok(features.includes('["comment"], ["story"], ["direct"]') &&
-  !features.includes('["comment", "story"]'),
-  "Each showcase scene must own exactly one feature, not a paired card row");
+// Native WebKit reflection is indexed by the original eight showcase rows,
+// plus the hero and footer. Restyling/splitting rows breaks the 0..9 JPEG map.
+for (const row of [
+  '["comment", "story"]', '["direct"]', '["share", "live"]',
+  '["reminder", "icebreaker"]', '["inbox"]', '["publishing"]',
+  '["insights"]', '["menu"]'
+]) assert.ok(features.includes(row),"Original feature layout missing: "+row);
+assert.ok(!features.includes("ap-product-story") &&
+  !features.includes("ap-social-card__mini-flow"),
+  "Homepage card markup and visual presentation must remain untouched");
+for (const variant of ["desktop","mobile"]) {
+  for (let i=0;i<10;i++) {
+    assert.ok(existsSync("public/landing-reflection/"+variant+"-"+i+".jpg"),
+      "Missing WebKit static reflection image "+variant+"-"+i);
+  }
+  assert.ok(!existsSync("public/landing-reflection/"+variant+"-10.jpg"),
+    "Reflection contract currently has exactly 10 original tiles");
+}
+assert.ok(interactions.includes('states.get(previous as HTMLElement) !== "done"') &&
+  interactions.includes('card.nextElementSibling') &&
+  interactions.includes('requestAnimationFrame(() => startCard(next))'),
+  "Paired cards keep their original layout but must enter sequentially");
 assert.ok(interactions.includes('rootMargin: "0px 0px -12% 0px"') &&
   interactions.includes('const leadEnd = innerHeight * .88;') &&
   !interactions.includes('1.68'),
@@ -91,10 +110,10 @@ assert.ok(header.includes("ap-menu--navigating") &&
   header.includes("setNavigating(true)") && header.includes("open ? <X"),
   "Route navigation must immediately hide the old menu and use one icon");
 const publicRedesign=read("app/public-redesign.css");
-assert.ok(publicRedesign.includes("min-height:94svh") &&
+assert.ok(!publicRedesign.includes(".ap-product-story") &&
   publicRedesign.includes(".ap-menu.ap-menu--navigating") &&
   publicRedesign.includes("blur(17px)"),
-  "Independent product scenes, hidden menu exit and stronger frost are required");
+  "Homepage visuals are frozen while the hamburger menu remains improved");
 assert.ok(interactions.includes(".ap-footer__links") && interactions.includes("select: \":scope > a\""),"Each footer link must have an individual GSAP fade");
 assert.ok(interactions.includes('rootMargin: "0px 0px -12% 0px"') && interactions.includes("threshold: [0, .1]"),"Cards must only start when entering their own viewport");
 assert.ok(interactions.includes("duration: .31") && interactions.includes("previewAt = .25"),"Card body and preview should assemble significantly faster with no long blank delay");
