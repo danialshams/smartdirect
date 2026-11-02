@@ -441,7 +441,7 @@ try {
   assert.ok(velora.firstCard.startsWith("/features/"));
   assert.equal(velora.hasOldCards,false,"Previous feature card layout must be replaced");
   assert.ok(velora.revealCount>=18,"Multiple one-shot Velora transitions should exist");
-  await evaluate('document.querySelector(".dv-bento-grid").scrollIntoView({block:"center",behavior:"instant"})');
+  await evaluate('document.querySelector(".dv-bento-card").scrollIntoView({block:"center",behavior:"instant"})');
   await sleep(1000);
   const reveal=await evaluate(`(() => {
     const card=document.querySelector(".dv-bento-card");
