@@ -1,0 +1,62 @@
+name: Regenerate Velora Safari optical tiles
+
+on:
+  push:
+    branches:
+      - feature/velora-landing-with-preserved-liquid-header-20261102
+    paths:
+      - "app/**"
+      - "components/landing/**"
+      - "scripts/regenerate-landing-reflection.mjs"
+      - ".github/workflows/velora-optical-tiles.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: velora-optical
+  cancel-in-progress: true
+
+jobs:
+  optics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact Daira feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/velora-landing-with-preserved-liquid-header-20261102
+          persist-credentials: true
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build public Daira pages before optical screenshot
+        env:
+          NODE_ENV: production
+          NEXTAUTH_URL: https://example.invalid
+          NEXTAUTH_SECRET: ci-only-placeholder-secret-with-more-than-32-characters
+          CRON_SECRET: ci-only-placeholder-cron-secret-with-more-than-32-characters
+          DATABASE_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          DIRECT_URL: postgresql://user:password@127.0.0.1:5432/smartdirect?sslmode=disable
+          REDIS_DRIVER: redis
+          REDIS_URL: redis://127.0.0.1:6379
+        run: npm run build
+      - name: Render all 20 optical source images from actual Velora UI
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: node scripts/regenerate-landing-reflection.mjs
+      - name: Commit refreshed images only to feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/landing-reflection/desktop-*.jpg public/landing-reflection/mobile-*.jpg
+          if git diff --cached --quiet; then
+            echo "All reflection tiles already match current UI"
+            exit 0
+          fi
+          git commit -m "Regenerate Safari Liquid Glass source imagery for Velora landing"
+          git push origin HEAD:feature/velora-landing-with-preserved-liquid-header-20261102
