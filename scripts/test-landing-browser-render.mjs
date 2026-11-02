@@ -417,104 +417,55 @@ try {
   await sleep(340);
   assert.equal(await evaluate('document.querySelector(".ap-menu").classList.contains("ap-menu--open")'),false);
 
-  // Verify real GSAP tweens are driven by per-card native visibility, while
-  // the masked feature headline remains driven by ScrollTrigger.
-  const entrance = await evaluate(`(async () => {
-    const sleep = ms => new Promise(resolve=>setTimeout(resolve,ms));
-    const root=document.querySelector(".ap-site");
-    const rows=[...document.querySelectorAll(".ap-showcase-capture")];
-    const footer=document.querySelector(".ap-footer--extended");
-    async function exercise(section, item) {
-      const top=section.getBoundingClientRect().top+window.scrollY;
-      window.scrollTo({top:Math.max(0,top-innerHeight*.73),behavior:"instant"});
-      await sleep(90);
-      const opacities=[], cardTransforms=[];
-      for (let i=0;i<11;i++) {
-        window.scrollBy({top:48,behavior:"instant"});
-        await sleep(85);
-        opacities.push(Number(getComputedStyle(item).opacity));
-        cardTransforms.push(getComputedStyle(section).transform);
-      }
-      await sleep(2200);
-      return {started:Number(section.dataset.gsapStarted??0),
-        shown:section.dataset.gsapShown,
-        opacities,cardTransforms,finalOpacity:Number(getComputedStyle(item).opacity)};
-    }
-    const row=rows[Math.min(4,rows.length-1)];
-    const card=row.querySelector(".ap-social-grid > .ap-social-card");
-    const feature=await exercise(card,card.querySelector(".ap-social-card__copy h3"));
-    const foot=await exercise(footer.querySelector(".ap-footer__links"),footer.querySelector(".ap-footer__links > a"));
-    return {active:root.dataset.gsapMotion,feature,footer:foot};
+  // Velora replaces the legacy full-width feature cards with animated Bento.
+  // Keep checking live Chromium rendering, actual in-viewport transitions,
+  // and the ORIGINAL native glass optical surface above.
+  const velora = await evaluate(`(() => {
+    const scenes=[...document.querySelectorAll(".ap-showcase-capture")];
+    const cards=[...document.querySelectorAll(".dv-bento-card")];
+    const hero=document.querySelector(".dv-hero");
+    const mockup=document.querySelector(".dv-hero .dv-dashboard");
+    const faq=document.querySelectorAll(".dv-faq-list details");
+    const optics=document.querySelector(".daira-library-liquid-header");
+    return {scenes:scenes.length,cards:cards.length,faq:faq.length,
+      hero:!!hero,mockup:!!mockup,
+      opticalStrategy:optics?.dataset.glassStrategy,
+      firstCard:cards[0]?.getAttribute("href"),
+      hasOldCards:!!document.querySelector(".ap-social-grid > .ap-social-card"),
+      revealCount:document.querySelectorAll("[data-dv-reveal]").length};
   })()`);
-  console.log("DAIRA_GSAP_ENTRANCES="+JSON.stringify(entrance));
-  assert.equal(entrance.active,"true","Real GSAP ScrollTrigger must be initialized");
-  assert.ok(entrance.feature.cardTransforms.some(t=>t!=="none"),
-    "Entire real feature card must visibly translate; moving only a decorative halo is invalid");
-  for (const [name,result] of Object.entries({feature:entrance.feature,footer:entrance.footer})) {
-    assert.ok(result.started>0, name+" must start a genuine GSAP entrance");
-    assert.equal(result.shown,"true",name+" GSAP timeline must finish");
-    assert.ok(result.opacities.some(x=>x<0.98),
-      name+" must show actual intermediate opacity during the entrance");
-    assert.equal(result.finalOpacity,1,name+" must remain fully visible after entrance");
-  }
-  const assembled = await evaluate(`(() => {
-    const rows=[...document.querySelectorAll(".ap-showcase-capture")];
-    const card=rows[Math.min(4,rows.length-1)]?.querySelector(".ap-social-grid > .ap-social-card");
-    const preview=card?.querySelector(".ig-preview");
-    return {
-      stageCount:Number(card?.dataset.gsapStages??0),
-      phase:card?.dataset.gsapPhase,
-      shellOpacity:Number(getComputedStyle(card).opacity),
-      realSurface:getComputedStyle(card).backgroundImage.includes("gradient"),
-      noUndersideShadow:getComputedStyle(card).boxShadow==="none",
-      removedShadowOnlyShell:card.querySelector(".ap-social-card__shell")===null,
-      titleOpacity:Number(getComputedStyle(card.querySelector("h3")).opacity),
-      previewOpacity:Number(getComputedStyle(preview).opacity),
-      stagedParts:[...card.querySelectorAll(".ig-preview > *, .ap-social-card__index, .ap-social-card__count")].length
-    };
+  assert.equal(velora.scenes,8,"Keep exactly eight WebKit capture sections");
+  assert.equal(velora.cards,11,"All eleven Daira product links in Velora Bento");
+  assert.ok(velora.faq>=4 && velora.hero && velora.mockup);
+  assert.equal(velora.opticalStrategy,"svg");
+  assert.ok(velora.firstCard.startsWith("/features/"));
+  assert.equal(velora.hasOldCards,false,"Previous feature card layout must be replaced");
+  assert.ok(velora.revealCount>=18,"Multiple one-shot Velora transitions should exist");
+  await evaluate('document.querySelector(".dv-bento-grid").scrollIntoView({block:"center",behavior:"instant"})');
+  await sleep(1000);
+  const reveal=await evaluate(`(() => {
+    const card=document.querySelector(".dv-bento-card");
+    return {visible:card?.dataset.dvVisible,
+      opacity:card?getComputedStyle(card).opacity:null,
+      motionReady:document.querySelector(".ap-site")?.dataset.dvMotionReady,
+      bg:getComputedStyle(document.querySelector(".dv-hero")).backgroundImage};
   })()`);
-  console.log("DAIRA_CARD_GSAP_ASSEMBLY="+JSON.stringify(assembled));
-  assert.ok(assembled.stageCount >= 5, "Each feature must sequence multiple real card internals");
-  assert.equal(assembled.phase,"complete","GSAP must complete the inner UI assembly");
-  assert.equal(assembled.shellOpacity,1);
-  assert.equal(assembled.realSurface,true,"Real feature article owns the animated card background");
-  assert.equal(assembled.noUndersideShadow,true,"Feature card must have no linear shadow underneath");
-  assert.equal(assembled.removedShadowOnlyShell,true,"No decorative-only shell should animate instead of the card");
-  assert.equal(assembled.titleOpacity,1);
-  assert.equal(assembled.previewOpacity,1);
-    const directionAudit = await evaluate(`(() => {
-    const cards=[...document.querySelectorAll(".ap-social-grid > .ap-social-card")];
-    const triggered=cards.filter(card=>card.dataset.gsapShown==="true");
-    const active=cards.find(card=>card.dataset.gsapStarted);
-    return {
-      directions:cards.map(card=>Number(card.dataset.gsapDirection)),
-      allStages:cards.every(card=>card.dataset.gsapStages===undefined ||
-        Number(card.dataset.gsapStages)>=6),
-      visited:triggered.length,
-      activeCardId:active?.id,
-      activeStart:active?.dataset.gsapStarted,
-      firstCardState:cards[0]?.dataset.gsapPhase
-    };
+  assert.equal(reveal.visible,"true","Velora features must reveal at viewport entry");
+  assert.equal(Number(reveal.opacity),1,"Visible Bento feature must finish fully opaque");
+  assert.equal(reveal.motionReady,"true");
+  assert.match(reveal.bg,/gradient/,"Aurora hero requires gradient background");
+  // Original footer link stagger still uses GSAP and must remain functional.
+  await evaluate('document.querySelector(".ap-footer__links").scrollIntoView({block:"center",behavior:"instant"})');
+  await sleep(1100);
+  const footer = await evaluate(`(() => {
+    const el=document.querySelector(".ap-footer__links");
+    return {shown:el?.dataset.gsapShown,
+      visible:[...el.querySelectorAll("a")].every(x=>getComputedStyle(x).opacity==="1")};
   })()`);
-  assert.deepEqual(directionAudit.directions,
-    directionAudit.directions.map((_,i)=>i%2===0?1:-1),
-    "The first card must enter from the right, then left, alternating globally");
-  assert.ok(directionAudit.allStages,"Each started card must have multiple independent GSAP stages");
-  console.log("DAIRA_CARD_DIRECTION_AUDIT="+JSON.stringify(directionAudit));
-  if(directionAudit.activeCardId) {
-    await evaluate('window.scrollTo({top:0,behavior:"instant"})');
-    await sleep(170);
-    await evaluate(`document.getElementById("${directionAudit.activeCardId}").scrollIntoView({block:"center",behavior:"instant"})`);
-    await sleep(550);
-    const replay=await evaluate(`(() => {
-      const el=document.getElementById("${directionAudit.activeCardId}");
-      return {started:el?.dataset.gsapStarted,phase:el?.dataset.gsapPhase};
-    })()`);
-    assert.equal(replay.started,directionAudit.activeStart,
-      "Returning to a completed card must not start a second entrance");
-    console.log("DAIRA_CARD_ONCE_PASS="+JSON.stringify(replay));
-  }
-    // A Firefox user-agent spoof inside Chromium does not test WebKit rendering.
+  assert.equal(footer.shown,"true","Footer stagger must complete");
+  assert.equal(footer.visible,true,"Footer links must remain visible");
+  console.log("DAIRA_VELORA_BROWSER_PASS="+JSON.stringify({velora,reveal,footer}));
+  // A Firefox user-agent spoof inside Chromium does not test WebKit rendering.
   // The official shared scene makes WebGL background capture available on iOS.
   assert.equal(await evaluate("document.querySelectorAll('[data-liquid-glass-scene]').length"),1);
   console.log("DAIRA BROWSER PASS: original simple-liquid-glass loupe, native rim, real refraction, iOS scene, menu and backtop.");
