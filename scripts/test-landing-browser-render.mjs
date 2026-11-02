@@ -277,6 +277,20 @@ try {
   assert.equal(hero.visibility,"visible","Typed Persian headline must finish legible");
   assert.equal(hero.transform,"none","Typewriter should not scatter or slide text");
   assert.equal(hero.cssAnimation,"none","No legacy CSS word animation should fight the typewriter");
+  // Minimal fade must not reserve a second hidden typewriter line.
+  // On desktop, the only CTA should be in view without scrolling.
+  const heroGeometry=await evaluate(`(() => {
+    const cta=document.querySelector(".dm-hero__cta")?.getBoundingClientRect();
+    const title=document.querySelector(".dm-hero h1")?.getBoundingClientRect();
+    return {ctaBottom:cta?.bottom,ctaTop:cta?.top,titleHeight:title?.height,
+      viewportHeight:innerHeight};
+  })()`);
+  assert.ok(heroGeometry.ctaBottom < heroGeometry.viewportHeight-8 &&
+    heroGeometry.ctaTop > 0,
+    "Minimal hero CTA must fit within the first desktop viewport");
+  assert.ok(heroGeometry.titleHeight < 290,
+    "Hidden typewriter measuring content must not double the heading height");
+
   assert.equal(await evaluate('document.querySelector("[data-hero-assembly]").hasAttribute("data-liquid-glass-ignore")'),false);
   const motionImage=(await send("Page.captureScreenshot",{format:"jpeg",quality:56,captureBeyondViewport:false})).data;
   console.log("DAIRA_DIAG_SCREENSHOT_HERO_MOTION="+motionImage);
