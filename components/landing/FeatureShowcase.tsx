@@ -11,14 +11,8 @@ import { InstagramPreview } from "./InstagramPreview";
  * Independent clipped rows bound captures to roughly one screen each.
  */
 const rows: readonly (readonly ShowcaseKind[])[] = [
-  ["comment", "story"],
-  ["direct"],
-  ["share", "live"],
-  ["reminder", "icebreaker"],
-  ["inbox"],
-  ["publishing"],
-  ["insights"],
-  ["menu"],
+  ["comment"], ["story"], ["direct"], ["share"], ["live"], ["reminder"],
+  ["inbox"], ["publishing"], ["insights"], ["menu"], ["icebreaker"]
 ];
 
 export function FeatureShowcase() {
@@ -34,7 +28,7 @@ export function FeatureShowcase() {
           <section
             key={ids.join("-")}
             id={rowIndex === 0 ? "features" : undefined}
-            className={"ap-showcase ap-social-showcase ap-showcase-capture" +
+            className={"ap-showcase ap-social-showcase ap-showcase-capture ap-product-story" +
               (rowIndex === 0 ? " ap-showcase-capture--first" : "") +
               (rowIndex === rows.length - 1 ? " ap-showcase-capture--last" : "") +
               (rowIndex % 2 ? " ap-showcase-capture--alternate" : "")}
@@ -46,7 +40,7 @@ export function FeatureShowcase() {
                 <div className="ap-showcase__intro">
                   <span className="ap-showcase__eyebrow">امکانات دایرا</span>
                   <h2 id="ap-features-title" className="ap-motion-reveal-title"><span>از یک پیام ساده، تا مدیریت کل پیج</span></h2>
-                  <p>هر قابلیت، در محیطی آشنا شبیه اینستاگرام.</p>
+                  <p>یک قابلیت در هر صحنه؛ با جریان واقعی کار، نه فهرست شلوغ ابزارها.</p>
                 </div>
               )}
               <div className="ap-social-grid">
@@ -60,9 +54,11 @@ export function FeatureShowcase() {
                   >
                     <div className="ap-social-card__copy">
                       <span className="ap-social-card__index" aria-hidden="true">{scene.no}</span>
-                      <span className="ap-social-card__count" aria-hidden="true">{scene.no} / ۱۱</span>
+                      <span className="ap-social-card__count" aria-hidden="true">DAIRA / {scene.no}</span>
+                      <span className="ap-social-card__label">یک ابزار، یک جریان ساده</span>
                       <h3 id={"feature-title-" + scene.id}>{scene.title}</h3>
                       <p>{scene.tagline}</p>
+                      <div className="ap-social-card__mini-flow" aria-hidden="true"><span>تنظیم</span><i/><span>ذخیره</span><i/><span>اجرا</span></div>
                       <Link className="ap-social-card__more" href={"/features/" + scene.id}>آشنایی با این قابلیت</Link>
                     </div>
                     <div className="ap-social-card__visual">
