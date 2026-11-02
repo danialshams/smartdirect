@@ -220,7 +220,7 @@ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.doesNotMatch(css,/border:[^;]*solid\s+white|setInterval/);
 
 assert.match(features,/ap-showcase-capture/);
-assert.match(features,/InstagramPreview kind=\{scene\.id\}/);
+assert.match(features,/InstagramPreview kind=\{kind\}/);
 assert.equal((scenes.match(/no: "([۰-۹]+)"/g)||[]).length,11);
 for(const id of ["comment","story","direct","share","live","reminder","inbox","publishing","insights","menu","icebreaker"])
   assert.ok(scenes.includes('id: "'+id+'"'),"Missing feature "+id);
