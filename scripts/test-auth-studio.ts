@@ -85,7 +85,7 @@ assert.ok(read("app/data-deletion/page.tsx").includes("DataDeletionRequestForm")
 assert.ok(read("app/privacy-policy/page.tsx").includes("دایرا") && read("app/privacy-policy/page.tsx").includes("Meta"));
 assert.ok(read("app/features/page.tsx").includes("featureDetails") && read("components/landing/feature-detail-data.ts").includes("icebreaker"));
 assert.ok(read("app/features/[slug]/page.tsx").includes("DashboardGuidePanel") && read("components/landing/feature-ui-guides.ts").includes("productGuides"),"Each feature includes detailed dashboard-derived tutorial previews");
-assert.ok(read("components/landing/FeatureShowcase.tsx").includes('href={"/features/"+kind}'),"All Bento features must link to their individual detail pages");
+assert.ok(read("components/landing/FeatureShowcase.tsx").includes('href={"/features/"+id}'),"All minimal cards must link to their individual feature detail pages");
 assert.ok(auth.includes("authPasswordAttempt.count") && auth.includes("authPasswordAttempt.create") && auth.includes("byIp>=30"),"Account and IP login throttling");
 assert.ok(auth.includes("sessionVersion") && reset.includes("sessionVersion:{increment:1}"),"Reset must invalidate existing sessions");
 assert.ok(schema.includes("model AuthPasswordAttempt"));
