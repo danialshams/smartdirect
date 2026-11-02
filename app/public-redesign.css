@@ -1,4 +1,4 @@
-/* Public Daira v11: editorial product scenes, readable help center.
+/* Daira public interior pages: readable guides, opaque hamburger menu.
    One component language, following React Bits' restrained reveal patterns.
    Keep the existing native header refraction and GSAP timelines untouched. */
 
@@ -23,84 +23,6 @@
   background:rgba(224,236,255,.94)!important;
 }
 .ap-site .ap-menu-overlay--open{background:rgba(20,37,68,.27)!important}
-
-/* Each feature occupies a separate viewport scene; GSAP only arms the
-   entering article and never the next feature down the page. */
-.ap-site .ap-product-story{
-  min-height:94svh;display:flex;align-items:center;
-  padding:clamp(60px,7vw,108px) 0!important;
-  background:linear-gradient(158deg,#f6faff,#fff 43%,#f0f6ff)!important;
-  contain:layout style;
-}
-.ap-site .ap-product-story.ap-showcase-capture--alternate{
-  background:linear-gradient(202deg,#f1f6ff,#fff 53%,#f7faff)!important;
-}
-.ap-site .ap-product-story .ap-showcase__inner{width:min(1180px,calc(100% - 76px));}
-.ap-site .ap-product-story .ap-social-grid{display:block}
-.ap-site .ap-product-story .ap-social-card{
-  display:grid;grid-template-columns:minmax(0,40%) minmax(0,60%);
-  min-height:clamp(465px,56vw,595px);align-items:center;
-  border-radius:38px!important;box-shadow:none!important;
-  background:linear-gradient(120deg,#ffffff,#f1f7ff)!important;
-  border:1px solid #dfebfa!important;overflow:hidden;
-}
-.ap-site .ap-product-story.ap-showcase-capture--alternate .ap-social-card{
-  grid-template-columns:minmax(0,58%) minmax(0,42%);
-  background:linear-gradient(265deg,#fff,#edf5ff)!important;
-}
-.ap-site .ap-product-story.ap-showcase-capture--alternate .ap-social-card__visual{grid-column:1;grid-row:1}
-.ap-site .ap-product-story.ap-showcase-capture--alternate .ap-social-card__copy{grid-column:2;grid-row:1}
-.ap-site .ap-product-story .ap-social-card__copy{padding:clamp(30px,4vw,67px)!important;z-index:1}
-.ap-site .ap-product-story .ap-social-card__index{
-  font-size:clamp(58px,7.5vw,105px)!important;line-height:1!important;
-  font-weight:900!important;letter-spacing:-.055em;color:#d2e1fc!important;
-  font-family:"DairaVazir",sans-serif;
-}
-.ap-site .ap-product-story .ap-social-card__count{
-  position:static!important;display:block;direction:ltr;text-align:right;
-  font:700 10px Arial,sans-serif!important;letter-spacing:.22em;
-  color:#7792bf!important;margin-top:9px;
-}
-.ap-site .ap-product-story .ap-social-card__label{
-  display:inline-block;margin-top:23px;color:#3069da;font-size:11px;
-  background:#e7f0ff;border-radius:100px;padding:7px 12px;font-weight:850
-}
-.ap-site .ap-product-story .ap-social-card__copy h3{
-  font-size:clamp(29px,3vw,48px)!important;line-height:1.48!important;
-  margin:18px 0 0!important;letter-spacing:-.04em;color:#152b55;
-}
-.ap-site .ap-product-story .ap-social-card__copy p{
-  max-width:360px!important;font-size:clamp(13px,1.14vw,15px)!important;
-  line-height:2.15!important;margin-top:13px!important;color:#5a7191!important;
-}
-.ap-site .ap-product-story .ap-social-card__more{
-  display:inline-flex;margin-top:25px;font-size:13px!important;
-  border:0!important;background:#2863e4;color:white!important;
-  padding:13px 19px!important;border-radius:15px;font-weight:850;
-}
-.ap-site .ap-product-story .ap-social-card__visual{
-  position:relative;min-width:0;min-height:420px;display:grid;
-  place-items:center;padding:40px!important;align-self:stretch;
-  background:radial-gradient(ellipse at 52% 55%,#dceaff 0%,#e9f2ff 34%,transparent 69%);
-}
-.ap-site .ap-product-story .ap-social-card__visual:before{
-  content:"";position:absolute;inset:12% 13%;border-radius:50%;
-  border:1px solid rgba(86,134,214,.12);transform:rotate(-18deg) scaleX(1.2);
-  pointer-events:none;
-}
-.ap-site .ap-product-story .ig-preview{
-  position:relative;width:min(100%,490px)!important;min-height:330px!important;
-  border-radius:23px!important;box-shadow:0 26px 66px rgba(39,81,147,.15)!important;
-}
-.ap-site .ap-product-story .ap-social-card:hover{box-shadow:none!important}
-.ap-site .ap-product-story .ap-social-card__mini-flow{
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:19px;
-  font-size:11px;font-weight:800;color:#7390b9;
-}
-.ap-social-card__mini-flow span{border:1px solid #dce7f9;background:#fff;border-radius:9px;padding:5px 9px}
-.ap-social-card__mini-flow i{height:1px;width:17px;background:#a9c4ee}
-.ap-site .ap-product-story .ap-showcase__intro{max-width:690px;margin:0 auto 35px!important}
-.ap-site .ap-product-story .ap-showcase__intro p{font-size:14px}
 
 /* Public articles: intentional rhythm, editorial hero, no return-home link. */
 .ap-site .ap-info{
@@ -256,12 +178,6 @@
 .da-info-card--wide{grid-column:1/-1;background:linear-gradient(135deg,#fff,#e9f2ff)}
 .da-info-card__link{display:inline-flex;margin-top:18px;gap:8px;align-items:center;color:#2d64d6;font-weight:850;font-size:12px}
 @media(max-width:850px){
-  .ap-site .ap-product-story{min-height:80svh;padding:72px 0!important}
-  .ap-site .ap-product-story .ap-social-card{grid-template-columns:1fr 1fr;min-height:420px}
-  .ap-site .ap-product-story.ap-showcase-capture--alternate .ap-social-card{grid-template-columns:1fr 1fr}
-  .ap-site .ap-product-story .ap-social-card__copy{padding:25px!important}
-  .ap-site .ap-product-story .ap-social-card__visual{min-height:320px;padding:20px!important}
-  .ap-site .ap-product-story .ig-preview{min-height:290px!important}
   .da-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .da-feature-grid .da-feature-tile,.da-feature-grid .da-feature-tile:nth-child(n){
     grid-column:span 1;grid-template-columns:1fr;grid-template-rows:auto 1fr;min-height:420px
@@ -275,21 +191,6 @@
   .da-feature-grid .da-feature-tile img{width:155px!important}
 }
 @media(max-width:620px){
-  .ap-site .ap-product-story{min-height:94svh;padding:54px 0!important}
-  .ap-site .ap-product-story .ap-showcase__inner{width:calc(100% - 32px)}
-  .ap-site .ap-product-story .ap-social-card,
-  .ap-site .ap-product-story.ap-showcase-capture--alternate .ap-social-card{
-    display:flex;flex-direction:column;min-height:0;border-radius:26px!important
-  }
-  .ap-site .ap-product-story .ap-social-card__copy{order:0;width:100%;padding:25px 23px!important}
-  .ap-site .ap-product-story .ap-social-card__visual,
-  .ap-site .ap-product-story.ap-showcase-capture--alternate .ap-social-card__visual{
-    order:1;grid-column:auto;grid-row:auto;width:100%;min-height:300px;padding:17px!important
-  }
-  .ap-site .ap-product-story .ap-social-card__copy h3{font-size:26px!important}
-  .ap-site .ap-product-story .ap-social-card__index{font-size:58px!important}
-  .ap-site .ap-product-story .ap-social-card__label{margin-top:8px}
-  .ap-site .ap-product-story .ap-social-card__visual .ig-preview{min-height:300px!important}
   .ap-site .ap-info{padding:25px 16px 80px}
   .ap-site .ap-info__hero{border-radius:25px;padding:30px 22px;min-height:225px}
   .ap-site .ap-info__hero:after{width:200px;height:200px;left:-90px;top:-80px}
