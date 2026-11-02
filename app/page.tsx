@@ -10,6 +10,8 @@ import { SimpleHeader } from "../components/landing/SimpleHeader";
 import { LandingInteractions } from "../components/landing/LandingInteractions";
 import { HeroAssembly } from "../components/landing/HeroAssembly";
 import { FeatureShowcase } from "../components/landing/FeatureShowcase";
+import { VeloraDashboardMockup } from "../components/landing/VeloraDashboardMockup";
+import { VeloraReveal } from "../components/landing/VeloraReveal";
 import "./simple-home.css";
 import "./showcase.css";
 import "./landing-refresh.css";
@@ -21,6 +23,7 @@ import "./landing-optics-v2.css";
 import "./header-library-optics.css";
 import "./landing-fixes.css";
 import "./public-redesign.css";
+import "./velora-landing.css";
 
 export const metadata:Metadata = {
   title:"دایرا | همه تعاملات پیجت، در یک فضای ساده",
@@ -64,31 +67,40 @@ export default function Home() {
       <SimpleHeader />
       <a className="ap-skip" data-liquid-glass-ignore="" href="#content">رفتن به محتوای صفحه</a>
       <main id="content">
-        <section className="ap-hero" aria-labelledby="ap-hero-title">
-          <div className="ap-hero__ambient" aria-hidden="true"/>
-          <div className="ap-shell ap-hero__content">
-            <h1 id="ap-hero-title" dir="rtl" aria-label={heroHeadline}
-              data-hero-assembly data-liquid-glass-ignore="">
-              <span className="ap-hero__typewriter" data-hero-typewriter
-                data-full-text={heroHeadline} aria-hidden="true">
-                <span className="ap-hero__typewriter-ink">
-                  <span className="ap-hero__typed" data-hero-typed>{heroHeadline}</span>
-                  <span className="ap-hero__caret" aria-hidden="true" />
+        <section className="ap-hero dv-hero" aria-labelledby="ap-hero-title">
+          <div className="dv-aurora" aria-hidden="true"><i/><i/><i/></div>
+          <div className="dv-hero-grid" aria-hidden="true"/>
+          <div className="ap-shell dv-hero__content">
+            <div className="dv-hero__text">
+              <span className="dv-hero__pill"><span className="dv-pill-dot"/> دایرا · فضای مدیریت اینستاگرام</span>
+              <h1 id="ap-hero-title" dir="rtl" aria-label={heroHeadline}
+                data-hero-assembly data-liquid-glass-ignore="">
+                <span className="ap-hero__typewriter" data-hero-typewriter data-full-text={heroHeadline} aria-hidden="true">
+                  <span className="ap-hero__typewriter-ink">
+                    <span className="ap-hero__typed" data-hero-typed>{heroHeadline}</span>
+                    <span className="ap-hero__caret" aria-hidden="true"/>
+                  </span>
                 </span>
-              </span>
-            </h1>
-            <p className="ap-hero__description" data-hero-description>از پاسخ خودکار و صندوق دایرکت تا انتشار محتوا؛ همه در یک فضای ساده.</p>
-            <div className="ap-hero__actions" data-hero-cta>
-              <Link className="ap-button ap-button--solid ap-hero__cta" href="/login">
-                رایگان شروع کن
-              </Link>
+              </h1>
+              <p className="ap-hero__description" data-hero-description>از اولین کامنت تا آخرین دایرکت؛ یازده ابزار برای پاسخ خودکار، مدیریت گفتگو و انتشار محتوای پیج.</p>
+              <div className="ap-hero__actions dv-hero__actions" data-hero-cta>
+                <Link className="dv-primary-button ap-hero__cta" href="/login">رایگان شروع کن <span aria-hidden="true">↗</span></Link>
+                <a className="dv-outline-button" href="#features">آشنایی با امکانات <span aria-hidden="true">↓</span></a>
+              </div>
+              <ul className="dv-hero__facts" aria-label="امکانات قابل دسترس">
+                <li>۱۱ ابزار مدیریت پیج</li><li>پاسخ خودکار قابل تنظیم</li><li>داشبورد یکپارچه</li>
+              </ul>
+            </div>
+            <div className="dv-hero__product" data-dv-reveal>
+              <VeloraDashboardMockup/>
+              <span className="dv-hero__product-caption">نمای نمایشی از ابزارهای داشبورد دایرا</span>
             </div>
           </div>
         </section>
 
       </main>
 
-      {/* Separate clipped rows must be direct scene children for fast WebGL captures. */}
+      {/* Eight direct child product scenes align with the native WebKit optical source. */}
       <FeatureShowcase />
 
       <footer className="ap-footer ap-footer--extended">
@@ -126,6 +138,7 @@ export default function Home() {
         </div>
       </footer>
       <HeroAssembly />
+      <VeloraReveal />
       <LandingInteractions />
     </LandingGlassBackdrop>
   );
