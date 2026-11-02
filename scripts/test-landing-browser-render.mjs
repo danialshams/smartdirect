@@ -213,13 +213,13 @@ try {
     const panel=g.querySelector(':scope > div[style*="backdrop-filter"]');
     const rect=g.getBoundingClientRect();
     const hero=document.querySelector(".ap-hero");
-    const selectors=[".ap-header",".daira-library-liquid-header",".ap-hero",".ap-hero__ambient",".ap-site","main"];
+    const selectors=[".ap-header",".daira-library-liquid-header",".ap-hero",".dv-aurora",".ap-site","main"];
     return {state:document.documentElement.dataset.dairaHero,
       size:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},
       filter:panel.getAttribute("style"),computedFilter:getComputedStyle(panel).backdropFilter,
       map:g.querySelector("feImage")?.getAttribute("href")?.length,
-      layers:selectors.map(s=>{const e=document.querySelector(s),v=getComputedStyle(e);
-        return [s,v.position,v.zIndex,v.isolation,v.background,v.backgroundColor,v.filter,v.backdropFilter,v.opacity,v.overflow];}),
+      layers:selectors.map(s=>{const e=document.querySelector(s),v=e?getComputedStyle(e):null;
+        return v?[s,v.position,v.zIndex,v.isolation,v.background,v.backgroundColor,v.filter,v.backdropFilter,v.opacity,v.overflow]:[s,"not-rendered"];}),
       center:document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2)?.className
     };
   })()`);
