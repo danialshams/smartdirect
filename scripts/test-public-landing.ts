@@ -81,7 +81,7 @@ assert.ok(interactions.includes('import { gsap } from "gsap"'), "Sections should
 assert.ok(interactions.includes('import { ScrollTrigger } from "gsap/ScrollTrigger"'), "Features and footer need real ScrollTrigger");
 assert.ok(interactions.includes(".ap-social-grid > .ap-social-card"), "GSAP must animate feature cards");
 assert.ok(interactions.includes(".ap-footer__links") && interactions.includes("select: \":scope > a\""),"Each footer link must have an individual GSAP fade");
-assert.ok(interactions.includes('rootMargin: "0px 0px 68% 0px"') && interactions.includes("threshold: [0, .08]"),"Cards should begin assembling EARLIER than the prior 42% trigger");
+assert.ok(interactions.includes('rootMargin: "0px 0px -12% 0px"') && interactions.includes("threshold: [0, .1]"),"Cards must only start when entering their own viewport");
 assert.ok(interactions.includes("duration: .31") && interactions.includes("previewAt = .25"),"Card body and preview should assemble significantly faster with no long blank delay");
 assert.ok(landingFixes.includes("box-shadow:none!important;") && !landingFixes.includes("0 13px 37px rgba(39,72,124,.08)"),"Remove the horizontal shadow underneath feature cards");
 assert.ok(interactions.includes("IntersectionObserver") && interactions.includes('states.set(card, "queued")'),"Card visibility state should prevent replay or premature entry");
