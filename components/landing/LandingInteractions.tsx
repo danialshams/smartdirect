@@ -109,10 +109,10 @@ export function LandingInteractions() {
 
     const cardObserver = new IntersectionObserver(entries => {
       for (const entry of entries) {
-        if (!entry.isIntersecting || entry.intersectionRatio < .08) continue;
+        if (!entry.isIntersecting || entry.intersectionRatio < .1) continue;
         startCard(entry.target as HTMLElement);
       }
-    }, { rootMargin: "0px 0px 68% 0px", threshold: [0, .08] });
+    }, { rootMargin: "0px 0px -12% 0px", threshold: [0, .1] });
 
     // WebKit may miss an observer after an instantaneous jump or resize.
     // Its fallback must NOT measure all pending card boxes on every scroll
@@ -124,10 +124,10 @@ export function LandingInteractions() {
       if (disposed) return;
       for (const card of pending) {
         const rect = card.getBoundingClientRect();
-        const leadEnd = innerHeight * 1.68;
+        const leadEnd = innerHeight * .88;
         const visible = Math.max(0, Math.min(rect.bottom, leadEnd) - Math.max(rect.top, 0));
         if (rect.top <= leadEnd && rect.bottom > 0 &&
-            visible >= Math.min(rect.height, leadEnd) * .08) startCard(card);
+            visible >= Math.min(rect.height, leadEnd) * .1) startCard(card);
       }
     };
     const scheduleProbe = () => {
@@ -246,20 +246,13 @@ export function LandingInteractions() {
       // EARLIER, then begin at the first short idle moment (85ms). Desktop
       // Chromium/Edge enters immediately with the fast timeline.
       if (mobileWebKit) {
-        deferred.set(card, build);
-        scheduleIdle();
+        // Do not wait for scrolling to stop: the card must appear when reached.
+        // Its visual rows already avoid heavy nested transforms on WebKit.
+        build();
         return;
       }
-      // Paired cards must not produce two compositing bursts on the same frame.
-      const secondInRow = innerWidth > 600 &&
-        Array.from(card.parentElement?.children ?? []).indexOf(card) > 0;
-      if (secondInRow) {
-        const delayed = gsap.delayedCall(.08, () => {
-          delays.delete(delayed);
-          build();
-        });
-        delays.add(delayed);
-      } else build();
+      // One full-width feature per scene: never queue a neighboring feature.
+      build();
     };
 
     cards.forEach((card, index) => {
@@ -277,7 +270,7 @@ export function LandingInteractions() {
       const rect = card.getBoundingClientRect();
       // Deep-link or restored scroll: already-visible content must not vanish
       // on hydration. Only cards still approaching the viewport are armed.
-      if (rect.top < innerHeight * .72 && rect.bottom > 0) {
+      if (rect.top < innerHeight * .35 && rect.bottom > 0) {
         states.set(card, "done");
         card.dataset.gsapShown = "true";
         card.dataset.gsapPhase = "complete";
@@ -293,6 +286,7 @@ export function LandingInteractions() {
         card.querySelector<HTMLElement>(".ap-social-card__count"),
         card.querySelector<HTMLElement>(".ap-social-card__copy h3"),
         card.querySelector<HTMLElement>(".ap-social-card__copy p"),
+        card.querySelector<HTMLElement>(".ap-social-card__mini-flow"),
         card.querySelector<HTMLElement>(".ap-social-card__more")
       ]);
       const groups = ".ig-chat, .ig-story, .ig-live, .ig-photo-grid, .ig-insights-bars, .ig-menu-sheet";
