@@ -213,7 +213,7 @@ try {
     const panel=g.querySelector(':scope > div[style*="backdrop-filter"]');
     const rect=g.getBoundingClientRect();
     const hero=document.querySelector(".ap-hero");
-    const selectors=[".ap-header",".daira-library-liquid-header",".ap-hero",".dv-aurora",".ap-site","main"];
+    const selectors=[".ap-header",".daira-library-liquid-header",".ap-hero",".dm-hero__inner",".ap-site","main"];
     return {state:document.documentElement.dataset.dairaHero,
       size:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},
       filter:panel.getAttribute("style"),computedFilter:getComputedStyle(panel).backdropFilter,
@@ -417,54 +417,59 @@ try {
   await sleep(340);
   assert.equal(await evaluate('document.querySelector(".ap-menu").classList.contains("ap-menu--open")'),false);
 
-  // Velora replaces the legacy full-width feature cards with animated Bento.
-  // Keep checking live Chromium rendering, actual in-viewport transitions,
-  // and the ORIGINAL native glass optical surface above.
-  const velora = await evaluate(`(() => {
+  // Minimal Motion: original header optics above must continue sampling live
+  // content, while eleven equal cards enter independently from alternating sides.
+  const minimal=await evaluate(`(() => {
     const scenes=[...document.querySelectorAll(".ap-showcase-capture")];
-    const cards=[...document.querySelectorAll(".dv-bento-card")];
-    const hero=document.querySelector(".dv-hero");
-    const mockup=document.querySelector(".dv-hero .dv-dashboard");
-    const faq=document.querySelectorAll(".dv-faq-list details");
-    const optics=document.querySelector(".daira-library-liquid-header");
-    return {scenes:scenes.length,cards:cards.length,faq:faq.length,
-      hero:!!hero,mockup:!!mockup,
-      opticalStrategy:optics?.dataset.glassStrategy,
-      firstCard:cards[0]?.getAttribute("href"),
-      hasOldCards:!!document.querySelector(".ap-social-grid > .ap-social-card"),
-      revealCount:document.querySelectorAll("[data-dv-reveal]").length};
+    const cards=[...document.querySelectorAll(".dm-card")];
+    const hero=document.querySelector(".dm-hero");
+    const dashboard=document.querySelector(".dm-product .dv-dashboard");
+    const header=document.querySelector(".daira-library-liquid-header");
+    const cta=document.querySelector(".dm-hero__cta");
+    return {scenes:scenes.length,cards:cards.length,
+      hero:!!hero,dashboard:!!dashboard,headline:!!hero?.querySelector("h1"),
+      ctaText:cta?.textContent.trim(),ctaCount:hero?.querySelectorAll(".ap-hero__cta").length,
+      hasCrowdedSections:!!document.querySelector(".dv-bento-grid,.dv-faq-list,.dv-flow-graphic"),
+      opticMode:header?.dataset.glassStrategy,
+      links:cards.map(el=>el.querySelector("a")?.getAttribute("href")),
+      titles:cards.map(el=>el.querySelector("h3")?.textContent.trim())};
   })()`);
-  assert.equal(velora.scenes,8,"Keep exactly eight WebKit capture sections");
-  assert.equal(velora.cards,11,"All eleven Daira product links in Velora Bento");
-  assert.ok(velora.faq>=4 && velora.hero && velora.mockup);
-  assert.equal(velora.opticalStrategy,"svg");
-  assert.ok(velora.firstCard.startsWith("/features/"));
-  assert.equal(velora.hasOldCards,false,"Previous feature card layout must be replaced");
-  assert.ok(velora.revealCount>=18,"Multiple one-shot Velora transitions should exist");
-  await evaluate('document.querySelector(".dv-bento-card").scrollIntoView({block:"center",behavior:"instant"})');
-  await sleep(1000);
-  const reveal=await evaluate(`(() => {
-    const card=document.querySelector(".dv-bento-card");
-    return {visible:card?.dataset.dvVisible,
-      opacity:card?getComputedStyle(card).opacity:null,
-      motionReady:document.querySelector(".ap-site")?.dataset.dvMotionReady,
-      bg:getComputedStyle(document.querySelector(".dv-hero")).backgroundImage};
+  assert.equal(minimal.scenes,8,"The Safari image source uses exactly eight showcase tiles");
+  assert.equal(minimal.cards,11,"All eleven Daira cards must exist");
+  assert.ok(minimal.hero && minimal.dashboard && minimal.headline);
+  assert.equal(minimal.ctaCount,1,"Hero should have only one main CTA");
+  assert.equal(minimal.ctaText,"رایگان شروع کن");
+  assert.equal(minimal.hasCrowdedSections,false,"No Velora Bento, FAQ or flow charts");
+  assert.equal(minimal.opticMode,"svg","Keep original native liquid lens");
+  assert.ok(minimal.links.every(path=>path?.startsWith("/features/")));
+  await evaluate('document.querySelector(".dm-card").scrollIntoView({block:"center",behavior:"instant"})');
+  await waitFor(async()=>await evaluate('document.querySelector(".dm-card")?.dataset.gsapShown==="true"'),4500);
+  await waitFor(async()=>await evaluate('!!document.querySelector(".dm-card")?.nextElementSibling?.dataset.gsapStarted'),3000);
+  const appearance=await evaluate(`(() => {
+    const el=document.querySelector(".dm-card");
+    const next=el.nextElementSibling;
+    const image=el.querySelector(".dm-card__picture");
+    return {phase:el.dataset.gsapPhase,stages:Number(el.dataset.gsapStages),
+      imageOpacity:getComputedStyle(image).opacity,
+      opacity:getComputedStyle(el).opacity,
+      secondStarted:next?.dataset.gsapStarted||null,
+      sectionColor:getComputedStyle(document.querySelector(".dm-hero")).backgroundColor};
   })()`);
-  assert.equal(reveal.visible,"true","Velora features must reveal at viewport entry");
-  assert.equal(Number(reveal.opacity),1,"Visible Bento feature must finish fully opaque");
-  assert.equal(reveal.motionReady,"true");
-  assert.match(reveal.bg,/gradient/,"Aurora hero requires gradient background");
-  // Original footer link stagger still uses GSAP and must remain functional.
+  assert.equal(appearance.phase,"complete","First card entrance must finish exactly once");
+  assert.ok(appearance.stages>=4,"Feature image and text should enter in steps");
+  assert.equal(Number(appearance.opacity),1);
+  assert.equal(Number(appearance.imageOpacity),1);
+  assert.ok(appearance.secondStarted,"Second card begins when first completes");
   await evaluate('document.querySelector(".ap-footer__links").scrollIntoView({block:"center",behavior:"instant"})');
   await waitFor(async()=>await evaluate('document.querySelector(".ap-footer__links")?.dataset.gsapShown==="true"'),4500);
-  const footer = await evaluate(`(() => {
+  const footer=await evaluate(`(() => {
     const el=document.querySelector(".ap-footer__links");
     return {shown:el?.dataset.gsapShown,
       visible:[...el.querySelectorAll("a")].every(x=>getComputedStyle(x).opacity==="1")};
   })()`);
-  assert.equal(footer.shown,"true","Footer stagger must complete");
-  assert.equal(footer.visible,true,"Footer links must remain visible");
-  console.log("DAIRA_VELORA_BROWSER_PASS="+JSON.stringify({velora,reveal,footer}));
+  assert.equal(footer.shown,"true");
+  assert.equal(footer.visible,true);
+  console.log("DAIRA_MINIMAL_MOTION_BROWSER_PASS="+JSON.stringify({minimal,appearance,footer}));
   // A Firefox user-agent spoof inside Chromium does not test WebKit rendering.
   // The official shared scene makes WebGL background capture available on iOS.
   assert.equal(await evaluate("document.querySelectorAll('[data-liquid-glass-scene]').length"),1);

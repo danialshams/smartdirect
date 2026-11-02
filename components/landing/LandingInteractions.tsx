@@ -223,6 +223,31 @@ export function LandingInteractions() {
         });
         running.add(timeline);
 
+        // Minimal Motion cards: animate only the card and a small number of
+        // composed layers. The image, title and copy appear sequentially
+        // AFTER the card reaches its position. No parallax, blur or looping.
+        if (card.classList.contains("dm-card")) {
+          timeline.to(card, {
+            x: 0, opacity: 1, duration: .31, ease: "power3.out", force3D: false
+          }, 0);
+          if (preview) {
+            timeline.set(preview, { visibility: "visible" }, .16);
+            timeline.set(visualParts, { opacity: 0 }, .12);
+            timeline.to(preview, {
+              x: 0, opacity: 1, duration: .25, ease: "power2.out",
+              force3D: false
+            }, .16);
+            timeline.to(visualParts, { opacity: 1, duration: .25 }, .19);
+          }
+          if (copyContainer) timeline.to(copyContainer, {
+            x: 0, duration: .31, force3D: false
+          }, .2);
+          copyParts.forEach((part, i) => timeline.to(part, {
+            opacity: 1, duration: .22, ease: "power2.out"
+          }, .25 + i * .075));
+          return;
+        }
+
         // The actual background, border, shadow and card box enter together.
         // Card content remains invisible until the background settles.
         timeline.to(card, {

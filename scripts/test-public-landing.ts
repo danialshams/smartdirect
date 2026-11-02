@@ -80,32 +80,35 @@ assert.ok(page.includes("ap-hero__caret"));
 assert.ok(interactions.includes('import { gsap } from "gsap"'), "Sections should not wait for late GSAP chunks");
 assert.ok(interactions.includes('import { ScrollTrigger } from "gsap/ScrollTrigger"'), "Features and footer need real ScrollTrigger");
 assert.ok(interactions.includes(".ap-social-grid > .ap-social-card"), "GSAP must animate feature cards");
-// Velora SaaS layout rebranded for Daira, with unchanged Liquid Glass header.
-const veloraCSS=read("app/velora-landing.css");
-const veloraReveal=read("components/landing/VeloraReveal.tsx");
+// Minimal Motion homepage keeps the original 10-tile Safari optical topology.
+const minimalCSS=read("app/minimal-motion-home.css");
 const productMockup=read("components/landing/VeloraDashboardMockup.tsx");
-for (const section of [
-  "dv-scene--features","dv-scene--connection","dv-scene--steps","dv-scene--growth",
-  "dv-scene--product","dv-scene--conversations","dv-scene--faq","dv-scene--last-cta"
-]) assert.ok(features.includes(section),"Velora section missing "+section);
-assert.ok(features.includes("mainFeatures.map") && features.includes("growthFeatures.map") &&
- features.includes("conversationFeatures.map"),"All eleven features must be represented");
-assert.ok(features.includes("dv-bento-grid") && features.includes("dv-faq-list") &&
- features.includes("dv-flow-graphic"),"Bento, flow and FAQ must be real sections");
-assert.ok(page.includes("dv-aurora") && page.includes("dv-hero-grid") &&
- page.includes("<VeloraReveal />") && page.includes("VeloraDashboardMockup"),
- "Velora hero and product visual must exist");
-assert.ok(productMockup.includes("/dashboard-art/comment-reply.webp") &&
- productMockup.includes("/dashboard-art/inbox.webp"),"Mockup shows actual Daira modules");
-assert.ok(veloraCSS.includes("ColorlibHQ/velora-ui") && veloraCSS.includes("MIT"),
- "MIT design origin documented");
-assert.ok(veloraCSS.includes("@media(prefers-reduced-motion:reduce)") &&
- veloraReveal.includes("IntersectionObserver"),"Motion should be reduced-motion safe");
-assert.ok(header.includes("ap-menu--navigating") && header.includes("setNavigating(true)") &&
- header.includes("open ? <X"),"Existing hamburger navigation must remain fixed");
+for(const id of ["comment","story","direct","share","live","reminder",
+ "inbox","publishing","insights","menu","icebreaker"])
+ assert.ok(features.includes('"' + id + '"'),"Missing minimal feature "+id);
+assert.ok(features.includes('ap-social-card dm-card') &&
+ features.includes('ap-social-grid dm-card-grid') &&
+ features.includes('dm-section--product') &&
+ features.includes('VeloraDashboardMockup'),"Clean cards and single product preview required");
+assert.ok(features.includes("const pairs:") && features.includes('["icebreaker"]') &&
+ features.includes("dm-section--intro"),"Eight static capture scenes need intro plus six card rows and product");
+assert.ok(!features.includes("dv-bento-grid") && !features.includes("dv-faq-list") &&
+ !features.includes("dv-flow-graphic"),"Remove crowded Bento, FAQ and diagrams from homepage");
+assert.ok(page.includes("dm-hero") && page.includes('data-hero-entrance="fade"') &&
+ !page.includes("dv-hero__product") && !page.includes("dv-aurora") &&
+ !page.includes("<VeloraReveal />"),"Hero must remain slogan and one CTA only");
+assert.ok(minimalCSS.includes(".dm-hero") && minimalCSS.includes(".dm-card") &&
+ minimalCSS.includes("@media(prefers-reduced-motion:reduce)"),"Minimal Motion layout and accessibility");
+assert.ok(hero.includes('title.dataset.heroEntrance === "fade"') &&
+ hero.includes("duration: .84"),"Heading uses smooth one-shot GSAP fade");
+assert.ok(productMockup.includes("/dashboard-art/inbox.webp"),
+ "Dashboard overview must use existing Daira icon artwork");
+assert.ok(!minimalCSS.includes(".daira-library-liquid-header{") &&
+ !minimalCSS.includes(".ap-header{"),"Never change liquid header or glass shader");
 for(const variant of ["desktop","mobile"])for(let i=0;i<10;i++)
  assert.ok(existsSync("public/landing-reflection/"+variant+"-"+i+".jpg"),
-  "Static WebKit reflection tile missing");
+ "Missing static optical tile");
+assert.ok(header.includes("ap-menu--navigating"),"Fixed hamburger preserved");
 assert.ok(interactions.includes(".ap-footer__links") && interactions.includes("select: \":scope > a\""),"Each footer link must have an individual GSAP fade");
 assert.ok(interactions.includes('rootMargin: "0px 0px -12% 0px"') && interactions.includes("threshold: [0, .1]"),"Cards must only start when entering their own viewport");
 assert.ok(interactions.includes("duration: .31") && interactions.includes("previewAt = .25"),"Card body and preview should assemble significantly faster with no long blank delay");
@@ -116,7 +119,7 @@ assert.ok(interactions.includes("gsap.timeline") && interactions.includes("timel
 
 
 assert.ok(landingFixes.includes("font-family:\"DairaVazir\""),"Feature numbers must use actual Vazir typeface");
-assert.ok(page.includes("ap-footer__callout") && page.includes("جایگاه مجوزهای آینده") && page.includes("اینماد") && page.includes("در آینده"),"Footer includes CTA and clearly labelled future license placeholders");
+assert.ok(page.includes("dm-footer") && page.includes("ap-footer__links") && !page.includes("ap-footer__badge-placeholder"),"Footer must be minimal, with functional legal links");
 assert.match(interactions,/yPercent:\s*105/,"Only major feature heading gets the GSAP mask reveal");
 assert.ok(!interactions.includes("node.animate("), "No Web Animations API fallback on Safari");
 assert.ok(!landingFixes.includes("daira-hero-rtl-fade"), "Legacy CSS keyframes must not fight GSAP");
@@ -220,7 +223,7 @@ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.doesNotMatch(css,/border:[^;]*solid\s+white|setInterval/);
 
 assert.match(features,/ap-showcase-capture/);
-assert.match(features,/InstagramPreview kind=\{kind\}/);
+assert.match(features,/Image src=\{artwork\[id\]\}/);
 assert.equal((scenes.match(/no: "([۰-۹]+)"/g)||[]).length,11);
 for(const id of ["comment","story","direct","share","live","reminder","inbox","publishing","insights","menu","icebreaker"])
   assert.ok(scenes.includes('id: "'+id+'"'),"Missing feature "+id);
