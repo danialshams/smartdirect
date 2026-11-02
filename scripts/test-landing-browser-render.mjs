@@ -456,7 +456,7 @@ try {
   assert.match(reveal.bg,/gradient/,"Aurora hero requires gradient background");
   // Original footer link stagger still uses GSAP and must remain functional.
   await evaluate('document.querySelector(".ap-footer__links").scrollIntoView({block:"center",behavior:"instant"})');
-  await sleep(1100);
+  await waitFor(async()=>await evaluate('document.querySelector(".ap-footer__links")?.dataset.gsapShown==="true"'),4500);
   const footer = await evaluate(`(() => {
     const el=document.querySelector(".ap-footer__links");
     return {shown:el?.dataset.gsapShown,
