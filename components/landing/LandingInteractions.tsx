@@ -169,6 +169,11 @@ export function LandingInteractions() {
 
     const startCard = (card: HTMLElement) => {
       if (disposed || states.get(card) !== "waiting") return;
+      // On the original two-card rows, always let the first card complete
+      // before playing the neighbor. Keep the exact original card layout.
+      const previous = card.previousElementSibling;
+      if (previous?.classList.contains("ap-social-card") &&
+          states.get(previous as HTMLElement) !== "done") return;
       states.set(card, "queued");
       card.dataset.gsapPhase = "queued";
       pending.delete(card);
@@ -202,6 +207,18 @@ export function LandingInteractions() {
               clearProps: "transform,opacity,visibility"
             });
             running.delete(timeline);
+            // The second card shares the same screen but must never animate
+            // at the same instant as the first. Trigger only after finishing,
+            // and only if that second card is actually in the viewport.
+            const next = card.nextElementSibling;
+            if (next instanceof HTMLElement &&
+                next.classList.contains("ap-social-card") &&
+                states.get(next) === "waiting") {
+              const bounds = next.getBoundingClientRect();
+              if (bounds.bottom > 0 && bounds.top < innerHeight * .88) {
+                requestAnimationFrame(() => startCard(next));
+              }
+            }
           }
         });
         running.add(timeline);
@@ -241,17 +258,14 @@ export function LandingInteractions() {
         }
       };
 
-      // Safari's live WebGL refraction cannot afford a new animated card
-      // compositor layer on the same scroll frame. Trigger 42% of a viewport
-      // EARLIER, then begin at the first short idle moment (85ms). Desktop
-      // Chromium/Edge enters immediately with the fast timeline.
+      // Keep mobile card entry immediate and avoid costly nested GPU motion.
       if (mobileWebKit) {
         // Do not wait for scrolling to stop: the card must appear when reached.
         // Its visual rows already avoid heavy nested transforms on WebKit.
         build();
         return;
       }
-      // One full-width feature per scene: never queue a neighboring feature.
+      // Near-viewport observer starts first card; the second starts when it finishes.
       build();
     };
 
@@ -286,7 +300,6 @@ export function LandingInteractions() {
         card.querySelector<HTMLElement>(".ap-social-card__count"),
         card.querySelector<HTMLElement>(".ap-social-card__copy h3"),
         card.querySelector<HTMLElement>(".ap-social-card__copy p"),
-        card.querySelector<HTMLElement>(".ap-social-card__mini-flow"),
         card.querySelector<HTMLElement>(".ap-social-card__more")
       ]);
       const groups = ".ig-chat, .ig-story, .ig-live, .ig-photo-grid, .ig-insights-bars, .ig-menu-sheet";
