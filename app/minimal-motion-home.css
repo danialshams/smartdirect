@@ -23,6 +23,11 @@
   text-shadow:none!important;filter:none!important;transform:none;
 }
 .ap-site .dm-hero .ap-hero__typewriter,
+/* Fade mode has real static text; the old typewriter measuring pseudo-element
+   would duplicate its height and push the CTA below short desktop viewports. */
+.ap-site .dm-hero .ap-hero__typewriter::before{
+  content:none!important;display:none!important;
+}
 .ap-site .dm-hero .ap-hero__typewriter-ink{
   width:100%!important;display:block!important;text-align:center!important;
   max-width:100%!important;color:inherit!important;position:relative!important;
