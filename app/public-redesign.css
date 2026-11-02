@@ -53,8 +53,8 @@
 .ap-site .ap-product-story .ap-social-card__copy{padding:clamp(30px,4vw,67px)!important;z-index:1}
 .ap-site .ap-product-story .ap-social-card__index{
   font-size:clamp(58px,7.5vw,105px)!important;line-height:1!important;
-  font-weight:900!important;letter-spacing:-.055em;color:#3569df!important;
-  opacity:.14!important;font-family:"DairaVazir",sans-serif;
+  font-weight:900!important;letter-spacing:-.055em;color:#d2e1fc!important;
+  font-family:"DairaVazir",sans-serif;
 }
 .ap-site .ap-product-story .ap-social-card__count{
   position:static!important;display:block;direction:ltr;text-align:right;
