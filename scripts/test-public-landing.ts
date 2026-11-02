@@ -97,6 +97,12 @@ assert.ok(!features.includes("dv-bento-grid") && !features.includes("dv-faq-list
 assert.ok(page.includes("dm-hero") && page.includes('data-hero-entrance="fade"') &&
  !page.includes("dv-hero__product") && !page.includes("dv-aurora") &&
  !page.includes("<VeloraReveal />"),"Hero must remain slogan and one CTA only");
+assert.ok(minimalCSS.includes(".ap-hero__typewriter::before") &&
+ minimalCSS.includes("content:none!important;display:none!important"),
+ "Minimal hero must remove the duplicate hidden headline layout footprint");
+assert.ok(interactions.includes('card.dataset.gsapShellReady = "true"') &&
+ interactions.includes('}, [], .22);'),
+ "Paired cards need responsive stagger without waiting for all copy");
 assert.ok(minimalCSS.includes(".dm-hero") && minimalCSS.includes(".dm-card") &&
  minimalCSS.includes("@media(prefers-reduced-motion:reduce)"),"Minimal Motion layout and accessibility");
 assert.ok(hero.includes('title.dataset.heroEntrance === "fade"') &&
