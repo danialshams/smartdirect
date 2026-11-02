@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { LiquidHeaderSurface } from "./LiquidHeaderSurface";
@@ -19,6 +20,8 @@ const menuItems = [
 export function SimpleHeader() {
   const [open,setOpen]=useState(false);
   const [glassMounted,setGlassMounted]=useState(false);
+  const [navigating,setNavigating]=useState(false);
+  const pathname=usePathname();
   const toggleRef=useRef<HTMLButtonElement>(null);
   const closeRef=useRef<HTMLButtonElement>(null);
   const menuRef=useRef<HTMLElement>(null);
@@ -34,8 +37,14 @@ export function SimpleHeader() {
 
   const closeOnNavigate=()=>{
     returnFocus.current=false;
+    // Hide immediately on route changes: the exiting panel close icon
+    // must never linger underneath a newly mounted hamburger toggle.
+    setNavigating(true);
+    setGlassMounted(false);
     setOpen(false);
   };
+
+  useEffect(()=>{setNavigating(false);setOpen(false);setGlassMounted(false);},[pathname]);
 
   useEffect(()=>{
     if(!open)return;
@@ -81,8 +90,7 @@ export function SimpleHeader() {
           onClick={()=>{returnFocus.current=true;if(!open)setGlassMounted(true);setOpen(value=>!value);}}
         >
           <span className={"ap-menu-toggle__glyphs"+(open?" ap-menu-toggle__glyphs--open":"")} aria-hidden="true">
-            <Menu size={21} className="ap-menu-toggle__hamburger"/>
-            <X size={21} className="ap-menu-toggle__close"/>
+            {open ? <X size={21} className="ap-menu-toggle__close"/> : <Menu size={21} className="ap-menu-toggle__hamburger"/>}
           </span>
         </button>
 
@@ -111,7 +119,7 @@ export function SimpleHeader() {
       <aside
         id="ap-menu"
         ref={menuRef}
-        className={"ap-menu"+(open?" ap-menu--open":"")}
+        className={"ap-menu"+(open?" ap-menu--open":"")+(navigating?" ap-menu--navigating":"")}
         role="dialog"
         aria-label="منوی اصلی دایرا"
         aria-modal={open?true:undefined}
