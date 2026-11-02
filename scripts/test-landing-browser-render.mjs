@@ -444,6 +444,7 @@ try {
   assert.ok(minimal.links.every(path=>path?.startsWith("/features/")));
   await evaluate('document.querySelector(".dm-card").scrollIntoView({block:"center",behavior:"instant"})');
   await waitFor(async()=>await evaluate('document.querySelector(".dm-card")?.dataset.gsapShown==="true"'),4500);
+  await waitFor(async()=>await evaluate('!!document.querySelector(".dm-card")?.nextElementSibling?.dataset.gsapStarted'),3000);
   const appearance=await evaluate(`(() => {
     const el=document.querySelector(".dm-card");
     const next=el.nextElementSibling;
