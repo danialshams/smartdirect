@@ -80,40 +80,32 @@ assert.ok(page.includes("ap-hero__caret"));
 assert.ok(interactions.includes('import { gsap } from "gsap"'), "Sections should not wait for late GSAP chunks");
 assert.ok(interactions.includes('import { ScrollTrigger } from "gsap/ScrollTrigger"'), "Features and footer need real ScrollTrigger");
 assert.ok(interactions.includes(".ap-social-grid > .ap-social-card"), "GSAP must animate feature cards");
-// Native WebKit reflection is indexed by the original eight showcase rows,
-// plus the hero and footer. Restyling/splitting rows breaks the 0..9 JPEG map.
-for (const row of [
-  '["comment", "story"]', '["direct"]', '["share", "live"]',
-  '["reminder", "icebreaker"]', '["inbox"]', '["publishing"]',
-  '["insights"]', '["menu"]'
-]) assert.ok(features.includes(row),"Original feature layout missing: "+row);
-assert.ok(!features.includes("ap-product-story") &&
-  !features.includes("ap-social-card__mini-flow"),
-  "Homepage card markup and visual presentation must remain untouched");
-for (const variant of ["desktop","mobile"]) {
-  for (let i=0;i<10;i++) {
-    assert.ok(existsSync("public/landing-reflection/"+variant+"-"+i+".jpg"),
-      "Missing WebKit static reflection image "+variant+"-"+i);
-  }
-  assert.ok(!existsSync("public/landing-reflection/"+variant+"-10.jpg"),
-    "Reflection contract currently has exactly 10 original tiles");
-}
-assert.ok(interactions.includes('states.get(previous as HTMLElement) !== "done"') &&
-  interactions.includes('card.nextElementSibling') &&
-  interactions.includes('requestAnimationFrame(() => startCard(next))'),
-  "Paired cards keep their original layout but must enter sequentially");
-assert.ok(interactions.includes('rootMargin: "0px 0px -12% 0px"') &&
-  interactions.includes('const leadEnd = innerHeight * .88;') &&
-  !interactions.includes('1.68'),
-  "Scroll entrance must start near the current viewport, never one scene ahead");
-assert.ok(header.includes("ap-menu--navigating") &&
-  header.includes("setNavigating(true)") && header.includes("open ? <X"),
-  "Route navigation must immediately hide the old menu and use one icon");
-const publicRedesign=read("app/public-redesign.css");
-assert.ok(!publicRedesign.includes(".ap-product-story") &&
-  publicRedesign.includes(".ap-menu.ap-menu--navigating") &&
-  publicRedesign.includes("blur(17px)"),
-  "Homepage visuals are frozen while the hamburger menu remains improved");
+// Velora SaaS layout rebranded for Daira, with unchanged Liquid Glass header.
+const veloraCSS=read("app/velora-landing.css");
+const veloraReveal=read("components/landing/VeloraReveal.tsx");
+const productMockup=read("components/landing/VeloraDashboardMockup.tsx");
+for (const section of [
+  "dv-scene--features","dv-scene--connection","dv-scene--steps","dv-scene--growth",
+  "dv-scene--product","dv-scene--conversations","dv-scene--faq","dv-scene--last-cta"
+]) assert.ok(features.includes(section),"Velora section missing "+section);
+assert.ok(features.includes("mainFeatures.map") && features.includes("growthFeatures.map") &&
+ features.includes("conversationFeatures.map"),"All eleven features must be represented");
+assert.ok(features.includes("dv-bento-grid") && features.includes("dv-faq-list") &&
+ features.includes("dv-flow-graphic"),"Bento, flow and FAQ must be real sections");
+assert.ok(page.includes("dv-aurora") && page.includes("dv-hero-grid") &&
+ page.includes("<VeloraReveal />") && page.includes("VeloraDashboardMockup"),
+ "Velora hero and product visual must exist");
+assert.ok(productMockup.includes("/dashboard-art/comment-reply.webp") &&
+ productMockup.includes("/dashboard-art/inbox.webp"),"Mockup shows actual Daira modules");
+assert.ok(veloraCSS.includes("ColorlibHQ/velora-ui") && veloraCSS.includes("MIT"),
+ "MIT design origin documented");
+assert.ok(veloraCSS.includes("@media(prefers-reduced-motion:reduce)") &&
+ veloraReveal.includes("IntersectionObserver"),"Motion should be reduced-motion safe");
+assert.ok(header.includes("ap-menu--navigating") && header.includes("setNavigating(true)") &&
+ header.includes("open ? <X"),"Existing hamburger navigation must remain fixed");
+for(const variant of ["desktop","mobile"])for(let i=0;i<10;i++)
+ assert.ok(existsSync("public/landing-reflection/"+variant+"-"+i+".jpg"),
+  "Static WebKit reflection tile missing");
 assert.ok(interactions.includes(".ap-footer__links") && interactions.includes("select: \":scope > a\""),"Each footer link must have an individual GSAP fade");
 assert.ok(interactions.includes('rootMargin: "0px 0px -12% 0px"') && interactions.includes("threshold: [0, .1]"),"Cards must only start when entering their own viewport");
 assert.ok(interactions.includes("duration: .31") && interactions.includes("previewAt = .25"),"Card body and preview should assemble significantly faster with no long blank delay");
@@ -121,8 +113,8 @@ assert.ok(landingFixes.includes("box-shadow:none!important;") && !landingFixes.i
 assert.ok(interactions.includes("IntersectionObserver") && interactions.includes('states.set(card, "queued")'),"Card visibility state should prevent replay or premature entry");
 assert.ok(interactions.includes("copyParts.forEach((part, i) => timeline.to(part") && interactions.includes("visualParts.forEach((part, i) => timeline.to(part"),"Independent copy and preview controls must animate sequentially");
 assert.ok(interactions.includes("gsap.timeline") && interactions.includes("timeline.to(card") && interactions.includes("gsapDirection"),"Real feature card should slide from alternating sides before its opposing inner assembly");
-assert.ok(!features.includes("ap-social-card__shell") && interactions.includes("gsap.set(card") && landingFixes.includes("background:linear-gradient(133deg,#fff,#f1f7ff)"),"Animate actual card background and border, not a decorative halo");
-assert.ok(features.includes("ap-social-card__index") && !features.includes("ap-social-card__icon"),"Feature card uses numbers rather than icons");
+
+
 assert.ok(landingFixes.includes("font-family:\"DairaVazir\""),"Feature numbers must use actual Vazir typeface");
 assert.ok(page.includes("ap-footer__callout") && page.includes("جایگاه مجوزهای آینده") && page.includes("اینماد") && page.includes("در آینده"),"Footer includes CTA and clearly labelled future license placeholders");
 assert.match(interactions,/yPercent:\s*105/,"Only major feature heading gets the GSAP mask reveal");
