@@ -80,6 +80,21 @@ assert.ok(page.includes("ap-hero__caret"));
 assert.ok(interactions.includes('import { gsap } from "gsap"'), "Sections should not wait for late GSAP chunks");
 assert.ok(interactions.includes('import { ScrollTrigger } from "gsap/ScrollTrigger"'), "Features and footer need real ScrollTrigger");
 assert.ok(interactions.includes(".ap-social-grid > .ap-social-card"), "GSAP must animate feature cards");
+assert.ok(features.includes('["comment"], ["story"], ["direct"]') &&
+  !features.includes('["comment", "story"]'),
+  "Each showcase scene must own exactly one feature, not a paired card row");
+assert.ok(interactions.includes('rootMargin: "0px 0px -12% 0px"') &&
+  interactions.includes('const leadEnd = innerHeight * .88;') &&
+  !interactions.includes('1.68'),
+  "Scroll entrance must start near the current viewport, never one scene ahead");
+assert.ok(header.includes("ap-menu--navigating") &&
+  header.includes("setNavigating(true)") && header.includes("open ? <X"),
+  "Route navigation must immediately hide the old menu and use one icon");
+const publicRedesign=read("app/public-redesign.css");
+assert.ok(publicRedesign.includes("min-height:94svh") &&
+  publicRedesign.includes(".ap-menu.ap-menu--navigating") &&
+  publicRedesign.includes("blur(17px)"),
+  "Independent product scenes, hidden menu exit and stronger frost are required");
 assert.ok(interactions.includes(".ap-footer__links") && interactions.includes("select: \":scope > a\""),"Each footer link must have an individual GSAP fade");
 assert.ok(interactions.includes('rootMargin: "0px 0px -12% 0px"') && interactions.includes("threshold: [0, .1]"),"Cards must only start when entering their own viewport");
 assert.ok(interactions.includes("duration: .31") && interactions.includes("previewAt = .25"),"Card body and preview should assemble significantly faster with no long blank delay");
