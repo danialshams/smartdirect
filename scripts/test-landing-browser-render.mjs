@@ -213,13 +213,13 @@ try {
     const panel=g.querySelector(':scope > div[style*="backdrop-filter"]');
     const rect=g.getBoundingClientRect();
     const hero=document.querySelector(".ap-hero");
-    const selectors=[".ap-header",".daira-library-liquid-header",".ap-hero",".dm-hero__inner",".ap-site","main"];
+    const selectors=[".ap-header",".daira-library-liquid-header",".ap-hero",".ap-hero__ambient",".ap-site","main"];
     return {state:document.documentElement.dataset.dairaHero,
       size:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},
       filter:panel.getAttribute("style"),computedFilter:getComputedStyle(panel).backdropFilter,
       map:g.querySelector("feImage")?.getAttribute("href")?.length,
-      layers:selectors.map(s=>{const e=document.querySelector(s),v=e?getComputedStyle(e):null;
-        return v?[s,v.position,v.zIndex,v.isolation,v.background,v.backgroundColor,v.filter,v.backdropFilter,v.opacity,v.overflow]:[s,"not-rendered"];}),
+      layers:selectors.map(s=>{const e=document.querySelector(s),v=getComputedStyle(e);
+        return [s,v.position,v.zIndex,v.isolation,v.background,v.backgroundColor,v.filter,v.backdropFilter,v.opacity,v.overflow];}),
       center:document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2)?.className
     };
   })()`);
@@ -277,20 +277,6 @@ try {
   assert.equal(hero.visibility,"visible","Typed Persian headline must finish legible");
   assert.equal(hero.transform,"none","Typewriter should not scatter or slide text");
   assert.equal(hero.cssAnimation,"none","No legacy CSS word animation should fight the typewriter");
-  // Minimal fade must not reserve a second hidden typewriter line.
-  // On desktop, the only CTA should be in view without scrolling.
-  const heroGeometry=await evaluate(`(() => {
-    const cta=document.querySelector(".dm-hero__cta")?.getBoundingClientRect();
-    const title=document.querySelector(".dm-hero h1")?.getBoundingClientRect();
-    return {ctaBottom:cta?.bottom,ctaTop:cta?.top,titleHeight:title?.height,
-      viewportHeight:innerHeight};
-  })()`);
-  assert.ok(heroGeometry.ctaBottom < heroGeometry.viewportHeight-8 &&
-    heroGeometry.ctaTop > 0,
-    "Minimal hero CTA must fit within the first desktop viewport");
-  assert.ok(heroGeometry.titleHeight < 290,
-    "Hidden typewriter measuring content must not double the heading height");
-
   assert.equal(await evaluate('document.querySelector("[data-hero-assembly]").hasAttribute("data-liquid-glass-ignore")'),false);
   const motionImage=(await send("Page.captureScreenshot",{format:"jpeg",quality:56,captureBeyondViewport:false})).data;
   console.log("DAIRA_DIAG_SCREENSHOT_HERO_MOTION="+motionImage);
@@ -431,60 +417,104 @@ try {
   await sleep(340);
   assert.equal(await evaluate('document.querySelector(".ap-menu").classList.contains("ap-menu--open")'),false);
 
-  // Minimal Motion: original header optics above must continue sampling live
-  // content, while eleven equal cards enter independently from alternating sides.
-  const minimal=await evaluate(`(() => {
-    const scenes=[...document.querySelectorAll(".ap-showcase-capture")];
-    const cards=[...document.querySelectorAll(".dm-card")];
-    const hero=document.querySelector(".dm-hero");
-    const dashboard=document.querySelector(".dm-product .dv-dashboard");
-    const header=document.querySelector(".daira-library-liquid-header");
-    const cta=document.querySelector(".dm-hero__cta");
-    return {scenes:scenes.length,cards:cards.length,
-      hero:!!hero,dashboard:!!dashboard,headline:!!hero?.querySelector("h1"),
-      ctaText:cta?.textContent.trim(),ctaCount:hero?.querySelectorAll(".ap-hero__cta").length,
-      hasCrowdedSections:!!document.querySelector(".dv-bento-grid,.dv-faq-list,.dv-flow-graphic"),
-      opticMode:header?.dataset.glassStrategy,
-      links:cards.map(el=>el.querySelector("a")?.getAttribute("href")),
-      titles:cards.map(el=>el.querySelector("h3")?.textContent.trim())};
+  // Verify real GSAP tweens are driven by per-card native visibility, while
+  // the masked feature headline remains driven by ScrollTrigger.
+  const entrance = await evaluate(`(async () => {
+    const sleep = ms => new Promise(resolve=>setTimeout(resolve,ms));
+    const root=document.querySelector(".ap-site");
+    const rows=[...document.querySelectorAll(".ap-showcase-capture")];
+    const footer=document.querySelector(".ap-footer--extended");
+    async function exercise(section, item) {
+      const top=section.getBoundingClientRect().top+window.scrollY;
+      window.scrollTo({top:Math.max(0,top-innerHeight*.73),behavior:"instant"});
+      await sleep(90);
+      const opacities=[], cardTransforms=[];
+      for (let i=0;i<11;i++) {
+        window.scrollBy({top:48,behavior:"instant"});
+        await sleep(85);
+        opacities.push(Number(getComputedStyle(item).opacity));
+        cardTransforms.push(getComputedStyle(section).transform);
+      }
+      await sleep(2200);
+      return {started:Number(section.dataset.gsapStarted??0),
+        shown:section.dataset.gsapShown,
+        opacities,cardTransforms,finalOpacity:Number(getComputedStyle(item).opacity)};
+    }
+    const row=rows[Math.min(4,rows.length-1)];
+    const card=row.querySelector(".ap-social-grid > .ap-social-card");
+    const feature=await exercise(card,card.querySelector(".ap-social-card__copy h3"));
+    const foot=await exercise(footer.querySelector(".ap-footer__links"),footer.querySelector(".ap-footer__links > a"));
+    return {active:root.dataset.gsapMotion,feature,footer:foot};
   })()`);
-  assert.equal(minimal.scenes,8,"The Safari image source uses exactly eight showcase tiles");
-  assert.equal(minimal.cards,11,"All eleven Daira cards must exist");
-  assert.ok(minimal.hero && minimal.dashboard && minimal.headline);
-  assert.equal(minimal.ctaCount,1,"Hero should have only one main CTA");
-  assert.equal(minimal.ctaText,"رایگان شروع کن");
-  assert.equal(minimal.hasCrowdedSections,false,"No Velora Bento, FAQ or flow charts");
-  assert.equal(minimal.opticMode,"svg","Keep original native liquid lens");
-  assert.ok(minimal.links.every(path=>path?.startsWith("/features/")));
-  await evaluate('document.querySelector(".dm-card").scrollIntoView({block:"center",behavior:"instant"})');
-  await waitFor(async()=>await evaluate('document.querySelector(".dm-card")?.dataset.gsapShown==="true"'),4500);
-  await waitFor(async()=>await evaluate('!!document.querySelector(".dm-card")?.nextElementSibling?.dataset.gsapStarted'),3000);
-  const appearance=await evaluate(`(() => {
-    const el=document.querySelector(".dm-card");
-    const next=el.nextElementSibling;
-    const image=el.querySelector(".dm-card__picture");
-    return {phase:el.dataset.gsapPhase,stages:Number(el.dataset.gsapStages),
-      imageOpacity:getComputedStyle(image).opacity,
-      opacity:getComputedStyle(el).opacity,
-      secondStarted:next?.dataset.gsapStarted||null,
-      sectionColor:getComputedStyle(document.querySelector(".dm-hero")).backgroundColor};
+  console.log("DAIRA_GSAP_ENTRANCES="+JSON.stringify(entrance));
+  assert.equal(entrance.active,"true","Real GSAP ScrollTrigger must be initialized");
+  assert.ok(entrance.feature.cardTransforms.some(t=>t!=="none"),
+    "Entire real feature card must visibly translate; moving only a decorative halo is invalid");
+  for (const [name,result] of Object.entries({feature:entrance.feature,footer:entrance.footer})) {
+    assert.ok(result.started>0, name+" must start a genuine GSAP entrance");
+    assert.equal(result.shown,"true",name+" GSAP timeline must finish");
+    assert.ok(result.opacities.some(x=>x<0.98),
+      name+" must show actual intermediate opacity during the entrance");
+    assert.equal(result.finalOpacity,1,name+" must remain fully visible after entrance");
+  }
+  const assembled = await evaluate(`(() => {
+    const rows=[...document.querySelectorAll(".ap-showcase-capture")];
+    const card=rows[Math.min(4,rows.length-1)]?.querySelector(".ap-social-grid > .ap-social-card");
+    const preview=card?.querySelector(".ig-preview");
+    return {
+      stageCount:Number(card?.dataset.gsapStages??0),
+      phase:card?.dataset.gsapPhase,
+      shellOpacity:Number(getComputedStyle(card).opacity),
+      realSurface:getComputedStyle(card).backgroundImage.includes("gradient"),
+      noUndersideShadow:getComputedStyle(card).boxShadow==="none",
+      removedShadowOnlyShell:card.querySelector(".ap-social-card__shell")===null,
+      titleOpacity:Number(getComputedStyle(card.querySelector("h3")).opacity),
+      previewOpacity:Number(getComputedStyle(preview).opacity),
+      stagedParts:[...card.querySelectorAll(".ig-preview > *, .ap-social-card__index, .ap-social-card__count")].length
+    };
   })()`);
-  assert.equal(appearance.phase,"complete","First card entrance must finish exactly once");
-  assert.ok(appearance.stages>=4,"Feature image and text should enter in steps");
-  assert.equal(Number(appearance.opacity),1);
-  assert.equal(Number(appearance.imageOpacity),1);
-  assert.ok(appearance.secondStarted,"Second card begins when first completes");
-  await evaluate('document.querySelector(".ap-footer__links").scrollIntoView({block:"center",behavior:"instant"})');
-  await waitFor(async()=>await evaluate('document.querySelector(".ap-footer__links")?.dataset.gsapShown==="true"'),4500);
-  const footer=await evaluate(`(() => {
-    const el=document.querySelector(".ap-footer__links");
-    return {shown:el?.dataset.gsapShown,
-      visible:[...el.querySelectorAll("a")].every(x=>getComputedStyle(x).opacity==="1")};
+  console.log("DAIRA_CARD_GSAP_ASSEMBLY="+JSON.stringify(assembled));
+  assert.ok(assembled.stageCount >= 5, "Each feature must sequence multiple real card internals");
+  assert.equal(assembled.phase,"complete","GSAP must complete the inner UI assembly");
+  assert.equal(assembled.shellOpacity,1);
+  assert.equal(assembled.realSurface,true,"Real feature article owns the animated card background");
+  assert.equal(assembled.noUndersideShadow,true,"Feature card must have no linear shadow underneath");
+  assert.equal(assembled.removedShadowOnlyShell,true,"No decorative-only shell should animate instead of the card");
+  assert.equal(assembled.titleOpacity,1);
+  assert.equal(assembled.previewOpacity,1);
+    const directionAudit = await evaluate(`(() => {
+    const cards=[...document.querySelectorAll(".ap-social-grid > .ap-social-card")];
+    const triggered=cards.filter(card=>card.dataset.gsapShown==="true");
+    const active=cards.find(card=>card.dataset.gsapStarted);
+    return {
+      directions:cards.map(card=>Number(card.dataset.gsapDirection)),
+      allStages:cards.every(card=>card.dataset.gsapStages===undefined ||
+        Number(card.dataset.gsapStages)>=6),
+      visited:triggered.length,
+      activeCardId:active?.id,
+      activeStart:active?.dataset.gsapStarted,
+      firstCardState:cards[0]?.dataset.gsapPhase
+    };
   })()`);
-  assert.equal(footer.shown,"true");
-  assert.equal(footer.visible,true);
-  console.log("DAIRA_MINIMAL_MOTION_BROWSER_PASS="+JSON.stringify({minimal,appearance,footer}));
-  // A Firefox user-agent spoof inside Chromium does not test WebKit rendering.
+  assert.deepEqual(directionAudit.directions,
+    directionAudit.directions.map((_,i)=>i%2===0?1:-1),
+    "The first card must enter from the right, then left, alternating globally");
+  assert.ok(directionAudit.allStages,"Each started card must have multiple independent GSAP stages");
+  console.log("DAIRA_CARD_DIRECTION_AUDIT="+JSON.stringify(directionAudit));
+  if(directionAudit.activeCardId) {
+    await evaluate('window.scrollTo({top:0,behavior:"instant"})');
+    await sleep(170);
+    await evaluate(`document.getElementById("${directionAudit.activeCardId}").scrollIntoView({block:"center",behavior:"instant"})`);
+    await sleep(550);
+    const replay=await evaluate(`(() => {
+      const el=document.getElementById("${directionAudit.activeCardId}");
+      return {started:el?.dataset.gsapStarted,phase:el?.dataset.gsapPhase};
+    })()`);
+    assert.equal(replay.started,directionAudit.activeStart,
+      "Returning to a completed card must not start a second entrance");
+    console.log("DAIRA_CARD_ONCE_PASS="+JSON.stringify(replay));
+  }
+    // A Firefox user-agent spoof inside Chromium does not test WebKit rendering.
   // The official shared scene makes WebGL background capture available on iOS.
   assert.equal(await evaluate("document.querySelectorAll('[data-liquid-glass-scene]').length"),1);
   console.log("DAIRA BROWSER PASS: original simple-liquid-glass loupe, native rim, real refraction, iOS scene, menu and backtop.");

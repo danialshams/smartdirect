@@ -173,8 +173,7 @@ export function LandingInteractions() {
       // before playing the neighbor. Keep the exact original card layout.
       const previous = card.previousElementSibling;
       if (previous?.classList.contains("ap-social-card") &&
-          states.get(previous as HTMLElement) !== "done" &&
-          (previous as HTMLElement).dataset.gsapShellReady !== "true") return;
+          states.get(previous as HTMLElement) !== "done") return;
       states.set(card, "queued");
       card.dataset.gsapPhase = "queued";
       pending.delete(card);
@@ -223,45 +222,6 @@ export function LandingInteractions() {
           }
         });
         running.add(timeline);
-
-        // Minimal Motion cards: animate only the card and a small number of
-        // composed layers. The image, title and copy appear sequentially
-        // AFTER the card reaches its position. No parallax, blur or looping.
-        if (card.classList.contains("dm-card")) {
-          timeline.to(card, {
-            x: 0, opacity: 1, duration: .27, ease: "power3.out", force3D: false
-          }, 0);
-          // Unlock the next visible card when the first shell has arrived,
-          // not after every child fade. This retains sequential entry without
-          // leaving an empty card for a full second while scrolling.
-          timeline.call(() => {
-            card.dataset.gsapShellReady = "true";
-            const next = card.nextElementSibling;
-            if (!(next instanceof HTMLElement) ||
-                !next.classList.contains("dm-card") ||
-                states.get(next) !== "waiting") return;
-            const bounds = next.getBoundingClientRect();
-            if (bounds.bottom > 0 && bounds.top < innerHeight * .88) {
-              requestAnimationFrame(() => startCard(next));
-            }
-          }, [], .22);
-          if (preview) {
-            timeline.set(preview, { visibility: "visible" }, .10);
-            timeline.set(visualParts, { opacity: 0 }, .09);
-            timeline.to(preview, {
-              x: 0, opacity: 1, duration: .20, ease: "power2.out",
-              force3D: false
-            }, .12);
-            timeline.to(visualParts, { opacity: 1, duration: .19 }, .15);
-          }
-          if (copyContainer) timeline.to(copyContainer, {
-            x: 0, duration: .24, force3D: false
-          }, .15);
-          copyParts.forEach((part, i) => timeline.to(part, {
-            opacity: 1, duration: .17, ease: "power2.out"
-          }, .20 + i * .055));
-          return;
-        }
 
         // The actual background, border, shadow and card box enter together.
         // Card content remains invisible until the background settles.

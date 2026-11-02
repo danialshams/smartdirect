@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { BadgeCheck, Check, ShieldCheck } from "lucide-react";
 import { preconnect, preload } from "react-dom";
 
 import { LandingGlassBackdrop } from "../components/landing/LandingGlassBackdrop";
@@ -20,7 +21,6 @@ import "./landing-optics-v2.css";
 import "./header-library-optics.css";
 import "./landing-fixes.css";
 import "./public-redesign.css";
-import "./minimal-motion-home.css";
 
 export const metadata:Metadata = {
   title:"دایرا | همه تعاملات پیجت، در یک فضای ساده",
@@ -64,10 +64,11 @@ export default function Home() {
       <SimpleHeader />
       <a className="ap-skip" data-liquid-glass-ignore="" href="#content">رفتن به محتوای صفحه</a>
       <main id="content">
-        <section className="ap-hero dm-hero" aria-labelledby="ap-hero-title">
-          <div className="ap-shell dm-hero__inner">
+        <section className="ap-hero" aria-labelledby="ap-hero-title">
+          <div className="ap-hero__ambient" aria-hidden="true"/>
+          <div className="ap-shell ap-hero__content">
             <h1 id="ap-hero-title" dir="rtl" aria-label={heroHeadline}
-              data-hero-assembly data-hero-entrance="fade" data-liquid-glass-ignore="">
+              data-hero-assembly data-liquid-glass-ignore="">
               <span className="ap-hero__typewriter" data-hero-typewriter
                 data-full-text={heroHeadline} aria-hidden="true">
                 <span className="ap-hero__typewriter-ink">
@@ -76,8 +77,9 @@ export default function Home() {
                 </span>
               </span>
             </h1>
-            <div className="ap-hero__actions dm-hero__actions" data-hero-cta>
-              <Link className="ap-button ap-button--solid ap-hero__cta dm-hero__cta" href="/login">
+            <p className="ap-hero__description" data-hero-description>از پاسخ خودکار و صندوق دایرکت تا انتشار محتوا؛ همه در یک فضای ساده.</p>
+            <div className="ap-hero__actions" data-hero-cta>
+              <Link className="ap-button ap-button--solid ap-hero__cta" href="/login">
                 رایگان شروع کن
               </Link>
             </div>
@@ -86,29 +88,41 @@ export default function Home() {
 
       </main>
 
-      {/* Eight minimal direct scenes preserve the native WebKit optical source. */}
+      {/* Separate clipped rows must be direct scene children for fast WebGL captures. */}
       <FeatureShowcase />
 
-      <footer className="ap-footer ap-footer--extended dm-footer">
-        <div className="ap-shell ap-footer__callout dm-footer__callout" data-footer-callout>
-          <h2>آماده‌ای ساده‌تر مدیریت کنی؟</h2>
+      <footer className="ap-footer ap-footer--extended">
+        <div className="ap-footer__halo" aria-hidden="true"/>
+        <div className="ap-shell ap-footer__callout" data-footer-callout>
+          <h2>آماده‌ای مدیریت پیجت ساده‌تر بشه؟</h2>
+          <p>همه تعاملات پیجت رو یک‌جا مدیریت کن.</p>
           <Link href="/login" className="ap-button ap-button--solid ap-footer__cta">رایگان شروع کن</Link>
         </div>
-        <div className="ap-shell ap-footer__hero dm-footer__body">
+        <div className="ap-shell ap-footer__hero">
           <div className="ap-footer__brand">
             <Link href="/" className="ap-brand" aria-label="دایرا، صفحه اصلی">
-              <Image src="/daira-header-logo-hd.webp" alt="" width={36} height={36} />
+              <Image src="/daira-header-logo-hd.webp" alt="" width={42} height={42}/>
               <span>دایرا</span>
             </Link>
+            <p>مدیریت ساده‌تر تعامل‌ها، گفتگوها و محتوای اینستاگرام.</p>
           </div>
           <nav className="ap-footer__links" aria-label="راهنمای سایت">
-            {footerLinks.map((item,index)=>
-              <Link href={item.href} key={item.href}
-                style={{"--link-index":index} as CSSProperties}>{item.label}</Link>)}
+            {footerLinks.map((item,index)=><Link href={item.href} key={item.href} style={{"--link-index":index} as CSSProperties}>{item.label}</Link>)}
           </nav>
+        </div>
+        <div className="ap-shell ap-footer__trust" aria-label="جایگاه مجوزهای آینده">
+          <div className="ap-footer__trust-copy">
+            <span className="ap-footer__trust-title"><ShieldCheck size={17} aria-hidden="true"/> بخش مجوزها و اعتبارسنجی</span>
+            <p>پس از دریافت هر مجوز، نشان معتبر و لینک استعلام آن در همین بخش قرار می‌گیرد.</p>
+          </div>
+          <div className="ap-footer__badge-list">
+            <div className="ap-footer__badge-placeholder"><BadgeCheck size={23} aria-hidden="true"/><span>Meta</span><small>در آینده</small></div>
+            <div className="ap-footer__badge-placeholder"><Check size={23} aria-hidden="true"/><span>اینماد</span><small>در آینده</small></div>
+          </div>
         </div>
         <div className="ap-shell ap-footer__bottom">
           <span>© {new Date().getFullYear()} دایرا</span>
+          <span>ساخته‌شده برای مدیریت ساده‌تر پیج</span>
         </div>
       </footer>
       <HeroAssembly />
