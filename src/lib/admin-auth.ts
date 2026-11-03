@@ -15,7 +15,11 @@ export async function requireAdmin() {
   // Check the current database role, not just the cached session claim.
   const current = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true, isBlocked: true, sessionVersion: true } });
   if (!current || current.role !== "ADMIN" || current.isBlocked) return { session: null, response: NextResponse.json({ message: "دسترسی غیرمجاز" }, { status: 403 }) };
-  const mfa=await hasAdminMfa(session.user.id,current.sessionVersion);
-  if(mfa!=="ok")return {session:null,response:adminMfaDenied(mfa)};
+  // MFA is opt-in for the deployment; administrator role, account blocking,
+  // and session validity are still enforced for every admin API request.
+  if(process.env.DAIRA_ADMIN_MFA_REQUIRED === "true") {
+    const mfa=await hasAdminMfa(session.user.id,current.sessionVersion);
+    if(mfa!=="ok")return {session:null,response:adminMfaDenied(mfa)};
+  }
   return { session, response: null };
 }
