@@ -13,6 +13,8 @@ type Account = {
   igUsername: string;
   username: string;
   isConnected: boolean;
+  tokenExpiresAt: string | null;
+  needsReconnect: boolean;
   profilePictureUrl: string | null;
 };
 
@@ -128,11 +130,20 @@ export default function ConnectedAccounts() {
                 </div>
               </CardContent>
 
-              <CardActions className="justify-between border-t px-5 py-3">
+              <CardActions className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-3">
                 <span className="text-xs text-muted-foreground">وضعیت اتصال</span>
-                <Chip size="small" variant="outlined" label={
-  <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="size-3.5" />{account.isConnected ? "متصل" : "قطع"}</span>
-} />
+                <Chip size="small" variant="outlined" color={account.needsReconnect ? "warning" : "success"} label={
+                  <span className="inline-flex items-center gap-1.5">
+                    <CheckCircle2 className="size-3.5" />
+                    {account.needsReconnect ? "نیاز به اتصال مجدد" : "متصل"}
+                  </span>
+                } />
+                <Button asChild className="w-full" variant={account.needsReconnect ? "default" : "outline"}>
+                  <a href={"/api/instagram/connect?reconnect=" + encodeURIComponent(account.id)}>
+                    <RefreshCw size={16} aria-hidden="true" />
+                    اتصال مجدد همین پیج
+                  </a>
+                </Button>
               </CardActions>
             </Card>
           ))}
