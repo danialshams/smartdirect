@@ -212,9 +212,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       catch (error) { return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "پاسخ‌های کامنت معتبر نیستند." }, { status: 400 }); }
     }
 
-    if (title !== undefined && (typeof title !== "string" || title.trim().length > 80)) return NextResponse.json({ success: false, error: "نام پاسخ حداکثر ۸۰ نویسه است." }, { status: 400 });
+    if (title !== undefined && typeof title !== "string") return NextResponse.json({ success: false, error: "نام پاسخ معتبر نیست." }, { status: 400 });
+    // Automatically generated names can be longer than the database field.
+    // Trim only the internal label and preserve the complete response content.
+    const normalizedTitle = typeof title === "string" ? title.trim().slice(0, 80) || null : null;
     const updateData: Record<string, unknown> = {
-      ...(title !== undefined ? { title: title.trim() || null } : {}),
+      ...(title !== undefined ? { title: normalizedTitle } : {}),
       ...(triggerType !== undefined ? { triggerType: nextTriggerType } : {}),
       ...(triggerType !== undefined || keyword !== undefined ? { keyword: nextKeyword } : {}),
       ...(mediaId !== undefined ? { mediaId: nextMediaId } : {}),
