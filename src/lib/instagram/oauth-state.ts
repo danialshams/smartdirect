@@ -7,6 +7,7 @@ type InstagramOAuthState = {
   userId: string;
   timestamp: number;
   nonce: string;
+  reconnectAccountId?: string;
 };
 
 function getStateSecret(): string {
@@ -23,13 +24,14 @@ function sign(payload: string): string {
   return createHmac("sha256", getStateSecret()).update(payload).digest("base64url");
 }
 
-export async function createInstagramOAuthState(userId: string): Promise<string> {
+export async function createInstagramOAuthState(userId: string, reconnectAccountId?: string): Promise<string> {
   if (!userId) throw new Error("Instagram OAuth state userId is required");
 
   const payload: InstagramOAuthState = {
     userId,
     timestamp: Date.now(),
     nonce: randomBytes(16).toString("hex"),
+    ...(reconnectAccountId ? { reconnectAccountId } : {}),
   };
 
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -80,7 +82,8 @@ export async function verifyInstagramOAuthState(state: string): Promise<Instagra
     typeof payload.timestamp !== "number" ||
     !Number.isFinite(payload.timestamp) ||
     typeof payload.nonce !== "string" ||
-    !payload.nonce
+    !payload.nonce ||
+    (payload.reconnectAccountId !== undefined && (typeof payload.reconnectAccountId !== "string" || !payload.reconnectAccountId))
   ) {
     throw new Error("Invalid Instagram OAuth state payload");
   }
