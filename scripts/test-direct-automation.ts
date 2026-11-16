@@ -31,6 +31,24 @@ for(const route of titleBoundedRoutes){
     "Automation internal titles must be bounded on the server: "+route);
 }
 
+// Both manual DM menu and ice-breaker editors intentionally allow no
+// response name. JSON null/omission must not be mistaken for an invalid title.
+for (const route of [
+  "app/api/automations/route.ts",
+  "app/api/automations/[id]/route.ts",
+]) {
+  const source=readFileSync(route,"utf8");
+  assert.ok(source.includes('title !== undefined && title !== null && typeof title !== "string"'),
+    "Null internal response names must be accepted by generic API: "+route);
+  assert.ok(source.includes('typeof title === "string" ? title.trim().slice(0, 80) || null : null'),
+    "Optional response names must normalize to null, not be required: "+route);
+}
+const entryPointBuilder=readFileSync("components/dashboard/EntryPointFlowBuilder.tsx","utf8");
+assert.ok(!entryPointBuilder.includes("title: responseName.trim() || null,"),
+  "Entry-point creation must omit the internal title when left blank");
+assert.ok(entryPointBuilder.includes('...(responseName.trim() ? { title: responseName.trim().slice(0, 80) } : {})'),
+  "Entry-point editors must send a bounded title only when provided");
+
 const sidebar=readFileSync("components/dashboard/DashboardSidebar.tsx","utf8");
 const directList = readFileSync("components/dashboard/DirectAutomationList.tsx","utf8");
 const directSkeleton = readFileSync("components/dashboard/DirectAutomationSkeleton.tsx","utf8");
