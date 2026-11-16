@@ -86,7 +86,7 @@ export async function prepareAutomationMessages(
       const url = cleaned(link.url), title = cleaned(link.title);
       let valid = false;
       try { valid = ["http:", "https:"].includes(new URL(url).protocol); } catch { /* bad URL */ }
-      if (!valid || url.length > 2048 || !title || title.length > 20) throw Error("عنوان یا آدرس دکمه لینک نامعتبر است.");
+      if ((url && !valid) || url.length > 2048 || !title || title.length > 20) throw Error("عنوان دکمه الزامی است و لینک واردشده باید معتبر باشد.");
       linkButtons.push({url,title});
     }
     if (messageType === "TEXT" && text.length > (linkButtons.length ? 640 : 2000))

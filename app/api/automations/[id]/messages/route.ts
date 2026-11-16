@@ -52,9 +52,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!item || typeof item !== "object") return NextResponse.json({ success: false, error: "ساختار دکمه لینک نامعتبر است." }, { status: 400 });
       const url = normalizeOptionalString((item as Record<string, unknown>).url);
       const title = normalizeOptionalString((item as Record<string, unknown>).title);
-      if (!url || !title) return NextResponse.json({ success: false, error: "آدرس و عنوان همه دکمه‌ها الزامی است." }, { status: 400 });
+      if (!title) return NextResponse.json({ success: false, error: "عنوان همه دکمه‌ها الزامی است؛ آدرس لینک اختیاری است." }, { status: 400 });
       let parsed: URL;
-      try { parsed = new URL(url); } catch { return NextResponse.json({ success: false, error: "آدرس یکی از دکمه‌ها معتبر نیست." }, { status: 400 }); }
+      try { parsed = url ? new URL(url) : new URL("https://example.com"); } catch { return NextResponse.json({ success: false, error: "آدرس یکی از دکمه‌ها معتبر نیست." }, { status: 400 }); }
       if (!["http:", "https:"].includes(parsed.protocol)) return NextResponse.json({ success: false, error: "آدرس دکمه باید با http یا https شروع شود." }, { status: 400 });
       if (url.length > 2048) return NextResponse.json({ success: false, error: "آدرس هر دکمه حداکثر ۲۰۴۸ کاراکتر است." }, { status: 400 });
       if (title.length > 20) return NextResponse.json({ success: false, error: "عنوان هر دکمه حداکثر ۲۰ کاراکتر است." }, { status: 400 });

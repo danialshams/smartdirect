@@ -51,7 +51,7 @@ function readSavedLinks(raw: unknown): LinkButton[] {
     return item.linkButtons
       .filter((value): value is Record<string, unknown> => Boolean(value && typeof value === "object"))
       .map((value) => ({ title: String(value.title ?? ""), url: String(value.url ?? "") }))
-      .filter((button) => button.title && button.url);
+      .filter((button) => button.title);
   }
   if (typeof item.linkButtonUrl === "string" && item.linkButtonUrl) {
     return [{ title: typeof item.linkButtonTitle === "string" ? item.linkButtonTitle : "", url: item.linkButtonUrl }];
@@ -447,7 +447,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     catch { return false; }
   };
   const validateLinks = (items: LinkButton[]) => items.length <= MAX_LINK_BUTTONS && items.every((button) =>
-    Boolean(button.title.trim()) && button.title.trim().length <= 20 && button.url.trim().length <= 2048 && validUrl(button.url));
+    Boolean(button.title.trim()) && button.title.trim().length <= 20 && button.url.trim().length <= 2048 && (!button.url.trim() || validUrl(button.url)));
   const mainLinksValid = dmMode !== "TEXT_WITH_LINK" || (message.messageType === "TEXT" &&
     linkButtons.length > 0 && validateLinks(linkButtons) && message.text.trim().length <= 640);
   const extraLinksValid = extraMessages.every((item) => item.messageType !== "TEXT" ||
@@ -459,7 +459,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     keywords.length > MAX_KEYWORDS ? "حداکثر ده کلمه کلیدی مجاز است." :
     commentReplies.length < 3 || commentReplies.length > 5 || commentReplies.some((text) => !text.trim() || text.trim().length > 2000) || new Set(commentReplies.map(publicCommentReplyKey)).size !== commentReplies.length ? "سه تا پنج پاسخ متفاوت زیر کامنت را کامل وارد کنید." :
     enteredDm && !validDm ? "همه پیام‌های دایرکت را کامل وارد کنید." :
-    enteredDm && (!mainLinksValid || !extraLinksValid) ? "عنوان و آدرس دکمه‌های لینک را کامل و معتبر وارد کنید." :
+    enteredDm && (!mainLinksValid || !extraLinksValid) ? "عنوان دکمه را وارد کنید؛ آدرس لینک اختیاری است اما اگر وارد شود باید معتبر باشد." :
 
     requireFollow && !enteredDm ? "برای فعال کردن شرط فالو، پیام دایرکت لازم است." :
     requireFollow && (!followGateText.trim() || followGateText.length > 640 ||
@@ -625,8 +625,8 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
       for (const button of currentLinks) {
         let validUrl = false;
         try { validUrl = ["http:", "https:"].includes(new URL(button.url).protocol); } catch { validUrl = false; }
-        if (!button.title || button.title.length > 20 || !validUrl) {
-          setError("آدرس و عنوان دکمه‌های لینک را کامل و معتبر وارد کنید."); return;
+        if (!button.title || button.title.length > 20 || (button.url && !validUrl)) {
+          setError("عنوان دکمه الزامی است؛ آدرس لینک اختیاری است اما باید معتبر باشد."); return;
         }
       }
       if (currentMessage.messageType === "TEXT" && currentMessage.text.trim().length > (currentLinks.length ? 640 : 2000)) {
@@ -697,7 +697,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
     }
 
     if (triggerType === "COMMENT_KEYWORD" && dmMode === "TEXT_WITH_LINK" && enteredDm) {
-      if (!mainLinksValid) { setError("برای هر دکمه، آدرس لینک و عنوان معتبر وارد کنید."); return; }
+      if (!mainLinksValid) { setError("عنوان هر دکمه الزامی است؛ آدرس لینک اختیاری است اما باید معتبر باشد."); return; }
       if (currentMessage.text.trim().length > 640) { setError("متن دایرکت همراه دکمه حداکثر ۶۴۰ کاراکتر است."); return; }
     }
     if (triggerType === "COMMENT_KEYWORD" && selectedMediaIds.length === 0) {
@@ -1171,7 +1171,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                       پیام قدیمی از نوع دیگری ذخیره شده است و بدون تغییر حفظ می‌شود. در پاسخ خودکار کامنت، ایجاد پیام جدید فقط به‌صورت متن ساده امکان‌پذیر است.
                     </p>
                   )}
-                  {message.messageType === "TEXT" && dmMode === "TEXT_WITH_LINK" && <p className="mb-2 text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه لینک می‌توانید اضافه کنید.</p>}
+                  {message.messageType === "TEXT" && dmMode === "TEXT_WITH_LINK" && <p className="mb-2 text-xs leading-5" style={{ color: dairaPalette.text.body }}>حداکثر {MAX_LINK_BUTTONS} دکمه می‌توانید اضافه کنید. آدرس لینک اختیاری است؛ بدون لینک دکمه صفحه‌ای را باز نمی‌کند.</p>}
 
                   {message.messageType === "TEXT" && dmMode === "TEXT_WITH_LINK" && (
                     <div className="space-y-3">
@@ -1198,7 +1198,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                               <input value={button.title} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, title: event.target.value.slice(0, 20) } : item))} maxLength={20} placeholder="متن دکمه" className="w-full rounded-xl border bg-white px-3 py-3 text-base outline-none placeholder:text-xs focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
                             </div>
                             <div>
-                              <label className="mb-2 block text-center text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>آدرس لینک</label>
+                              <label className="mb-2 block text-center text-xs font-semibold" style={{ color: dairaPalette.text.heading }}>آدرس لینک <span className="font-normal opacity-70">(اختیاری)</span></label>
                               <input type="url" value={button.url} onChange={(event) => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: event.target.value } : item))} onBlur={() => setLinkButtons((current) => current.map((item, i) => i === index ? { ...item, url: normalizeExternalLink(item.url) } : item))} placeholder="example.com" dir="ltr" className="w-full rounded-xl border bg-white px-3 py-3 text-base outline-none placeholder:text-xs focus:ring-2 focus:ring-[color:var(--daira-primary)]/15" style={{ borderColor: dairaPalette.form.border, color: dairaPalette.text.heading, fontSize: "16px" }} />
                             </div>
                           </div>
@@ -1239,7 +1239,7 @@ export default function AutomationCreationFlow({ account, mediaId, triggerType, 
                             {(extraLinks[entry.id] || []).map((button, linkIndex) => (
                               <div key={linkIndex} className="grid gap-2 rounded-xl border border-[var(--daira-border)] bg-[var(--daira-surface-hover)] p-3 sm:grid-cols-[1fr_2fr_auto]">
                                 <input aria-label="عنوان دکمه" maxLength={20} value={button.title} placeholder="عنوان دکمه" onChange={(event) => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).map((value, i) => i === linkIndex ? { ...value, title: event.target.value } : value) }))} className="min-w-0 rounded-lg border border-[var(--daira-border)] bg-white p-2.5 text-base" />
-                                <input aria-label="آدرس لینک" dir="ltr" value={button.url} placeholder="example.com" onChange={(event) => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).map((value, i) => i === linkIndex ? { ...value, url: event.target.value } : value) }))} onBlur={() => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).map((value, i) => i === linkIndex ? { ...value, url: normalizeExternalLink(value.url) } : value) }))} className="min-w-0 rounded-lg border border-[var(--daira-border)] bg-white p-2.5 text-base" />
+                                <input aria-label="آدرس لینک (اختیاری)" dir="ltr" value={button.url} placeholder="example.com" onChange={(event) => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).map((value, i) => i === linkIndex ? { ...value, url: event.target.value } : value) }))} onBlur={() => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).map((value, i) => i === linkIndex ? { ...value, url: normalizeExternalLink(value.url) } : value) }))} className="min-w-0 rounded-lg border border-[var(--daira-border)] bg-white p-2.5 text-base" />
                                 <button type="button" aria-label="حذف دکمه لینک" onClick={() => setExtraLinks((current) => ({ ...current, [entry.id]: (current[entry.id] || []).filter((_, i) => i !== linkIndex) }))} className="sd-destructive-button min-h-10 rounded-lg border border-[var(--daira-error-border)] bg-[var(--daira-error-background)] px-3 text-[var(--daira-error-text)]"><Trash2 size={16} /></button>
                               </div>
                             ))}

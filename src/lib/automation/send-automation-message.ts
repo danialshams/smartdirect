@@ -143,7 +143,9 @@ async function sendTextLike({ instagramAccountId, tenantId, instagramUserId, rec
   const buttons = linkButtons?.length ? linkButtons : linkButtonUrl && linkButtonTitle ? [{ url: linkButtonUrl, title: linkButtonTitle }] : [];
   if (buttons.length > 3) throw new Error("حداکثر ۳ دکمه لینک مجاز است.");
   const message: Record<string, unknown> = buttons.length
-    ? { attachment: { type: "template", payload: { template_type: "button", text: text.trim(), buttons: buttons.map((button) => ({ type: "web_url", url: button.url, title: button.title.trim().slice(0, 20) })) } } }
+    ? { attachment: { type: "template", payload: { template_type: "button", text: text.trim(), buttons: buttons.map((button, index) => button.url.trim()
+      ? { type: "web_url", url: button.url.trim(), title: button.title.trim().slice(0, 20) }
+      : { type: "postback", payload: `DAIRA_LINKLESS_BUTTON_${index + 1}`, title: button.title.trim().slice(0, 20) }) } } }
     : { text: text.trim() };
   if (!buttons.length && quickReplies?.length) message.quick_replies = formatQuickReplies(quickReplies);
   return callInstagramMessagesApi({

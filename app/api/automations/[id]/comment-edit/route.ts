@@ -61,7 +61,7 @@ function parseLinks(value: unknown): LinkButton[] {
     const url = clean(item.url);
     if (!title || title.length > 20 || url.length > 2048) throw new EditError("عنوان دکمه باید حداکثر ۲۰ کاراکتر و لینک حداکثر ۲۰۴۸ کاراکتر باشد.");
     let parsed: URL;
-    try { parsed = new URL(url); } catch { throw new EditError("آدرس دکمه لینک معتبر نیست."); }
+    try { parsed = url ? new URL(url) : new URL("https://example.com"); } catch { throw new EditError("آدرس دکمه لینک معتبر نیست."); }
     if (!["https:", "http:"].includes(parsed.protocol) || !parsed.hostname) throw new EditError("آدرس دکمه باید یک لینک http یا https معتبر باشد.");
     return { title, url };
   });
