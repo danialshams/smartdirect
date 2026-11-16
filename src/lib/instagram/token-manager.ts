@@ -252,10 +252,23 @@ export async function refreshInstagramToken(
       error,
     });
 
-    /**
-     * خطای شبکه یا timeout نباید باعث شود
-     * اکانت disconnected شود.
-     */
+    // Meta error 190 is an expired or revoked authorization.
+    // Compare the exact old token to avoid invalidating a freshly reconnected page.
+    if (error instanceof InstagramApiError && error.details?.code === 190) {
+      const changed = await prisma.instagramAccount.updateMany({
+        where: { id: instagramAccountId, accessToken: account.accessToken, isConnected: true },
+        data: { isConnected: false },
+      });
+      if (changed.count > 0) {
+        await Promise.allSettled([
+          deleteCachedJson(cacheKey("instagram-token", instagramAccountId)),
+          deleteCachedJson(cacheKey("instagram-account", instagramAccountId)),
+        ]);
+      }
+      throw new Error("Instagram access token has expired and must be reconnected");
+    }
+
+    // Network, timeout and rate-limit failures do not disconnect accounts.
     throw new Error("Instagram token refresh request failed");
   }
 
