@@ -21,6 +21,7 @@ type InstagramAccount = {
   igUsername: string;
   igUserId: string;
   isConnected: boolean;
+  needsReconnect: boolean;
   createdAt: Date;
 };
 
@@ -51,10 +52,10 @@ export default function DashboardShell({ user, instagramAccounts, children }: Da
     "/dashboard/direct-automation/new",
   ].some((route) => pathname === route || pathname.startsWith(route + "/"));
 
-  const initialAccountId = instagramAccounts.find((account) => account.isConnected)?.id ?? null;
+  const initialAccountId = instagramAccounts.find((account) => !account.needsReconnect)?.id ?? instagramAccounts[0]?.id ?? null;
 
   return (
-    <DashboardAccountProvider accountId={initialAccountId} accountIds={instagramAccounts.filter((account) => account.isConnected).map((account) => account.id)} accounts={instagramAccounts}>
+    <DashboardAccountProvider accountId={initialAccountId} accountIds={instagramAccounts.map((account) => account.id)} accounts={instagramAccounts}>
     <DashboardBackNavigationProvider>
     <DashboardTheme>
     <SupportNotifications userEmail={user.email}>
