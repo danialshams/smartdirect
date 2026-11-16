@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Bot, Camera, CheckCircle2, Clock3, LayoutGrid, MessageCircle } from "lucide-react";
+import { ArrowLeft, Bot, Camera, CheckCircle2, Clock3, LayoutGrid, MessageCircle, RefreshCw } from "lucide-react";
 import { useDashboardAccountSelection } from "./DashboardAccountContext";
 import DashboardHomeSkeleton from "./DashboardHomeSkeleton";
 import { getDashboardHomeSnapshot, setDashboardHomeSnapshot, type DashboardHomeCounts } from "@/src/lib/dashboard/home-summary-cache";
