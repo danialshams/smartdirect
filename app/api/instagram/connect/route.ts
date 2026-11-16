@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { createInstagramOAuthState } from "@/lib/instagram/oauth-state";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -37,7 +38,20 @@ export async function GET() {
       );
     }
 
-    const state = await createInstagramOAuthState(session.user.id);
+    // Reconnecting an existing account requires authenticated ownership.
+    // The target account is signed into OAuth state for callback verification.
+    const reconnectAccountId = request.nextUrl.searchParams.get("reconnect")?.trim();
+    if (reconnectAccountId) {
+      const existing = await prisma.instagramAccount.findFirst({
+        where: { id: reconnectAccountId, userId: session.user.id },
+        select: { id: true },
+      });
+      if (!existing) {
+        return NextResponse.json({ error: "پیج انتخاب‌شده برای اتصال مجدد پیدا نشد." }, { status: 404 });
+      }
+    }
+
+    const state = await createInstagramOAuthState(session.user.id, reconnectAccountId);
 
     const params = new URLSearchParams({
       client_id: clientId,
