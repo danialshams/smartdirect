@@ -38,11 +38,13 @@ async function save(request:NextRequest,editing:boolean){
   const session=await getServerSession(authOptions);
   if(!session?.user?.id)return NextResponse.json({success:false,error:"احراز هویت انجام نشده است."},{status:401});
   const body=obj(await request.json()),instagramAccountId=clean(body.instagramAccountId),id=clean(body.id);
-  const title=clean(body.title);
-  if (!title||title.length>80) throw new RuleError("نام پاسخ را وارد کن (حداکثر ۸۰ نویسه).");
   const words=Array.from(new Set(splitAutomationKeywords(clean(body.keyword))));
   if(!instagramAccountId)throw new RuleError("پیج اینستاگرام را انتخاب کنید.");
   if(!words.length||words.length>10||words.some(w=>w.length>100))throw new RuleError("بین ۱ تا ۱۰ کلمه کلیدی، هرکدام حداکثر ۱۰۰ کاراکتر، وارد کنید.");
+  // Direct automation titles are internal labels generated from the keywords,
+  // never a field that users need to fill. Generate on the server too, so a
+  // stale client or long list of keywords cannot block saving on title length.
+  const title=("پاسخ دایرکت - "+words.join("، ")).slice(0,80);
   // A legacy single message is still accepted for backwards-compatible clients.
   // The current editor submits an ordered sequence. All messages are validated
   // before the transaction, so a partially valid flow is never persisted.
