@@ -1,14 +1,14 @@
 "use client";
 import { useDashboardAccountSelection } from "./DashboardAccountContext";
 
-import { useEffect, useState } from "react";
-import { Lightbulb, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, Lightbulb, Plus, Trash2, X } from "lucide-react";
 import { dairaPalette } from "../../lib/design-system/palette";
-import PublishingStoryAutomationSetup, { type StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
-import { createEmptyMessage, normalizeMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
+import PublishingStoryAutomationSetup, { type PublishingStoryAutomationSetupHandle, type StoryFormTemplate } from "./publishing/PublishingStoryAutomationSetup";
+import { createEmptyMessage, getMessageTypeLabel, normalizeMessages, validateMessages, type MessageDraft, type Showcase, type FormItem } from "./automation-form-utils";
 import DirectAutomationSkeleton from "./DirectAutomationSkeleton";
 import DirectAutomationSuccess from "./DirectAutomationSuccess";
-import { directAutomationHasChanges, responseFingerprint } from "./automation-response-compare";
+import { directAutomationHasChanges, responseSequenceFingerprint } from "./automation-response-compare";
 
 type Account = {id:string;igUsername:string;isConnected:boolean};
 type Automation = {id:string;title?:string|null;triggerType:string;instagramAccountId:string;keyword:string|null;updatedAt:string;messages:unknown};
@@ -32,9 +32,11 @@ export default function DirectAutomationEditor({id}:{id?:string}){
  const [original,setOriginal]=useState<Automation|null>(null);
  const [keywords,setKeywords]=useState<string[]>([]);
  const [draft,setDraft]=useState("");
- const [message,setMessage]=useState<MessageDraft>(()=>createEmptyMessage());
+ const [messages,setMessages]=useState<MessageDraft[]>(()=>[createEmptyMessage()]);
+ const messageEditors=useRef<Record<string,PublishingStoryAutomationSetupHandle|null>>({});
+ const showcaseHandlers=useRef<Record<string,(changed:boolean)=>void>>({});
  const [originalResponseSignature,setOriginalResponseSignature]=useState<string|null>(null);
- const [showcaseDraftChanged,setShowcaseDraftChanged]=useState(false);
+ const [showcaseDraftChanged,setShowcaseDraftChanged]=useState<Record<string,boolean>>({});
  const [showcases,setShowcases]=useState<Showcase[]>([]);
  const [forms,setForms]=useState<FormItem[]>([]);
  const [formTemplates,setFormTemplates]=useState<StoryFormTemplate[]>([]);
@@ -51,8 +53,9 @@ export default function DirectAutomationEditor({id}:{id?:string}){
   originalKeywords:wordsFrom(original.keyword||""),
   currentKeywords:effectiveKeywords,
   originalResponseSignature,
-  currentMessage:message,
-  showcaseDraftChanged,
+  currentMessage:messages[0],
+  currentMessages:messages,
+  showcaseDraftChanged:Object.values(showcaseDraftChanged).some(Boolean),
  });
  useEffect(()=>{
   if(!dashboardReady)return;
@@ -91,14 +94,19 @@ export default function DirectAutomationEditor({id}:{id?:string}){
      if(msgs[0]?.quickReplies.length>=2)templates.push({id:"saved:"+item.id,title:item.title||"فرم ذخیره‌شده",text:msgs[0].text,quickReplies:msgs[0].quickReplies});
     }
     if(!controller.signal.aborted){
-     const initialMessage=existing?normalizeMessages(existing.messages)[0]||createEmptyMessage():createEmptyMessage();
+     // Loading all rows keeps existing DM flows intact; older rules still
+     // hydrate as a single message.
+     const storedMessages=existing?normalizeMessages(existing.messages):[];
+     const initialMessages=storedMessages.length?storedMessages:[createEmptyMessage()];
      setAccount(active);
      setOriginal(existing);
      setKeywords(existing?wordsFrom(existing.keyword||""):[]);
      setDraft("");
-     setMessage(initialMessage);
-     setOriginalResponseSignature(existing?responseFingerprint(initialMessage):null);
-     setShowcaseDraftChanged(false);
+     setMessages(initialMessages);
+     setOriginalResponseSignature(existing?responseSequenceFingerprint(initialMessages):null);
+     setShowcaseDraftChanged({});
+     messageEditors.current={};
+     showcaseHandlers.current={};
      setShowcases(Array.isArray(showcaseData)?showcaseData:Array.isArray(showcaseData?.data)?showcaseData.data:[]);
      setForms(Array.isArray(formData)?formData:Array.isArray(formData?.data)?formData.data:[]);
      setFormTemplates(templates);
@@ -108,23 +116,66 @@ export default function DirectAutomationEditor({id}:{id?:string}){
   })();
   return ()=>controller.abort();
  },[id,retry,dashboardReady,activeDashboardAccount?.id]);
-  async function save(prepared?:MessageDraft){
-  if(saving||!account||(original&&!hasChanges))return;
-  const entries=effectiveKeywords.slice(0,11);
-  if(!entries.length||entries.length>10){setError("بین ۱ تا ۱۰ کلمه کلیدی وارد کنید.");return;}
-  setSaving(true);setError("");
-  try{
-   const response=await fetch("/api/direct-automation",{method:original?"PUT":"POST",credentials:"include",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({id:original?.id,expectedUpdatedAt:original?.updatedAt,
-     instagramAccountId:account.id,title:("پاسخ دایرکت - "+entries.join("، ")).slice(0,80),keyword:entries.join(","),message:{...(prepared||message),savedResponseId:null}})});
-   const body=await response.json();
-   if(!response.ok||!body.success)throw new Error(body.error||"ذخیره پاسخ خودکار ناموفق بود.");
-   setCompleted(true);
-   window.scrollTo(0,0);
-  }catch(e){setError(e instanceof Error?e.message:"ذخیره ناموفق بود.");}
-  finally{setSaving(false);}
- }
+  function moveMessage(index:number,direction:-1|1){
+    setMessages(current=>{
+      const target=index+direction;
+      if(target<0||target>=current.length)return current;
+      const next=[...current];
+      [next[index],next[target]]=[next[target],next[index]];
+      return next;
+    });
+  }
+  function getShowcaseDraftHandler(messageId:string){
+    if(!showcaseHandlers.current[messageId]){
+      showcaseHandlers.current[messageId]=(changed:boolean)=>{
+        setShowcaseDraftChanged(current=>current[messageId]===changed
+          ?current:{...current,[messageId]:changed});
+      };
+    }
+    return showcaseHandlers.current[messageId];
+  }
+  async function save(){
+    if(saving||!account||(original&&!hasChanges))return;
+    const entries=effectiveKeywords.slice(0,11);
+    if(!entries.length||entries.length>10){setError("بین ۱ تا ۱۰ کلمه کلیدی وارد کنید.");return;}
+    if(!messages.length||messages.length>5){setError("بین ۱ تا ۵ پیام اضافه کنید.");return;}
+    if(messages.slice(0,-1).some(item=>item.messageType==="FORM")){
+      setError("فرم باید آخرین پیام باشد؛ پس از فرم، سیستم منتظر انتخاب کاربر می‌ماند.");return;
+    }
+    setSaving(true);setError("");
+    try{
+      const prepared:MessageDraft[]=[];
+      for(const [index,item] of messages.entries()){
+        const editor=messageEditors.current[item.id];
+        if(!editor){
+          throw new Error(`ویرایشگر پیام ${index+1} آماده نیست. دوباره تلاش کنید.`);
+        }
+        const result=await editor.prepareExternalSave();
+        if(!result){
+          throw new Error(`پیام ${index+1} ناقص است یا آپلود آن هنوز تمام نشده است.`);
+        }
+        prepared.push({...result,savedResponseId:null});
+      }
+      validateMessages(prepared,"DM");
+      const response=await fetch("/api/direct-automation",{
+        method:original?"PUT":"POST",credentials:"include",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          id:original?.id,expectedUpdatedAt:original?.updatedAt,
+          instagramAccountId:account.id,
+          title:("پاسخ دایرکت - "+entries.join("، ")).slice(0,80),
+          keyword:entries.join(","),
+          messages:prepared,
+        }),
+      });
+      const body=await response.json();
+      if(!response.ok||!body.success)
+        throw new Error(body.error||"ذخیره پاسخ خودکار ناموفق بود.");
+      setCompleted(true);
+      window.scrollTo(0,0);
+    }catch(e){setError(e instanceof Error?e.message:"ذخیره ناموفق بود.");}
+    finally{setSaving(false);}
+  }
  if(loading)return <DirectAutomationSkeleton view="editor"/>;
  if(completed)return <DirectAutomationSuccess isEditing={Boolean(original)}/>;
  if(!account)return <div dir="rtl" className="mx-auto max-w-xl space-y-4 rounded-2xl border p-5 text-center" style={{borderColor:dairaPalette.border}}>
@@ -148,18 +199,94 @@ export default function DirectAutomationEditor({id}:{id?:string}){
      <p className="text-xs" style={{color:dairaPalette.text.body}}>حداکثر ۱۰ کلمه. هر کلمه فقط می‌تواند به یک پاسخ خودکار دایرکت تعلق داشته باشد.</p>
     </div>
    </section>
-    <section><Guide step={2} title="نوع پاسخ خودکار"
-    hint="نوع پیام را انتخاب کن و محتوای آن را بساز. همه پاسخ‌ها از موتور پیام‌رسانی فعلی استفاده می‌کنند."/>
-    <div className="rounded-2xl border bg-white p-4 sm:p-5" style={{borderColor:dairaPalette.border}}>
-     <PublishingStoryAutomationSetup key={original?.id||account.id} message={message} showcases={showcases} forms={forms}
-      formTemplates={formTemplates} loadingResources={false} instagramAccountId={account.id} onUpdate={patch=>setMessage(m=>({...m,...patch}))}
-      keywordValid={keywordValid} storyCreateMode storyEditMode={Boolean(original)} hideLibrary
-      onDraftChange={setShowcaseDraftChanged}
-      disabled={saving} showFinalSave finalSaveDisabled={saving||!hasChanges} onContinue={save}
-      finalSaveLabel={original?"ذخیره تغییرات":"ساخت پاسخ خودکار دایرکت"}
-      finalSaveLoadingLabel="در حال ذخیره..." textPlaceholder="متنی که بعد از دریافت کلمه کلیدی ارسال می‌شود..."/>
-    </div>
-   </section>
+    <section>
+     <Guide step={2} title="پاسخ‌ها به ترتیب ارسال"
+      hint="هر نوع پاسخ را به‌صورت یک پیام جداگانه بساز. از بالا به پایین ارسال می‌شوند؛ می‌توانی ترتیب را تغییر بدهی."/>
+     <div className="space-y-4">
+      {messages.map((item,index)=>(
+       <article key={item.id} className="overflow-hidden rounded-2xl border bg-white"
+        style={{borderColor:dairaPalette.border}}>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:px-5"
+         style={{borderColor:dairaPalette.border,background:dairaPalette.background.surface}}>
+         <div className="flex min-w-0 items-center gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold"
+           style={{background:dairaPalette.secondary.hoverBackground,color:dairaPalette.primary.main}}>
+           {new Intl.NumberFormat("fa-IR").format(index+1)}
+          </span>
+          <div>
+           <h3 className="text-sm font-bold" style={{color:dairaPalette.text.heading}}>
+            پیام {new Intl.NumberFormat("fa-IR").format(index+1)}
+           </h3>
+           <p className="mt-0.5 text-xs" style={{color:dairaPalette.text.body}}>
+            {getMessageTypeLabel(item.messageType)}
+           </p>
+          </div>
+         </div>
+         <div className="flex items-center gap-1.5">
+          <button type="button" title="انتقال پیام به بالا" aria-label={`انتقال پیام ${index+1} به بالا`}
+           disabled={saving||index===0} onClick={()=>moveMessage(index,-1)}
+           className="flex size-10 items-center justify-center rounded-xl border disabled:opacity-35"
+           style={{borderColor:dairaPalette.border,color:dairaPalette.primary.main}}>
+           <ArrowUp size={17} aria-hidden="true"/>
+          </button>
+          <button type="button" title="انتقال پیام به پایین" aria-label={`انتقال پیام ${index+1} به پایین`}
+           disabled={saving||index===messages.length-1} onClick={()=>moveMessage(index,1)}
+           className="flex size-10 items-center justify-center rounded-xl border disabled:opacity-35"
+           style={{borderColor:dairaPalette.border,color:dairaPalette.primary.main}}>
+           <ArrowDown size={17} aria-hidden="true"/>
+          </button>
+          <button type="button" title="حذف پیام" aria-label={`حذف پیام ${index+1}`}
+           disabled={saving||messages.length===1} onClick={()=>{
+            setMessages(current=>current.filter(message=>message.id!==item.id));
+            setShowcaseDraftChanged(current=>{
+              const next={...current};delete next[item.id];return next;
+            });
+           }}
+           className="sd-destructive-button flex size-10 items-center justify-center rounded-xl border disabled:opacity-35"
+           style={{borderColor:dairaPalette.status.errorBorder,color:dairaPalette.status.errorText}}>
+           <Trash2 size={16} aria-hidden="true"/>
+          </button>
+         </div>
+        </div>
+        <div className="px-4 py-4 sm:px-5">
+         <PublishingStoryAutomationSetup
+          key={item.id}
+          ref={node=>{messageEditors.current[item.id]=node;}}
+          message={item} showcases={showcases} forms={forms} formTemplates={formTemplates}
+          loadingResources={false} instagramAccountId={account.id}
+          onUpdate={patch=>setMessages(current=>current.map(message=>message.id===item.id
+           ?{...message,...patch}:message))}
+          keywordValid={keywordValid} storyCreateMode storyEditMode={Boolean(original)}
+          hideLibrary onDraftChange={getShowcaseDraftHandler(item.id)}
+          disabled={saving} showFinalSave={false} onContinue={()=>undefined}
+          responseTypeTitle="نوع پیام"
+          responseTypeDescription="متن، عکس، وویس، ویترین یا فرم را انتخاب کن."
+          textPlaceholder="متن این پیام دایرکت را بنویس..."
+         />
+        </div>
+       </article>
+      ))}
+      <button type="button" disabled={saving||messages.length>=5}
+       onClick={()=>setMessages(current=>[...current,createEmptyMessage()])}
+       className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-3 text-sm font-bold disabled:opacity-40"
+       style={{borderColor:dairaPalette.border,color:dairaPalette.primary.main}}>
+       <Plus size={18} aria-hidden="true"/> افزودن پیام بعدی
+       <span className="text-xs font-normal">({new Intl.NumberFormat("fa-IR").format(messages.length)} از ۵)</span>
+      </button>
+      <p className="rounded-xl border p-3 text-xs leading-6"
+       style={{borderColor:dairaPalette.border,color:dairaPalette.text.body}}>
+       پیام‌ها پشت سر هم، به ترتیب نمایش داده‌شده، ارسال می‌شوند.
+       اگر یک پیام «فرم» باشد، باید در انتهای لیست قرار بگیرد؛
+       چون ارسال آن تا دریافت انتخاب کاربر منتظر می‌ماند. آپلود ویدیو فعلاً غیرفعال است.
+      </p>
+      <button type="button" onClick={()=>void save()}
+       disabled={saving||!keywordValid||!hasChanges}
+       className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-extrabold text-white transition disabled:cursor-not-allowed disabled:opacity-45"
+       style={{background:dairaPalette.primary.main}}>
+       {saving?"در حال ذخیره...":original?"ذخیره تغییرات":"ساخت پاسخ خودکار دایرکت"}
+      </button>
+     </div>
+    </section>
    {error&&<p role="alert" className="rounded-xl border px-4 py-3 text-xs leading-6"
     style={{borderColor:dairaPalette.status.error,background:dairaPalette.background.surface,color:dairaPalette.status.error}}>{error}</p>}
  </div>;
