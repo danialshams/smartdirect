@@ -13,6 +13,7 @@ type InstagramAccount = {
   igUsername: string;
   igUserId: string;
   isConnected: boolean;
+  needsReconnect: boolean;
   createdAt: Date;
 };
 
@@ -52,8 +53,9 @@ function formatNumber(value: number) {
 
 export default function DashboardOverview({ user, instagramAccounts, isActive = true }: DashboardOverviewProps & { isActive?: boolean }) {
   const { accountId, isReady } = useDashboardAccountSelection();
-  const activeAccount = instagramAccounts.find((account) => account.id === accountId && account.isConnected)
-    ?? instagramAccounts.find((account) => account.isConnected);
+  const activeAccount = instagramAccounts.find((account) => account.id === accountId)
+    ?? instagramAccounts.find((account) => !account.needsReconnect)
+    ?? instagramAccounts[0];
   const activeAccountId = activeAccount?.id ?? null;
   const [avatarFailedFor, setAvatarFailedFor] = useState<string | null>(null);
   // Account and user-scoped snapshots survive route unmounts within this tab.
@@ -177,9 +179,21 @@ export default function DashboardOverview({ user, instagramAccounts, isActive = 
             <span className="daira-home__account-label">پیج فعال اینستاگرام</span>
             <strong dir="ltr">{"@" + activeAccount.igUsername}</strong>
           </span>
-          <span className="daira-home__account-connected"><CheckCircle2 size={14} aria-hidden="true" />متصل</span>
+          <span className={"daira-home__account-connected" + (activeAccount.needsReconnect ? " is-expired" : "")}>
+            <CheckCircle2 size={14} aria-hidden="true" />
+            {activeAccount.needsReconnect ? "مجوز منقضی شده" : "متصل"}
+          </span>
         </button>
       </div>
+      {activeAccount.needsReconnect ? (
+        <div className="daira-home__reconnect-banner" role="status">
+          <span>برای فعال شدن پاسخ‌های خودکار و دسترسی به Instagram، مجوز پیج فعلی رو دوباره تأیید کن.</span>
+          <Link href={"/api/instagram/connect?reconnect=" + encodeURIComponent(activeAccount.id)}>
+            <RefreshCw size={16} aria-hidden="true" />
+            اتصال مجدد @{activeAccount.igUsername}
+          </Link>
+        </div>
+      ) : null}
 
       <section className="daira-home__section" aria-labelledby="daira-automation-title">
         <div className="daira-home__section-heading daira-home__section-heading--automation">
