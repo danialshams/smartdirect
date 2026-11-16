@@ -50,8 +50,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const normalizedLinkButtons: Array<{ url: string; title: string }> = [];
     for (const item of rawLinkButtons) {
       if (!item || typeof item !== "object") return NextResponse.json({ success: false, error: "ساختار دکمه لینک نامعتبر است." }, { status: 400 });
-      const url = normalizeOptionalString((item as Record<string, unknown>).url);
-      const title = normalizeOptionalString((item as Record<string, unknown>).title);
+      const url = normalizeOptionalString((item as Record<string, unknown>).url) || "";
+      const title = normalizeOptionalString((item as Record<string, unknown>).title) || "";
       if (!title) return NextResponse.json({ success: false, error: "عنوان همه دکمه‌ها الزامی است؛ آدرس لینک اختیاری است." }, { status: 400 });
       if (url) {
         let parsed: URL;
