@@ -140,7 +140,11 @@ function buildUrl(
   params?: InstagramApiRequestOptions["params"],
 ) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = new URL(`${INSTAGRAM_GRAPH_URL}${normalizedPath}`);
+  // OAuth token exchange/refresh endpoints are UNVERSIONED on graph.instagram.com.
+  // Sending them to /v26.0/ returns Meta IGApiException 100/33 ("Unsupported get request").
+  const isTokenEndpoint = normalizedPath === "/access_token" || normalizedPath === "/refresh_access_token";
+  const baseUrl = isTokenEndpoint ? "https://graph.instagram.com" : INSTAGRAM_GRAPH_URL;
+  const url = new URL(`${baseUrl}${normalizedPath}`);
 
   for (const [key, value] of Object.entries(params ?? {})) {
     if (value !== undefined && value !== null) {

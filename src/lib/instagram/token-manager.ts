@@ -77,10 +77,11 @@ function shouldRefreshToken(tokenExpiresAt: Date | null): boolean {
 }
 
 async function fetchInstagram<T = InstagramTokenResponse>(
+  path: "/access_token" | "/refresh_access_token",
   params: Record<string, string>,
   rateLimit?: { instagramAccountId: string; operation: "PROFILE_READ" },
 ): Promise<T> {
-  return instagramApiRequest<T>("", {
+  return instagramApiRequest<T>(path, {
     method: "GET",
     params,
     timeoutMs: REQUEST_TIMEOUT_MS,
@@ -109,7 +110,7 @@ export async function exchangeInstagramToken(
   let data: InstagramTokenResponse;
 
   try {
-    data = await fetchInstagram<InstagramTokenResponse>({
+    data = await fetchInstagram<InstagramTokenResponse>("/access_token", {
       grant_type: "ig_exchange_token",
       client_secret: clientSecret,
       access_token: shortLivedToken,
@@ -240,6 +241,7 @@ export async function refreshInstagramToken(
 
   try {
     data = await fetchInstagram<InstagramTokenResponse>(
+      "/refresh_access_token",
       {
         grant_type: "ig_refresh_token",
         access_token: decryptMetaToken(account.accessToken),

@@ -42,6 +42,9 @@ export default function DashboardHeader({
     if (status === "reconnect_mismatch") {
       setOauthNotice("اکانت انتخاب‌شده در اینستاگرام با پیج قبلی فرق دارد. برای اتصال مجدد، وارد همان پیج قبلی شو.");
       setAccountModalOpen(true);
+    } else if (status === "long_lived_token_error") {
+      setOauthNotice("اینستاگرام مجوز ورود رو تأیید کرد، اما دریافت توکن بلندمدت ناموفق بود. اتصال هنوز کامل نشده؛ دوباره اتصال مجدد همین پیج رو بزن.");
+      setAccountModalOpen(true);
     } else if (status === "reconnect_not_found" || status === "error") {
       setOauthNotice("اتصال مجدد انجام نشد. دوباره از همین پیج تلاش کن.");
       setAccountModalOpen(true);
