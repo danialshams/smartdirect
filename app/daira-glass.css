@@ -1000,3 +1000,70 @@
 .daira-reply-list-delete{color:var(--daira-error-text);border-color:var(--daira-error-border);background:var(--daira-surface);}
 .daira-reply-list-edit:hover{background:var(--daira-outline-hover-bg);}
 .daira-reply-list-delete:hover{background:var(--daira-error-background);}
+
+/* DAIRA RECONNECT / existing-account authorization — preserve all saved page data */
+.daira-app-shell .daira-account-modal__account-row{
+ display:grid;grid-template-columns:minmax(0,1fr);gap:8px;
+ border:1px solid var(--daira-border);border-radius:16px;
+ padding:9px;background:var(--daira-surface);
+}
+.daira-app-shell .daira-account-modal__account-row .daira-account-modal__account{
+ width:100%;margin:0;min-width:0;
+}
+.daira-app-shell .daira-account-modal__account:disabled{
+ opacity:.85;cursor:default;border-color:var(--daira-border);
+ background:var(--daira-surface-hover);
+}
+.daira-app-shell .daira-account-modal__account:disabled .daira-account-modal__connected{
+ color:var(--daira-text);font-weight:600;
+}
+.daira-app-shell .daira-account-modal__account-row .daira-account-modal__avatar{flex-shrink:0}
+.daira-app-shell .daira-account-modal__account-row .daira-account-modal__account [dir=ltr]{
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.daira-app-shell .daira-account-modal__reconnect{
+ display:inline-flex;justify-content:center;align-items:center;gap:9px;
+ min-height:42px;padding:9px 13px;width:100%;
+ border:1px solid var(--daira-primary);border-radius:12px;
+ background:var(--daira-primary);color:#fff;text-decoration:none;
+ font-size:12px;font-weight:750;transition:filter .2s ease,transform .2s ease;
+}
+.daira-app-shell .daira-account-modal__reconnect:hover{
+ filter:brightness(.94);color:#fff;
+}
+.daira-app-shell .daira-account-modal__reconnect:focus-visible{
+ outline:2px solid var(--daira-primary);outline-offset:3px;
+}
+.daira-app-shell .daira-account-modal__notice{
+ background:var(--daira-surface-hover);
+ border:1px solid var(--daira-border);
+ border-radius:12px;color:var(--daira-heading);
+ font-size:12px;line-height:2;padding:12px;margin:0 0 14px;
+ text-align:right;
+}
+.daira-app-shell .daira-home__account-connected.is-expired{
+ background:#fff4e5;color:#955d1c;
+}
+.daira-app-shell .daira-home__reconnect-banner{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:14px;flex-wrap:wrap;margin:0 0 22px;padding:16px 18px;
+ border:1px solid #edd9b6;border-radius:17px;
+ background:#fffaf1;color:#79542a;font-size:12px;line-height:1.9;
+}
+.daira-app-shell .daira-home__reconnect-banner a{
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ min-height:42px;padding:9px 15px;border-radius:11px;
+ background:var(--daira-primary);color:#fff;font-weight:700;
+ text-decoration:none;white-space:normal;
+}
+.daira-app-shell .daira-home__reconnect-banner a:hover{filter:brightness(.94)}
+@media(max-width:520px){
+ .daira-app-shell .daira-account-modal__account-row{padding:7px}
+ .daira-app-shell .daira-account-modal__account-row .daira-account-modal__account{font-size:11px;padding:9px}
+ .daira-app-shell .daira-account-modal__account-row .daira-account-modal__connected{font-size:9px}
+ .daira-app-shell .daira-home__reconnect-banner{align-items:stretch;padding:14px;gap:12px}
+ .daira-app-shell .daira-home__reconnect-banner a{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+ .daira-app-shell .daira-account-modal__reconnect{transition:none}
+}
