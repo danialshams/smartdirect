@@ -417,7 +417,7 @@ export default function EntryPointFlowBuilder({
                             body: JSON.stringify(
                                 {
                                     triggerType,
-                                    ...(responseName.trim() ? { title: responseName.trim() } : {}),
+                                    ...(responseName.trim() ? { title: responseName.trim().slice(0, 80) } : {}),
                                     keyword:
                                         triggerType === "DM" ? null : keyword.trim(),
                                     isActive,
@@ -461,7 +461,7 @@ export default function EntryPointFlowBuilder({
                                 {
                                     instagramAccountId:
                                         accountId,
-                                    title: responseName.trim() || null,
+                                    ...(responseName.trim() ? { title: responseName.trim().slice(0, 80) } : {}),
                                     triggerType,
                                     mediaId:
                                         null,
