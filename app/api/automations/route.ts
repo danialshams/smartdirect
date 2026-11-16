@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
       catch (error) { return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "پاسخ‌های کامنت معتبر نیستند." }, { status: 400 }); }
     }
 
-    if (title !== undefined && typeof title !== "string") return NextResponse.json({ success: false, error: "نام پاسخ معتبر نیست." }, { status: 400 });
+    if (title !== undefined && title !== null && typeof title !== "string") return NextResponse.json({ success: false, error: "ساختار نام پاسخ نامعتبر است." }, { status: 400 });
     // The title is an internal label, often generated from many keywords.
     // Bound it server-side; do not reject otherwise valid automation content.
     const normalizedTitle = typeof title === "string" ? title.trim().slice(0, 80) || null : null;
