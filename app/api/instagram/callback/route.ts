@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { exchangeInstagramToken } from "@/lib/instagram/token-manager";
 import { verifyInstagramOAuthState } from "@/lib/instagram/oauth-state";
+import { cacheKey, deleteCachedJson } from "@/lib/cache/redis-cache";
 
 const INSTAGRAM_API_VERSION = "v26.0";
 const REQUEST_TIMEOUT_MS = 15000;
@@ -204,6 +205,7 @@ export async function GET(request: NextRequest) {
       userId: string;
       timestamp: number;
       nonce: string;
+      reconnectAccountId?: string;
     };
 
     try {
@@ -469,20 +471,33 @@ export async function GET(request: NextRequest) {
 
     console.log("[Instagram OAuth] Checking existing account...");
 
-    const existingAccount = await prisma.instagramAccount.findFirst({
-      where: {
-        userId: stateData.userId,
+    // A targeted reconnect must never overwrite or create a different page.
+    // It only updates the original account if Meta returns its exact user ID.
+    const reconnectAccount = stateData.reconnectAccountId
+      ? await prisma.instagramAccount.findFirst({
+          where: { id: stateData.reconnectAccountId, userId: stateData.userId },
+          select: { id: true, igUserId: true },
+        })
+      : null;
 
-        OR: [
-          {
-            igUserId: instagramUserId,
+    if (stateData.reconnectAccountId && !reconnectAccount) {
+      return redirectToDashboard(request, "reconnect_not_found");
+    }
+    if (reconnectAccount && reconnectAccount.igUserId !== instagramUserId) {
+      console.warn("[Instagram OAuth] Different professional account selected for reconnect", {
+        accountId: reconnectAccount.id,
+      });
+      return redirectToDashboard(request, "reconnect_mismatch");
+    }
+
+    const existingAccount = reconnectAccount
+      ? await prisma.instagramAccount.findUnique({ where: { id: reconnectAccount.id } })
+      : await prisma.instagramAccount.findFirst({
+          where: {
+            userId: stateData.userId,
+            OR: [{ igUserId: instagramUserId }, { igUsername: instagramUsername }],
           },
-          {
-            igUsername: instagramUsername,
-          },
-        ],
-      },
-    });
+        });
 
     // =========================================================
     // 15. Save Instagram Account
@@ -529,6 +544,15 @@ export async function GET(request: NextRequest) {
           isConnected: true,
         },
       });
+    }
+
+    // Drop old Redis tokens immediately after the OAuth credentials are renewed.
+    const cacheResults = await Promise.allSettled([
+      deleteCachedJson(cacheKey("instagram-token", instagramAccount.id)),
+      deleteCachedJson(cacheKey("instagram-account", instagramAccount.id)),
+    ]);
+    if (cacheResults.some((result) => result.status === "rejected")) {
+      console.warn("[Instagram OAuth] Token cache cleanup failed", instagramAccount.id);
     }
 
     // =========================================================
