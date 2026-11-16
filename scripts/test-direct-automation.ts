@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { matchesAutomationKeyword, splitAutomationKeywords } from "../src/lib/automation/trigger";
-import { directAutomationHasChanges, responseFingerprint } from "../components/dashboard/automation-response-compare";
+import { directAutomationHasChanges, responseFingerprint, responseSequenceFingerprint } from "../components/dashboard/automation-response-compare";
 import type { MessageDraft, QuickReplyDraft } from "../components/dashboard/automation-form-utils";
 
 assert.deepEqual(splitAutomationKeywords(" قیمت، موجودی; ۱ "), ["قیمت", "موجودی", "1"]);
@@ -56,11 +56,11 @@ assert.ok(directSuccess.includes("بازگشت به لیست پاسخ‌ها"),"
 // Editing an existing direct reply must not allow saving without a real change.
 assert.ok(directEditor.includes("const hasChanges=!original||directAutomationHasChanges("),
   "DM edit must compute dirty state from saved keywords and response");
-assert.ok(directEditor.includes("setOriginalResponseSignature(existing?responseFingerprint(initialMessage):null)"),
+assert.ok(directEditor.includes("setOriginalResponseSignature(existing?responseSequenceFingerprint(initialMessages):null)"),
   "DM edit must take the saved response as its baseline after hydration");
-assert.ok(directEditor.includes("finalSaveDisabled={saving||!hasChanges}"),
+assert.ok(directEditor.includes("disabled={saving||!keywordValid||!hasChanges}"),
   "DM edit Save must be disabled when there are no changes");
-assert.ok(directEditor.includes("onDraftChange={setShowcaseDraftChanged}"),
+assert.ok(directEditor.includes("onDraftChange={getShowcaseDraftHandler(item.id)}"),
   "Unsaved showcase slide edits must also enable Save");
 assert.ok(directEditor.includes("(original&&!hasChanges)"),
   "A submit triggered without changes must not send the API update");
@@ -124,6 +124,50 @@ assert.equal(unchanged({
     ] },
   ] },
 }), true, "Editing a nested form destination must enable Save");
+
+// Ordered multi-message replies reuse the existing automation execution loop.
+const automationEngine = readFileSync("src/lib/automation/execute-automation.ts","utf8");
+assert.ok(automationEngine.includes("resolveNextSequentialMessage(automation.messages, currentMessage.id)"),
+  "Engine must send successive messages in database order");
+assert.ok(api.includes("const rawMessages: unknown[] = Array.isArray(body.messages)"),
+  "API must accept multi-message sequences without breaking legacy clients");
+assert.ok(api.includes("const MAX_DM_MESSAGES = 5"),
+  "API must enforce a bounded outbound sequence");
+assert.ok(api.includes("order:index") && api.includes("retainedMessageIds"),
+  "API must save order and preserve previously stored message IDs");
+assert.ok(!api.includes("existing.slice(1)"),
+  "Editing a direct automation must not silently erase all later messages");
+assert.ok(directEditor.includes('messages:prepared'),
+  "The editor must save every composed message, not just the first");
+assert.ok(directEditor.includes("moveMessage(index,-1)") &&
+  directEditor.includes("moveMessage(index,1)"), "Message order must be editable");
+assert.ok(directEditor.includes("editor.prepareExternalSave()"),
+  "Every message editor must validate and finalize its draft before saving");
+
+const imageMessage: MessageDraft = {
+  ...sampleMessage, id: "image_1", messageType: "IMAGE",
+  text: "", mediaUrl: "https://cdn.example.com/image.jpg",
+};
+const orderedSequence=[sampleMessage,imageMessage];
+const sequenceSignature=responseSequenceFingerprint(orderedSequence);
+assert.equal(responseSequenceFingerprint([
+  {...sampleMessage,id:"some-other-db-id"},
+  {...imageMessage,id:"new-id"},
+]),sequenceSignature,"Generated message IDs do not count as sequence changes");
+assert.notEqual(responseSequenceFingerprint([imageMessage,sampleMessage]),sequenceSignature,
+  "Reordering messages must enable Save");
+assert.notEqual(responseSequenceFingerprint([sampleMessage]),sequenceSignature,
+  "Removing messages must enable Save");
+assert.equal(directAutomationHasChanges({
+  originalKeywords:["قیمت"],currentKeywords:["قیمت"],
+  originalResponseSignature:sequenceSignature,currentMessage:sampleMessage,
+  currentMessages:[{...sampleMessage,id:"replaced"},{...imageMessage,id:"other"}],
+}),false,"Hydrated, unchanged multi-message rule must stay clean");
+assert.equal(directAutomationHasChanges({
+  originalKeywords:["قیمت"],currentKeywords:["قیمت"],
+  originalResponseSignature:sequenceSignature,currentMessage:sampleMessage,
+  currentMessages:[imageMessage,sampleMessage],
+}),true,"Changing message order must be a meaningful edit");
 
 console.log("DIRECT_AUTOMATION_INTEGRATION_OK",{
   exactKeywords:true,internalDmIsolation:true,quickReplyPreservation:true,
