@@ -16,6 +16,21 @@ assert.equal(matchesAutomationKeyword("۱", "1"), true);
 const finder=readFileSync("src/lib/automation/find-matching-automation.ts","utf8");
 const webhook=readFileSync("app/api/webhooks/instagram/route.ts","utf8");
 const api=readFileSync("app/api/direct-automation/route.ts","utf8");
+const titleBoundedRoutes=[
+  "app/api/direct-automation/route.ts",
+  "app/api/automations/route.ts",
+  "app/api/automations/[id]/route.ts",
+  "app/api/automations/[id]/story-edit/route.ts",
+  "app/api/automations/[id]/comment-edit/route.ts",
+];
+for(const route of titleBoundedRoutes){
+  const code=readFileSync(route,"utf8");
+  assert.ok(!code.includes("نام پاسخ حداکثر ۸۰ نویسه است."),
+    "An internal generated automation title must not reject saving: "+route);
+  assert.ok(/\.slice\(0,\s*80\)/.test(code),
+    "Automation internal titles must be bounded on the server: "+route);
+}
+
 const sidebar=readFileSync("components/dashboard/DashboardSidebar.tsx","utf8");
 const directList = readFileSync("components/dashboard/DirectAutomationList.tsx","utf8");
 const directSkeleton = readFileSync("components/dashboard/DirectAutomationSkeleton.tsx","utf8");
