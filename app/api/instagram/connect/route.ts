@@ -64,7 +64,32 @@ export async function GET(request: NextRequest) {
       state,
     });
 
+    if (reconnectAccountId) {
+      // A fresh Instagram login prevents stale native-app or Facebook-linked
+      // sessions from silently reusing a different Instagram identity.
+      params.set("force_reauth", "true");
+      params.set("enable_fb_login", "false");
+    }
+
     const instagramLoginUrl = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+
+    console.info("[Instagram OAuth] Starting authorization", {
+      reconnect: Boolean(reconnectAccountId),
+      redirectHost: (() => { try { return new URL(redirectUri).hostname; } catch { return "invalid"; } })(),
+      appIdLast4: clientId.slice(-4),
+      forceReauth: Boolean(reconnectAccountId),
+      requestedScopes: params.get("scope")?.split(","),
+    });
+
+    // The browser-launched reconnect flow avoids an HTTP 302 from the
+    // user-facing link directly to instagram.com, which some mobile browsers
+    // hand off to the native Instagram app before OAuth finishes.
+    if (request.nextUrl.searchParams.get("format") === "json") {
+      return NextResponse.json(
+        { success: true, authorizationUrl: instagramLoginUrl },
+        { headers: { "Cache-Control": "no-store, private" } },
+      );
+    }
 
     return NextResponse.redirect(instagramLoginUrl);
   } catch (error) {

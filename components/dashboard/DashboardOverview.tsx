@@ -188,7 +188,7 @@ export default function DashboardOverview({ user, instagramAccounts, isActive = 
       {activeAccount.needsReconnect ? (
         <div className="daira-home__reconnect-banner" role="status">
           <span>برای فعال شدن پاسخ‌های خودکار و دسترسی به Instagram، مجوز پیج فعلی رو دوباره تأیید کن.</span>
-          <Link href={"/api/instagram/connect?reconnect=" + encodeURIComponent(activeAccount.id)}>
+          <Link href={"/dashboard/instagram/authorize?reconnect=" + encodeURIComponent(activeAccount.id)}>
             <RefreshCw size={16} aria-hidden="true" />
             اتصال مجدد @{activeAccount.igUsername}
           </Link>

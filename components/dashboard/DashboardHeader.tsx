@@ -166,7 +166,7 @@ export default function DashboardHeader({
                       <span className="daira-account-modal__connected">{account.needsReconnect ? "مجوز منقضی شده" : selectedAccountId === account.id ? "فعال" : "انتخاب"}</span>
                     </button>
                     <Link className="daira-account-modal__reconnect"
-                      href={"/api/instagram/connect?reconnect=" + encodeURIComponent(account.id)}
+                      href={"/dashboard/instagram/authorize?reconnect=" + encodeURIComponent(account.id)}
                       onClick={() => setAccountModalOpen(false)}>
                       <RefreshCw size={15} aria-hidden="true" />
                       اتصال مجدد همین پیج

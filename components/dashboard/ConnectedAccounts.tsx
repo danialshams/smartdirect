@@ -139,7 +139,7 @@ export default function ConnectedAccounts() {
                   </span>
                 } />
                 <Button asChild className="w-full" variant={account.needsReconnect ? "default" : "outline"}>
-                  <a href={"/api/instagram/connect?reconnect=" + encodeURIComponent(account.id)}>
+                  <a href={"/dashboard/instagram/authorize?reconnect=" + encodeURIComponent(account.id)}>
                     <RefreshCw size={16} aria-hidden="true" />
                     اتصال مجدد همین پیج
                   </a>
