@@ -28,6 +28,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           igUsername: true,
           igUserId: true,
           isConnected: true,
+          tokenExpiresAt: true,
           createdAt: true,
         },
         orderBy: { createdAt: "desc" },
@@ -47,7 +48,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         role: user.role,
         createdAt: user.createdAt,
       }}
-      instagramAccounts={user.instagramAccounts}
+      instagramAccounts={user.instagramAccounts.map(account => ({
+        ...account,
+        needsReconnect: !account.isConnected || !account.tokenExpiresAt || account.tokenExpiresAt.getTime() <= Date.now(),
+      }))}
     >
       {children}
     </DashboardShell>
