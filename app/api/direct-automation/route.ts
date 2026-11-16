@@ -43,23 +43,57 @@ async function save(request:NextRequest,editing:boolean){
   const words=Array.from(new Set(splitAutomationKeywords(clean(body.keyword))));
   if(!instagramAccountId)throw new RuleError("پیج اینستاگرام را انتخاب کنید.");
   if(!words.length||words.length>10||words.some(w=>w.length>100))throw new RuleError("بین ۱ تا ۱۰ کلمه کلیدی، هرکدام حداکثر ۱۰۰ کاراکتر، وارد کنید.");
-  const raw=obj(body.message),messageType=clean(raw.messageType) as Type;
-  if(!types.includes(messageType))throw new RuleError("نوع پاسخ معتبر نیست.");
-  if(messageType==="VIDEO")throw new RuleError("آپلود ویدیو برای پاسخ خودکار فعلاً غیرفعال است.");
-  const text=clean(raw.text),mediaUrl=clean(raw.mediaUrl),mediaId=clean(raw.mediaId),showcaseId=clean(raw.showcaseId),formId=clean(raw.formId);
-  if(["TEXT","FORM"].includes(messageType)&&(!text||text.length>2000))throw new RuleError("متن پیام یا سؤال فرم را کامل وارد کنید.");
-  if(["IMAGE","VIDEO","AUDIO"].includes(messageType)&&!mediaUrl&&!mediaId)throw new RuleError("فایل پیام را انتخاب کنید.");
-  if(messageType==="SHOWCASE"&&!showcaseId)throw new RuleError("ویترین پاسخ را انتخاب کنید.");
-  const replies=messageType==="FORM"?parseReplies(raw.quickReplies):[];
+  // A legacy single message is still accepted for backwards-compatible clients.
+  // The current editor submits an ordered sequence. All messages are validated
+  // before the transaction, so a partially valid flow is never persisted.
+  const rawMessages: unknown[] = Array.isArray(body.messages) ? body.messages : [body.message];
+  const MAX_DM_MESSAGES = 5;
+  if (!rawMessages.length || rawMessages.length > MAX_DM_MESSAGES)
+    throw new RuleError("بین ۱ تا ۵ پیام برای هر پاسخ خودکار دایرکت مجاز است.");
+  const parsedMessages = rawMessages.map((entry, index) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry))
+      throw new RuleError(`ساختار پیام ${index + 1} نامعتبر است.`);
+    const raw = obj(entry);
+    const messageType = clean(raw.messageType) as Type;
+    if (!types.includes(messageType)) throw new RuleError(`نوع پیام ${index + 1} معتبر نیست.`);
+    if (messageType === "VIDEO") throw new RuleError("ارسال خودکار ویدیو فعلاً غیرفعال است.");
+    const text=clean(raw.text),mediaUrl=clean(raw.mediaUrl),mediaId=clean(raw.mediaId),
+      showcaseId=clean(raw.showcaseId),formId=clean(raw.formId);
+    if (["TEXT","FORM"].includes(messageType) && (!text || text.length > 2000))
+      throw new RuleError(`متن پیام یا سؤال فرم ${index + 1} را کامل وارد کنید (حداکثر ۲۰۰۰ کاراکتر).`);
+    if (["IMAGE","AUDIO"].includes(messageType) && !mediaUrl && !mediaId)
+      throw new RuleError(`فایل پیام ${index + 1} را انتخاب کنید.`);
+    if (messageType === "SHOWCASE" && !showcaseId)
+      throw new RuleError(`ویترین پیام ${index + 1} را انتخاب کنید.`);
+    const replies = messageType === "FORM" ? parseReplies(raw.quickReplies) : [];
+    return { id:clean(raw.id),messageType,text,mediaUrl,mediaId,showcaseId,formId,
+      savedResponseId:raw.savedResponseId,replies };
+  });
+  // A form waits for the recipient to choose an option; unlike text/media, it
+  // cannot be followed by an automatically sent message in the same run.
+  if (parsedMessages.slice(0, -1).some(item => item.messageType === "FORM"))
+    throw new RuleError("فرم باید آخرین پیام باشد؛ ارسال پاسخ بعدی منتظر انتخاب کاربر می‌ماند.");
   const account=await prisma.instagramAccount.findFirst({where:{id:instagramAccountId,userId:session.user.id,isConnected:true},select:{id:true}});
   if(!account)throw new RuleError("پیج اینستاگرام متصل و متعلق به شما نیست.",403);
-  let savedOrigin: string | null | undefined;
-  try { savedOrigin = await validateSavedResponseOrigin(raw.savedResponseId, instagramAccountId, session.user.id, messageType); }
-  catch (error) { throw new RuleError(error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست."); }
+  // Validate each saved-response reference against this account; never reuse a
+  // saved asset from another tenant or Instagram page.
+  const savedOrigins: Array<string | null | undefined> = [];
+  for (const item of parsedMessages) {
+    try {
+      savedOrigins.push(await validateSavedResponseOrigin(
+        item.savedResponseId, instagramAccountId, session.user.id, item.messageType
+      ));
+    } catch (error) {
+      throw new RuleError(error instanceof Error ? error.message : "پاسخ ذخیره‌شده معتبر نیست.");
+    }
+  }
   const expected=clean(body.expectedUpdatedAt);
   if(editing&&(!id||!expected||!Number.isFinite(Date.parse(expected))))throw new RuleError("صفحه ویرایش را دوباره باز کنید.",409);
   const showcaseIds=new Set<string>();
-  if(messageType==="SHOWCASE")showcaseIds.add(showcaseId);getShowcases(replies,showcaseIds);
+  for (const item of parsedMessages) {
+    if (item.messageType === "SHOWCASE") showcaseIds.add(item.showcaseId);
+    getShowcases(item.replies,showcaseIds);
+  }
   if(showcaseIds.size){
    const owned=await prisma.showcase.findMany({where:{id:{in:[...showcaseIds]},userId:session.user.id,instagramAccountId},select:{id:true}});
    if(owned.length!==showcaseIds.size)throw new RuleError("یکی از ویترین‌ها متعلق به این پیج نیست.");
@@ -75,33 +109,65 @@ async function save(request:NextRequest,editing:boolean){
    const automation=current
     ?await tx.automation.update({where:{id:current.id},data:{title,keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true}})
     :await tx.automation.create({data:{instagramAccountId,title,triggerType:"DM",keyword:words.join(","),keywordMatchMode:"EXACT",sendDm:true,isActive:true}});
-   const existing=await tx.automationMessage.findMany({where:{automationId:automation.id},orderBy:{order:"asc"},select:{id:true}});
-   const fields={messageType,order:0,text:text||null,...(savedOrigin !== undefined ? { savedResponseId: savedOrigin } : {}),
-    mediaUrl:["IMAGE","VIDEO","AUDIO"].includes(messageType)?mediaUrl||null:null,
-    mediaId:["IMAGE","VIDEO","AUDIO"].includes(messageType)?mediaId||null:null,
-    showcaseId:messageType==="SHOWCASE"?showcaseId:null,
-    formId:messageType==="FORM"?formId||null:null};
-   const saved=existing[0]?await tx.automationMessage.update({where:{id:existing[0].id},data:fields})
-    :await tx.automationMessage.create({data:{automationId:automation.id,...fields}});
-   const previous=await tx.quickReply.findMany({where:{automationMessageId:saved.id},select:{id:true,payload:true}});
-   const previousByPayload=new Map(previous.map(x=>[x.payload,x.id]));
-   const retained:string[]=[];
-   for(const reply of replies){
-    const data={title:reply.title,payload:reply.payload,replyText:JSON.stringify({
-      isExit:reply.isExit,savedResponseId:reply.savedResponseId,destinationType:reply.destinationType,destinationText:reply.destinationText,
-      destinationQuestion:reply.destinationQuestion,destinationShowcaseId:reply.destinationShowcaseId,
-      destinationMediaUrl:reply.destinationMediaUrl,destinationMediaId:reply.destinationMediaId,
-      destinationFormId:reply.destinationFormId,destinationQuickReplies:reply.destinationQuickReplies})};
-    const prev=previousByPayload.get(reply.payload);
-    const item=prev?await tx.quickReply.update({where:{id:prev},data}):await tx.quickReply.create({data:{automationMessageId:saved.id,...data}});
-    retained.push(item.id);
+   const existing=await tx.automationMessage.findMany({
+     where:{automationId:automation.id},orderBy:{order:"asc"},select:{id:true}
+   });
+   const existingIds=new Set(existing.map(item=>item.id));
+   const retainedMessageIds:string[]=[];
+   for (const [index,item] of parsedMessages.entries()) {
+     const fields={
+       messageType:item.messageType,
+       order:index,
+       text:item.text||null,
+       savedResponseId:savedOrigins[index]??null,
+       mediaUrl:["IMAGE","AUDIO"].includes(item.messageType)?item.mediaUrl||null:null,
+       mediaId:["IMAGE","AUDIO"].includes(item.messageType)?item.mediaId||null:null,
+       showcaseId:item.messageType==="SHOWCASE"?item.showcaseId:null,
+       formId:item.messageType==="FORM"?item.formId||null:null,
+     };
+     // Keep the original database row and its inbound links when reordering.
+     const matchedId=item.id&&existingIds.has(item.id)?item.id:null;
+     const saved=matchedId
+       ?await tx.automationMessage.update({where:{id:matchedId},data:fields})
+       :await tx.automationMessage.create({data:{automationId:automation.id,...fields}});
+     retainedMessageIds.push(saved.id);
+     const previous=await tx.quickReply.findMany({
+       where:{automationMessageId:saved.id},select:{id:true,payload:true}
+     });
+     const previousByPayload=new Map(previous.map(reply=>[reply.payload,reply.id]));
+     const retainedReplyIds:string[]=[];
+     for (const reply of item.replies) {
+       const data={title:reply.title,payload:reply.payload,replyText:JSON.stringify({
+         isExit:reply.isExit,savedResponseId:reply.savedResponseId,
+         destinationType:reply.destinationType,destinationText:reply.destinationText,
+         destinationQuestion:reply.destinationQuestion,
+         destinationShowcaseId:reply.destinationShowcaseId,
+         destinationMediaUrl:reply.destinationMediaUrl,
+         destinationMediaId:reply.destinationMediaId,
+         destinationFormId:reply.destinationFormId,
+         destinationQuickReplies:reply.destinationQuickReplies,
+       })};
+       const previousId=previousByPayload.get(reply.payload);
+       const row=previousId
+         ?await tx.quickReply.update({where:{id:previousId},data})
+         :await tx.quickReply.create({data:{automationMessageId:saved.id,...data}});
+       retainedReplyIds.push(row.id);
+     }
+     await tx.quickReply.deleteMany({
+       where:{automationMessageId:saved.id,id:{notIn:retainedReplyIds}}
+     });
    }
-   await tx.quickReply.deleteMany({where:{automationMessageId:saved.id,id:{notIn:retained}}});
-   const obsolete=existing.slice(1).map(x=>x.id);
+   // Delete removed messages only after all retained rows have been saved.
+   // Null external quick-reply destinations before removing their target.
+   const obsolete=existing.filter(item=>!retainedMessageIds.includes(item.id)).map(item=>item.id);
    if(obsolete.length){
-    await tx.quickReply.updateMany({where:{nextMessageId:{in:obsolete}},data:{nextMessageId:null}});
-    await tx.quickReply.deleteMany({where:{automationMessageId:{in:obsolete}}});
-    await tx.automationMessage.deleteMany({where:{id:{in:obsolete},automationId:automation.id}});
+     await tx.quickReply.updateMany({
+       where:{nextMessageId:{in:obsolete}},data:{nextMessageId:null}
+     });
+     await tx.quickReply.deleteMany({where:{automationMessageId:{in:obsolete}}});
+     await tx.automationMessage.deleteMany({
+       where:{id:{in:obsolete},automationId:automation.id}
+     });
    }
    return {id:automation.id};
   },{maxWait:10000,timeout:30000});
