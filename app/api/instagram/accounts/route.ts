@@ -63,9 +63,11 @@ export async function GET() {
                 igUserId: true,
                 igUsername: true,
                 isConnected: true,
+                tokenExpiresAt: true,
             },
         });
 
+        const now = Date.now();
         const result = await Promise.all(
             accounts.map(async (account) => ({
                 id: account.id,
@@ -73,6 +75,8 @@ export async function GET() {
                 igUsername: account.igUsername,
                 username: account.igUsername,
                 isConnected: account.isConnected,
+                tokenExpiresAt: account.tokenExpiresAt?.toISOString() ?? null,
+                needsReconnect: !account.isConnected || !account.tokenExpiresAt || account.tokenExpiresAt.getTime() <= now,
                 profilePictureUrl: account.isConnected
                     ? proxyInstagramAccountProfileUrl(account.id)
                     : null,
