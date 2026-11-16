@@ -28,6 +28,12 @@ export function responseFingerprint(message: MessageDraft): string {
   });
 }
 
+/** Sequence order is recipient-visible. Ignore generated database IDs and
+ * quick-reply payloads exactly as responseFingerprint does for one message. */
+export function responseSequenceFingerprint(messages: MessageDraft[]): string {
+  return JSON.stringify(messages.map((message) => JSON.parse(responseFingerprint(message))));
+}
+
 function keywordsFingerprint(words: string[]): string {
   return JSON.stringify(Array.from(
     new Set(words.map((word) => word.trim().toLocaleLowerCase("fa-IR")).filter(Boolean)),
@@ -40,16 +46,18 @@ export function directAutomationHasChanges({
   currentKeywords,
   originalResponseSignature,
   currentMessage,
+  currentMessages,
   showcaseDraftChanged = false,
 }: {
   originalKeywords: string[];
   currentKeywords: string[];
   originalResponseSignature: string | null;
   currentMessage: MessageDraft;
+  currentMessages?: MessageDraft[];
   showcaseDraftChanged?: boolean;
 }): boolean {
   if (originalResponseSignature === null) return false;
   return keywordsFingerprint(originalKeywords) !== keywordsFingerprint(currentKeywords)
-    || originalResponseSignature !== responseFingerprint(currentMessage)
+    || originalResponseSignature !== (currentMessages ? responseSequenceFingerprint(currentMessages) : responseFingerprint(currentMessage))
     || showcaseDraftChanged;
 }
