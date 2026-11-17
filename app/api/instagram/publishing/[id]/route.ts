@@ -12,6 +12,7 @@ import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-workflow";
 import { getStorageObjectExpiry } from "@/lib/instagram/publishing-media-cleanup";
 import { readReelOptions, reelOptionsSchema } from "@/lib/instagram/reel-settings";
+import { requireTrialReelEligibility } from "@/lib/instagram/trial-reels";
 
 export const dynamic = "force-dynamic";
 const INSTAGRAM_API_VERSION = "v26.0";
@@ -144,6 +145,13 @@ export async function PATCH(request: NextRequest, context: Context) {
 
     if (parsed.data.reelOptions && job.type !== "REEL") return NextResponse.json({ success: false, message: "این تنظیمات فقط برای ریلز است." }, { status: 400 });
     const reelOptions = parsed.data.reelOptions ?? readReelOptions(job.reelOptions);
+    if (job.type === "REEL" && reelOptions.trial.enabled) {
+      try {
+        await requireTrialReelEligibility(await getValidInstagramAccessToken(job.instagramAccountId));
+      } catch (error) {
+        return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "پیج واجد شرایط Trial نیست." }, { status: 422 });
+      }
+    }
     if (job.type === "REEL" && reelOptions.coverStorageKey) {
       const cover = await prisma.instagramStorageObject.findFirst({ where: { userId: session.user.id, storageKey: reelOptions.coverStorageKey, publicUrl: reelOptions.coverUrl, deletedAt: null, expiresAt: { gt: new Date() } }, select: { id: true } });
       if (!cover) return NextResponse.json({ success: false, message: "کاور معتبر نیست یا منقضی شده؛ دوباره آپلود کن." }, { status: 400 });

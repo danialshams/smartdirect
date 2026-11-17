@@ -13,6 +13,8 @@ import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { getStorageObjectExpiry } from "@/lib/instagram/publishing-media-cleanup";
 import { DEFAULT_REEL_OPTIONS, reelOptionsSchema } from "@/lib/instagram/reel-settings";
+import { requireTrialReelEligibility } from "@/lib/instagram/trial-reels";
+import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 
 export const dynamic = "force-dynamic";
 const INSTAGRAM_API_VERSION = "v26.0";
@@ -219,6 +221,13 @@ export async function POST(request: NextRequest) {
 
     const account = await prisma.instagramAccount.findFirst({ where: { id: data.instagramAccountId, userId: session.user.id, isConnected: true } });
     if (!account) return NextResponse.json({ success: false, message: "اکانت Instagram پیدا نشد یا متصل نیست." }, { status: 404 });
+    if (reelOptions?.trial.enabled) {
+      try {
+        await requireTrialReelEligibility(await getValidInstagramAccessToken(account.id));
+      } catch (error) {
+        return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "پیج واجد شرایط Trial نیست." }, { status: 422 });
+      }
+    }
 
     if (data.commentAutomationId) {
       const automation = await prisma.automation.findFirst({ where: { id: data.commentAutomationId, instagramAccountId: account.id, triggerType: "COMMENT_KEYWORD", isActive: true }, select: { id: true } });

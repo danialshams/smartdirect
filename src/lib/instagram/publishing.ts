@@ -4,7 +4,8 @@ import { activateStoryReply } from "@/lib/automation/story-activation";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import { deletePublishMediaStorage } from "@/lib/instagram/publishing-media-cleanup";
-import { readReelOptions, type ReelOptions } from "@/lib/instagram/reel-settings";
+import { readReelOptions, reelTrialParams, type ReelOptions } from "@/lib/instagram/reel-settings";
+import { requireTrialReelEligibility } from "@/lib/instagram/trial-reels";
 import { invalidateAutomationCache } from "@/lib/cache/instagram";
 import {
   claimPublishingExecution,
@@ -536,7 +537,12 @@ async function createReelContainer(
   if (caption) body.caption = caption;
   if (tags.length) body.user_tags = JSON.stringify(tags);
   const settings = readReelOptions(reelOptions);
-  body.share_to_feed = settings.shareToFeed;
+  const trialParams = reelTrialParams(settings);
+  if (trialParams) {
+    body.trial_params = trialParams;
+  } else {
+    body.share_to_feed = settings.shareToFeed;
+  }
   if (settings.coverMode === "upload" && settings.coverUrl) body.cover_url = settings.coverUrl;
   if (settings.coverMode === "frame" && settings.thumbOffsetMs !== null) body.thumb_offset = settings.thumbOffsetMs;
 
@@ -1085,6 +1091,11 @@ async function publishInstagramJobInternal(jobId: string) {
     } else if (job.type === "REEL") {
       if (media.length !== 1 || media[0].type !== "VIDEO") {
         throw new Error("Reel باید دقیقاً یک ویدیو داشته باشد.");
+      }
+      if (readReelOptions(job.reelOptions).trial.enabled) {
+        // Recheck at publish time: a scheduled account may lose eligibility.
+        // Never quietly change a Trial to a public Reel.
+        await requireTrialReelEligibility(token);
       }
 
       containerId = await createReelContainer(

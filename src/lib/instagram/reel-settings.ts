@@ -6,6 +6,7 @@ export const reelOptionsSchema = z.object({
   coverUrl: z.string().url().nullable(),
   thumbOffsetMs: z.number().int().min(0).max(900000).nullable(),
   shareToFeed: z.boolean(),
+  trial: z.object({ enabled: z.boolean(), graduationStrategy: z.enum(["MANUAL", "SS_PERFORMANCE"]) }).strict().default({ enabled: false, graduationStrategy: "MANUAL" }),
 }).strict().superRefine((value, context) => {
   const hasCover = Boolean(value.coverStorageKey && value.coverUrl);
   if (Boolean(value.coverStorageKey) !== Boolean(value.coverUrl)) {
@@ -33,9 +34,16 @@ export const DEFAULT_REEL_OPTIONS: ReelOptions = {
   coverUrl: null,
   thumbOffsetMs: null,
   shareToFeed: true,
+  trial: { enabled: false, graduationStrategy: "MANUAL" },
 };
 
 export function readReelOptions(value: unknown): ReelOptions {
   const result = reelOptionsSchema.safeParse(value);
-  return result.success ? result.data : { ...DEFAULT_REEL_OPTIONS };
+  return result.success ? result.data : { ...DEFAULT_REEL_OPTIONS, trial: { ...DEFAULT_REEL_OPTIONS.trial } };
+}
+
+/** Meta accepts this field only for REELS container creation. */
+export function reelTrialParams(value: unknown): string | null {
+  const trial = readReelOptions(value).trial;
+  return trial.enabled ? JSON.stringify({ graduation_strategy: trial.graduationStrategy }) : null;
 }
