@@ -341,6 +341,9 @@ jobs:
       - name: Test direct keyword automation integration
         run: npx tsx scripts/test-direct-automation.ts
 
+      - name: Verify Instagram linkless buttons and legacy postback payloads
+        run: npx tsx scripts/test-linkless-button-postback.ts
+
       - name: Test advanced Instagram Reel publishing options
         run: npx tsx scripts/test-reel-settings.ts
 

@@ -72,8 +72,9 @@ const pages=collect(pageRoot).map(path=>"/dashboard"+(
 assert.equal(new Set(pages).size,pages.length,"Each dashboard path must be unique");
 const staticPages=pages.filter(path=>!path.includes("["));
 const dynamicPages=pages.filter(path=>path.includes("["));
-assert.equal(pages.length,37,"Expand the coverage inventory when adding dashboard pages");
-assert.equal(staticPages.length,29);
+assert(staticPages.includes("/dashboard/instagram/authorize"), "The Instagram reconnect authorization page must remain covered by the dashboard audit");
+assert.equal(pages.length,38,"Expand the coverage inventory when adding dashboard pages");
+assert.equal(staticPages.length,30);
 assert.equal(dynamicPages.length,8);
 
 const audit=file("scripts/benchmark-full-dashboard.mjs");
