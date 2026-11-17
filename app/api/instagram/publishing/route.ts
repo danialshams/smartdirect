@@ -10,7 +10,6 @@ import { scheduleInstagramPublish } from "@/lib/instagram/scheduled-publishing-w
 import { enqueueInstagramPublishing } from "@/lib/instagram/publishing-queue";
 import { processPublishingQueueJob } from "@/lib/instagram/publishing-workflow";
 import { proxyInstagramMediaUrl } from "@/lib/instagram/media-proxy";
-import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { getStorageObjectExpiry } from "@/lib/instagram/publishing-media-cleanup";
 import { DEFAULT_REEL_OPTIONS, reelOptionsSchema } from "@/lib/instagram/reel-settings";
 import { requireTrialReelEligibility } from "@/lib/instagram/trial-reels";
