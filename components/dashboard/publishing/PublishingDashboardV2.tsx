@@ -1516,9 +1516,9 @@ export default function PublishingDashboardV2({ onTypeChange }: { onTypeChange?:
             {type==="REEL" && (
               <section aria-label="تنظیمات ریلز" className="space-y-3">
                 <PublishingSectionGuide number={2} title="تنظیمات ریلز">
-                  کاور ریلز و نمایش آن در فید را به‌دلخواه تنظیم کن. هر دو اختیاری‌اند.
+                  کاور، انتشار معمولی یا Trial و نحوه نمایش ریلز را تنظیم کن.
                 </PublishingSectionGuide>
-                <ReelSettingsFields value={reelOptions} onChange={setReelOptions} videoUrl={uploadedMedia[0]?.publicUrl ?? media[0]?.previewUrl ?? null} disabled={publishing || uploading} onBusyChange={setReelCoverUploading}/>
+                <ReelSettingsFields value={reelOptions} onChange={setReelOptions} videoUrl={uploadedMedia[0]?.publicUrl ?? media[0]?.previewUrl ?? null} instagramAccountId={selectedAccountId} disabled={publishing || uploading} onBusyChange={setReelCoverUploading}/>
               </section>
             )}
 

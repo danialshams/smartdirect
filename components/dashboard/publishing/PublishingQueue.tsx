@@ -10,6 +10,7 @@ type PublishType = "POST" | "CAROUSEL" | "REEL" | "STORY";
 export type PublishingQueueJob = {
   id: string; type: PublishType; status: string; scheduledAt: string | null;
   publishedAt: string | null; createdAt: string; errorMessage: string | null;
+  reelOptions?: { trial?: { enabled?: boolean; graduationStrategy?: string } } | null;
   media: Array<{type:"IMAGE"|"VIDEO";publicUrl:string|null}>;
 };
 type Props = {
@@ -88,11 +89,16 @@ export default function PublishingQueue({jobs,loading,error,onRetry,onCancel,onR
       return <article key={job.id} className="daira-publishing-queue-item flex min-h-[96px] items-center gap-3 rounded-[22px] border border-[var(--daira-border)] bg-white px-3 py-3 shadow-sm sm:px-4">
         <Preview job={job}/>
         <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2"><p className="text-sm font-bold text-[var(--daira-heading)]">{labels[job.type]}</p>
+          <div className="flex flex-wrap items-center gap-2"><p className="text-sm font-bold text-[var(--daira-heading)]">{job.type==="REEL" && job.reelOptions?.trial?.enabled ? "ریلز آزمایشی (Trial)" : labels[job.type]}</p>
             <span className="rounded-lg px-2 py-1 text-[10px] font-semibold" style={{color:status.color,background:status.background}}>{status.text}</span>
           </div>
           <p className="text-[11px] text-[var(--daira-text-secondary)]">{job.status==="PUBLISHED"?"منتشرشده در ":job.scheduledAt?"زمان انتشار: ":"ساخته‌شده در "}{formattedDate(job.status==="PUBLISHED"?job.publishedAt:job.scheduledAt||job.createdAt)}</p>
-          {job.status==="FAILED"&&job.errorMessage&&<p className="line-clamp-2 text-[11px] leading-5 text-[var(--daira-error-text)]">{job.errorMessage}</p>}
+          {job.status==="PUBLISHED" && job.type==="REEL" && job.reelOptions?.trial?.enabled && (
+            <p className="text-[11px] leading-5 text-[var(--daira-text-secondary)]">
+              {job.reelOptions.trial.graduationStrategy==="MANUAL" ? "انتشار برای همه: از داخل اپ اینستاگرام" : "انتشار برای همه: در صورت عملکرد خوب، با تصمیم اینستاگرام"}
+            </p>
+          )}
+          {job.status==="FAILED"&&job.errorMessage&&<p className="line-clamp-2 text-[11px] leading-5 text-[var(--daira-error-text)]">{job.errorMessage}</p>
         </div>
         <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row">
           {["SCHEDULED","DRAFT"].includes(job.status) && <Link href={"/dashboard/publishing/"+encodeURIComponent(job.id)} className="inline-flex min-h-8 items-center justify-center gap-1 rounded-lg border border-[var(--daira-outline-active-bg)] bg-white px-2 text-[11px] font-semibold text-[var(--daira-primary)]"><Pencil size={13}/><span>ویرایش</span></Link>}

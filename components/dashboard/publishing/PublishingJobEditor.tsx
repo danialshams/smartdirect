@@ -645,6 +645,7 @@ export default function PublishingJobEditor({
                 <div className="mt-5 space-y-2">
                   <ReelSettingsFields value={reelOptions} onChange={setReelOptions}
                     videoUrl={job.media.find((item) => item.type === "VIDEO")?.publicUrl ?? null}
+                    instagramAccountId={job.instagramAccount.id}
                     disabled={contentSaving || deleting} onBusyChange={setReelCoverUploading}/>
                 </div>
               )}
