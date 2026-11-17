@@ -1,7 +1,7 @@
 "use client";
 
 import { uploadFileWithProgress } from "./shared-upload";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, ImagePlus, Loader2 } from "lucide-react";
 import type { ReelOptions } from "@/lib/instagram/reel-settings";
 
@@ -51,6 +51,7 @@ type Props = {
   onChange: (options: ReelOptions) => void;
   videoUrl: string | null;
   disabled?: boolean;
+  instagramAccountId?: string;
   onBusyChange?: (busy: boolean) => void;
 };
 
@@ -58,13 +59,45 @@ function persian(value: number) {
   return value.toLocaleString("fa-IR", { maximumFractionDigits: 1 });
 }
 
-export default function ReelSettingsFields({ value, onChange, videoUrl, disabled = false, onBusyChange }: Props) {
+export default function ReelSettingsFields({ value, onChange, videoUrl, disabled = false, instagramAccountId, onBusyChange }: Props) {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [duration, setDuration] = useState(0);
   const video = useRef<HTMLVideoElement>(null);
   const locked = disabled || busy;
+  const [trialBusy, setTrialBusy] = useState(false);
+  const [trialResult, setTrialResult] = useState<{ eligible: boolean; followersCount: number | null; reason: string | null } | null>(null);
+  const [trialError, setTrialError] = useState("");
+
+  useEffect(() => {
+    if (!value.trial.enabled || !instagramAccountId) {
+      setTrialResult(null);
+      setTrialError("");
+      setTrialBusy(false);
+      return;
+    }
+    const controller = new AbortController();
+    setTrialBusy(true);
+    setTrialResult(null);
+    setTrialError("");
+    void (async () => {
+      try {
+        const response = await fetch("/api/instagram/publishing/trial-eligibility?accountId=" + encodeURIComponent(instagramAccountId), {
+          credentials: "include", cache: "no-store", signal: controller.signal,
+        });
+        const data = await response.json() as { success?: boolean; eligible?: boolean; followersCount?: number | null; reason?: string | null; message?: string };
+        if (!response.ok || !data.success) throw new Error(data.message || "بررسی شرایط Trial ناموفق بود.");
+        if (!controller.signal.aborted) setTrialResult({ eligible: data.eligible === true, followersCount: data.followersCount ?? null, reason: data.reason ?? null });
+      } catch (error) {
+        if (!controller.signal.aborted) setTrialError(error instanceof Error ? error.message : "بررسی شرایط Trial ناموفق بود.");
+      } finally {
+        if (!controller.signal.aborted) setTrialBusy(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [value.trial.enabled, instagramAccountId]);
+
 
   function selectMode(mode: ReelOptions["coverMode"]) {
     if (locked) return;
@@ -161,14 +194,64 @@ export default function ReelSettingsFields({ value, onChange, videoUrl, disabled
         </div>
       )}
       {error && <p role="alert" className="rounded-xl bg-[var(--daira-error-background)] p-3 text-xs leading-6 text-[var(--daira-error-text)]">{error}</p>}
+      <section aria-label="روش انتشار ریلز" className="space-y-3 border-t border-[var(--daira-border)] pt-4">
+        <div>
+          <h3 className="text-sm font-extrabold text-[var(--daira-heading)]">روش انتشار ریلز</h3>
+          <p className="mt-1 text-xs leading-6 text-[var(--daira-text-secondary)]">Trial ابتدا برای آزمایش روی کسانی است که پیج را فالو ندارند.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { enabled: false, label: "انتشار معمولی", hint: "نمایش عادی برای مخاطبان" },
+            { enabled: true, label: "انتشار آزمایشی (Trial)", hint: "اول برای غیرفالوورها" },
+          ] as const).map(option => (
+            <button key={String(option.enabled)} type="button" disabled={locked} aria-pressed={value.trial.enabled === option.enabled}
+              onClick={() => onChange({ ...value, trial: { ...value.trial, enabled: option.enabled } })}
+              className={"rounded-xl border p-3 text-right transition disabled:opacity-50 " +
+                (value.trial.enabled === option.enabled ? "border-[var(--daira-primary)] bg-[var(--daira-outline-hover-bg)]" : "border-[var(--daira-border)] bg-[var(--daira-surface-hover)]")}>
+              <span className="flex items-center gap-1 text-xs font-bold text-[var(--daira-heading)]">
+                {value.trial.enabled === option.enabled && <CheckCircle2 size={14} className="text-[var(--daira-primary)]" />}{option.label}
+              </span>
+              <span className="mt-1 block text-[11px] leading-5 text-[var(--daira-text-secondary)]">{option.hint}</span>
+            </button>
+          ))}
+        </div>
+        {value.trial.enabled && (
+          <div className="space-y-3 rounded-xl border border-[var(--daira-publishing-border)] bg-[var(--daira-upload-bg)] p-3">
+            <p className="text-xs font-bold text-[var(--daira-heading)]">بعد از انتشار آزمایشی</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {([
+                { value: "MANUAL", label: "دستی", hint: "بعداً در خود اینستاگرام برای همه منتشر کن." },
+                { value: "SS_PERFORMANCE", label: "خودکار", hint: "اگر عملکرد خوب باشد، اینستاگرام خودش برای همه منتشر می‌کند." },
+              ] as const).map(option => (
+                <button key={option.value} type="button" disabled={locked}
+                  aria-pressed={value.trial.graduationStrategy === option.value}
+                  onClick={() => onChange({ ...value, trial: { enabled: true, graduationStrategy: option.value } })}
+                  className={"rounded-xl border p-3 text-right transition disabled:opacity-50 " +
+                    (value.trial.graduationStrategy === option.value ? "border-[var(--daira-primary)] bg-white" : "border-[var(--daira-border)] bg-[var(--daira-surface-hover)]")}>
+                  <span className="block text-xs font-bold text-[var(--daira-heading)]">{option.label}</span>
+                  <span className="mt-1 block text-[11px] leading-5 text-[var(--daira-text-secondary)]">{option.hint}</span>
+                </button>
+              ))}
+            </div>
+            <div aria-live="polite" role="status" className="rounded-lg border border-[var(--daira-border)] bg-white p-3 text-xs leading-6">
+              {!instagramAccountId ? <span className="text-[var(--daira-warning-text)]">پیج متصل را انتخاب کن.</span>
+                : trialBusy ? <span className="flex items-center gap-2 text-[var(--daira-text-secondary)]"><Loader2 size={14} className="animate-spin" />در حال بررسی شرایط پیج...</span>
+                : trialError ? <span className="text-[var(--daira-error-text)]">{trialError}</span>
+                : trialResult?.eligible ? <span className="text-[var(--daira-chart-increase)]">شرط اولیه تأیید شد: {trialResult.followersCount?.toLocaleString("fa-IR")} فالوور</span>
+                : <span className="text-[var(--daira-error-text)]">{trialResult?.reason || "حداقل ۲۰۰ فالوور و حساب حرفه‌ای لازم است."}</span>}
+            </div>
+            <p className="text-[11px] leading-6 text-[var(--daira-text-secondary)]">این شرط هنگام ثبت و انتشار زمان‌بندی‌شده دوباره بررسی می‌شود. فعال بودن نهایی Trial و سهمیه انتشار را Meta تعیین می‌کند.</p>
+          </div>
+        )}
+      </section>
       <div className="border-t border-[var(--daira-border)] pt-4">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input type="checkbox" checked={value.shareToFeed} disabled={locked}
+        <label className={"flex items-start gap-3 " + (value.trial.enabled ? "cursor-not-allowed opacity-50" : "cursor-pointer")}>
+          <input type="checkbox" checked={value.shareToFeed} disabled={locked || value.trial.enabled}
             onChange={(event) => onChange({ ...value, shareToFeed: event.target.checked })}
             className="mt-1 h-4 w-4 accent-[var(--daira-primary)]"/>
           <span>
             <span className="block text-sm font-bold text-[var(--daira-heading)]">نمایش ریلز در فید</span>
-            <span className="mt-1 block text-xs leading-6 text-[var(--daira-text-secondary)]">اگر فعال باشد ریلز در فید و تب ریلز نمایش داده می‌شود؛ با خاموش‌کردن، فقط در تب ریلز نمایش داده می‌شود.</span>
+            <span className="mt-1 block text-xs leading-6 text-[var(--daira-text-secondary)]">{value.trial.enabled ? "در حالت آزمایشی، ریلز تا زمان انتشار عمومی در فید نشان داده نمی‌شود." : "اگر فعال باشد ریلز در فید و تب ریلز نمایش داده می‌شود؛ با خاموش‌کردن، فقط در تب ریلز نمایش داده می‌شود."}</span>
           </span>
         </label>
       </div>
