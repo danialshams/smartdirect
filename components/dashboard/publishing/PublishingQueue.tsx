@@ -95,10 +95,10 @@ export default function PublishingQueue({jobs,loading,error,onRetry,onCancel,onR
           <p className="text-[11px] text-[var(--daira-text-secondary)]">{job.status==="PUBLISHED"?"منتشرشده در ":job.scheduledAt?"زمان انتشار: ":"ساخته‌شده در "}{formattedDate(job.status==="PUBLISHED"?job.publishedAt:job.scheduledAt||job.createdAt)}</p>
           {job.status==="PUBLISHED" && job.type==="REEL" && job.reelOptions?.trial?.enabled && (
             <p className="text-[11px] leading-5 text-[var(--daira-text-secondary)]">
-              {job.reelOptions.trial.graduationStrategy==="MANUAL" ? "انتشار برای همه: از داخل اپ اینستاگرام" : "انتشار برای همه: در صورت عملکرد خوب، با تصمیم اینستاگرام"}
+              {job.reelOptions?.trial?.graduationStrategy==="MANUAL" ? "انتشار برای همه: از داخل اپ اینستاگرام" : "انتشار برای همه: در صورت عملکرد خوب، با تصمیم اینستاگرام"}
             </p>
           )}
-          {job.status==="FAILED"&&job.errorMessage&&<p className="line-clamp-2 text-[11px] leading-5 text-[var(--daira-error-text)]">{job.errorMessage}</p>
+          {job.status==="FAILED"&&job.errorMessage&&<p className="line-clamp-2 text-[11px] leading-5 text-[var(--daira-error-text)]">{job.errorMessage}</p>}
         </div>
         <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row">
           {["SCHEDULED","DRAFT"].includes(job.status) && <Link href={"/dashboard/publishing/"+encodeURIComponent(job.id)} className="inline-flex min-h-8 items-center justify-center gap-1 rounded-lg border border-[var(--daira-outline-active-bg)] bg-white px-2 text-[11px] font-semibold text-[var(--daira-primary)]"><Pencil size={13}/><span>ویرایش</span></Link>}
