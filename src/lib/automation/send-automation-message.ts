@@ -4,6 +4,7 @@ import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
 import { InstagramApiError, instagramApiRequest } from "@/lib/instagram/client";
 import type { InstagramRateLimitOperation } from "@/lib/instagram/rate-limit";
 import { prisma } from "@/lib/prisma";
+import { createLinklessButtonPayload } from "@/lib/automation/linkless-button";
 import {
   getAutomatedMessageBlockReason, reserveRecipientAutomatedMessageBudget,
   claimFirstAutomationStopOption, AUTOMATION_STOP_QUICK_REPLY_PAYLOAD,
@@ -138,14 +139,14 @@ async function callInstagramMessagesApi({ instagramAccountId, tenantId, instagra
   return { success: false, error: "Instagram API request failed" };
 }
 
-async function sendTextLike({ instagramAccountId, tenantId, instagramUserId, recipientId, commentId, accessToken, text, quickReplies, linkButtonUrl, linkButtonTitle, linkButtons }: { instagramAccountId: string; tenantId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; text: string; quickReplies?: QuickReplyPayload[]; linkButtonUrl?: string | null; linkButtonTitle?: string | null; linkButtons?: Array<{ url: string; title: string }> }) {
+async function sendTextLike({ sourceMessageId, instagramAccountId, tenantId, instagramUserId, recipientId, commentId, accessToken, text, quickReplies, linkButtonUrl, linkButtonTitle, linkButtons }: { sourceMessageId?: string; instagramAccountId: string; tenantId: string; instagramUserId: string; recipientId: string; commentId?: string | null; accessToken: string; text: string; quickReplies?: QuickReplyPayload[]; linkButtonUrl?: string | null; linkButtonTitle?: string | null; linkButtons?: Array<{ url: string; title: string }> }) {
   if (!text.trim()) throw new Error("متن پیام نمی‌تواند خالی باشد.");
   const buttons = linkButtons?.length ? linkButtons : linkButtonUrl && linkButtonTitle ? [{ url: linkButtonUrl, title: linkButtonTitle }] : [];
   if (buttons.length > 3) throw new Error("حداکثر ۳ دکمه لینک مجاز است.");
   const message: Record<string, unknown> = buttons.length
     ? { attachment: { type: "template", payload: { template_type: "button", text: text.trim(), buttons: buttons.map((button, index) => button.url.trim()
       ? { type: "web_url", url: button.url.trim(), title: button.title.trim().slice(0, 20) }
-      : { type: "postback", payload: `DAIRA_LINKLESS_BUTTON_${index + 1}`, title: button.title.trim().slice(0, 20) }) } } }
+      : { type: "postback", payload: sourceMessageId ? createLinklessButtonPayload(sourceMessageId, index) : `DAIRA_LINKLESS_BUTTON_${index + 1}`, title: button.title.trim().slice(0, 20) }) } } }
     : { text: text.trim() };
   if (!buttons.length && quickReplies?.length) message.quick_replies = formatQuickReplies(quickReplies);
   return callInstagramMessagesApi({
@@ -315,6 +316,7 @@ export async function sendAutomationMessage(payload: AutomationMessagePayload): 
       : message.quickReplies;
     try {
       const result = await sendTextLike({
+        sourceMessageId: message.id,
         instagramAccountId, tenantId, instagramUserId, recipientId,
         commentId: payload.commentId, accessToken, text: message.text || "",
         quickReplies: offeredReplies,

@@ -18,6 +18,7 @@ import { processInstagramWebhookQueueJob } from "@/lib/webhook/workflow";
 import { executeAutomation } from "@/lib/automation/execute-automation";
 import { processLiveComment, processLiveReplyContinuation } from "@/lib/automation/live-replies";
 import { findAutomationByQuickReplyPayload, findMatchingAutomation } from "@/lib/automation/find-matching-automation";
+import { parseLinklessButtonPayload, resolveLinklessButtonTitle } from "@/lib/automation/linkless-button";
 import { extractInboundInteraction } from "@/lib/automation/inbound-interactions";
 import { findMatchingInteractionAutomation } from "@/lib/automation/find-interaction-automation";
 import { getValidInstagramAccessToken } from "@/lib/instagram/token-manager";
@@ -3007,6 +3008,100 @@ async function processInstagramPostback(
         executionId,
       });
 
+      return;
+    }
+
+    // =======================================================
+    // Button template without a URL (postback)
+    // =======================================================
+    // Meta delivers a click as messaging[].postback, not as a typed
+    // message. Previously DAIRA_LINKLESS_BUTTON_1 fell through to
+    // "unknown postback", forcing the person to type the button title.
+    // New payloads identify their source message; old delivered buttons
+    // continue working when their title matches a saved account button.
+    const linklessClick = parseLinklessButtonPayload(payload);
+    if (linklessClick) {
+      const sourceMessages = await prisma.automationMessage.findMany({
+        where: {
+          ...(linklessClick.messageId ? { id: linklessClick.messageId } : {}),
+          messageType: "TEXT",
+          automation: {
+            instagramAccountId: instagramAccount.id,
+            isActive: true,
+          },
+        },
+        select: {
+          id: true,
+          linkButtons: true,
+          linkButtonUrl: true,
+          linkButtonTitle: true,
+        },
+        // Legacy button payloads lacked a source ID. Search the owned
+        // active messages by most recent first; never cross accounts.
+        orderBy: { createdAt: "desc" },
+        take: linklessClick.messageId ? 1 : 500,
+      });
+
+      const buttonTitle = resolveLinklessButtonTitle(
+        linklessClick,
+        title,
+        sourceMessages,
+      );
+
+      if (!buttonTitle) {
+        console.warn("[Instagram Button] Unrecognized or outdated linkless button", {
+          instagramAccountId: instagramAccount.id,
+          sourceIdentified: Boolean(linklessClick.messageId),
+          titlePresent: Boolean(title),
+        });
+        return;
+      }
+
+      await saveEntryPointInteraction({
+        instagramAccount,
+        participantId,
+        title: buttonTitle,
+        payload,
+        source: "UNKNOWN_POSTBACK",
+      });
+
+      const automation = await findMatchingAutomation({
+        instagramAccountId: instagramAccount.id,
+        triggerType: "DM",
+        keyword: buttonTitle,
+      });
+
+      if (!automation) {
+        console.warn("[Instagram Button] No active DM keyword reply for clicked button", {
+          instagramAccountId: instagramAccount.id,
+          buttonTitle,
+        });
+        return;
+      }
+
+      const conversation = await getOrCreateConversation({
+        instagramAccount,
+        participantId,
+        igUserId: participantId,
+      });
+      if (await applyInboundAutomationPreference(conversation.id, buttonTitle, payload)) return;
+      if (!conversation.isActive) return;
+
+      const result = await executeAutomation({
+        automationId: automation.id,
+        instagramAccountId: instagramAccount.id,
+        participantId,
+        igUserId: participantId,
+        executionId,
+      });
+
+      console.info("[Instagram Button] Direct reply triggered by click", {
+        instagramAccountId: instagramAccount.id,
+        automationId: automation.id,
+        success: result.success,
+        executed: result.executed,
+        reason: "reason" in result ? result.reason : undefined,
+      });
       return;
     }
 
