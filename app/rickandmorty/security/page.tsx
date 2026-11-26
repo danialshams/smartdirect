@@ -18,7 +18,7 @@ export default function AdminSecurityPage(){
    setMigrated(done);setRemaining(left);
   }catch(e){setError(e instanceof Error?e.message:"خطای مهاجرت");}finally{setBusy(false);}
  }
- return <div><AdminHeading title="امنیت مدیریت" description="تأیید دومرحله‌ای برای دسترسی به این بخش و همه عملیات مدیریت الزامی است."/>
+ return <div><AdminHeading title="امنیت مدیریت" description="مدیریت رمزنگاری و تبدیل امن توکن‌های متا؛ تأیید دومرحله‌ای در حال حاضر اجباری نیست."/>
   {error&&<AdminAlert>{error}</AdminAlert>}
   <AdminPanel>
    <h2 style={{fontWeight:800,marginBottom:12}}>رمزنگاری توکن‌های متا</h2>

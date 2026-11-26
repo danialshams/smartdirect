@@ -14,7 +14,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (session.user.role !== "ADMIN") redirect("/dashboard");
   const admin = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true, isBlocked: true,sessionVersion:true } });
   if (!admin || admin.role !== "ADMIN" || admin.isBlocked) redirect("/dashboard");
-  const mfa=await hasAdminMfa(session.user.id,admin.sessionVersion);
+  // Keep optional TOTP support available without forcing enrollment.
+  const mfa=process.env.DAIRA_ADMIN_MFA_REQUIRED === "true"
+    ? await hasAdminMfa(session.user.id,admin.sessionVersion) : "ok";
   return (
     <AdminProviders>
       {mfa==="ok"?<AdminShell>{children}</AdminShell>:<AdminMfaGate initialState={mfa}/>}

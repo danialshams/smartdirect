@@ -143,7 +143,7 @@ jobs:
       - name: Verify security hardening contracts
         run: npx tsx scripts/test-security-hardening.ts
 
-      - name: Verify mandatory MFA, token encryption and deletion safety
+      - name: Verify optional admin MFA, token encryption and deletion safety
         run: npx tsx scripts/test-security-phase2.ts
 
       - name: Build application
